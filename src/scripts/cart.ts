@@ -1,0 +1,202 @@
+import { ADD_TO_CART_EVENT, type CartItem, type CartItemInput } from "./order-types";
+
+export const initCart = () => {
+  const cartLayer = document.querySelector<HTMLElement>("[data-cart-layer]");
+  const cartItems = document.querySelector<HTMLOListElement>("[data-cart-items]");
+  const cartEmpty = document.querySelector<HTMLElement>("[data-cart-empty]");
+  const cartCheckout = document.querySelector<HTMLElement>("[data-cart-checkout]");
+  const cartCountElements = document.querySelectorAll<HTMLElement>("[data-cart-count]");
+  const whatsappOrder = document.querySelector<HTMLAnchorElement>("[data-whatsapp-order]");
+  const baleOrder = document.querySelector<HTMLButtonElement>("[data-bale-order]");
+  const customerName = document.querySelector<HTMLInputElement>("[data-customer-name]");
+  const customerPhone = document.querySelector<HTMLInputElement>("[data-customer-phone]");
+  const customerProvince = document.querySelector<HTMLInputElement>("[data-customer-province]");
+  const customerCity = document.querySelector<HTMLInputElement>("[data-customer-city]");
+  const customerAddress = document.querySelector<HTMLTextAreaElement>("[data-customer-address]");
+  const customerPostal = document.querySelector<HTMLInputElement>("[data-customer-postal]");
+  const copyStatus = document.querySelector<HTMLElement>("[data-copy-status]");
+  const numberFormatter = new Intl.NumberFormat("fa-IR");
+
+  const readCart = (): CartItem[] => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("orenza-cart") || "[]");
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
+  };
+
+  let cart = readCart();
+  const saveCart = () => localStorage.setItem("orenza-cart", JSON.stringify(cart));
+
+  const createOrderSummary = () => {
+    const name = customerName?.value.trim();
+    const phone = customerPhone?.value.trim();
+    const province = customerProvince?.value.trim();
+    const city = customerCity?.value.trim();
+    const address = customerAddress?.value.trim();
+    const postal = customerPostal?.value.trim();
+    const lines = cart.map((item, index) => {
+      const device = item.device ? `، دستگاه: ${item.device}` : "";
+      const grindSize = item.grindSize ? `، درجه آسیاب: ${item.grindSize}` : "";
+      return `${numberFormatter.format(index + 1)}. ${item.blend} | رست ${item.roast} | ${item.grind}${device}${grindSize} | ${item.weight}`;
+    });
+
+    return [
+      "سلام اورنزا، برای استعلام قیمت این سفارش پیام می‌دهم:",
+      "",
+      ...lines,
+      "",
+      name ? `نام تحویل‌گیرنده: ${name}` : "",
+      phone ? `شماره تماس: ${phone}` : "",
+      province ? `استان: ${province}` : "",
+      city ? `شهر: ${city}` : "",
+      address ? `نشانی: ${address}` : "",
+      postal ? `کد پستی: ${postal}` : "",
+      "",
+      "لطفاً قیمت نهایی و زمان آماده‌سازی را اعلام کنید."
+    ].filter((line, index, all) => line || all[index - 1] !== "").join("\n");
+  };
+
+  const addressInputs = [customerName, customerPhone, customerProvince, customerCity, customerAddress, customerPostal].filter(
+    (input): input is HTMLInputElement | HTMLTextAreaElement => Boolean(input)
+  );
+
+  const addressIsComplete = () => addressInputs.every((input) => input.value.trim().length > 0);
+
+  const showAddressValidation = () => {
+    const firstEmpty = addressInputs.find((input) => !input.value.trim());
+    firstEmpty?.reportValidity();
+    firstEmpty?.focus();
+    if (copyStatus) copyStatus.textContent = "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.";
+  };
+
+  const updateOrderLinks = () => {
+    if (whatsappOrder) {
+      whatsappOrder.href = `https://wa.me/989103060396?text=${encodeURIComponent(createOrderSummary())}`;
+      whatsappOrder.classList.toggle("is-disabled", !addressIsComplete());
+      whatsappOrder.setAttribute("aria-disabled", String(!addressIsComplete()));
+    }
+  };
+
+  const createCartItem = (item: CartItem, index: number) => {
+    const row = document.createElement("li");
+    row.className = "cart-item";
+
+    const number = document.createElement("span");
+    number.className = "cart-item-number";
+    number.textContent = numberFormatter.format(index + 1).padStart(2, "۰");
+
+    const copy = document.createElement("div");
+    const title = document.createElement("strong");
+    title.textContent = item.blend;
+    const details = document.createElement("small");
+    details.textContent = [`رست ${item.roast}`, item.grind, item.device, item.grindSize, item.weight].filter(Boolean).join(" · ");
+    copy.append(title, details);
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "cart-remove";
+    remove.dataset.removeCart = String(item.id);
+    remove.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4.5 7h15M9 7V4.5h6V7m-8.5 0 .8 12h9.4l.8-12M10 10.5v5m4-5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+    remove.setAttribute("aria-label", `حذف ${item.blend} از سبد`);
+    remove.title = "حذف از سبد";
+    row.append(number, copy, remove);
+    return row;
+  };
+
+  const render = () => {
+    cartCountElements.forEach((element) => {
+      element.textContent = numberFormatter.format(cart.length);
+    });
+    cartItems?.replaceChildren(...cart.map(createCartItem));
+    if (cartEmpty) cartEmpty.hidden = cart.length > 0;
+    if (cartCheckout) cartCheckout.hidden = cart.length === 0;
+    updateOrderLinks();
+  };
+
+  const open = () => {
+    if (!cartLayer) return;
+    cartLayer.hidden = false;
+    document.body.classList.add("cart-is-open");
+    requestAnimationFrame(() => cartLayer.classList.add("is-open"));
+    cartLayer.querySelector<HTMLButtonElement>("[data-cart-close]")?.focus();
+  };
+
+  const close = () => {
+    if (!cartLayer) return;
+    cartLayer.classList.remove("is-open");
+    document.body.classList.remove("cart-is-open");
+    window.setTimeout(() => {
+      cartLayer.hidden = true;
+    }, 280);
+  };
+
+  document.querySelectorAll<HTMLButtonElement>("[data-cart-open]").forEach((button) => button.addEventListener("click", open));
+  document.querySelectorAll<HTMLButtonElement>("[data-cart-close]").forEach((button) => {
+    button.addEventListener("click", () => {
+      close();
+      if (button.hasAttribute("data-scroll-builder")) {
+        const builder = document.querySelector("#coffee-builder");
+        if (builder) {
+          builder.scrollIntoView({ behavior: "smooth" });
+        } else {
+          window.location.href = "/order";
+        }
+      }
+    });
+  });
+
+  cartItems?.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-remove-cart]");
+    if (!button) return;
+    cart = cart.filter((item) => item.id !== Number(button.dataset.removeCart));
+    saveCart();
+    render();
+  });
+
+  addressInputs.forEach((input) => input.addEventListener("input", updateOrderLinks));
+
+  whatsappOrder?.addEventListener("click", (event) => {
+    if (addressIsComplete()) return;
+    event.preventDefault();
+    showAddressValidation();
+  });
+
+  baleOrder?.addEventListener("click", async () => {
+    if (!addressIsComplete()) {
+      showAddressValidation();
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(createOrderSummary());
+      if (copyStatus) copyStatus.textContent = "خلاصه سفارش کپی شد؛ آن را در گفت‌وگوی بله جای‌گذاری کن.";
+    } catch {
+      if (copyStatus) copyStatus.textContent = "مرورگر اجازه کپی نداد؛ از دکمه واتساپ استفاده کن.";
+    }
+    window.open("https://ble.ir/orenzacoffee", "_blank", "noopener,noreferrer");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && cartLayer && !cartLayer.hidden) close();
+  });
+
+  document.addEventListener(ADD_TO_CART_EVENT, (event) => {
+    const item = (event as CustomEvent<CartItemInput>).detail;
+    cart.push({ ...item, id: Date.now() });
+    saveCart();
+    render();
+    document.querySelectorAll<HTMLElement>("[data-cart-open]").forEach((trigger) => {
+      trigger.classList.remove("has-new-item");
+      requestAnimationFrame(() => trigger.classList.add("has-new-item"));
+      window.setTimeout(() => trigger.classList.remove("has-new-item"), 900);
+    });
+    window.setTimeout(open, 520);
+  });
+
+  render();
+};

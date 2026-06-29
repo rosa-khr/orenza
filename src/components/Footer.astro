@@ -1,0 +1,70 @@
+---
+import AnimatedBanner from "./AnimatedBanner.astro";
+import Icon from "./Icon.astro";
+---
+
+<footer id="contact">
+  <AnimatedBanner />
+
+  <section class="contact-stage" aria-labelledby="contact-title">
+    <div>
+      <p class="eyebrow">PRIVATE COFFEE SERVICE</p>
+      <h2 id="contact-title">اگر بین دو انتخاب مرددی،<br />همان‌جاست که گفت‌وگو کمک می‌کند.</h2>
+    </div>
+    <div class="contact-stage-copy">
+      <p>چند سؤال کوتاه درباره طعم و دستگاهت کافی‌ست تا به ترکیب درست برسیم. تجربه ما پشت بار، برای ساده‌ترشدن انتخاب توست.</p>
+      <div class="contact-buttons">
+        <a href="https://wa.me/989103060396" target="_blank" rel="noreferrer">
+          <Icon name="whatsapp" size={19} />
+          <span>گفت‌وگو در واتساپ</span>
+          <Icon name="arrow" size={16} />
+        </a>
+        <a href="https://ble.ir/orenzacoffee" target="_blank" rel="noreferrer">
+          <Icon name="bale" size={19} />
+          <span>گفت‌وگو در بله</span>
+          <Icon name="arrow" size={16} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer-main">
+    <div class="footer-brand">
+      <span class="brand-mark">O</span>
+      <strong>ORENZA</strong>
+      <p>رُست دقیق، برای سلیقه شخصی.</p>
+    </div>
+
+    <nav class="footer-links" aria-label="دسترسی سریع فوتر">
+      <span>دسترسی سریع</span>
+      <a href="/about">داستان برند</a>
+      <a href="/order">ساخت قهوه</a>
+      <a href="/contact">ارتباط با ما</a>
+      <button type="button" data-cart-open>سبد سفارش</button>
+    </nav>
+
+    <div class="footer-contact">
+      <span>ارتباط مستقیم</span>
+      <a href="tel:+989103060396" dir="ltr"><Icon name="phone" size={17} /><span>0910 306 0396</span></a>
+      <a href="mailto:order.orenzacoffee@gmail.com"><Icon name="email" size={17} /><span>order.orenzacoffee@gmail.com</span></a>
+    </div>
+
+    <div class="footer-social">
+      <span>شبکه‌های اجتماعی</span>
+      <a href="https://instagram.com/orenzacoffee" rel="me noreferrer" target="_blank">
+        <Icon name="instagram" size={18} /><span>Instagram</span>
+      </a>
+      <a href="https://wa.me/989103060396" rel="noreferrer" target="_blank">
+        <Icon name="whatsapp" size={18} /><span>WhatsApp</span>
+      </a>
+      <a href="https://ble.ir/orenzacoffee" rel="me noreferrer" target="_blank">
+        <Icon name="bale" size={18} /><span>Bale</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>اورنزا؛ قهوه تازه، انتخاب دقیق.</span>
+    <span dir="ltr">© 2026 ORENZA COFFEE — ALL RIGHTS RESERVED.</span>
+  </div>
+</footer>

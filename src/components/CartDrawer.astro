@@ -1,0 +1,45 @@
+<div class="cart-layer" data-cart-layer hidden>
+  <button class="cart-backdrop" type="button" data-cart-close aria-label="بستن سبد سفارش"></button>
+  <aside class="cart-panel" aria-labelledby="cart-title" aria-modal="true" role="dialog">
+    <header class="cart-header">
+      <div>
+        <span>ORENZA PRIVATE ORDER</span>
+        <h2 id="cart-title">سبد سفارش شما</h2>
+      </div>
+      <button type="button" data-cart-close aria-label="بستن">×</button>
+    </header>
+
+    <div class="cart-content">
+      <div class="cart-empty" data-cart-empty>
+        <span class="cart-empty-mark">O</span>
+        <h3>سبد شما هنوز خالی‌ست.</h3>
+        <p>ترکیب دلخواهت را بساز و برای استعلام قیمت به سبد اضافه کن.</p>
+        <button type="button" data-cart-close data-scroll-builder>ساخت قهوه</button>
+      </div>
+      <ol class="cart-items" data-cart-items></ol>
+    </div>
+
+    <div class="cart-checkout" data-cart-checkout hidden>
+      <header class="cart-checkout-heading">
+        <span>DELIVERY DETAILS</span>
+        <h3>اطلاعات تحویل سفارش</h3>
+        <p>نشانی را کامل کن؛ خلاصه آماده‌شده را در واتساپ یا بله برای ما بفرست.</p>
+      </header>
+      <div class="customer-fields">
+        <label><span>نام و نام خانوادگی</span><input type="text" data-customer-name placeholder="مثلاً زهرا احمدی" autocomplete="name" required /></label>
+        <label><span>شماره تماس</span><input type="tel" data-customer-phone placeholder="09xxxxxxxxx" autocomplete="tel" inputmode="tel" required /></label>
+        <label><span>استان</span><input type="text" data-customer-province placeholder="مثلاً تهران" autocomplete="address-level1" required /></label>
+        <label><span>شهر</span><input type="text" data-customer-city placeholder="مثلاً تهران" autocomplete="address-level2" required /></label>
+        <label class="field-wide"><span>نشانی کامل</span><textarea data-customer-address placeholder="خیابان، کوچه، پلاک، واحد" autocomplete="street-address" required></textarea></label>
+        <label class="field-wide"><span>کد پستی</span><input type="text" data-customer-postal placeholder="کد پستی ۱۰ رقمی" autocomplete="postal-code" inputmode="numeric" maxlength="10" required /></label>
+      </div>
+      <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noreferrer">
+        ارسال خلاصه در واتساپ <span>↗</span>
+      </a>
+      <button class="checkout-button bale-button" type="button" data-bale-order>
+        کپی خلاصه و ارسال در بله <span>↗</span>
+      </button>
+      <small data-copy-status>برای ارسال سفارش، اطلاعات تحویل را کامل کن.</small>
+    </div>
+  </aside>
+</div>

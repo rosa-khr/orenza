@@ -1,0 +1,1003 @@
+/*
+ * Final reference-led art direction.
+ * Kept separate so the intended palette and readability always win over
+ * the older exploratory styles without coupling component internals.
+ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hero-product {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(184, 138, 66, 0.09), transparent 38%),
+    #090908;
+}
+
+.hero-copy {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero-copy > * {
+  position: relative;
+  z-index: 1;
+}
+
+.product-mockup {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: min(40vw, 610px);
+  height: min(82svh, 790px);
+  place-items: center;
+}
+
+.product-mockup img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(-22px 30px 38px rgba(0, 0, 0, 0.46));
+}
+
+.atelier-product-mockup {
+  display: grid;
+  width: min(78%, 340px);
+  height: min(43svh, 430px);
+  margin: 0;
+  place-items: center;
+}
+
+.atelier-product-mockup img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(-18px 25px 30px rgba(0, 0, 0, 0.5));
+}
+
+.manifesto {
+  background: #eadfc9;
+  color: #211a13;
+  border-color: rgba(99, 70, 31, 0.2);
+}
+
+.manifesto h2 {
+  color: #211a13;
+}
+
+.manifesto .eyebrow,
+.manifesto .section-number,
+.manifesto .value-row b {
+  color: #805824;
+}
+
+.manifesto-body {
+  border-right-color: rgba(82, 57, 26, 0.2);
+}
+
+.manifesto-body > p,
+.manifesto .value-row {
+  color: #5d503f;
+}
+
+.manifesto .value-row {
+  border-top-color: rgba(82, 57, 26, 0.16);
+}
+
+.manifesto .coffee-leaf-pattern {
+  color: #7d582a;
+  opacity: 0.12;
+}
+
+.order-summary {
+  margin-top: 54px;
+  padding: clamp(28px, 4vw, 48px);
+  background: #eee5d3;
+  border: 1px solid #c5b391;
+  color: #1d2b24;
+  box-shadow: 0 22px 60px rgba(35, 27, 17, 0.11);
+}
+
+.summary-title {
+  align-items: flex-start;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(42, 75, 59, 0.18);
+}
+
+.summary-title > span {
+  color: #87642e;
+  font-size: 10px;
+}
+
+.summary-title h3 {
+  color: #183026;
+}
+
+.summary-note {
+  margin: 7px 0 0;
+  color: #617168;
+  font-size: 13px;
+}
+
+.order-summary .result-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 26px 0 30px;
+  overflow: hidden;
+  background: rgba(42, 75, 59, 0.14);
+  border: 1px solid rgba(42, 75, 59, 0.14);
+}
+
+.order-summary .result-list div {
+  display: flex;
+  min-height: 88px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  background: #f8f2e6;
+  border: 0;
+}
+
+.order-summary .result-list dt {
+  color: #5b6b62;
+  font-size: 12px;
+}
+
+.order-summary .result-list dt small {
+  margin-top: 4px;
+  color: #8a968f;
+  font-size: 8px;
+}
+
+.order-summary .result-list dd {
+  margin: 0;
+  color: #173b2d;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.order-summary .button-primary {
+  background: #173f30;
+  border-color: #173f30;
+  color: #f5ead5;
+}
+
+.order-summary .restart-button {
+  border-bottom-color: rgba(56, 79, 67, 0.35);
+  color: #5a6b62;
+  font-size: 11px;
+}
+
+.ritual-section {
+  background: #e7decb;
+  border-color: rgba(91, 67, 35, 0.18);
+  color: #241e17;
+}
+
+.ritual-section h2 {
+  color: #241e17;
+}
+
+.ritual-section .eyebrow,
+.ritual-cards article > span {
+  color: #45634e;
+}
+
+.ritual-cards {
+  border-color: rgba(67, 86, 70, 0.22);
+}
+
+.ritual-cards article {
+  background: rgba(249, 244, 233, 0.58);
+  border-color: rgba(67, 86, 70, 0.2);
+}
+
+.ritual-cards h3 {
+  color: #243329;
+}
+
+.ritual-cards p {
+  color: #5f6259;
+}
+
+.atelier-section {
+  background: #eee5d5;
+  color: #241e17;
+}
+
+.atelier-header .eyebrow {
+  color: #45634e;
+}
+
+.atelier-header h2 {
+  color: #241e17;
+}
+
+.atelier-header > p:last-child {
+  color: #655c4f;
+  border-bottom-color: rgba(81, 64, 41, 0.24);
+}
+
+.contact-stage,
+.story-content,
+.contact-page-grid {
+  background: #e8dbc1;
+  color: #201911;
+}
+
+.contact-stage,
+.story-content article,
+.contact-page-grid > a {
+  border-color: rgba(99, 70, 31, 0.2);
+}
+
+.contact-stage h2,
+.story-content h2,
+.story-content article,
+.contact-page-grid > a {
+  color: #201911;
+}
+
+.contact-stage-copy > p,
+.story-content p {
+  color: #625542;
+}
+
+.contact-stage .eyebrow {
+  color: #805824;
+}
+
+.contact-buttons a {
+  color: #5d3e19;
+  border-color: #95682e;
+}
+
+.contact-buttons a:first-child,
+.contact-buttons a:hover {
+  background: #103126;
+  color: #ead8b4;
+}
+
+.contact-page-grid > a:hover {
+  background: #dfcfb2;
+}
+
+.cart-backdrop {
+  background: rgba(18, 19, 16, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.cart-panel {
+  display: flex;
+  width: min(590px, 100%);
+  flex-direction: column;
+  overflow-y: auto;
+  background: #f4eee2;
+  border-right-color: rgba(125, 90, 42, 0.35);
+  color: #241f18;
+}
+
+.cart-header {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  min-height: 104px;
+  padding: 23px clamp(22px, 5vw, 38px);
+  background: rgba(247, 241, 230, 0.96);
+  border-bottom: 1px solid rgba(125, 90, 42, 0.22);
+  color: #241f18;
+  backdrop-filter: blur(12px);
+}
+
+.cart-header span {
+  color: #8b672f;
+  font-size: 9px;
+}
+
+.cart-header h2 {
+  color: #241f18;
+  font-size: 25px;
+}
+
+.cart-header > button {
+  border-color: rgba(71, 61, 47, 0.22);
+  color: #584c3c;
+}
+
+.cart-content {
+  flex: 1 0 auto;
+  overflow: visible;
+  padding: 28px clamp(22px, 5vw, 38px);
+  background: #f4eee2;
+}
+
+.cart-empty {
+  min-height: 42vh;
+}
+
+.cart-empty h3 {
+  color: #29231b;
+}
+
+.cart-empty p,
+.cart-item small {
+  color: #706453;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.cart-items {
+  gap: 12px;
+}
+
+.cart-item {
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 17px;
+  background: #fffaf1;
+  border: 1px solid rgba(104, 78, 40, 0.16);
+}
+
+.cart-item-number {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  background: #efe3cb;
+  border-radius: 50%;
+  color: #805c27;
+  font-size: 11px;
+}
+
+.cart-item strong {
+  color: #2c251c;
+  font-size: 14px;
+}
+
+.cart-checkout {
+  flex: 0 0 auto;
+  padding: 30px clamp(22px, 5vw, 38px) 36px;
+  background: #eae4d5;
+  border-top: 1px solid #c2b08d;
+  color: #1e2c25;
+}
+
+.cart-checkout-heading {
+  margin-bottom: 22px;
+}
+
+.cart-checkout-heading > span {
+  color: #80612f;
+  font: 9px Georgia, serif;
+  letter-spacing: 0.15em;
+}
+
+.cart-checkout-heading h3 {
+  margin: 7px 0 5px;
+  color: #173327;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.cart-checkout-heading p {
+  max-width: 470px;
+  margin: 0;
+  color: #607068;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.cart-checkout > small,
+.cart-checkout .customer-fields span {
+  color: #53645b;
+}
+
+.customer-fields {
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.customer-fields label {
+  gap: 7px;
+}
+
+.customer-fields span {
+  font-size: 11px;
+}
+
+.customer-fields input,
+.customer-fields textarea {
+  background: #f8f5ed;
+  border: 1px solid rgba(50, 83, 66, 0.2);
+  color: #24342c;
+  font-size: 12px;
+}
+
+.customer-fields input {
+  height: 47px;
+}
+
+.customer-fields textarea {
+  min-height: 86px;
+  font-size: 12px;
+}
+
+.customer-fields input::placeholder,
+.customer-fields textarea::placeholder {
+  color: #9a9b91;
+}
+
+.customer-fields input:focus,
+.customer-fields textarea:focus {
+  background: #fffdf8;
+  border-color: #8b6a37;
+  box-shadow: 0 0 0 3px rgba(139, 106, 55, 0.1);
+  outline: 0;
+}
+
+.checkout-button {
+  min-height: 50px;
+  font-size: 12px;
+}
+
+.whatsapp-button {
+  background: #173f30;
+  border-color: #173f30;
+  color: #f5ead5;
+}
+
+.bale-button {
+  background: transparent;
+  border-color: #587565;
+  color: #244b3a;
+}
+
+.cart-remove {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  padding: 0 !important;
+  border: 1px solid rgba(124, 72, 41, 0.3) !important;
+  color: #85472f !important;
+}
+
+.cart-remove:hover {
+  background: #7f3e2b !important;
+  border-color: #7f3e2b !important;
+  color: #f4e7d2 !important;
+}
+
+body {
+  font-size: 16px;
+}
+
+.eyebrow,
+.section-number,
+.value-row {
+  font-size: 12px;
+}
+
+.site-header .primary-nav a,
+.header-actions > a,
+.footer-links a,
+.footer-links button,
+.footer-contact a,
+.footer-social a {
+  font-size: 13px;
+}
+
+.hero-lead,
+.atelier-header > p:last-child,
+.contact-stage-copy > p {
+  font-size: 15px;
+}
+
+.config-heading p {
+  font-size: 14px;
+}
+
+.blend-copy small,
+.roast-option small,
+.form-options small,
+.device-options small {
+  font-size: 10px;
+}
+
+.blend-copy em,
+.roast-option em,
+.form-options em,
+.device-options em {
+  font-size: 11px;
+}
+
+.blend-copy b,
+.metric i,
+.footer-links > span,
+.footer-contact > span,
+.footer-social > span {
+  font-size: 11px;
+}
+
+.metric small,
+.device-options em small {
+  font-size: 9px;
+}
+
+.device-options strong {
+  font-size: 13px;
+}
+
+.footer-bottom {
+  font-size: 11px;
+}
+
+@media (max-width: 650px) {
+  .product-mockup {
+    width: min(94vw, 480px);
+    height: 560px;
+  }
+
+  .manifesto-body {
+    border-top-color: rgba(82, 57, 26, 0.18);
+  }
+
+  .atelier-product-mockup {
+    width: min(86%, 330px);
+    height: 390px;
+  }
+
+  .order-summary {
+    margin-top: 36px;
+    padding: 24px 16px;
+  }
+
+  .summary-title {
+    gap: 6px;
+  }
+
+  .order-summary .result-list {
+    grid-template-columns: 1fr;
+  }
+
+  .order-summary .result-list div {
+    min-height: 74px;
+    padding: 15px;
+  }
+
+  .cart-panel {
+    width: 100%;
+  }
+
+  .cart-header {
+    min-height: 88px;
+    padding: 18px 20px;
+  }
+
+  .cart-header h2 {
+    font-size: 21px;
+  }
+
+  .cart-content,
+  .cart-checkout {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .cart-item {
+    grid-template-columns: 32px minmax(0, 1fr) 38px;
+    padding: 14px 12px;
+  }
+
+  .cart-item-number {
+    width: 28px;
+    height: 28px;
+  }
+
+  .customer-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-fields .field-wide {
+    grid-column: auto;
+  }
+}
+
+/* Photoreal espresso extraction */
+
+.espresso-scene {
+  min-height: 590px;
+  isolation: isolate;
+  background: #171512;
+}
+
+.espresso-scene::before {
+  display: none;
+}
+
+.espresso-machine-photo {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 48%;
+  filter: saturate(0.78) contrast(1.04) brightness(0.84);
+}
+
+.machine-interface {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+}
+
+.machine-interface .program-panel {
+  top: 28px;
+  gap: 8px;
+  padding: 10px 13px;
+  background: rgba(12, 12, 11, 0.74);
+  border: 1px solid rgba(226, 218, 201, 0.18);
+  backdrop-filter: blur(7px);
+}
+
+.machine-interface .program-option {
+  width: 68px;
+  color: rgba(239, 233, 221, 0.58);
+}
+
+.machine-interface .program-option > i {
+  width: 9px;
+  height: 9px;
+  margin-bottom: 6px;
+  background: #252522;
+  border-color: #77736b;
+  box-shadow: inset 0 0 0 2px #151513;
+}
+
+.machine-interface .program-option.is-active {
+  color: #f0e0bd;
+}
+
+.machine-interface .program-option.is-active > i {
+  background: #b98238;
+  border-color: #d6b36e;
+  box-shadow: 0 0 9px rgba(206, 160, 83, 0.38);
+}
+
+.machine-interface .shot-timer {
+  top: 102px;
+  right: 22px;
+  bottom: auto;
+  padding: 9px 11px;
+  background: rgba(10, 10, 9, 0.68);
+  border: 1px solid rgba(230, 224, 210, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+.machine-interface .shot-timer > span {
+  color: rgba(240, 234, 222, 0.56);
+}
+
+.machine-interface .shot-timer > b {
+  color: #f0d39a;
+}
+
+.espresso-scene .coffee-flow {
+  z-index: 4;
+  top: 315px;
+  width: 4px;
+  height: 105px;
+  background: linear-gradient(#56301a, #bd6e2c 52%, #6b3418);
+  box-shadow: 0 0 7px rgba(184, 99, 38, 0.28);
+}
+
+.espresso-scene .flow-one {
+  left: calc(50% - 21px);
+}
+
+.espresso-scene .flow-two {
+  left: calc(50% + 17px);
+}
+
+.espresso-scene .shot-glass {
+  z-index: 5;
+  top: 405px;
+  width: 112px;
+  height: 104px;
+  border-color: rgba(241, 239, 232, 0.7);
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow:
+    inset 0 0 16px rgba(255, 255, 255, 0.08),
+    0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+.espresso-scene .espresso-fill {
+  animation-duration: 5s;
+}
+
+.espresso-scene .shot-shadow {
+  z-index: 3;
+  top: 505px;
+}
+
+.espresso-scene .aroma {
+  z-index: 3;
+  top: 350px;
+  border-color: rgba(236, 230, 217, 0.28);
+  animation-duration: 5s;
+}
+
+.espresso-scene .counter-line {
+  display: none;
+}
+
+@media (max-width: 650px) {
+  .espresso-scene {
+    min-height: 560px;
+  }
+
+  .espresso-machine-photo {
+    object-position: center 48%;
+  }
+
+  .machine-interface .program-panel {
+    top: 20px;
+  }
+
+  .machine-interface .program-option {
+    width: 55px;
+  }
+
+  .machine-interface .shot-timer {
+    top: 94px;
+    right: 12px;
+  }
+
+  .espresso-scene .coffee-flow {
+    top: 300px;
+    height: 100px;
+  }
+
+  .espresso-scene .shot-glass {
+    top: 385px;
+  }
+
+  .espresso-scene .shot-shadow {
+    top: 486px;
+  }
+}
+
+/* Minimal editorial pass */
+
+.site-header {
+  min-height: 88px;
+  border-top: 0;
+}
+
+.site-header::after,
+.coffee-leaf-pattern,
+.espresso-ticker {
+  display: none;
+}
+
+.hero {
+  min-height: 100svh;
+}
+
+.hero::before {
+  display: none;
+}
+
+.hero h1 {
+  max-width: 610px;
+  font-size: clamp(48px, 5vw, 78px);
+  line-height: 1.3;
+}
+
+.hero-lead {
+  max-width: 470px;
+}
+
+.hero-actions {
+  margin-top: 34px;
+}
+
+.manifesto {
+  min-height: auto;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: clamp(50px, 8vw, 130px);
+  padding-top: clamp(80px, 9vw, 125px);
+  padding-bottom: clamp(80px, 9vw, 125px);
+}
+
+.manifesto h2 {
+  max-width: 760px;
+  font-size: clamp(34px, 3.8vw, 56px);
+}
+
+.manifesto-body {
+  max-width: 440px;
+  padding-right: clamp(28px, 4vw, 58px);
+}
+
+.manifesto-body > p {
+  font-size: 15px;
+}
+
+.atelier-section {
+  padding-top: clamp(84px, 8vw, 118px);
+}
+
+.atelier-header {
+  margin-bottom: 54px;
+}
+
+.atelier-header h2 {
+  font-size: clamp(38px, 4vw, 58px);
+}
+
+.blend-option {
+  min-height: 112px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  padding-block: 18px;
+}
+
+.coffee-metrics {
+  grid-column: 2;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: max-height 300ms ease, margin 300ms ease, opacity 220ms ease, transform 300ms ease;
+}
+
+.blend-option.is-selected .coffee-metrics {
+  max-height: 120px;
+  margin-top: 17px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ritual-section {
+  padding-top: clamp(85px, 8vw, 120px);
+  padding-bottom: clamp(85px, 8vw, 120px);
+}
+
+.ritual-section h2 {
+  font-size: clamp(34px, 3.8vw, 56px);
+}
+
+.ritual-cards {
+  margin-top: 55px;
+  border-bottom: 0;
+}
+
+.ritual-cards article {
+  min-height: 190px;
+  padding: 32px;
+  background: transparent;
+  border-top: 1px solid rgba(67, 86, 70, 0.22);
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.ritual-cards article + article {
+  border-right: 0;
+}
+
+.ritual-cards h3 {
+  margin-top: 34px;
+}
+
+.marquee-banner {
+  padding-block: 13px;
+}
+
+@media (max-width: 980px) {
+  .manifesto {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .manifesto-body {
+    max-width: 620px;
+    padding-top: 28px;
+    padding-right: 0;
+    border-top: 1px solid rgba(82, 57, 26, 0.16);
+    border-right: 0;
+  }
+}
+
+@media (max-width: 650px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .site-header,
+  .hero {
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-copy {
+    width: 100vw;
+    min-width: 0;
+    max-width: 100vw;
+    padding: 118px 22px 62px;
+  }
+
+  .hero-copy > * {
+    width: calc(100vw - 44px);
+    min-width: 0;
+    max-width: calc(100vw - 44px);
+  }
+
+  .hero-product {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .hero h1 {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: clamp(35px, 10.3vw, 43px);
+    line-height: 1.38;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-lead {
+    max-width: 100%;
+    margin-top: 25px;
+    font-size: 13px;
+  }
+
+  .hero-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .hero-actions .button {
+    width: 100%;
+  }
+
+  .manifesto {
+    padding: 75px 22px;
+  }
+
+  .blend-option {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+
+  .coffee-metrics {
+    grid-column: 1 / -1;
+  }
+
+  .ritual-cards article {
+    min-height: 150px;
+  }
+}

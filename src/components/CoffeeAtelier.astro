@@ -1,0 +1,172 @@
+---
+import { blends, devices, roasts, weights } from "../data/coffee";
+---
+
+<section class="builder-section atelier-section" id="coffee-builder" aria-labelledby="atelier-title">
+  <header class="builder-header atelier-header">
+    <p class="eyebrow">ORENZA COFFEE ATELIER</p>
+    <h2 id="atelier-title">سفارش اختصاصی قهوه</h2>
+    <p>ترکیب، رُست و روش دم‌آوری را مشخص کن؛ ما درجه آسیاب را دقیقاً متناسب با انتخاب تو تنظیم می‌کنیم.</p>
+  </header>
+
+  <div class="coffee-atelier" data-builder>
+    <aside class="atelier-preview">
+      <div class="process-display" data-process-display data-mode="idle">
+        <div class="process-copy">
+          <span data-process-eyebrow>LIVE ROASTERY</span>
+          <strong data-process-title>انتخاب تو، همان لحظه</strong>
+          <small data-process-note>فرآیند آماده‌سازی اینجا نمایش داده می‌شود.</small>
+        </div>
+        <div class="roast-process" data-roast-process aria-hidden="true">
+          <span class="heat-line heat-one"></span><span class="heat-line heat-two"></span><span class="heat-line heat-three"></span>
+          <div class="roast-drum"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="grind-process" data-grind-process aria-hidden="true">
+          <div class="grinder-hopper"><i></i><i></i><i></i><i></i></div>
+          <div class="grinder-burr"><span></span></div>
+          <div class="grind-stream"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="grounds-pile"></div>
+        </div>
+        <div class="grind-readout" data-grind-readout hidden>
+          <span>GRIND SIZE</span>
+          <strong data-grind-fa>—</strong>
+          <small data-grind-en>—</small>
+          <div class="grind-scale"><i data-grind-scale></i></div>
+        </div>
+      </div>
+
+      <figure class="atelier-product-mockup">
+        <img
+          src="/images/orenza-bag-mockup-v2.webp"
+          alt="پاکت ایستاده مشکی مات قهوه اورنزا با لیبل کرم و سوپاپ یک‌طرفه"
+          width="1024"
+          height="1536"
+          loading="lazy"
+        />
+        <figcaption class="sr-only">
+          <span data-preview-blend>YOUR PRIVATE BLEND</span>
+          <b data-preview-roast>ROASTED TO ORDER</b>
+          <small data-preview-device>WHOLE BEAN / GROUND</small>
+          <span data-preview-weight>250 g</span>
+        </figcaption>
+      </figure>
+      <p class="package-note">پاکت مشکی مات چهارطرف‌دوخت · سوپاپ یک‌طرفه · لیبل اختصاصی سفارش</p>
+    </aside>
+
+    <div class="atelier-form">
+      <section class="config-section is-ready" data-config-section="blend">
+        <header class="config-heading">
+          <span>BLEND PROFILE</span>
+          <div><h3>ترکیب دانه</h3><p>نسبت عربیکا و روبوستا، شخصیت اصلی فنجان را مشخص می‌کند.</p></div>
+        </header>
+        <div class="blend-options">
+          {blends.map((blend) => (
+            <button class="blend-option" type="button" data-choice="blend" data-value={blend.title} data-en={blend.en}>
+              <span class="option-radio"></span>
+              <span class="blend-copy">
+                <small>{blend.en}</small><strong>{blend.title}</strong><em>{blend.note}</em><b>{blend.taste}</b>
+              </span>
+              <span class="coffee-metrics">
+                {[
+                  ["کافئین", "CAFFEINE", blend.caffeine],
+                  ["بادی", "BODY", blend.body],
+                  ["اسیدیته", "ACIDITY", blend.acidity],
+                  ["کِرما", "CREMA", blend.crema]
+                ].map(([label, en, value]) => (
+                  <span class="metric">
+                    <span><i>{label}</i><small>{en}</small></span>
+                    <b><i style={`--metric: ${Number(value) * 20}%`}></i></b>
+                  </span>
+                ))}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section class="config-section is-locked" data-config-section="roast" aria-disabled="true">
+        <header class="config-heading">
+          <span>ROAST PROFILE</span>
+          <div><h3>پروفایل رُست</h3><p>هر درجه، شیرینی، اسیدیته و بادی قهوه را به شکل متفاوتی برجسته می‌کند.</p></div>
+        </header>
+        <div class="roast-options">
+          {roasts.map((roast) => (
+            <button class="roast-option" type="button" data-choice="roast" data-value={roast.title} data-en={roast.en} data-roast-level={roast.level}>
+              <span class={`roast-swatch roast-level-${roast.level}`}><i></i></span>
+              <span><small>{roast.en}</small><strong>{roast.title}</strong><em>{roast.note}</em></span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section class="config-section is-locked" data-config-section="grind" aria-disabled="true">
+        <header class="config-heading">
+          <span>COFFEE FORM</span>
+          <div><h3>دان یا آسیاب‌شده</h3><p>اگر آسیاب‌شده را انتخاب کنی، درجه دقیق را بر اساس دستگاه تنظیم می‌کنیم.</p></div>
+        </header>
+        <div class="form-options">
+          <button type="button" data-choice="grind" data-value="دان کامل" data-en="WHOLE BEAN">
+            <span class="bean-symbol"><i></i><i></i><i></i></span>
+            <span><small>WHOLE BEAN</small><strong>دان کامل</strong><em>برای آسیاب در لحظه دم‌آوری</em></span>
+          </button>
+          <button type="button" data-choice="grind" data-value="آسیاب‌شده" data-en="GROUND COFFEE">
+            <span class="ground-symbol"><i></i></span>
+            <span><small>GROUND COFFEE</small><strong>آسیاب‌شده</strong><em>تنظیم تخصصی برای دستگاه شما</em></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="config-section device-section is-locked" data-config-section="device" aria-disabled="true" hidden>
+        <header class="config-heading">
+          <span>BREW METHOD</span>
+          <div><h3>روش دم‌آوری</h3><p>با انتخاب دستگاه، اندازه ذرات آسیاب به‌صورت خودکار تنظیم می‌شود.</p></div>
+        </header>
+        <div class="device-options">
+          {devices.map((device) => (
+            <button type="button" data-choice="device" data-value={device.title} data-en={device.en} data-grind-fa={device.grindFa} data-grind-en={device.grindEn} data-grind-level={device.grind}>
+              <span class="device-mark">{device.mark}</span>
+              <span><strong>{device.title}</strong><small>{device.en}</small></span>
+              <em>{device.grindFa}<small>{device.grindEn}</small></em>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section class="config-section is-locked" data-config-section="weight" aria-disabled="true">
+        <header class="config-heading">
+          <span>PACK SIZE</span>
+          <div><h3>وزن سفارش</h3><p>برای حفظ تازگی، مقدار مناسب با مصرف خودت را انتخاب کن.</p></div>
+        </header>
+        <div class="weight-options">
+          {weights.map((weight) => (
+            <button type="button" data-choice="weight" data-value={weight}>
+              <span class="option-radio"></span><strong>{weight}</strong>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section class="order-summary is-locked" data-config-section="summary" aria-disabled="true">
+        <div class="summary-title">
+          <span>ORDER REVIEW</span>
+          <div>
+            <h3>مرور سفارش شما</h3>
+            <p class="summary-note">پیش از افزودن به سبد، انتخاب‌ها را یک‌بار مرور کن.</p>
+          </div>
+        </div>
+        <dl class="result-list">
+          <div><dt>ترکیب <small>BLEND</small></dt><dd data-result="blend">—</dd></div>
+          <div><dt>درجه رُست <small>ROAST</small></dt><dd data-result="roast">—</dd></div>
+          <div><dt>فرم قهوه <small>FORM</small></dt><dd data-result="grind">—</dd></div>
+          <div data-device-result hidden><dt>روش دم‌آوری <small>BREW METHOD</small></dt><dd data-result="device">—</dd></div>
+          <div data-grind-result hidden><dt>درجه آسیاب <small>GRIND SIZE</small></dt><dd data-result="grindSize">—</dd></div>
+          <div><dt>وزن <small>WEIGHT</small></dt><dd data-result="weight">—</dd></div>
+        </dl>
+        <div class="result-actions">
+          <button class="button button-primary" type="button" data-add-cart>افزودن به سبد سفارش</button>
+          <button class="restart-button" type="button" data-restart>پاک‌کردن انتخاب‌ها</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

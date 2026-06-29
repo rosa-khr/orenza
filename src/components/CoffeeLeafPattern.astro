@@ -1,0 +1,22 @@
+---
+interface Props {
+  className?: string;
+}
+
+const { className = "" } = Astro.props;
+---
+
+<svg class={`coffee-leaf-pattern ${className}`} viewBox="0 0 360 420" fill="none" aria-hidden="true">
+  <path d="M68 402C108 326 129 249 145 164 155 111 175 62 207 20" stroke="currentColor" stroke-width="1.3" />
+  <path d="M144 171C102 155 76 126 68 86c40 5 68 31 76 85Z" stroke="currentColor" stroke-width="1.3" />
+  <path d="M144 171c44-14 78-42 96-82-43-2-77 25-96 82Z" stroke="currentColor" stroke-width="1.3" />
+  <path d="M119 271c-46-5-80-28-102-65 43-12 81 10 102 65Z" stroke="currentColor" stroke-width="1.3" />
+  <path d="M119 271c45-22 75-57 85-102-45 7-74 40-85 102Z" stroke="currentColor" stroke-width="1.3" />
+  <path d="M85 354c-39 3-70-11-94-42 35-16 68-2 94 42Z" stroke="currentColor" stroke-width="1.3" />
+  <path d="M85 354c39-21 63-51 70-90-39 9-63 39-70 90Z" stroke="currentColor" stroke-width="1.3" />
+  <path d="M159 108c-24-25-29-55-15-89 30 22 35 52 15 89Z" stroke="currentColor" stroke-width="1.3" />
+  <circle cx="128" cy="225" r="7" stroke="currentColor" stroke-width="1.2" />
+  <circle cx="116" cy="238" r="6" stroke="currentColor" stroke-width="1.2" />
+  <circle cx="101" cy="247" r="5" stroke="currentColor" stroke-width="1.2" />
+  <path d="M70 86c31 20 52 49 74 85M240 89c-35 18-65 45-96 82M17 206c39 13 71 35 102 65M204 169c-34 31-60 65-85 102M-9 312c37 6 66 20 94 42M155 264c-30 31-51 60-70 90" stroke="currentColor" stroke-width=".75" opacity=".7" />
+</svg>

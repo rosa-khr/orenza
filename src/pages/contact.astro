@@ -1,0 +1,25 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import CoffeeLeafPattern from "../components/CoffeeLeafPattern.astro";
+import Icon from "../components/Icon.astro";
+---
+
+<BaseLayout
+  title="ارتباط و مشاوره سفارش"
+  description="برای مشاوره انتخاب قهوه، سفارش سازمانی و پیگیری سفارش اورنزا از طریق تلفن، واتساپ، بله یا ایمیل با ما در ارتباط باشید."
+  canonicalPath="/contact"
+  keywords={["تماس با اورنزا", "مشاوره خرید قهوه", "سفارش سازمانی قهوه", "پشتیبانی اورنزا"]}
+>
+  <section class="inner-hero contact-page-hero">
+    <CoffeeLeafPattern className="inner-hero-leaves" />
+    <p class="eyebrow">CONTACT ORENZA</p>
+    <h1>یک گفت‌وگوی کوتاه،<br />برای یک انتخاب دقیق.</h1>
+    <p>برای انتخاب ترکیب، سفارش سازمانی یا پیگیری سفارش مستقیماً با ما در ارتباط باش.</p>
+  </section>
+  <section class="contact-page-grid">
+    <a href="tel:+989103060396"><Icon name="phone" size={25} /><span><small>تماس مستقیم</small><b dir="ltr">0910 306 0396</b></span></a>
+    <a href="https://wa.me/989103060396" target="_blank" rel="noreferrer"><Icon name="whatsapp" size={25} /><span><small>پیام در</small><b>واتساپ</b></span></a>
+    <a href="https://ble.ir/orenzacoffee" target="_blank" rel="noreferrer"><Icon name="bale" size={25} /><span><small>پیام در</small><b>بله</b></span></a>
+    <a href="mailto:order.orenzacoffee@gmail.com"><Icon name="email" size={25} /><span><small>ایمیل</small><b>order.orenzacoffee@gmail.com</b></span></a>
+  </section>
+</BaseLayout>

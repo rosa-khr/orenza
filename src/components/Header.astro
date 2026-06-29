@@ -1,0 +1,24 @@
+---
+import Icon from "./Icon.astro";
+---
+
+<header class="site-header">
+  <nav class="primary-nav" aria-label="ناوبری اصلی">
+    <a href="/about">درباره اورنزا</a>
+    <a href="/order">سفارش اختصاصی</a>
+  </nav>
+  <a class="brand" href="/" aria-label="اورنزا، صفحه اصلی">
+    <span class="brand-mark" aria-hidden="true">O</span>
+    <span class="brand-lockup">
+      <span class="brand-name">ORENZA</span>
+      <small>COFFEE ROASTERS</small>
+    </span>
+  </a>
+  <div class="header-actions">
+    <a href="/contact">ارتباط با ما</a>
+    <button class="cart-trigger" type="button" data-cart-open aria-label="باز کردن سبد سفارش" title="سبد سفارش">
+      <Icon name="cart" size={21} />
+      <span data-cart-count>۰</span>
+    </button>
+  </div>
+</header>

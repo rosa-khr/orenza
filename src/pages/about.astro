@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import CoffeeLeafPattern from "../components/CoffeeLeafPattern.astro";
+---
+
+<BaseLayout
+  title="داستان و فلسفه اورنزا"
+  description="با داستان اورنزا، فلسفه رُست تازه و رویکرد ما برای ساخت قهوه‌ای متناسب با ذائقه و روش دم‌آوری شما آشنا شوید."
+  canonicalPath="/about"
+  keywords={["درباره اورنزا", "رستری قهوه", "قهوه تخصصی ایران", "قهوه تازه رست"]}
+  pageType="article"
+>
+  <section class="inner-hero">
+    <CoffeeLeafPattern className="inner-hero-leaves" />
+    <p class="eyebrow">OUR STORY</p>
+    <h1>قهوه خوب،<br />نسخه واحد ندارد.</h1>
+    <p>اورنزا از یک باور ساده شروع شد: یک ترکیب ثابت نمی‌تواند پاسخ همه ذائقه‌ها باشد.</p>
+  </section>
+  <section class="story-content">
+    <article>
+      <span>01 · SELECTION</span>
+      <h2>انتخاب آگاهانه</h2>
+      <p>نسبت عربیکا و روبوستا، درجه رُست و روش عصاره‌گیری را کنار هم می‌گذاریم تا نتیجه فقط «قهوه خوب» نباشد؛ قهوه مناسب تو باشد.</p>
+    </article>
+    <article>
+      <span>02 · ROAST</span>
+      <h2>رُست پس از انتخاب</h2>
+      <p>هر سفارش پس از مشخص‌شدن پروفایل آماده می‌شود تا عطر، تازگی و ویژگی‌های اصلی دانه تا لحظه دم‌آوری حفظ شوند.</p>
+    </article>
+    <article>
+      <span>03 · CRAFT</span>
+      <h2>دقت در جزئیات</h2>
+      <p>از درجه آسیاب تا بسته‌بندی سوپاپ‌دار، هر جزئیات برای رسیدن به یک فنجان قابل تکرار و باکیفیت طراحی شده است.</p>
+    </article>
+  </section>
+</BaseLayout>
