@@ -1,3 +1,7 @@
+---
+import Icon from "./Icon.astro";
+---
+
 <div class="cart-layer" data-cart-layer hidden>
   <button class="cart-backdrop" type="button" data-cart-close aria-label="بستن سبد سفارش"></button>
   <aside class="cart-panel" aria-labelledby="cart-title" aria-modal="true" role="dialog">
@@ -57,10 +61,10 @@
       </fieldset>
 
       <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noopener noreferrer">
-        ارسال خلاصه در واتساپ <span>↗</span>
+        ارسال خلاصه در واتساپ <span class="message-action-icon"><Icon name="send" size={16} /></span>
       </a>
-      <a class="checkout-button bale-button" data-bale-order href="https://ble.ir/orenzacoffee" target="_blank" rel="noopener noreferrer">
-        کپی خلاصه و ارسال در بله <span>↗</span>
+      <a class="checkout-button bale-button" data-bale-order href="https://ble.ir/09103060396" target="_blank" rel="noopener noreferrer">
+        کپی خلاصه و ارسال در بله <span class="message-action-icon"><Icon name="send" size={16} /></span>
       </a>
       <small data-copy-status>برای ارسال سفارش، اطلاعات تحویل و شیوه ارسال را کامل کن.</small>
     </div>

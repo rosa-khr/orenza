@@ -1415,6 +1415,33 @@ textarea:focus-visible {
   font-size: 12px;
 }
 
+.message-action-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.82;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.checkout-button:hover .message-action-icon {
+  opacity: 1;
+  transform: translate(-2px, -2px);
+}
+
+.whatsapp-button .message-action-icon {
+  color: #e8d1a4;
+  border-color: rgba(232, 209, 164, 0.48);
+}
+
+.bale-button .message-action-icon {
+  color: var(--gold);
+  border-color: rgba(169, 124, 62, 0.44);
+}
+
 .whatsapp-button {
   background: var(--green);
   border-color: var(--green);
