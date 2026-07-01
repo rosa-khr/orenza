@@ -7,11 +7,26 @@ import { blends, devices, roasts, weights } from "../data/coffee";
     <p class="eyebrow">ORENZA COFFEE ATELIER</p>
     <h2 id="atelier-title">سفارش اختصاصی قهوه</h2>
     <p>ترکیب، رُست و روش دم‌آوری را مشخص کن؛ ما درجه آسیاب را دقیقاً متناسب با انتخاب تو تنظیم می‌کنیم.</p>
+    <div class="atelier-meta" aria-label="اطلاعات فرایند سفارش">
+      <span>حدود ۲ دقیقه</span>
+      <i aria-hidden="true"></i>
+      <span>بدون پرداخت آنلاین</span>
+      <i aria-hidden="true"></i>
+      <span>ارسال خلاصه در پیام‌رسان</span>
+    </div>
   </header>
+
+  <ol class="order-progress" aria-label="مراحل ساخت سفارش">
+    <li class="is-active" data-progress-step="blend"><span>۱</span><b>ترکیب</b></li>
+    <li data-progress-step="roast"><span>۲</span><b>رُست</b></li>
+    <li data-progress-step="grind"><span>۳</span><b>فرم و آسیاب</b></li>
+    <li data-progress-step="weight"><span>۴</span><b>وزن</b></li>
+    <li data-progress-step="summary"><span>۵</span><b>مرور</b></li>
+  </ol>
 
   <div class="coffee-atelier" data-builder>
     <aside class="atelier-preview">
-      <div class="process-display" data-process-display data-mode="idle">
+      <div class="process-display" data-process-display data-mode="idle" aria-live="polite">
         <div class="process-copy">
           <span data-process-eyebrow>LIVE ROASTERY</span>
           <strong data-process-title>انتخاب تو، همان لحظه</strong>
@@ -37,7 +52,7 @@ import { blends, devices, roasts, weights } from "../data/coffee";
 
       <figure class="atelier-product-mockup">
         <img
-          src="/images/orenza-bag-mockup-v2.webp"
+          src="/images/orenza-bag-mockup-v3.webp"
           alt="پاکت ایستاده مشکی مات قهوه اورنزا با لیبل کرم و سوپاپ یک‌طرفه"
           width="1024"
           height="1536"
@@ -64,7 +79,10 @@ import { blends, devices, roasts, weights } from "../data/coffee";
             <button class="blend-option" type="button" data-choice="blend" data-value={blend.title} data-en={blend.en}>
               <span class="option-radio"></span>
               <span class="blend-copy">
-                <small>{blend.en}</small><strong>{blend.title}</strong><em>{blend.note}</em><b>{blend.taste}</b>
+                <small>{blend.en}</small>
+                <strong>{blend.title}</strong>
+                {blend.id === "half" && <span class="recommended-note">پیشنهاد متعادل اورنزا</span>}
+                <em>{blend.note}</em><b>{blend.taste}</b>
               </span>
               <span class="coffee-metrics">
                 {[

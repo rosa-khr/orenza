@@ -20,20 +20,39 @@ npm run build
 ## اجرا با Docker
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
 سایت روی `http://localhost:8080` در دسترس خواهد بود.
 
-در شبکه ASAX، Compose فایل محلی `.asax-ca.pem` را به‌صورت BuildKit secret
-به مرحله build می‌دهد. این فایل وارد image یا Git نمی‌شود.
-
-برای استفاده از CA دیگری، فایل `.asax-ca.pem` را با CA معتبر همان شبکه جایگزین
-کنید؛ اعتبارسنجی SSL را غیرفعال نکنید. بیلد مستقیم بدون Compose:
+بررسی وضعیت کانتینر:
 
 ```bash
-docker build --secret id=npm_ca,src=company-ca.pem -t orenza-coffee .
+docker compose ps
+curl -I http://127.0.0.1:8080/
 ```
+
+## انتشار روی هاست
+
+### هاست استاتیک یا `public_html`
+
+```bash
+npm ci
+npm run build
+```
+
+محتویات پوشه `dist` را داخل روت سایت آپلود کنید. دامنه اصلی پروژه در
+`astro.config.mjs` برابر `https://orenza.ir` است.
+
+### سرور لینوکسی با Docker
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+پورت `8080` را مستقیماً عمومی نکنید؛ Nginx یا Caddy میزبان را به
+`127.0.0.1:8080` متصل و HTTPS را برای دامنه فعال کنید.
 
 ## محدوده نسخه فعلی
 
@@ -43,5 +62,8 @@ docker build --secret id=npm_ca,src=company-ca.pem -t orenza-coffee .
 - انتخاب دان یا آسیاب‌شده
 - انتخاب دستگاه و درجه آسیاب مرتبط
 - انتخاب وزن و نمایش خلاصه
+- سبد سفارش و دریافت کامل نشانی
+- ارسال خلاصه سفارش در واتساپ یا بله
 
-سبد خرید، قیمت‌گذاری و ارسال سفارش در فاز فروشگاه اضافه می‌شود.
+پرداخت و قیمت‌گذاری آنلاین در این نسخه وجود ندارد و هماهنگی مبلغ نهایی از طریق
+پیام‌رسان انجام می‌شود.

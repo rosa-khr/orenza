@@ -4,4 +4,6 @@ dist
 .git
 .gitignore
 README.md
+.DS_Store
+*.log
 .asax-ca.pem

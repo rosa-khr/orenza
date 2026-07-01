@@ -2,13 +2,7 @@ services:
   web:
     build:
       context: .
-      secrets:
-        - npm_ca
     image: orenza-coffee:latest
     ports:
       - "8080:80"
     restart: unless-stopped
-
-secrets:
-  npm_ca:
-    file: .asax-ca.pem

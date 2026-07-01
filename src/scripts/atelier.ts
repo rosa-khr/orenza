@@ -23,6 +23,7 @@ export const initAtelier = () => {
   const deviceResult = builder.querySelector<HTMLElement>("[data-device-result]")!;
   const grindResult = builder.querySelector<HTMLElement>("[data-grind-result]")!;
   const addCartButton = builder.querySelector<HTMLButtonElement>("[data-add-cart]")!;
+  const progressItems = [...document.querySelectorAll<HTMLElement>("[data-progress-step]")];
   let animationTimer = 0;
 
   const unlock = (name: string) => {
@@ -60,12 +61,55 @@ export const initAtelier = () => {
     if (previewWeight) previewWeight.textContent = state.weight || "250 g";
   };
 
+  const updateProgress = () => {
+    const grindIsComplete = Boolean(state.grind && (state.grind === "دان کامل" || state.device));
+    const completed: Record<string, boolean> = {
+      blend: Boolean(state.blend),
+      roast: Boolean(state.roast),
+      grind: grindIsComplete,
+      weight: Boolean(state.weight),
+      summary: false
+    };
+    const active = !state.blend
+      ? "blend"
+      : !state.roast
+        ? "roast"
+        : !grindIsComplete
+          ? "grind"
+          : !state.weight
+            ? "weight"
+            : "summary";
+
+    progressItems.forEach((item) => {
+      const step = item.dataset.progressStep || "";
+      item.classList.toggle("is-complete", completed[step]);
+      item.classList.toggle("is-active", step === active);
+      if (step === active) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
+    });
+  };
+
+  const moveToSection = (name: string, delay = 420) => {
+    if (!window.matchMedia("(max-width: 760px)").matches) return;
+    const section = sections.get(name);
+    if (!section) return;
+    window.setTimeout(() => {
+      section.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start"
+      });
+    }, delay);
+  };
+
   const clearFollowing = (key: SelectionKey) => {
     const order: SelectionKey[] = ["blend", "roast", "grind", "device", "grindSize", "weight"];
     const index = order.indexOf(key);
     order.slice(index + 1).forEach((nextKey) => {
       delete state[nextKey];
-      builder.querySelectorAll(`[data-choice="${nextKey}"]`).forEach((item) => item.classList.remove("is-selected"));
+      builder.querySelectorAll<HTMLButtonElement>(`[data-choice="${nextKey}"]`).forEach((item) => {
+        item.classList.remove("is-selected");
+        item.setAttribute("aria-pressed", "false");
+      });
     });
   };
 
@@ -74,8 +118,12 @@ export const initAtelier = () => {
     const value = choice.dataset.value!;
     const english = choice.dataset.en || "";
 
-    builder.querySelectorAll(`[data-choice="${key}"]`).forEach((item) => item.classList.remove("is-selected"));
+    builder.querySelectorAll<HTMLButtonElement>(`[data-choice="${key}"]`).forEach((item) => {
+      item.classList.remove("is-selected");
+      item.setAttribute("aria-pressed", "false");
+    });
     choice.classList.add("is-selected");
+    choice.setAttribute("aria-pressed", "true");
     clearFollowing(key);
     state[key] = value;
     addCartButton.textContent = "افزودن به سبد سفارش";
@@ -90,6 +138,7 @@ export const initAtelier = () => {
       processEyebrow.textContent = "BLEND PROFILE";
       processTitle.textContent = value;
       processNote.textContent = "ویژگی‌های فنجان بر اساس نسبت انتخابی تنظیم شد.";
+      moveToSection("roast");
     }
 
     if (key === "roast") {
@@ -105,6 +154,7 @@ export const initAtelier = () => {
       processNote.textContent = english;
       playProcess("roast");
       unlock("grind");
+      moveToSection("grind", 850);
     }
 
     if (key === "grind") {
@@ -121,6 +171,7 @@ export const initAtelier = () => {
         processTitle.textContent = "دستگاهت را انتخاب کن";
         processNote.textContent = "اندازه ذرات بر اساس روش دم‌آوری محاسبه می‌شود.";
         grindReadout.hidden = true;
+        moveToSection("device");
       } else {
         if (deviceSection) deviceSection.hidden = true;
         delete state.device;
@@ -133,6 +184,7 @@ export const initAtelier = () => {
         processTitle.textContent = "دان کامل";
         processNote.textContent = "برای حفظ بیشترین عطر تا لحظه دم‌آوری.";
         unlock("weight");
+        moveToSection("weight");
       }
     }
 
@@ -153,10 +205,15 @@ export const initAtelier = () => {
       builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = english;
       playProcess("grind", 1800);
       unlock("weight");
+      moveToSection("weight", 900);
     }
 
-    if (key === "weight") unlock("summary");
+    if (key === "weight") {
+      unlock("summary");
+      moveToSection("summary");
+    }
     updateResults();
+    updateProgress();
   };
 
   builder.addEventListener("click", (event) => {
@@ -168,6 +225,7 @@ export const initAtelier = () => {
   builder.querySelector<HTMLButtonElement>("[data-restart]")?.addEventListener("click", () => {
     (Object.keys(state) as SelectionKey[]).forEach((key) => delete state[key]);
     builder.querySelectorAll(".is-selected").forEach((item) => item.classList.remove("is-selected"));
+    builder.querySelectorAll<HTMLButtonElement>("[data-choice]").forEach((item) => item.setAttribute("aria-pressed", "false"));
     ["roast", "grind", "device", "weight", "summary"].forEach(lock);
     const deviceSection = sections.get("device");
     if (deviceSection) deviceSection.hidden = true;
@@ -181,6 +239,7 @@ export const initAtelier = () => {
     builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = "WHOLE BEAN / GROUND";
     addCartButton.textContent = "افزودن به سبد سفارش";
     updateResults();
+    updateProgress();
     sections.get("blend")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
@@ -196,7 +255,10 @@ export const initAtelier = () => {
     };
     document.dispatchEvent(new CustomEvent(ADD_TO_CART_EVENT, { detail: item }));
     addCartButton.textContent = "به سبد اضافه شد ✓";
+    progressItems.find((item) => item.dataset.progressStep === "summary")?.classList.add("is-complete");
   });
 
+  builder.querySelectorAll<HTMLButtonElement>("[data-choice]").forEach((item) => item.setAttribute("aria-pressed", "false"));
   updateResults();
+  updateProgress();
 };

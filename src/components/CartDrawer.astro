@@ -26,12 +26,12 @@
         <p>نشانی را کامل کن؛ خلاصه آماده‌شده را در واتساپ یا بله برای ما بفرست.</p>
       </header>
       <div class="customer-fields">
-        <label><span>نام و نام خانوادگی</span><input type="text" data-customer-name placeholder="مثلاً زهرا احمدی" autocomplete="name" required /></label>
-        <label><span>شماره تماس</span><input type="tel" data-customer-phone placeholder="09xxxxxxxxx" autocomplete="tel" inputmode="tel" required /></label>
-        <label><span>استان</span><input type="text" data-customer-province placeholder="مثلاً تهران" autocomplete="address-level1" required /></label>
-        <label><span>شهر</span><input type="text" data-customer-city placeholder="مثلاً تهران" autocomplete="address-level2" required /></label>
-        <label class="field-wide"><span>نشانی کامل</span><textarea data-customer-address placeholder="خیابان، کوچه، پلاک، واحد" autocomplete="street-address" required></textarea></label>
-        <label class="field-wide"><span>کد پستی</span><input type="text" data-customer-postal placeholder="کد پستی ۱۰ رقمی" autocomplete="postal-code" inputmode="numeric" maxlength="10" required /></label>
+        <label><span>نام و نام خانوادگی</span><input type="text" data-customer-name placeholder="مثلاً زهرا احمدی" autocomplete="name" minlength="3" required /></label>
+        <label><span>شماره تماس</span><input type="tel" data-customer-phone placeholder="09xxxxxxxxx" autocomplete="tel" inputmode="tel" pattern="09[0-9]{9}" title="شماره موبایل را با ۰۹ و ۱۱ رقم وارد کن" required /></label>
+        <label><span>استان</span><input type="text" data-customer-province placeholder="مثلاً تهران" autocomplete="address-level1" minlength="2" required /></label>
+        <label><span>شهر</span><input type="text" data-customer-city placeholder="مثلاً تهران" autocomplete="address-level2" minlength="2" required /></label>
+        <label class="field-wide"><span>نشانی کامل</span><textarea data-customer-address placeholder="خیابان، کوچه، پلاک، واحد" autocomplete="street-address" minlength="10" required></textarea></label>
+        <label class="field-wide"><span>کد پستی</span><input type="text" data-customer-postal placeholder="کد پستی ۱۰ رقمی" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{10}" title="کد پستی باید دقیقاً ۱۰ رقم باشد" maxlength="10" required /></label>
       </div>
       <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noreferrer">
         ارسال خلاصه در واتساپ <span>↗</span>

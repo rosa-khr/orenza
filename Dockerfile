@@ -1,9 +1,7 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN --mount=type=secret,id=npm_ca,required=false \
-  if [ -f /run/secrets/npm_ca ]; then npm config set cafile /run/secrets/npm_ca; fi \
-  && npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 

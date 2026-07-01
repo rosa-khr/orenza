@@ -16,6 +16,7 @@ export const initCart = () => {
   const customerPostal = document.querySelector<HTMLInputElement>("[data-customer-postal]");
   const copyStatus = document.querySelector<HTMLElement>("[data-copy-status]");
   const numberFormatter = new Intl.NumberFormat("fa-IR");
+  let lastFocused: HTMLElement | null = null;
 
   const readCart = (): CartItem[] => {
     try {
@@ -62,12 +63,12 @@ export const initCart = () => {
     (input): input is HTMLInputElement | HTMLTextAreaElement => Boolean(input)
   );
 
-  const addressIsComplete = () => addressInputs.every((input) => input.value.trim().length > 0);
+  const addressIsComplete = () => addressInputs.every((input) => input.value.trim().length > 0 && input.checkValidity());
 
   const showAddressValidation = () => {
-    const firstEmpty = addressInputs.find((input) => !input.value.trim());
-    firstEmpty?.reportValidity();
-    firstEmpty?.focus();
+    const firstInvalid = addressInputs.find((input) => !input.value.trim() || !input.checkValidity());
+    firstInvalid?.reportValidity();
+    firstInvalid?.focus();
     if (copyStatus) copyStatus.textContent = "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.";
   };
 
@@ -76,6 +77,10 @@ export const initCart = () => {
       whatsappOrder.href = `https://wa.me/989103060396?text=${encodeURIComponent(createOrderSummary())}`;
       whatsappOrder.classList.toggle("is-disabled", !addressIsComplete());
       whatsappOrder.setAttribute("aria-disabled", String(!addressIsComplete()));
+    }
+    if (baleOrder) {
+      baleOrder.classList.toggle("is-disabled", !addressIsComplete());
+      baleOrder.setAttribute("aria-disabled", String(!addressIsComplete()));
     }
   };
 
@@ -121,6 +126,7 @@ export const initCart = () => {
 
   const open = () => {
     if (!cartLayer) return;
+    lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     cartLayer.hidden = false;
     document.body.classList.add("cart-is-open");
     requestAnimationFrame(() => cartLayer.classList.add("is-open"));
@@ -133,6 +139,7 @@ export const initCart = () => {
     document.body.classList.remove("cart-is-open");
     window.setTimeout(() => {
       cartLayer.hidden = true;
+      lastFocused?.focus();
     }, 280);
   };
 
@@ -182,7 +189,28 @@ export const initCart = () => {
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && cartLayer && !cartLayer.hidden) close();
+    if (!cartLayer || cartLayer.hidden) return;
+    if (event.key === "Escape") {
+      close();
+      return;
+    }
+    if (event.key !== "Tab") return;
+
+    const focusable = [
+      ...cartLayer.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href]:not([aria-disabled="true"]), input:not([disabled]), textarea:not([disabled])'
+      )
+    ].filter((element) => element.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   });
 
   document.addEventListener(ADD_TO_CART_EVENT, (event) => {
