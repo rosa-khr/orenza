@@ -7,7 +7,7 @@ export const initCart = () => {
   const cartCheckout = document.querySelector<HTMLElement>("[data-cart-checkout]");
   const cartCountElements = document.querySelectorAll<HTMLElement>("[data-cart-count]");
   const whatsappOrder = document.querySelector<HTMLAnchorElement>("[data-whatsapp-order]");
-  const baleOrder = document.querySelector<HTMLButtonElement>("[data-bale-order]");
+  const baleOrder = document.querySelector<HTMLAnchorElement>("[data-bale-order]");
   const customerName = document.querySelector<HTMLInputElement>("[data-customer-name]");
   const customerPhone = document.querySelector<HTMLInputElement>("[data-customer-phone]");
   const customerProvince = document.querySelector<HTMLInputElement>("[data-customer-province]");
@@ -78,6 +78,11 @@ export const initCart = () => {
     shippingInputs.some((input) => input.checked) &&
     paymentInputs.some((input) => input.checked);
 
+  const normalizeDigits = (value: string) =>
+    value
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+
   const showCheckoutValidation = () => {
     const firstInvalid = addressInputs.find((input) => !input.value.trim() || !input.checkValidity());
     if (firstInvalid) {
@@ -97,12 +102,15 @@ export const initCart = () => {
     if (whatsappOrder) {
       const message = encodeURIComponent(createOrderSummary());
       whatsappOrder.href = `https://api.whatsapp.com/send/?phone=989103060396&text=${message}&type=phone_number&app_absent=0`;
-      whatsappOrder.classList.toggle("is-disabled", !isComplete);
-      whatsappOrder.setAttribute("aria-disabled", String(!isComplete));
+      whatsappOrder.classList.remove("is-disabled");
+      whatsappOrder.removeAttribute("aria-disabled");
     }
     if (baleOrder) {
-      baleOrder.classList.toggle("is-disabled", !isComplete);
-      baleOrder.setAttribute("aria-disabled", String(!isComplete));
+      baleOrder.classList.remove("is-disabled");
+      baleOrder.removeAttribute("aria-disabled");
+    }
+    if (copyStatus && isComplete) {
+      copyStatus.textContent = "سفارش آماده است؛ واتساپ یا بله را انتخاب کن.";
     }
   };
 
@@ -188,7 +196,14 @@ export const initCart = () => {
     render();
   });
 
-  addressInputs.forEach((input) => input.addEventListener("input", updateOrderLinks));
+  addressInputs.forEach((input) => {
+    input.addEventListener("input", () => {
+      if (input === customerPhone || input === customerPostal) {
+        input.value = normalizeDigits(input.value);
+      }
+      updateOrderLinks();
+    });
+  });
   [...shippingInputs, ...paymentInputs].forEach((input) => input.addEventListener("change", updateOrderLinks));
 
   whatsappOrder?.addEventListener("click", (event) => {
@@ -200,8 +215,9 @@ export const initCart = () => {
     showCheckoutValidation();
   });
 
-  baleOrder?.addEventListener("click", async () => {
+  baleOrder?.addEventListener("click", async (event) => {
     if (!checkoutIsComplete()) {
+      event.preventDefault();
       showCheckoutValidation();
       return;
     }
@@ -209,9 +225,8 @@ export const initCart = () => {
       await navigator.clipboard.writeText(createOrderSummary());
       if (copyStatus) copyStatus.textContent = "خلاصه سفارش کپی شد؛ آن را در گفت‌وگوی بله جای‌گذاری کن.";
     } catch {
-      if (copyStatus) copyStatus.textContent = "مرورگر اجازه کپی نداد؛ از دکمه واتساپ استفاده کن.";
+      if (copyStatus) copyStatus.textContent = "بله باز شد؛ اگر خلاصه کپی نشد، از واتساپ استفاده کن.";
     }
-    window.open("https://ble.ir/orenzacoffee", "_blank", "noopener,noreferrer");
   });
 
   document.addEventListener("keydown", (event) => {
