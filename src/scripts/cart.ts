@@ -99,13 +99,14 @@ export const initCart = () => {
 
   const updateOrderLinks = () => {
     const isComplete = checkoutIsComplete();
+    const message = encodeURIComponent(createOrderSummary());
     if (whatsappOrder) {
-      const message = encodeURIComponent(createOrderSummary());
       whatsappOrder.href = `https://api.whatsapp.com/send/?phone=989103060396&text=${message}&type=phone_number&app_absent=0`;
       whatsappOrder.classList.remove("is-disabled");
       whatsappOrder.removeAttribute("aria-disabled");
     }
     if (baleOrder) {
+      baleOrder.href = `https://ble.ir/share/url?url=${encodeURIComponent("https://orenza.ir")}&text=${message}`;
       baleOrder.classList.remove("is-disabled");
       baleOrder.removeAttribute("aria-disabled");
     }
@@ -223,9 +224,9 @@ export const initCart = () => {
     }
     try {
       await navigator.clipboard.writeText(createOrderSummary());
-      if (copyStatus) copyStatus.textContent = "خلاصه سفارش کپی شد؛ آن را در گفت‌وگوی بله جای‌گذاری کن.";
+      if (copyStatus) copyStatus.textContent = "پیش‌نویس سفارش در بله باز شد؛ گفت‌وگوی khoobrooz را انتخاب کن.";
     } catch {
-      if (copyStatus) copyStatus.textContent = "بله باز شد؛ اگر خلاصه کپی نشد، از واتساپ استفاده کن.";
+      if (copyStatus) copyStatus.textContent = "پیش‌نویس سفارش در بله باز شد.";
     }
   });
 
