@@ -14,6 +14,12 @@ export const initCart = () => {
   const customerCity = document.querySelector<HTMLInputElement>("[data-customer-city]");
   const customerAddress = document.querySelector<HTMLTextAreaElement>("[data-customer-address]");
   const customerPostal = document.querySelector<HTMLInputElement>("[data-customer-postal]");
+  const shippingInputs = [
+    ...document.querySelectorAll<HTMLInputElement>('input[name="shipping-method"]')
+  ];
+  const paymentInputs = [
+    ...document.querySelectorAll<HTMLInputElement>('input[name="payment-method"]')
+  ];
   const copyStatus = document.querySelector<HTMLElement>("[data-copy-status]");
   const numberFormatter = new Intl.NumberFormat("fa-IR");
   let lastFocused: HTMLElement | null = null;
@@ -37,6 +43,8 @@ export const initCart = () => {
     const city = customerCity?.value.trim();
     const address = customerAddress?.value.trim();
     const postal = customerPostal?.value.trim();
+    const shipping = shippingInputs.find((input) => input.checked)?.value;
+    const payment = paymentInputs.find((input) => input.checked)?.value;
     const lines = cart.map((item, index) => {
       const device = item.device ? `، دستگاه: ${item.device}` : "";
       const grindSize = item.grindSize ? `، درجه آسیاب: ${item.grindSize}` : "";
@@ -54,8 +62,10 @@ export const initCart = () => {
       city ? `شهر: ${city}` : "",
       address ? `نشانی: ${address}` : "",
       postal ? `کد پستی: ${postal}` : "",
+      shipping ? `شیوه ارسال: ${shipping}` : "",
+      payment ? `شیوه پرداخت: ${payment}` : "",
       "",
-      "لطفاً قیمت نهایی و زمان آماده‌سازی را اعلام کنید."
+      "لطفاً مبلغ نهایی، هزینه ارسال و زمان آماده‌سازی را اعلام کنید."
     ].filter((line, index, all) => line || all[index - 1] !== "").join("\n");
   };
 
@@ -63,24 +73,36 @@ export const initCart = () => {
     (input): input is HTMLInputElement | HTMLTextAreaElement => Boolean(input)
   );
 
-  const addressIsComplete = () => addressInputs.every((input) => input.value.trim().length > 0 && input.checkValidity());
+  const checkoutIsComplete = () =>
+    addressInputs.every((input) => input.value.trim().length > 0 && input.checkValidity()) &&
+    shippingInputs.some((input) => input.checked) &&
+    paymentInputs.some((input) => input.checked);
 
-  const showAddressValidation = () => {
+  const showCheckoutValidation = () => {
     const firstInvalid = addressInputs.find((input) => !input.value.trim() || !input.checkValidity());
-    firstInvalid?.reportValidity();
-    firstInvalid?.focus();
-    if (copyStatus) copyStatus.textContent = "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.";
+    if (firstInvalid) {
+      firstInvalid.reportValidity();
+      firstInvalid.focus();
+      if (copyStatus) copyStatus.textContent = "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.";
+      return;
+    }
+    const shippingChoice = document.querySelector<HTMLElement>("[data-shipping-choice]");
+    shippingChoice?.scrollIntoView({ behavior: "smooth", block: "center" });
+    shippingInputs[0]?.focus();
+    if (copyStatus) copyStatus.textContent = "لطفاً تیپاکس یا پست را برای ارسال انتخاب کن.";
   };
 
   const updateOrderLinks = () => {
+    const isComplete = checkoutIsComplete();
     if (whatsappOrder) {
-      whatsappOrder.href = `https://wa.me/989103060396?text=${encodeURIComponent(createOrderSummary())}`;
-      whatsappOrder.classList.toggle("is-disabled", !addressIsComplete());
-      whatsappOrder.setAttribute("aria-disabled", String(!addressIsComplete()));
+      const message = encodeURIComponent(createOrderSummary());
+      whatsappOrder.href = `https://api.whatsapp.com/send/?phone=989103060396&text=${message}&type=phone_number&app_absent=0`;
+      whatsappOrder.classList.toggle("is-disabled", !isComplete);
+      whatsappOrder.setAttribute("aria-disabled", String(!isComplete));
     }
     if (baleOrder) {
-      baleOrder.classList.toggle("is-disabled", !addressIsComplete());
-      baleOrder.setAttribute("aria-disabled", String(!addressIsComplete()));
+      baleOrder.classList.toggle("is-disabled", !isComplete);
+      baleOrder.setAttribute("aria-disabled", String(!isComplete));
     }
   };
 
@@ -167,16 +189,20 @@ export const initCart = () => {
   });
 
   addressInputs.forEach((input) => input.addEventListener("input", updateOrderLinks));
+  [...shippingInputs, ...paymentInputs].forEach((input) => input.addEventListener("change", updateOrderLinks));
 
   whatsappOrder?.addEventListener("click", (event) => {
-    if (addressIsComplete()) return;
+    if (checkoutIsComplete()) {
+      updateOrderLinks();
+      return;
+    }
     event.preventDefault();
-    showAddressValidation();
+    showCheckoutValidation();
   });
 
   baleOrder?.addEventListener("click", async () => {
-    if (!addressIsComplete()) {
-      showAddressValidation();
+    if (!checkoutIsComplete()) {
+      showCheckoutValidation();
       return;
     }
     try {

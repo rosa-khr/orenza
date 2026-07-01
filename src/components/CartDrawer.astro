@@ -23,7 +23,7 @@
       <header class="cart-checkout-heading">
         <span>DELIVERY DETAILS</span>
         <h3>اطلاعات تحویل سفارش</h3>
-        <p>نشانی را کامل کن؛ خلاصه آماده‌شده را در واتساپ یا بله برای ما بفرست.</p>
+        <p>نشانی و روش ارسال را مشخص کن؛ خلاصه آماده‌شده را در واتساپ یا بله برای ما بفرست.</p>
       </header>
       <div class="customer-fields">
         <label><span>نام و نام خانوادگی</span><input type="text" data-customer-name placeholder="مثلاً زهرا احمدی" autocomplete="name" minlength="3" required /></label>
@@ -33,13 +33,36 @@
         <label class="field-wide"><span>نشانی کامل</span><textarea data-customer-address placeholder="خیابان، کوچه، پلاک، واحد" autocomplete="street-address" minlength="10" required></textarea></label>
         <label class="field-wide"><span>کد پستی</span><input type="text" data-customer-postal placeholder="کد پستی ۱۰ رقمی" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{10}" title="کد پستی باید دقیقاً ۱۰ رقم باشد" maxlength="10" required /></label>
       </div>
-      <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noreferrer">
+
+      <fieldset class="checkout-choice" data-shipping-choice>
+        <legend><span>SHIPPING METHOD</span>شیوه ارسال</legend>
+        <div class="checkout-choice-grid">
+          <label class="choice-card">
+            <input type="radio" name="shipping-method" value="تیپاکس" required />
+            <span><strong>تیپاکس</strong><small>ارسال سریع‌تر؛ هزینه بر اساس مقصد</small></span>
+          </label>
+          <label class="choice-card">
+            <input type="radio" name="shipping-method" value="پست" required />
+            <span><strong>پست</strong><small>ارسال سراسری؛ هزینه بر اساس مقصد</small></span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="checkout-choice payment-choice">
+        <legend><span>PAYMENT METHOD</span>شیوه پرداخت</legend>
+        <label class="choice-card">
+          <input type="radio" name="payment-method" value="کارت به کارت" checked required />
+          <span><strong>کارت به کارت</strong><small>اطلاعات کارت پس از تأیید سفارش برایت ارسال می‌شود.</small></span>
+        </label>
+      </fieldset>
+
+      <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noopener noreferrer">
         ارسال خلاصه در واتساپ <span>↗</span>
       </a>
       <button class="checkout-button bale-button" type="button" data-bale-order>
         کپی خلاصه و ارسال در بله <span>↗</span>
       </button>
-      <small data-copy-status>برای ارسال سفارش، اطلاعات تحویل را کامل کن.</small>
+      <small data-copy-status>برای ارسال سفارش، اطلاعات تحویل و شیوه ارسال را کامل کن.</small>
     </div>
   </aside>
 </div>

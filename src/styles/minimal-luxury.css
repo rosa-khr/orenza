@@ -1323,6 +1323,93 @@ textarea:focus-visible {
   box-shadow: 0 0 0 3px rgba(169, 124, 62, 0.09);
 }
 
+.checkout-choice {
+  min-width: 0;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.checkout-choice legend {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: var(--text-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.checkout-choice legend span {
+  color: var(--gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}
+
+.checkout-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.choice-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 70px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #fffaf1;
+  border: 1px solid rgba(74, 58, 37, 0.16);
+  cursor: pointer;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.choice-card:has(input:checked) {
+  background: #f7f1e5;
+  border-color: rgba(36, 75, 59, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(36, 75, 59, 0.18);
+}
+
+.choice-card input {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.choice-card > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.choice-card strong {
+  color: var(--text-dark);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.choice-card small {
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+.payment-choice {
+  margin-bottom: 20px;
+}
+
+.payment-choice .choice-card {
+  width: 100%;
+}
+
 .checkout-button {
   min-height: 50px;
   font-size: 12px;
@@ -1714,6 +1801,11 @@ textarea:focus-visible {
 
   .customer-fields .field-wide {
     grid-column: 1 / -1;
+  }
+
+  .choice-card {
+    min-height: 74px;
+    padding: 14px;
   }
 
   .inner-hero {
