@@ -20,6 +20,9 @@ export const initAtelier = () => {
   const grindFa = builder.querySelector<HTMLElement>("[data-grind-fa]")!;
   const grindEn = builder.querySelector<HTMLElement>("[data-grind-en]")!;
   const grindScale = builder.querySelector<HTMLElement>("[data-grind-scale]")!;
+  const mobileGrindFeedback = builder.querySelector<HTMLElement>("[data-mobile-grind-feedback]");
+  const mobileGrindFa = builder.querySelector<HTMLElement>("[data-mobile-grind-fa]");
+  const mobileGrindEn = builder.querySelector<HTMLElement>("[data-mobile-grind-en]");
   const deviceResult = builder.querySelector<HTMLElement>("[data-device-result]")!;
   const grindResult = builder.querySelector<HTMLElement>("[data-grind-result]")!;
   const addCartButton = builder.querySelector<HTMLButtonElement>("[data-add-cart]")!;
@@ -160,6 +163,7 @@ export const initAtelier = () => {
     if (key === "grind") {
       builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = english;
       const deviceSection = sections.get("device");
+      if (mobileGrindFeedback) mobileGrindFeedback.hidden = true;
 
       if (value === "آسیاب‌شده") {
         if (deviceSection) deviceSection.hidden = false;
@@ -196,6 +200,13 @@ export const initAtelier = () => {
       state.grindSize = `${grindFaValue} · ${grindEnValue}`;
       grindFa.textContent = grindFaValue;
       grindEn.textContent = grindEnValue;
+      if (mobileGrindFa) mobileGrindFa.textContent = grindFaValue;
+      if (mobileGrindEn) mobileGrindEn.textContent = grindEnValue;
+      if (mobileGrindFeedback) {
+        mobileGrindFeedback.hidden = false;
+        mobileGrindFeedback.classList.remove("is-running");
+        requestAnimationFrame(() => mobileGrindFeedback.classList.add("is-running"));
+      }
       grindScale.style.setProperty("--grind-position", `${(grindLevel / 7) * 100}%`);
       processDisplay.style.setProperty("--particle-size", `${Math.max(1.4, grindLevel * 0.55)}px`);
       grindReadout.hidden = false;
@@ -230,6 +241,7 @@ export const initAtelier = () => {
     const deviceSection = sections.get("device");
     if (deviceSection) deviceSection.hidden = true;
     grindReadout.hidden = true;
+    if (mobileGrindFeedback) mobileGrindFeedback.hidden = true;
     processDisplay.dataset.mode = "idle";
     processEyebrow.textContent = "LIVE ROASTERY";
     processTitle.textContent = "انتخاب تو، همان لحظه";

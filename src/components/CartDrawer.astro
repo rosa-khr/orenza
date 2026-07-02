@@ -27,9 +27,37 @@ import Icon from "./Icon.astro";
       <header class="cart-checkout-heading">
         <span>DELIVERY DETAILS</span>
         <h3>اطلاعات تحویل سفارش</h3>
-        <p>نشانی و روش ارسال را مشخص کن؛ خلاصه آماده‌شده را در واتساپ یا بله برای ما بفرست.</p>
+        <p>نشانی تحویل و روش ارسال را انتخاب کن؛ خلاصه سفارش آماده می‌شود تا برای ما بفرستی.</p>
       </header>
-      <div class="customer-fields">
+
+      <div class="checkout-account" data-checkout-account hidden>
+        <Icon name="user" size={18} />
+        <div>
+          <strong data-checkout-profile>اطلاعات حساب کاربری</strong>
+          <small>نام و شماره تماس از پروفایل شما برداشته می‌شود.</small>
+        </div>
+        <a href="/account/profile/?next=%2Forder%2F%3Fcart%3Dopen">ویرایش</a>
+      </div>
+
+      <div class="checkout-login" data-checkout-login hidden>
+        <div>
+          <strong>نشانی‌هایت را یک‌بار ثبت کن.</strong>
+          <small>با ورود به حساب، اطلاعات تماس و نشانی تحویل خودکار تکمیل می‌شود.</small>
+        </div>
+        <a href="/login/?next=%2Forder%2F%3Fcart%3Dopen">ورود به حساب</a>
+      </div>
+
+      <fieldset class="saved-addresses" data-saved-addresses hidden>
+        <div class="saved-address-heading">
+          <legend>نشانی تحویل</legend>
+          <a href="/account/addresses/?next=%2Forder%2F%3Fcart%3Dopen">مدیریت نشانی‌ها</a>
+        </div>
+        <p class="saved-address-state" data-saved-address-state aria-live="polite"></p>
+        <div class="saved-address-list" data-saved-address-list></div>
+        <button type="button" class="address-manual-toggle" data-use-new-address>استفاده از نشانی دیگر</button>
+      </fieldset>
+
+      <div class="customer-fields" data-customer-fields>
         <label><span>نام و نام خانوادگی</span><input type="text" data-customer-name placeholder="مثلاً زهرا احمدی" autocomplete="name" minlength="3" required /></label>
         <label><span>شماره تماس</span><input type="tel" data-customer-phone placeholder="09xxxxxxxxx" autocomplete="tel" inputmode="tel" pattern="09[0-9]{9}" title="شماره موبایل را با ۰۹ و ۱۱ رقم وارد کن" required /></label>
         <label><span>استان</span><input type="text" data-customer-province placeholder="مثلاً تهران" autocomplete="address-level1" minlength="2" required /></label>

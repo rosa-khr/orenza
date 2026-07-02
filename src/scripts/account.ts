@@ -1,4 +1,5 @@
 export {};
+import { enablePersianValidation, validateFormFa } from "./persian-validation";
 
 type User = { phone: string | null; email: string | null; displayName: string | null; hasPassword: boolean };
 type Address = {
@@ -115,7 +116,7 @@ const openAddressForm = (address?: Address) => {
 
 profileForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!profileForm.reportValidity()) return;
+  if (!validateFormFa(profileForm)) return;
   const data = new FormData(profileForm);
   try {
     const payload = await api("/me", {
@@ -125,6 +126,8 @@ profileForm?.addEventListener("submit", async (event) => {
     user = payload.user;
     fillProfile();
     setStatus("profile", "تغییرات مشخصات با موفقیت ذخیره شد.");
+    const next = new URLSearchParams(location.search).get("next");
+    if (next?.startsWith("/")) window.location.href = next;
   } catch (error) {
     setStatus("profile", error instanceof Error ? error.message : "ذخیره انجام نشد.", true);
   }
@@ -137,7 +140,7 @@ document.querySelector("[data-cancel-address]")?.addEventListener("click", () =>
 
 addressForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!addressForm.reportValidity()) return;
+  if (!validateFormFa(addressForm)) return;
   const data = new FormData(addressForm);
   const id = String(data.get("id") || "");
   const body = {
@@ -150,6 +153,8 @@ addressForm?.addEventListener("submit", async (event) => {
     await loadAddresses();
     addressForm.hidden = true;
     setStatus("address", "نشانی با موفقیت ذخیره شد.");
+    const next = new URLSearchParams(location.search).get("next");
+    if (next?.startsWith("/")) window.location.href = next;
   } catch (error) {
     setStatus("address", error instanceof Error ? error.message : "ذخیره نشانی انجام نشد.", true);
   }
@@ -171,7 +176,7 @@ addressList?.addEventListener("click", async (event) => {
 
 passwordForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!passwordForm.reportValidity()) return;
+  if (!validateFormFa(passwordForm)) return;
   const data = new FormData(passwordForm);
   if (data.get("newPassword") !== data.get("confirmPassword")) {
     return setStatus("password", "تکرار رمز با رمز جدید یکسان نیست.", true);
@@ -190,9 +195,20 @@ passwordForm?.addEventListener("submit", async (event) => {
   }
 });
 
-document.querySelector("[data-logout]")?.addEventListener("click", async () => {
-  await api("/auth/logout", { method: "POST" });
-  window.location.href = "/";
+document.querySelector<HTMLButtonElement>("[data-logout]")?.addEventListener("click", async (event) => {
+  const button = event.currentTarget as HTMLButtonElement;
+  button.disabled = true;
+  button.textContent = "در حال خروج...";
+  try {
+    await fetch("/api/v1/auth/logout", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    });
+  } finally {
+    window.location.replace("/login/");
+  }
 });
 
 const loadAddresses = async () => {
@@ -208,3 +224,5 @@ Promise.all([api("/me"), loadAddresses()])
     fillProfile();
   })
   .catch(() => undefined);
+
+enablePersianValidation();

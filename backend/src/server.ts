@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { OAuth2Client } from "google-auth-library";
+import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { pool, query } from "./db.js";
 import {
@@ -12,6 +13,7 @@ import {
   normalizePhone,
   verifyPassword
 } from "./security.js";
+import { sendPasswordResetCode } from "./sms.js";
 
 type UserRow = {
   id: string;
@@ -40,6 +42,7 @@ const cookieName = "orenza_session";
 const sessionDays = 30;
 const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
 const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
+const passwordResetSecret = process.env.PASSWORD_RESET_SECRET || "orenza-local-reset-secret";
 const allowedOrigins = (process.env.APP_ORIGIN || "http://127.0.0.1:4321,http://localhost:4321")
   .split(",")
   .map((origin) => origin.trim());
@@ -101,6 +104,8 @@ const requireUser = async (request: FastifyRequest, reply: FastifyReply) => {
 
 const phoneSchema = z.string().transform(normalizePhone).pipe(z.string().regex(/^09\d{9}$/));
 const passwordSchema = z.string().min(8).max(128);
+const hashResetCode = (phone: string, code: string) =>
+  createHash("sha256").update(`${phone}:${code}:${passwordResetSecret}`).digest("hex");
 const profileSchema = z.object({
   displayName: z.string().trim().min(2).max(100),
   phone: phoneSchema.optional()
@@ -159,6 +164,62 @@ app.post("/api/v1/auth/login", { config: { rateLimit: { max: 10, timeWindow: "15
   await query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]);
   await setSession(reply, user.id);
   return { user: publicUser(user) };
+});
+
+app.post("/api/v1/auth/password-reset/request", { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } }, async (request, reply) => {
+  const { phone } = z.object({ phone: phoneSchema }).parse(request.body);
+  const result = await query<UserRow>("SELECT * FROM users WHERE phone = $1", [phone]);
+  const user = result.rows[0];
+  const genericMessage = "اگر این شماره در اورنزا ثبت شده باشد، کد بازیابی برای آن ارسال می‌شود.";
+  if (!user) return { message: genericMessage };
+
+  const code = String(randomInt(100_000, 1_000_000));
+  await query("UPDATE password_reset_codes SET used_at = now() WHERE user_id = $1 AND used_at IS NULL", [user.id]);
+  await query(
+    `INSERT INTO password_reset_codes (user_id, code_hash, expires_at)
+     VALUES ($1, $2, now() + interval '10 minutes')`,
+    [user.id, hashResetCode(phone, code)]
+  );
+
+  try {
+    const delivery = await sendPasswordResetCode(phone, code);
+    return { message: genericMessage, ...delivery };
+  } catch (error) {
+    app.log.error(error);
+    return reply.code(503).send({ error: "ارسال کد بازیابی فعلاً ممکن نیست. لطفاً کمی بعد دوباره تلاش کنید." });
+  }
+});
+
+app.post("/api/v1/auth/password-reset/confirm", { config: { rateLimit: { max: 8, timeWindow: "15 minutes" } } }, async (request, reply) => {
+  const data = z.object({
+    phone: phoneSchema,
+    code: z.string().regex(/^\d{6}$/),
+    newPassword: passwordSchema
+  }).parse(request.body);
+  const result = await query<{ id: string; user_id: string; code_hash: string; attempts: number }>(
+    `SELECT r.id, r.user_id, r.code_hash, r.attempts
+       FROM password_reset_codes r
+       JOIN users u ON u.id = r.user_id
+      WHERE u.phone = $1 AND r.used_at IS NULL AND r.expires_at > now()
+      ORDER BY r.created_at DESC LIMIT 1`,
+    [data.phone]
+  );
+  const reset = result.rows[0];
+  const expected = reset ? Buffer.from(reset.code_hash, "hex") : Buffer.alloc(32);
+  const actual = Buffer.from(hashResetCode(data.phone, data.code), "hex");
+  const isValid = Boolean(reset && reset.attempts < 5 && expected.length === actual.length && timingSafeEqual(expected, actual));
+  if (!isValid) {
+    if (reset) await query("UPDATE password_reset_codes SET attempts = attempts + 1 WHERE id = $1", [reset.id]);
+    return reply.code(422).send({ error: "کد بازیابی صحیح نیست یا زمان آن گذشته است." });
+  }
+
+  await query("UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2", [
+    await hashPassword(data.newPassword),
+    reset!.user_id
+  ]);
+  await query("UPDATE password_reset_codes SET used_at = now() WHERE id = $1", [reset!.id]);
+  await query("DELETE FROM user_sessions WHERE user_id = $1", [reset!.user_id]);
+  return { message: "رمز عبور تازه ثبت شد؛ حالا می‌توانید وارد حساب شوید." };
 });
 
 app.post("/api/v1/auth/google", { config: { rateLimit: { max: 15, timeWindow: "15 minutes" } } }, async (request, reply) => {

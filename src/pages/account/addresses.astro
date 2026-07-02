@@ -7,7 +7,7 @@ import AccountShell from "../../components/AccountShell.astro";
     <header><span>02</span><div><h2>نشانی‌های تحویل</h2><p>نشانی‌های ذخیره‌شده هنگام ثبت سفارش در دسترس شما هستند.</p></div></header>
     <div class="address-list" data-address-list></div>
     <button class="account-secondary" type="button" data-new-address>افزودن نشانی جدید</button>
-    <form class="account-form address-form" data-address-form hidden>
+    <form class="account-form address-form" data-address-form hidden novalidate>
       <input type="hidden" name="id" />
       <div class="account-form-row">
         <label><span>عنوان نشانی</span><input name="label" placeholder="خانه یا محل کار" required /></label>

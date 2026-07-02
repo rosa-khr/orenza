@@ -1,10 +1,13 @@
 ---
 import {
   ArrowLeft,
+  Bean,
   Camera,
   Contact,
   LayoutDashboard,
   LockKeyhole,
+  LogOut,
+  Gauge,
   Mail,
   MapPin,
   MessageCircle,
@@ -30,6 +33,9 @@ type IconName =
   | "profile"
   | "address"
   | "security"
+  | "logout"
+  | "bean"
+  | "grind"
   | "close";
 
 interface Props {
@@ -52,6 +58,9 @@ const icons = {
   profile: Contact,
   address: MapPin,
   security: LockKeyhole,
+  logout: LogOut,
+  bean: Bean,
+  grind: Gauge,
   close: X
 } satisfies Record<IconName, typeof ArrowLeft>;
 const LucideIcon = icons[name];

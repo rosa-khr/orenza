@@ -47,11 +47,27 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 
 CREATE INDEX IF NOT EXISTS user_sessions_user_id_idx ON user_sessions(user_id);
 CREATE INDEX IF NOT EXISTS user_sessions_expires_at_idx ON user_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS password_reset_codes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  code_hash char(64) NOT NULL,
+  expires_at timestamptz NOT NULL,
+  attempts smallint NOT NULL DEFAULT 0,
+  used_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS password_reset_codes_user_idx
+  ON password_reset_codes(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS password_reset_codes_expiry_idx
+  ON password_reset_codes(expires_at);
 `;
 
 try {
   await pool.query(migration);
   await pool.query("DELETE FROM user_sessions WHERE expires_at < now()");
+  await pool.query("DELETE FROM password_reset_codes WHERE expires_at < now() - interval '1 day'");
   console.log("Database migration completed.");
 } finally {
   await pool.end();

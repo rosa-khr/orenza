@@ -1,12 +1,13 @@
 ---
 import { blends, devices, roasts, weights } from "../data/coffee";
+import Icon from "./Icon.astro";
 ---
 
 <section class="builder-section atelier-section" id="coffee-builder" aria-labelledby="atelier-title">
   <header class="builder-header atelier-header">
     <p class="eyebrow">ORENZA COFFEE ATELIER</p>
     <h2 id="atelier-title">سفارش اختصاصی قهوه</h2>
-    <p>ترکیب، رُست و روش دم‌آوری را مشخص کن؛ ما درجه آسیاب را دقیقاً متناسب با انتخاب تو تنظیم می‌کنیم.</p>
+    <p>ترکیب و رُست را انتخاب کن؛ آسیاب مناسب دستگاهت با ما.</p>
     <div class="atelier-meta" aria-label="اطلاعات فرایند سفارش">
       <span>حدود ۲ دقیقه</span>
       <i aria-hidden="true"></i>
@@ -71,7 +72,7 @@ import { blends, devices, roasts, weights } from "../data/coffee";
       <section class="config-section is-ready" data-config-section="blend">
         <header class="config-heading">
           <span>BLEND PROFILE</span>
-          <div><h3>ترکیب دانه</h3><p>نسبت عربیکا و روبوستا، شخصیت اصلی فنجان را مشخص می‌کند.</p></div>
+          <div><h3>ترکیب دانه</h3><p>تعادل عطر، قدرت و کافئین را انتخاب کن.</p></div>
         </header>
         <div class="blend-options">
           {blends.map((blend) => (
@@ -104,7 +105,7 @@ import { blends, devices, roasts, weights } from "../data/coffee";
       <section class="config-section is-locked" data-config-section="roast" aria-disabled="true">
         <header class="config-heading">
           <span>ROAST PROFILE</span>
-          <div><h3>پروفایل رُست</h3><p>هر درجه، شیرینی، اسیدیته و بادی قهوه را به شکل متفاوتی برجسته می‌کند.</p></div>
+          <div><h3>پروفایل رُست</h3><p>رُستی را انتخاب کن که به طعم تو نزدیک‌تر است.</p></div>
         </header>
         <div class="roast-options">
           {roasts.map((roast) => (
@@ -119,16 +120,16 @@ import { blends, devices, roasts, weights } from "../data/coffee";
       <section class="config-section is-locked" data-config-section="grind" aria-disabled="true">
         <header class="config-heading">
           <span>COFFEE FORM</span>
-          <div><h3>دان یا آسیاب‌شده</h3><p>اگر آسیاب‌شده را انتخاب کنی، درجه دقیق را بر اساس دستگاه تنظیم می‌کنیم.</p></div>
+          <div><h3>دان یا آسیاب‌شده</h3><p>دان کامل برای آسیاب تازه؛ آسیاب‌شده برای دم‌آوری بی‌دردسر.</p></div>
         </header>
         <div class="form-options">
           <button type="button" data-choice="grind" data-value="دان کامل" data-en="WHOLE BEAN">
-            <span class="bean-symbol"><i></i><i></i><i></i></span>
+            <span class="form-choice-icon"><Icon name="bean" size={27} /></span>
             <span><small>WHOLE BEAN</small><strong>دان کامل</strong><em>برای آسیاب در لحظه دم‌آوری</em></span>
           </button>
           <button type="button" data-choice="grind" data-value="آسیاب‌شده" data-en="GROUND COFFEE">
-            <span class="ground-symbol"><i></i></span>
-            <span><small>GROUND COFFEE</small><strong>آسیاب‌شده</strong><em>تنظیم تخصصی برای دستگاه شما</em></span>
+            <span class="form-choice-icon"><Icon name="grind" size={27} /></span>
+            <span><small>GROUND COFFEE</small><strong>آسیاب‌شده</strong><em>تنظیم دقیق برای دستگاه تو</em></span>
           </button>
         </div>
       </section>
@@ -136,7 +137,7 @@ import { blends, devices, roasts, weights } from "../data/coffee";
       <section class="config-section device-section is-locked" data-config-section="device" aria-disabled="true" hidden>
         <header class="config-heading">
           <span>BREW METHOD</span>
-          <div><h3>روش دم‌آوری</h3><p>با انتخاب دستگاه، اندازه ذرات آسیاب به‌صورت خودکار تنظیم می‌شود.</p></div>
+          <div><h3>روش دم‌آوری</h3><p>دستگاهت را انتخاب کن تا درجه آسیاب مشخص شود.</p></div>
         </header>
         <div class="device-options">
           {devices.map((device) => (
@@ -147,12 +148,17 @@ import { blends, devices, roasts, weights } from "../data/coffee";
             </button>
           ))}
         </div>
+        <div class="mobile-grind-feedback" data-mobile-grind-feedback hidden aria-live="polite">
+          <Icon name="grind" size={20} />
+          <span><small>GRIND SIZE</small><strong data-mobile-grind-fa>—</strong><em data-mobile-grind-en>—</em></span>
+          <i aria-hidden="true"></i>
+        </div>
       </section>
 
       <section class="config-section is-locked" data-config-section="weight" aria-disabled="true">
         <header class="config-heading">
           <span>PACK SIZE</span>
-          <div><h3>وزن سفارش</h3><p>برای حفظ تازگی، مقدار مناسب با مصرف خودت را انتخاب کن.</p></div>
+          <div><h3>وزن سفارش</h3><p>به‌اندازه مصرفت انتخاب کن تا قهوه تازه بماند.</p></div>
         </header>
         <div class="weight-options">
           {weights.map((weight) => (

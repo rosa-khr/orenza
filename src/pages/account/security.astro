@@ -5,7 +5,7 @@ import AccountShell from "../../components/AccountShell.astro";
 <AccountShell title="امنیت حساب" current="security">
   <section class="account-panel account-route-panel">
     <header><span>03</span><div><h2>امنیت حساب</h2><p>رمز جدید باید حداقل ۸ کاراکتر داشته باشد.</p></div></header>
-    <form class="account-form" data-password-form>
+    <form class="account-form" data-password-form novalidate>
       <label data-current-password><span>رمز عبور فعلی</span><input name="currentPassword" type="password" autocomplete="current-password" /></label>
       <label><span>رمز عبور جدید</span><input name="newPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
       <label><span>تکرار رمز عبور جدید</span><input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required /></label>

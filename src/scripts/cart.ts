@@ -1,4 +1,22 @@
 import { ADD_TO_CART_EVENT, type CartItem, type CartItemInput } from "./order-types";
+import { enablePersianValidation, validateControlFa } from "./persian-validation";
+
+type AccountUser = {
+  displayName: string | null;
+  phone: string | null;
+};
+
+type SavedAddress = {
+  id: string;
+  label: string;
+  recipient_name: string;
+  phone: string;
+  province: string;
+  city: string;
+  postal_code: string;
+  address_line: string;
+  is_default: boolean;
+};
 
 export const initCart = () => {
   const cartLayer = document.querySelector<HTMLElement>("[data-cart-layer]");
@@ -14,6 +32,14 @@ export const initCart = () => {
   const customerCity = document.querySelector<HTMLInputElement>("[data-customer-city]");
   const customerAddress = document.querySelector<HTMLTextAreaElement>("[data-customer-address]");
   const customerPostal = document.querySelector<HTMLInputElement>("[data-customer-postal]");
+  const customerFields = document.querySelector<HTMLElement>("[data-customer-fields]");
+  const checkoutAccount = document.querySelector<HTMLElement>("[data-checkout-account]");
+  const checkoutProfile = document.querySelector<HTMLElement>("[data-checkout-profile]");
+  const checkoutLogin = document.querySelector<HTMLElement>("[data-checkout-login]");
+  const savedAddresses = document.querySelector<HTMLFieldSetElement>("[data-saved-addresses]");
+  const savedAddressList = document.querySelector<HTMLElement>("[data-saved-address-list]");
+  const savedAddressState = document.querySelector<HTMLElement>("[data-saved-address-state]");
+  const useNewAddress = document.querySelector<HTMLButtonElement>("[data-use-new-address]");
   const shippingInputs = [
     ...document.querySelectorAll<HTMLInputElement>('input[name="shipping-method"]')
   ];
@@ -23,6 +49,8 @@ export const initCart = () => {
   const copyStatus = document.querySelector<HTMLElement>("[data-copy-status]");
   const numberFormatter = new Intl.NumberFormat("fa-IR");
   let lastFocused: HTMLElement | null = null;
+  let accountUser: AccountUser | null = null;
+  let accountRequest: Promise<void> | null = null;
 
   const readCart = (): CartItem[] => {
     try {
@@ -37,8 +65,8 @@ export const initCart = () => {
   const saveCart = () => localStorage.setItem("orenza-cart", JSON.stringify(cart));
 
   const createOrderSummary = () => {
-    const name = customerName?.value.trim();
-    const phone = customerPhone?.value.trim();
+    const name = accountUser?.displayName?.trim() || customerName?.value.trim();
+    const phone = accountUser?.phone?.trim() || customerPhone?.value.trim();
     const province = customerProvince?.value.trim();
     const city = customerCity?.value.trim();
     const address = customerAddress?.value.trim();
@@ -52,20 +80,21 @@ export const initCart = () => {
     });
 
     return [
-      "سلام اورنزا، برای استعلام قیمت این سفارش پیام می‌دهم:",
+      "سلام، وقت بخیر.",
+      "این سفارش قهوه را در سایت اورنزا آماده کرده‌ام:",
       "",
       ...lines,
       "",
-      name ? `نام تحویل‌گیرنده: ${name}` : "",
+      "مشخصات تحویل",
+      name ? `نام: ${name}` : "",
       phone ? `شماره تماس: ${phone}` : "",
-      province ? `استان: ${province}` : "",
-      city ? `شهر: ${city}` : "",
-      address ? `نشانی: ${address}` : "",
+      province && city ? `شهر: ${province}، ${city}` : "",
+      address ? `نشانی کامل: ${address}` : "",
       postal ? `کد پستی: ${postal}` : "",
       shipping ? `شیوه ارسال: ${shipping}` : "",
       payment ? `شیوه پرداخت: ${payment}` : "",
       "",
-      "لطفاً مبلغ نهایی، هزینه ارسال و زمان آماده‌سازی را اعلام کنید."
+      "ممنون می‌شوم مبلغ نهایی و زمان آماده‌شدن سفارش را اعلام کنید."
     ].filter((line, index, all) => line || all[index - 1] !== "").join("\n");
   };
 
@@ -83,9 +112,104 @@ export const initCart = () => {
       .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
       .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 
+  const applyAddress = (address: SavedAddress) => {
+    if (customerName) customerName.value = address.recipient_name || accountUser?.displayName || "";
+    if (customerPhone) customerPhone.value = address.phone || accountUser?.phone || "";
+    if (customerProvince) customerProvince.value = address.province;
+    if (customerCity) customerCity.value = address.city;
+    if (customerAddress) customerAddress.value = address.address_line;
+    if (customerPostal) customerPostal.value = address.postal_code;
+    addressInputs.forEach((input) => input.setCustomValidity(""));
+    if (customerFields) customerFields.hidden = true;
+    if (savedAddressState) savedAddressState.textContent = `ارسال به نشانی «${address.label}»`;
+    updateOrderLinks();
+  };
+
+  const renderSavedAddresses = (addresses: SavedAddress[]) => {
+    if (!savedAddressList || !savedAddresses) return;
+    savedAddressList.replaceChildren();
+    addresses.forEach((address, index) => {
+      const label = document.createElement("label");
+      label.className = "saved-address-card";
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "saved-address";
+      input.value = address.id;
+      input.checked = address.is_default || (!addresses.some((item) => item.is_default) && index === 0);
+      const copy = document.createElement("span");
+      const title = document.createElement("strong");
+      title.textContent = address.is_default ? `${address.label} · پیش‌فرض` : address.label;
+      const detail = document.createElement("small");
+      detail.textContent = `${address.province}، ${address.city}، ${address.address_line}`;
+      const recipient = document.createElement("small");
+      recipient.textContent = `${address.recipient_name} · ${address.phone}`;
+      copy.append(title, detail, recipient);
+      label.append(input, copy);
+      savedAddressList.append(label);
+      input.addEventListener("change", () => applyAddress(address));
+      if (input.checked) applyAddress(address);
+    });
+    savedAddresses.hidden = false;
+    if (useNewAddress) useNewAddress.hidden = false;
+  };
+
+  const loadCheckoutAccount = () => {
+    if (accountRequest) return accountRequest;
+    accountRequest = (async () => {
+      try {
+        const meResponse = await fetch("/api/v1/me", { credentials: "include" });
+        if (!meResponse.ok) throw new Error("guest");
+        const mePayload = await meResponse.json();
+        accountUser = mePayload.user as AccountUser;
+        if (customerName && accountUser.displayName) {
+          customerName.value = accountUser.displayName;
+          customerName.readOnly = true;
+        }
+        if (customerPhone && accountUser.phone) {
+          customerPhone.value = accountUser.phone;
+          customerPhone.readOnly = true;
+        }
+        if (checkoutProfile) {
+          checkoutProfile.textContent =
+            [accountUser.displayName, accountUser.phone].filter(Boolean).join(" · ") || "حساب کاربری شما";
+        }
+        if (checkoutAccount) checkoutAccount.hidden = false;
+        if (checkoutLogin) checkoutLogin.hidden = true;
+        if (savedAddresses) savedAddresses.hidden = false;
+        if (savedAddressState) savedAddressState.textContent = "در حال دریافت نشانی‌های ذخیره‌شده...";
+
+        const addressesResponse = await fetch("/api/v1/me/addresses", { credentials: "include" });
+        if (!addressesResponse.ok) throw new Error("addresses");
+        const payload = await addressesResponse.json();
+        const addresses = (payload.addresses || []) as SavedAddress[];
+        if (addresses.length) {
+          renderSavedAddresses(addresses);
+        } else {
+          savedAddressList?.replaceChildren();
+          if (savedAddressState) {
+            savedAddressState.textContent = "هنوز نشانی ذخیره‌شده‌ای نداری؛ اطلاعات تحویل را وارد کن.";
+          }
+          if (useNewAddress) useNewAddress.hidden = true;
+          if (customerFields) customerFields.hidden = false;
+        }
+        updateOrderLinks();
+      } catch {
+        accountUser = null;
+        if (checkoutAccount) checkoutAccount.hidden = true;
+        if (checkoutLogin) checkoutLogin.hidden = false;
+        if (savedAddresses) savedAddresses.hidden = true;
+        if (customerFields) customerFields.hidden = false;
+      } finally {
+        accountRequest = null;
+      }
+    })();
+    return accountRequest;
+  };
+
   const showCheckoutValidation = () => {
     const firstInvalid = addressInputs.find((input) => !input.value.trim() || !input.checkValidity());
     if (firstInvalid) {
+      validateControlFa(firstInvalid);
       firstInvalid.reportValidity();
       firstInvalid.focus();
       if (copyStatus) copyStatus.textContent = "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.";
@@ -157,6 +281,7 @@ export const initCart = () => {
 
   const open = () => {
     if (!cartLayer) return;
+    void loadCheckoutAccount();
     lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     cartLayer.hidden = false;
     document.body.classList.add("cart-is-open");
@@ -206,6 +331,20 @@ export const initCart = () => {
     });
   });
   [...shippingInputs, ...paymentInputs].forEach((input) => input.addEventListener("change", updateOrderLinks));
+
+  useNewAddress?.addEventListener("click", () => {
+    savedAddressList?.querySelectorAll<HTMLInputElement>('input[name="saved-address"]').forEach((input) => {
+      input.checked = false;
+    });
+    if (customerProvince) customerProvince.value = "";
+    if (customerCity) customerCity.value = "";
+    if (customerAddress) customerAddress.value = "";
+    if (customerPostal) customerPostal.value = "";
+    if (customerFields) customerFields.hidden = false;
+    if (savedAddressState) savedAddressState.textContent = "نشانی جدید را در فرم زیر وارد کن.";
+    customerProvince?.focus();
+    updateOrderLinks();
+  });
 
   whatsappOrder?.addEventListener("click", (event) => {
     if (checkoutIsComplete()) {
@@ -269,4 +408,12 @@ export const initCart = () => {
   });
 
   render();
+  void loadCheckoutAccount();
+  enablePersianValidation(cartLayer || document);
+  if (new URLSearchParams(location.search).get("cart") === "open") {
+    window.setTimeout(open, 250);
+    const cleanUrl = new URL(location.href);
+    cleanUrl.searchParams.delete("cart");
+    history.replaceState({}, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+  }
 };
