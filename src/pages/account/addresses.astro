@@ -1,0 +1,33 @@
+---
+import AccountShell from "../../components/AccountShell.astro";
+---
+
+<AccountShell title="نشانی‌های تحویل" current="addresses">
+  <section class="account-panel account-route-panel account-address-panel">
+    <header><span>02</span><div><h2>نشانی‌های تحویل</h2><p>نشانی‌های ذخیره‌شده هنگام ثبت سفارش در دسترس شما هستند.</p></div></header>
+    <div class="address-list" data-address-list></div>
+    <button class="account-secondary" type="button" data-new-address>افزودن نشانی جدید</button>
+    <form class="account-form address-form" data-address-form hidden>
+      <input type="hidden" name="id" />
+      <div class="account-form-row">
+        <label><span>عنوان نشانی</span><input name="label" placeholder="خانه یا محل کار" required /></label>
+        <label><span>نام تحویل‌گیرنده</span><input name="recipientName" autocomplete="name" required /></label>
+      </div>
+      <div class="account-form-row">
+        <label><span>شماره تماس</span><input name="phone" type="tel" inputmode="numeric" pattern="09[0-9]{9}" required /></label>
+        <label><span>کد پستی</span><input name="postalCode" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required /></label>
+      </div>
+      <div class="account-form-row">
+        <label><span>استان</span><input name="province" autocomplete="address-level1" required /></label>
+        <label><span>شهر</span><input name="city" autocomplete="address-level2" required /></label>
+      </div>
+      <label><span>نشانی کامل</span><textarea name="addressLine" autocomplete="street-address" minlength="10" required></textarea></label>
+      <label class="account-check"><input name="isDefault" type="checkbox" /><span>استفاده به‌عنوان نشانی پیش‌فرض</span></label>
+      <div class="account-form-actions">
+        <button class="account-primary" type="submit">ذخیره نشانی</button>
+        <button class="account-quiet-button" type="button" data-cancel-address>انصراف</button>
+      </div>
+      <p class="account-status" data-address-status aria-live="polite"></p>
+    </form>
+  </section>
+</AccountShell>

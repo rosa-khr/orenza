@@ -1,0 +1,16 @@
+---
+import AccountShell from "../../components/AccountShell.astro";
+---
+
+<AccountShell title="مشخصات فردی" current="profile">
+  <section class="account-panel account-route-panel">
+    <header><span>01</span><div><h2>مشخصات فردی</h2><p>این اطلاعات برای ثبت و تحویل سفارش استفاده می‌شود.</p></div></header>
+    <form class="account-form" data-profile-form>
+      <label><span>نام و نام خانوادگی</span><input name="displayName" autocomplete="name" minlength="2" required /></label>
+      <label><span>شماره موبایل</span><input name="phone" type="tel" autocomplete="tel" inputmode="numeric" pattern="09[0-9]{9}" /></label>
+      <label><span>ایمیل متصل به حساب</span><input name="email" type="email" placeholder="ثبت نشده" disabled /></label>
+      <button class="account-primary" type="submit">ذخیره تغییرات</button>
+      <p class="account-status" data-profile-status aria-live="polite"></p>
+    </form>
+  </section>
+</AccountShell>

@@ -6,7 +6,10 @@ export default defineConfig({
   output: "static",
   integrations: [
     sitemap({
-      filter: (page) => page !== "https://orenza.ir/404.html"
+      filter: (page) =>
+        page !== "https://orenza.ir/404.html" &&
+        page !== "https://orenza.ir/login/" &&
+        !page.startsWith("https://orenza.ir/account/")
     })
   ],
   build: {

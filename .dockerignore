@@ -1,4 +1,6 @@
 node_modules
+backend/node_modules
+backend/dist
 dist
 .astro
 .git
@@ -7,3 +9,4 @@ README.md
 .DS_Store
 *.log
 .asax-ca.pem
+.env

@@ -1,8 +1,51 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-orenza}
+      POSTGRES_USER: ${POSTGRES_USER:-orenza}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orenza_local_change_me}
+    volumes:
+      - orenza-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orenza} -d ${POSTGRES_DB:-orenza}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+    image: orenza-api:latest
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-orenza}:${POSTGRES_PASSWORD:-orenza_local_change_me}@db:5432/${POSTGRES_DB:-orenza}
+      APP_ORIGIN: ${APP_ORIGIN:-http://127.0.0.1:8080}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      PORT: 8787
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8787/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
   web:
     build:
       context: .
+      args:
+        PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     image: orenza-coffee:latest
     ports:
       - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  orenza-postgres:

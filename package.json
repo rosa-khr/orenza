@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.4.2",
+    "@lucide/astro": "^1.23.0",
     "astro": "^5.13.5"
   },
   "devDependencies": {

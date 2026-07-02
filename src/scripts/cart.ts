@@ -135,8 +135,8 @@ export const initCart = () => {
     remove.className = "cart-remove";
     remove.dataset.removeCart = String(item.id);
     remove.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4.5 7h15M9 7V4.5h6V7m-8.5 0 .8 12h9.4l.8-12M10 10.5v5m4-5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg class="lucide lucide-trash-2" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 5v5m4-5v5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `;
     remove.setAttribute("aria-label", `حذف ${item.blend} از سبد`);

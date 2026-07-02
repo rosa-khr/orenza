@@ -16,6 +16,10 @@ import Icon from "./Icon.astro";
   </a>
   <div class="header-actions">
     <a href="/contact/">ارتباط با ما</a>
+    <a class="account-trigger" href="/account/profile/" aria-label="حساب کاربری" title="حساب کاربری">
+      <Icon name="user" size={20} />
+      <span data-header-account-name>ورود</span>
+    </a>
     <button class="cart-trigger" type="button" data-cart-open aria-label="باز کردن سبد سفارش" title="سبد سفارش">
       <Icon name="cart" size={21} />
       <span data-cart-count>۰</span>

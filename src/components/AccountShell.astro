@@ -1,0 +1,60 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "./Icon.astro";
+
+interface Props {
+  title: string;
+  current: "profile" | "addresses" | "security";
+}
+
+const { title, current } = Astro.props;
+const menu = [
+  { key: "profile", label: "مشخصات فردی", detail: "نام و اطلاعات تماس", href: "/account/profile/", icon: "profile" },
+  { key: "addresses", label: "نشانی‌ها", detail: "نشانی‌های تحویل", href: "/account/addresses/", icon: "address" },
+  { key: "security", label: "امنیت حساب", detail: "مدیریت رمز عبور", href: "/account/security/", icon: "security" }
+] as const;
+---
+
+<BaseLayout
+  title={title}
+  description="مدیریت حساب کاربری اورنزا."
+  canonicalPath={`/account/${current}/`}
+  keywords={[]}
+  noindex
+>
+  <section class="account-page" data-account-page>
+    <header class="account-heading">
+      <div>
+        <p class="eyebrow">حساب من در اورنزا</p>
+        <h1 data-account-title>حساب کاربری</h1>
+        <p data-account-welcome>در حال بارگذاری اطلاعات حساب...</p>
+      </div>
+      <button class="account-quiet-button" type="button" data-logout>خروج از حساب</button>
+    </header>
+
+    <div class="account-workspace">
+      <aside class="account-menu">
+        <span class="account-menu-title">منوی حساب</span>
+        <nav aria-label="منوی حساب کاربری">
+          {menu.map((item) => (
+            <a href={item.href} aria-current={current === item.key ? "page" : undefined}>
+              <Icon name={item.icon} size={18} />
+              <div>
+                <strong>{item.label}</strong>
+                <small>{item.detail}</small>
+              </div>
+            </a>
+          ))}
+        </nav>
+        <a class="account-menu-order" href="/order/">ساخت سفارش جدید</a>
+      </aside>
+
+      <main class="account-content">
+        <slot />
+      </main>
+    </div>
+  </section>
+  <script>
+    import "../scripts/account.ts";
+  </script>
+</BaseLayout>

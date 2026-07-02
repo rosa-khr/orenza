@@ -1,55 +1,66 @@
 ---
+import {
+  ArrowLeft,
+  Camera,
+  Contact,
+  LayoutDashboard,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  MessageCircle,
+  MessageCircleCheck,
+  Phone,
+  Send,
+  ShoppingBag,
+  UserRound,
+  X
+} from "@lucide/astro";
+
+type IconName =
+  | "instagram"
+  | "whatsapp"
+  | "bale"
+  | "phone"
+  | "email"
+  | "arrow"
+  | "cart"
+  | "send"
+  | "user"
+  | "dashboard"
+  | "profile"
+  | "address"
+  | "security"
+  | "close";
+
 interface Props {
-  name: "instagram" | "whatsapp" | "bale" | "phone" | "email" | "arrow" | "cart" | "send";
+  name: IconName;
   size?: number;
 }
 
 const { name, size = 20 } = Astro.props;
+const icons = {
+  instagram: Camera,
+  whatsapp: MessageCircle,
+  bale: MessageCircleCheck,
+  phone: Phone,
+  email: Mail,
+  arrow: ArrowLeft,
+  cart: ShoppingBag,
+  send: Send,
+  user: UserRound,
+  dashboard: LayoutDashboard,
+  profile: Contact,
+  address: MapPin,
+  security: LockKeyhole,
+  close: X
+} satisfies Record<IconName, typeof ArrowLeft>;
+const LucideIcon = icons[name];
 ---
 
-<svg class={`icon icon-${name}`} width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-  {name === "instagram" && (
-    <>
-      <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.5" />
-      <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5" />
-      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
-    </>
-  )}
-  {name === "whatsapp" && (
-    <>
-      <path d="M20.4 11.7a8.4 8.4 0 0 1-12.5 7.4L4 20l1-3.7a8.4 8.4 0 1 1 15.4-4.6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-      <path d="M9 8.3c.3-.7.6-.7.9-.7h.5c.2 0 .4.1.5.5l.8 1.8c.1.3.1.5-.1.7l-.6.8c-.2.2-.1.4 0 .6.7 1.2 1.6 2.1 2.9 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.3.7-.2l1.8.8c.3.2.5.3.5.5 0 .3-.1 1.3-.8 1.9-.6.6-1.5.8-2.5.5-1-.3-2.8-1-4.7-2.7-1.5-1.4-2.5-3.1-2.8-4.2-.3-.9.1-1.5.5-1.9Z" fill="currentColor" />
-    </>
-  )}
-  {name === "bale" && (
-    <>
-      <path d="M12 3.25a8.75 8.75 0 0 0-7.1 13.86l-.65 3.64 3.7-.8A8.75 8.75 0 1 0 12 3.25Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-      <path d="m8.15 11.85 2.45 2.35 5.25-5.15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    </>
-  )}
-  {name === "phone" && (
-    <path d="M7.2 3.8 9.4 7c.3.5.2 1.1-.2 1.5L7.8 9.8a14.8 14.8 0 0 0 6.4 6.4l1.3-1.4c.4-.4 1-.5 1.5-.2l3.2 2.2c.5.3.7 1 .4 1.5l-1 1.8c-.4.7-1.2 1.1-2 1-7.5-1.2-13.5-7.2-14.7-14.7-.1-.8.3-1.6 1-2l1.8-1c.5-.3 1.2-.1 1.5.4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-  )}
-  {name === "email" && (
-    <>
-      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
-      <path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-    </>
-  )}
-  {name === "arrow" && (
-    <path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-  )}
-  {name === "cart" && (
-    <>
-      <path d="M5.5 8.5h13l-1 10h-11l-1-10Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-      <path d="M9 9V7a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-      <path d="M9 13h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-    </>
-  )}
-  {name === "send" && (
-    <>
-      <path d="M20.25 4.25 9.7 14.8" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" />
-      <path d="m20.25 4.25-6.3 15.5-3.05-5.85-6.65-3.05 16-6.6Z" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" />
-    </>
-  )}
-</svg>
+<LucideIcon
+  class={`icon icon-${name}`}
+  width={size}
+  height={size}
+  stroke-width={1.45}
+  aria-hidden="true"
+/>
