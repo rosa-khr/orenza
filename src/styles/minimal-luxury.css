@@ -40,6 +40,30 @@ main {
   overflow: clip;
 }
 
+.not-found {
+  display: grid;
+  min-height: 72svh;
+  place-content: center;
+  justify-items: start;
+  gap: 18px;
+  padding: calc(var(--header-height) + 70px) 22px 70px;
+  background: var(--surface-cream);
+}
+
+.not-found h1,
+.not-found p {
+  margin: 0;
+}
+
+.not-found h1 {
+  color: var(--text-dark);
+  font-size: clamp(38px, 10vw, 72px);
+}
+
+.not-found > p:not(.eyebrow) {
+  color: var(--text-muted);
+}
+
 button,
 a,
 input,

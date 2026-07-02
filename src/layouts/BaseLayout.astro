@@ -13,6 +13,7 @@ interface Props {
   canonicalPath: string;
   keywords: string[];
   pageType?: "website" | "article";
+  noindex?: boolean;
 }
 
 const {
@@ -20,13 +21,14 @@ const {
   description,
   canonicalPath,
   keywords,
-  pageType = "website"
+  pageType = "website",
+  noindex = false
 } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL(Astro.url.origin);
 const canonical = new URL(canonicalPath, siteUrl);
 const socialImage = new URL("/images/orenza-leopard-label.png", siteUrl);
-const fullTitle = `${title} | Orenza Coffee`;
+const fullTitle = `${title} | اورنزا`;
 
 const schema = {
   "@context": "https://schema.org",
@@ -40,15 +42,32 @@ const schema = {
       logo: socialImage.toString(),
       email: "order.orenzacoffee@gmail.com",
       telephone: "+989103060396",
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: "+989103060396",
+        contactType: "customer service",
+        availableLanguage: ["fa"]
+      },
       sameAs: ["https://instagram.com/orenzacoffee", "https://ble.ir/khoobrooz"]
     },
     {
+      "@type": "WebSite",
+      "@id": `${siteUrl}#website`,
+      name: "قهوه اورنزا",
+      alternateName: "Orenza Coffee",
+      url: siteUrl.toString(),
+      inLanguage: "fa-IR",
+      publisher: { "@id": `${siteUrl}#organization` }
+    },
+    {
       "@type": "WebPage",
+      "@id": `${canonical}#webpage`,
       name: fullTitle,
       description,
       url: canonical.toString(),
       inLanguage: "fa-IR",
-      isPartOf: { "@type": "WebSite", name: "Orenza Coffee", url: siteUrl.toString() }
+      isPartOf: { "@id": `${siteUrl}#website` },
+      about: { "@id": `${siteUrl}#organization` }
     }
   ]
 };
@@ -62,7 +81,7 @@ const schema = {
     <meta name="theme-color" content="#0b0b0a" />
     <meta name="description" content={description} />
     <meta name="keywords" content={keywords.join(", ")} />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"} />
     <meta name="author" content="Orenza Coffee" />
     <meta property="og:type" content={pageType} />
     <meta property="og:locale" content="fa_IR" />
@@ -72,13 +91,17 @@ const schema = {
     <meta property="og:url" content={canonical.toString()} />
     <meta property="og:image" content={socialImage.toString()} />
     <meta property="og:image:alt" content="نشان تصویری پلنگ ایرانی اورنزا" />
+    <meta property="og:image:width" content="620" />
+    <meta property="og:image:height" content="895" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={socialImage.toString()} />
     <link rel="canonical" href={canonical.toString()} />
+    <link rel="alternate" hreflang="fa-IR" href={canonical.toString()} />
+    <link rel="alternate" hreflang="x-default" href={canonical.toString()} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)}></script>
+    {!noindex && <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)}></script>}
     <title>{fullTitle}</title>
   </head>
   <body>

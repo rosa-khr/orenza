@@ -183,7 +183,7 @@ export const initCart = () => {
         if (builder) {
           builder.scrollIntoView({ behavior: "smooth" });
         } else {
-          window.location.href = "/order";
+          window.location.href = "/order/";
         }
       }
     });
