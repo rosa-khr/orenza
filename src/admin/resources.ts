@@ -34,10 +34,27 @@ const yesNo = [
 ];
 
 export const iranianBanks = [
-  "ملی ایران", "ملت", "تجارت", "صادرات ایران", "سپه", "کشاورزی", "مسکن",
-  "رفاه کارگران", "پاسارگاد", "پارسیان", "سامان", "اقتصاد نوین", "شهر",
-  "آینده", "دی", "کارآفرین", "خاورمیانه", "گردشگری", "ایران‌زمین", "رسالت"
-].map((bank) => ({ label: `بانک ${bank}`, value: bank }));
+  { name: "ملی ایران", code: "bmi" },
+  { name: "ملت", code: "mellat" },
+  { name: "تجارت", code: "tejarat" },
+  { name: "صادرات ایران", code: "bsi" },
+  { name: "سپه", code: "sepah" },
+  { name: "کشاورزی", code: "bki" },
+  { name: "مسکن", code: "maskan" },
+  { name: "رفاه کارگران", code: "rb" },
+  { name: "پاسارگاد", code: "bpi" },
+  { name: "پارسیان", code: "parsian" },
+  { name: "سامان", code: "sb" },
+  { name: "اقتصاد نوین", code: "en" },
+  { name: "شهر", code: "shahr" },
+  { name: "آینده", code: "ba" },
+  { name: "دی", code: "day" },
+  { name: "کارآفرین", code: "kar" },
+  { name: "خاورمیانه", code: "me" },
+  { name: "گردشگری", code: "tourism" },
+  { name: "ایران‌زمین", code: "iz" },
+  { name: "رسالت", code: "resalat" }
+].map((bank) => ({ label: `بانک ${bank.name}`, value: bank.name, code: bank.code }));
 
 export const adminResources: AdminResource[] = [
   {
@@ -47,6 +64,7 @@ export const adminResources: AdminResource[] = [
     description: "قهوه‌ها، قیمت هر وزن و وضعیت عرضه",
     fields: [
       { key: "titleFa", label: "عنوان فارسی", type: "text", required: true, list: true },
+      { key: "sortOrder", label: "ترتیب نمایش", type: "number", required: true, min: 1, list: true },
       { key: "titleEn", label: "عنوان انگلیسی", type: "text", required: true, dir: "ltr" },
       { key: "categoryId", label: "دسته‌بندی", type: "select", required: true },
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
@@ -87,9 +105,42 @@ export const adminResources: AdminResource[] = [
         ]
       },
       { key: "blendType", label: "ترکیب دانه", type: "text", required: true, list: true },
-      { key: "purchasePricePerKg", label: "قیمت خرید هر کیلو (تومان)", type: "number", required: true, min: 0, list: true },
-      { key: "salePricePerKg", label: "قیمت فروش هر کیلو (تومان)", type: "number", required: true, min: 0, list: true },
-      { key: "profitPerKg", label: "سود هر کیلو (تومان)", type: "number", list: true, readonly: true },
+      {
+        key: "saleType",
+        label: "نوع فروش",
+        type: "select",
+        required: true,
+        list: true,
+        options: [
+          { label: "فروش وزنی", value: "weighted" },
+          { label: "فروش بسته‌ای", value: "packaged" }
+        ]
+      },
+      {
+        key: "packageWeightGrams",
+        label: "وزن ثابت بسته",
+        type: "select",
+        required: true,
+        options: [
+          { label: "۲۵۰ گرم", value: "250" },
+          { label: "۵۰۰ گرم", value: "500" },
+          { label: "۱ کیلوگرم", value: "1000" }
+        ]
+      },
+      {
+        key: "stockStatus",
+        label: "امکان تأمین",
+        type: "select",
+        required: true,
+        list: true,
+        options: [
+          { label: "موجود", value: "inStock" },
+          { label: "ناموجود", value: "outOfStock" }
+        ]
+      },
+      { key: "purchasePricePerKg", label: "قیمت خرید واحد (تومان)", type: "number", required: true, min: 0, list: true },
+      { key: "salePricePerKg", label: "قیمت فروش واحد (تومان)", type: "number", required: true, min: 0, list: true },
+      { key: "profitPerKg", label: "سود واحد (تومان)", type: "number", list: true, readonly: true },
       { key: "imageUrl", label: "تصویر محصول", type: "image", dir: "ltr" },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]

@@ -7,6 +7,9 @@ type ProductPriceRow = {
   title_fa: string;
   is_active: boolean;
   sale_price_per_kg: string;
+  sale_type: "weighted" | "packaged";
+  package_weight_grams: number;
+  stock_status: "inStock" | "outOfStock";
 };
 
 const nextOrderNumber = () => {
@@ -49,7 +52,7 @@ export class OrderService {
     return withTransaction(this.pool, async (client) => {
       const productIds = [...new Set(data.items.map((item) => item.productId))];
       const products = await client.query<ProductPriceRow>(
-        `SELECT id, title_fa, is_active, sale_price_per_kg
+        `SELECT id, title_fa, is_active, sale_price_per_kg, sale_type, package_weight_grams, stock_status
          FROM products WHERE id = ANY($1::uuid[]) FOR SHARE`,
         [productIds]
       );
@@ -59,7 +62,15 @@ export class OrderService {
         if (!product?.is_active) {
           throw Object.assign(new Error("یکی از قهوه‌های انتخابی در حال حاضر قابل سفارش نیست."), { statusCode: 422 });
         }
-        const unitPrice = Math.round(Number(product.sale_price_per_kg) * item.weight / 1000);
+        if (product.stock_status !== "inStock") {
+          throw Object.assign(new Error(`${product.title_fa} در حال حاضر ناموجود است.`), { statusCode: 422 });
+        }
+        if (product.sale_type === "packaged" && item.weight !== product.package_weight_grams) {
+          throw Object.assign(new Error("وزن بسته این محصول تغییر کرده است؛ لطفاً دوباره آن را انتخاب کنید."), { statusCode: 422 });
+        }
+        const unitPrice = product.sale_type === "packaged"
+          ? Number(product.sale_price_per_kg)
+          : Math.round(Number(product.sale_price_per_kg) * item.weight / 1000);
         return {
           ...item,
           productTitle: product.title_fa,

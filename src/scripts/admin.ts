@@ -1,3 +1,16 @@
+import {
+  AllCommunityModule,
+  ModuleRegistry,
+  createGrid,
+  type ColDef,
+  type GridApi,
+  type ICellRendererParams
+} from "ag-grid-community";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-material.css";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
 type ResourceField = {
   key: string;
   label: string;
@@ -32,7 +45,42 @@ const statusLabels: Record<string, string> = {
   fixed: "مبلغ ثابت",
   cardToCard: "کارت‌به‌کارت",
   bankGateway: "درگاه بانکی",
-  zarinpal: "زرین‌پال"
+  zarinpal: "زرین‌پال",
+  weighted: "فروش وزنی",
+  packaged: "فروش بسته‌ای",
+  inStock: "موجود",
+  outOfStock: "ناموجود"
+};
+
+const bankLogoCodes: Record<string, string> = {
+  "ملی ایران": "bmi",
+  "ملت": "mellat",
+  "تجارت": "tejarat",
+  "صادرات ایران": "bsi",
+  "سپه": "sepah",
+  "کشاورزی": "bki",
+  "مسکن": "maskan",
+  "رفاه کارگران": "rb",
+  "پاسارگاد": "bpi",
+  "پارسیان": "parsian",
+  "سامان": "sb",
+  "اقتصاد نوین": "en",
+  "شهر": "shahr",
+  "آینده": "ba",
+  "دی": "day",
+  "کارآفرین": "kar",
+  "خاورمیانه": "me",
+  "گردشگری": "tourism",
+  "ایران‌زمین": "iz",
+  "رسالت": "resalat"
+};
+
+const createBankLogo = (code: string, label: string) => {
+  const logo = document.createElement("i");
+  logo.className = `admin-bank-logo bank-${code}`;
+  logo.setAttribute("role", "img");
+  logo.setAttribute("aria-label", `لوگوی ${label}`);
+  return logo;
 };
 
 const api = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
@@ -124,7 +172,13 @@ const enhanceDropdowns = (root: ParentNode = document) => {
     const search = panel.querySelector<HTMLInputElement>("input")!;
     const optionsRoot = panel.querySelector<HTMLElement>(":scope > div")!;
     const syncLabel = () => {
-      value.textContent = select.selectedOptions[0]?.textContent || "انتخاب کنید";
+      const selected = select.selectedOptions[0];
+      value.replaceChildren();
+      const label = document.createElement("span");
+      label.textContent = selected?.textContent || "انتخاب کنید";
+      const bankCode = selected?.dataset.bankCode;
+      if (bankCode) value.append(createBankLogo(bankCode, selected?.textContent || ""));
+      value.append(label);
       value.classList.toggle("placeholder", !select.value);
     };
     const render = () => {
@@ -136,7 +190,20 @@ const enhanceDropdowns = (root: ParentNode = document) => {
         const button = document.createElement("button");
         button.type = "button";
         button.classList.toggle("selected", option.value === select.value);
-        button.innerHTML = `<span>${option.textContent}</span>${option.value === select.value ? "<b>✓</b>" : ""}`;
+        const optionLabel = document.createElement("span");
+        optionLabel.className = "admin-dropdown-option-label";
+        if (option.dataset.bankCode) {
+          optionLabel.append(createBankLogo(option.dataset.bankCode, option.textContent || ""));
+        }
+        const optionText = document.createElement("span");
+        optionText.textContent = option.textContent;
+        optionLabel.append(optionText);
+        button.append(optionLabel);
+        if (option.value === select.value) {
+          const check = document.createElement("b");
+          check.textContent = "✓";
+          button.append(check);
+        }
         button.addEventListener("click", () => {
           select.value = option.value;
           select.dispatchEvent(new Event("change", { bubbles: true }));
@@ -335,93 +402,123 @@ const displayValue = (value: unknown, field: ResourceField) => {
   return String(value);
 };
 
-const initList = (root: HTMLElement, config: ResourceConfig) => {
-  const rows = root.querySelector<HTMLTableSectionElement>("[data-admin-rows]")!;
-  const total = root.querySelector<HTMLElement>("[data-admin-total]")!;
-  const pageLabel = root.querySelector<HTMLElement>("[data-admin-page]")!;
-  const search = root.querySelector<HTMLInputElement>("[data-admin-search]");
-  const filters = [...root.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-admin-filter]")];
-  let page = 1;
-  let totalPages = 1;
-  let timer = 0;
-  enhanceDropdowns(root);
-  enhancePersianDates(root);
+const persianGridLocale: Record<string, string> = {
+  page: "صفحه",
+  more: "بیشتر",
+  to: "تا",
+  of: "از",
+  next: "بعدی",
+  last: "آخرین",
+  first: "اولین",
+  previous: "قبلی",
+  loadingOoo: "در حال بارگذاری…",
+  selectAll: "انتخاب همه",
+  searchOoo: "جستجو…",
+  blanks: "خالی",
+  filterOoo: "فیلتر…",
+  equals: "برابر",
+  notEqual: "نامساوی",
+  contains: "شامل",
+  notContains: "شامل نباشد",
+  startsWith: "شروع با",
+  endsWith: "پایان با",
+  lessThan: "کمتر از",
+  greaterThan: "بیشتر از",
+  lessThanOrEqual: "کمتر یا مساوی",
+  greaterThanOrEqual: "بیشتر یا مساوی",
+  inRange: "در بازه",
+  andCondition: "و",
+  orCondition: "یا",
+  applyFilter: "اعمال",
+  resetFilter: "بازنشانی",
+  clearFilter: "پاک‌کردن",
+  cancelFilter: "لغو",
+  noRowsToShow: "رکوردی برای نمایش وجود ندارد",
+  pinColumn: "سنجاق‌کردن ستون",
+  autosizeThiscolumn: "اندازه خودکار ستون",
+  autosizeAllColumns: "اندازه خودکار همه ستون‌ها",
+  resetColumns: "بازنشانی ستون‌ها",
+  sortAscending: "مرتب‌سازی صعودی",
+  sortDescending: "مرتب‌سازی نزولی",
+  sortUnSort: "حذف مرتب‌سازی"
+};
 
-  const load = async () => {
-    rows.innerHTML = `<tr><td colspan="${config.fields.length + 2}"><div class="admin-loading">در حال دریافت اطلاعات…</div></td></tr>`;
-    const params = new URLSearchParams({ page: String(page), pageSize: "15" });
-    if (search?.value.trim()) params.set("search", search.value.trim());
-    filters.forEach((input) => input.value && params.set(input.dataset.adminFilter || "", input.value));
+const gridIcons = {
+  eye: '<svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8 4 20Z"/><path d="m13.8 7 3.2 3.2"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 5v5m4-5v5"/></svg>',
+  invoice: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>',
+  approve: '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',
+  cancel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>'
+};
+
+const fetchAllAdminRows = async (resource: string) => {
+  const rows: Record<string, unknown>[] = [];
+  let page = 1;
+  let total = 0;
+  do {
+    const payload = await api<{ items: Record<string, unknown>[]; total: number }>(
+      `/api/v1/admin/${resource}?page=${page}&pageSize=100`
+    );
+    rows.push(...payload.items);
+    total = payload.total;
+    page += 1;
+  } while (rows.length < total);
+  return rows;
+};
+
+const initList = (root: HTMLElement, config: ResourceConfig) => {
+  const gridElement = root.querySelector<HTMLElement>("[data-admin-grid]");
+  const countElement = root.querySelector<HTMLElement>("[data-admin-grid-count]");
+  if (!gridElement) return;
+
+  const storageKey = `orenza.admin.grid.${config.key}`;
+  let gridApi: GridApi<Record<string, unknown>>;
+
+  const refreshCount = () => {
+    if (!countElement || !gridApi) return;
+    countElement.textContent = `${faNumber.format(gridApi.getDisplayedRowCount())} رکورد`;
+  };
+
+  const saveGridState = () => {
+    if (!gridApi) return;
+    sessionStorage.setItem(storageKey, JSON.stringify({
+      columnState: gridApi.getColumnState(),
+      filterModel: gridApi.getFilterModel()
+    }));
+  };
+
+  const loadRows = async () => {
+    gridApi.setGridOption("loading", true);
     try {
-      const payload = await api<{ items: Record<string, unknown>[]; total: number; page: number; pageSize: number }>(
-        `/api/v1/admin/${config.key}?${params}`
-      );
-      totalPages = Math.max(1, Math.ceil(payload.total / payload.pageSize));
-      page = payload.page;
-      pageLabel.textContent = faNumber.format(page);
-      total.textContent = `${faNumber.format(payload.total)} رکورد`;
-      rows.replaceChildren();
-      if (!payload.items.length) {
-        rows.innerHTML = `<tr><td colspan="${config.fields.length + 2}"><div class="admin-empty">رکوردی پیدا نشد.</div></td></tr>`;
-        return;
-      }
-      payload.items.forEach((item, index) => {
-        const tr = document.createElement("tr");
-        const indexCell = document.createElement("td");
-        indexCell.textContent = faNumber.format((page - 1) * payload.pageSize + index + 1);
-        tr.append(indexCell);
-        config.fields.forEach((field) => {
-          const td = document.createElement("td");
-          const value = item[field.key];
-          td.textContent = displayValue(value, field);
-          if (["isActive", "isPublished", "orderStatus", "paymentStatus"].includes(field.key)) {
-            td.innerHTML = `<span class="admin-badge admin-status status-${String(value)}">${td.textContent}</span>`;
-          }
-          tr.append(td);
-        });
-        const actions = document.createElement("td");
-        actions.className = "admin-row-actions";
-        const icon = {
-          eye: '<svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>',
-          pencil: '<svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8 4 20Z"/><path d="m13.8 7 3.2 3.2"/></svg>',
-          trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 5v5m4-5v5"/></svg>',
-          invoice: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>',
-          approve: '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',
-          cancel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>'
-        };
-        const isPendingOrder = config.key === "orders" && item.orderStatus === "new" && item.paymentStatus === "pending";
-        actions.innerHTML = `
-          <a href="/admin/${config.key}/view/?id=${item.id}" aria-label="مشاهده" title="مشاهده">${icon.eye}</a>
-          <a href="/admin/${config.key}/edit/?id=${item.id}" aria-label="ویرایش" title="ویرایش">${icon.pencil}</a>
-          ${config.key === "orders" ? `<a href="/admin/orders/invoice/?id=${item.id}" aria-label="فاکتور" title="مشاهده و چاپ فاکتور">${icon.invoice}</a>` : ""}
-          ${isPendingOrder ? `<button type="button" data-order-action="approve" data-id="${item.id}" data-payment="${item.paymentStatus}" aria-label="تأیید سفارش" title="تأیید سفارش">${icon.approve}</button>` : ""}
-          ${isPendingOrder ? `<button type="button" data-order-action="cancel" data-id="${item.id}" data-payment="${item.paymentStatus}" aria-label="لغو سفارش" title="لغو سفارش">${icon.cancel}</button>` : ""}
-          ${config.key !== "orders" || isPendingOrder ? `<button type="button" data-delete="${item.id}" aria-label="حذف" title="حذف">${icon.trash}</button>` : ""}`;
-        tr.append(actions);
-        rows.append(tr);
-      });
+      const items = await fetchAllAdminRows(config.key);
+      gridApi.setGridOption("rowData", items);
+      refreshCount();
     } catch (error) {
-      rows.innerHTML = `<tr><td colspan="${config.fields.length + 2}"><div class="admin-empty">${error instanceof Error ? error.message : "خطا در دریافت اطلاعات"}</div></td></tr>`;
+      gridApi.setGridOption("rowData", []);
+      toast(error instanceof Error ? error.message : "خطا در دریافت اطلاعات", "error");
+    } finally {
+      gridApi.setGridOption("loading", false);
     }
   };
 
-  rows.addEventListener("click", async (event) => {
-    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-delete]");
-    if (button) {
-      const accepted = await askConfirm("حذف رکورد", "این عملیات قابل بازگشت نیست. از حذف این رکورد مطمئن هستید؟", "بله، حذف شود");
-      if (!accepted) return;
-      try {
-        await api(`/api/v1/admin/${config.key}/${button.dataset.delete}`, { method: "DELETE" });
-        toast("رکورد با موفقیت حذف شد.");
-        await load();
-      } catch (error) {
-        toast(error instanceof Error ? error.message : "حذف انجام نشد.", "error");
-      }
-      return;
+  const deleteRow = async (id: string) => {
+    const accepted = await askConfirm(
+      "حذف رکورد",
+      "این عملیات قابل بازگشت نیست. از حذف این رکورد مطمئن هستید؟",
+      "بله، حذف شود"
+    );
+    if (!accepted) return;
+    try {
+      await api(`/api/v1/admin/${config.key}/${id}`, { method: "DELETE" });
+      toast("رکورد با موفقیت حذف شد.");
+      await loadRows();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "حذف انجام نشد.", "error");
     }
-    const orderAction = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-order-action]");
-    if (!orderAction) return;
-    const action = orderAction.dataset.orderAction;
+  };
+
+  const changeOrderStatus = async (row: Record<string, unknown>, action: "approve" | "cancel") => {
     const accepted = await askConfirm(
       action === "approve" ? "تأیید سفارش" : "لغو سفارش",
       action === "approve"
@@ -431,43 +528,183 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     );
     if (!accepted) return;
     try {
-      await api(`/api/v1/admin/orders/${orderAction.dataset.id}`, {
+      await api(`/api/v1/admin/orders/${row.id}`, {
         method: "PUT",
         body: JSON.stringify({
           orderStatus: action === "approve" ? "processing" : "canceled",
-          paymentStatus: orderAction.dataset.payment || "pending",
+          paymentStatus: row.paymentStatus || "pending",
           adminNote: action === "cancel" ? "سفارش توسط مدیر لغو شد." : null
         })
       });
       toast(action === "approve" ? "سفارش تأیید شد." : "سفارش لغو شد.");
-      await load();
+      await loadRows();
     } catch (error) {
       toast(error instanceof Error ? error.message : "تغییر وضعیت انجام نشد.", "error");
     }
+  };
+
+  const actionRenderer = ({ data }: ICellRendererParams<Record<string, unknown>>) => {
+    const row = data;
+    const actions = document.createElement("div");
+    actions.className = "admin-row-actions";
+    if (!row?.id) return actions;
+    const id = String(row.id);
+    const link = (href: string, label: string, icon: string) => {
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.title = label;
+      anchor.setAttribute("aria-label", label);
+      anchor.innerHTML = icon;
+      return anchor;
+    };
+    const button = (label: string, icon: string, onClick: () => void) => {
+      const element = document.createElement("button");
+      element.type = "button";
+      element.title = label;
+      element.setAttribute("aria-label", label);
+      element.innerHTML = icon;
+      element.addEventListener("click", onClick);
+      return element;
+    };
+    actions.append(
+      link(`/admin/${config.key}/view/?id=${id}`, "مشاهده", gridIcons.eye),
+      link(`/admin/${config.key}/edit/?id=${id}`, "ویرایش", gridIcons.pencil)
+    );
+    const isPendingOrder = config.key === "orders" && row.orderStatus === "new" && row.paymentStatus === "pending";
+    if (config.key === "orders") {
+      actions.append(link(`/admin/orders/invoice/?id=${id}`, "مشاهده و چاپ فاکتور", gridIcons.invoice));
+    }
+    if (isPendingOrder) {
+      actions.append(
+        button("تأیید سفارش", gridIcons.approve, () => void changeOrderStatus(row, "approve")),
+        button("لغو سفارش", gridIcons.cancel, () => void changeOrderStatus(row, "cancel"))
+      );
+    }
+    if (config.key !== "orders" || isPendingOrder) {
+      actions.append(button("حذف", gridIcons.trash, () => void deleteRow(id)));
+    }
+    return actions;
+  };
+
+  const columns: ColDef<Record<string, unknown>>[] = [
+    {
+      headerName: "ردیف",
+      valueGetter: ({ node }) => (node?.rowIndex ?? 0) + 1,
+      valueFormatter: ({ value }) => faNumber.format(Number(value)),
+      width: 78,
+      minWidth: 78,
+      maxWidth: 78,
+      filter: false,
+      sortable: false,
+      pinned: "right"
+    },
+    ...config.fields.map((field): ColDef<Record<string, unknown>> => {
+      const isStatus = ["isActive", "isPublished", "orderStatus", "paymentStatus", "saleType", "stockStatus"].includes(field.key);
+      return {
+        headerName: field.label,
+        field: field.key,
+        minWidth: isStatus ? 120 : field.type === "number" ? 145 : 150,
+        width: isStatus ? 130 : undefined,
+        maxWidth: isStatus ? 150 : undefined,
+        flex: isStatus ? undefined : field.type === "textarea" ? 1.5 : 1,
+        cellClass: isStatus ? "admin-status-cell" : undefined,
+        headerClass: isStatus ? "admin-status-header" : undefined,
+        filter: field.type === "number" ? "agNumberColumnFilter" : "agTextColumnFilter",
+        filterValueGetter: ({ data }) => displayValue(data?.[field.key], field),
+        valueFormatter: ({ value }) => displayValue(value, field),
+        cellRenderer: isStatus
+          ? ({ value }: ICellRendererParams<Record<string, unknown>>) => {
+              const badge = document.createElement("span");
+              badge.className = `admin-badge admin-status status-${String(value)}`;
+              badge.textContent = displayValue(value, field);
+              return badge;
+            }
+          : undefined
+      };
+    }),
+    {
+      headerName: "عملیات",
+      field: "id",
+      pinned: "left",
+      width: config.key === "orders" ? 230 : 132,
+      minWidth: config.key === "orders" ? 230 : 132,
+      maxWidth: config.key === "orders" ? 230 : 132,
+      filter: false,
+      sortable: false,
+      cellRenderer: actionRenderer
+    }
+  ];
+
+  gridApi = createGrid<Record<string, unknown>>(gridElement, {
+    theme: "legacy",
+    columnDefs: columns,
+    rowData: [],
+    animateRows: true,
+    enableRtl: true,
+    localeText: persianGridLocale,
+    rowHeight: 56,
+    headerHeight: 52,
+    pagination: true,
+    paginationPageSize: 15,
+    paginationPageSizeSelector: [15, 25, 50, 100],
+    suppressCellFocus: true,
+    defaultColDef: {
+      resizable: true,
+      sortable: true,
+      filter: true,
+      floatingFilter: false,
+      suppressHeaderMenuButton: false,
+      filterParams: {
+        buttons: ["reset"],
+        debounceMs: 250
+      }
+    },
+    onGridReady: ({ api: readyApi }) => {
+      const savedState = sessionStorage.getItem(storageKey);
+      if (savedState) {
+        try {
+          const state = JSON.parse(savedState) as {
+            columnState?: ReturnType<GridApi["getColumnState"]>;
+            filterModel?: ReturnType<GridApi["getFilterModel"]>;
+          };
+          if (state.columnState?.length) readyApi.applyColumnState({ state: state.columnState, applyOrder: true });
+          if (state.filterModel) readyApi.setFilterModel(state.filterModel);
+        } catch {
+          sessionStorage.removeItem(storageKey);
+        }
+      }
+      void loadRows();
+    },
+    onFilterChanged: () => {
+      refreshCount();
+      saveGridState();
+    },
+    onSortChanged: saveGridState,
+    onColumnMoved: saveGridState,
+    onColumnPinned: saveGridState,
+    onColumnVisible: saveGridState,
+    onColumnResized: ({ finished }) => {
+      if (finished) saveGridState();
+    }
   });
-  search?.addEventListener("input", () => {
-    window.clearTimeout(timer);
-    timer = window.setTimeout(() => { page = 1; void load(); }, 350);
-  });
-  filters.forEach((input) => input.addEventListener("change", () => { page = 1; void load(); }));
-  root.querySelector("[data-admin-prev]")?.addEventListener("click", () => {
-    if (page > 1) { page -= 1; void load(); }
-  });
-  root.querySelector("[data-admin-next]")?.addEventListener("click", () => {
-    if (page < totalPages) { page += 1; void load(); }
-  });
-  void load();
 };
 
 const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   const input = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
   if (!input) return;
+  let normalizedValue = "";
   if ((input.type === "date" || input.dataset.persianReady) && value) {
-    input.value = String(value).slice(0, 10);
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+    normalizedValue = String(value).slice(0, 10);
   }
-  else if (Array.isArray(value)) input.value = value.join(", ");
-  else input.value = value === null || value === undefined ? "" : String(value);
+  else if (Array.isArray(value)) normalizedValue = value.join(", ");
+  else normalizedValue = value === null || value === undefined ? "" : String(value);
+
+  if (input instanceof HTMLSelectElement && normalizedValue &&
+      ![...input.options].some((option) => option.value === normalizedValue)) {
+    input.add(new Option(statusLabels[normalizedValue] || normalizedValue, normalizedValue));
+  }
+  input.value = normalizedValue;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
 };
 
 const loadLookups = async (form: HTMLFormElement) => {
@@ -542,12 +779,16 @@ const initPaymentCards = (form: HTMLFormElement, paymentMethodId: string, readon
       }
       payload.items.forEach((card) => {
         const article = document.createElement("article");
+        const bankCode = bankLogoCodes[card.bankName] || "bmi";
         article.innerHTML = `
-          <div><span>${card.bankName}</span><strong dir="ltr">${card.cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ")}</strong></div>
+          <header class="admin-bank-card-head">
+            <span class="admin-bank-identity"><i class="admin-bank-logo bank-${bankCode}" role="img" aria-label="لوگوی بانک ${card.bankName}"></i><b>بانک ${card.bankName}</b></span>
+            <span class="admin-badge admin-status status-${card.isActive}">${card.isActive ? "فعال" : "غیرفعال"}</span>
+          </header>
+          <div class="admin-bank-card-number"><small>شماره کارت</small><strong dir="ltr">${card.cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ")}</strong></div>
           <div><small>شبا</small><b dir="ltr">IR${card.shebaNumber}</b></div>
           <div><small>حساب</small><b dir="ltr">${card.accountNumber}</b></div>
           <div><small>صاحب حساب</small><b>${card.accountOwner}</b></div>
-          <span class="admin-badge admin-status status-${card.isActive}">${card.isActive ? "فعال" : "غیرفعال"}</span>
           ${readonly ? "" : `<footer><button type="button" data-card-edit="${card.id}">ویرایش</button><button type="button" data-card-delete="${card.id}">حذف</button></footer>`}`;
         article.querySelector("[data-card-edit]")?.addEventListener("click", () => openEditor(card));
         article.querySelector("[data-card-delete]")?.addEventListener("click", async () => {
@@ -609,26 +850,53 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   enhancePersianDates(form);
   const updateProductProfit = () => {
     if (config.key !== "products") return;
+    const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
+    const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLSelectElement | null;
     const purchase = form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null;
     const sale = form.elements.namedItem("salePricePerKg") as HTMLInputElement | null;
     const profit = form.elements.namedItem("profitPerKg") as HTMLInputElement | null;
     const purchaseValue = Number(purchase?.value || 0);
     const saleValue = Number(sale?.value || 0);
+    const isPackaged = saleType?.value === "packaged";
+    const packageField = form.querySelector<HTMLElement>('[data-admin-field="packageWeightGrams"]');
+    if (packageField) packageField.hidden = !isPackaged;
     if (profit) profit.value = String(saleValue - purchaseValue);
     const breakdown = form.querySelector<HTMLElement>("[data-price-breakdown] > div");
     if (breakdown) {
-      breakdown.innerHTML = [100, 250, 500, 1000].map((grams) => {
+      const weights = isPackaged ? [Number(packageWeight?.value || 250)] : [250, 500, 1000];
+      breakdown.innerHTML = weights.map((grams) => {
         const ratio = grams / 1000;
+        const purchaseAmount = isPackaged ? purchaseValue : Math.round(purchaseValue * ratio);
+        const saleAmount = isPackaged ? saleValue : Math.round(saleValue * ratio);
         return `<article>
-          <strong>${faNumber.format(grams)} گرم</strong>
-          <span>خرید <b>${money.format(Math.round(purchaseValue * ratio))}</b></span>
-          <span>فروش <b>${money.format(Math.round(saleValue * ratio))}</b></span>
-          <span>سود <b>${money.format(Math.round((saleValue - purchaseValue) * ratio))}</b></span>
+          <strong>${isPackaged ? "بسته " : ""}${faNumber.format(grams)} گرم</strong>
+          <span>خرید <b>${money.format(purchaseAmount)}</b></span>
+          <span>فروش <b>${money.format(saleAmount)}</b></span>
+          <span>سود <b>${money.format(saleAmount - purchaseAmount)}</b></span>
         </article>`;
       }).join("");
     }
   };
   if (config.key === "products") {
+    const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
+    const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLSelectElement | null;
+    const stockStatus = form.elements.namedItem("stockStatus") as HTMLSelectElement | null;
+    if (mode === "add") {
+      if (saleType && !saleType.value) {
+        saleType.value = "weighted";
+        saleType.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      if (packageWeight && !packageWeight.value) {
+        packageWeight.value = "250";
+        packageWeight.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      if (stockStatus && !stockStatus.value) {
+        stockStatus.value = "inStock";
+        stockStatus.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+    saleType?.addEventListener("change", updateProductProfit);
+    packageWeight?.addEventListener("change", updateProductProfit);
     (form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null)?.addEventListener("input", updateProductProfit);
     (form.elements.namedItem("salePricePerKg") as HTMLInputElement | null)?.addEventListener("input", updateProductProfit);
     updateProductProfit();
@@ -671,7 +939,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     config.fields.forEach((field) => {
       if (field.readonly) return;
       const raw = data.get(field.key);
-      if (field.type === "number") body[field.key] = raw === "" ? null : Number(raw);
+      if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : Number(raw);
       else if (field.key === "isActive" || field.key === "isPublished") body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;

@@ -35,7 +35,7 @@ const orderReadonly = new Set([
   >
     <div class="admin-form-grid">
       {resource.fields.map((field) => (
-        <label class:list={["admin-field", { wide: field.type === "textarea" }]}>
+        <label class:list={["admin-field", { wide: field.type === "textarea" }]} data-admin-field={field.key}>
           <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
           {field.type === "textarea" ? (
             <textarea name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} minlength={field.required ? 2 : undefined}></textarea>
@@ -80,9 +80,9 @@ const orderReadonly = new Set([
             <label><span>نام صاحب حساب</span><input type="text" data-card-input="accountOwner" /></label>
             <label>
               <span>بانک</span>
-              <select data-card-input="bankName">
+              <select data-card-input="bankName" data-bank-select>
                 <option value="">انتخاب بانک</option>
-                {iranianBanks.map((bank) => <option value={bank.value}>{bank.label}</option>)}
+                {iranianBanks.map((bank) => <option value={bank.value} data-bank-code={bank.code}>{bank.label}</option>)}
               </select>
             </label>
             <label>

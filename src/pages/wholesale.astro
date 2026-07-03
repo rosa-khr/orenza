@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const whatsappText = encodeURIComponent("سلام، برای خرید عمده قهوه اورنزا و تأمین کافه نیاز به مشاوره دارم.");
+---
+
+<BaseLayout
+  title="خرید عمده قهوه برای کافه، رستوران و سازمان"
+  description="خرید عمده قهوه تازه‌رست اورنزا برای کافه، رستوران و سازمان؛ انتخاب ترکیب عربیکا و روبوستا، آسیاب متناسب با دستگاه و برنامه تأمین منظم."
+  canonicalPath="/wholesale/"
+  keywords={["خرید عمده قهوه", "قهوه عمده برای کافه", "تامین قهوه کافه", "قیمت عمده قهوه", "قهوه تازه رست عمده"]}
+>
+  <section class="wholesale-hero">
+    <p class="eyebrow">ORENZA FOR BUSINESS</p>
+    <h1>قهوه‌ای که در شلوغی کافه،<br />همان کیفیت همیشگی را دارد.</h1>
+    <p>ترکیب، رُست و آسیاب را با دستگاه و منوی شما هماهنگ می‌کنیم؛ بعد، تأمین منظم را طوری می‌چینیم که قهوه همیشه تازه برسد.</p>
+    <div>
+      <a class="button button-primary" href={`https://wa.me/989103060396?text=${whatsappText}`} target="_blank" rel="noreferrer">مشاوره خرید عمده</a>
+      <a class="wholesale-secondary" href="tel:+989103060396">تماس مستقیم</a>
+    </div>
+  </section>
+
+  <section class="wholesale-benefits" aria-labelledby="wholesale-benefits-title">
+    <header>
+      <span>WHO WE SERVE</span>
+      <h2 id="wholesale-benefits-title">برای سرو حرفه‌ای، نه صرفاً خرید بیشتر.</h2>
+    </header>
+    <div>
+      <article><small>۰۱</small><h3>ترکیب متناسب با منو</h3><p>از اسپرسوی روزانه تا نوشیدنی‌های بر پایه شیر، ترکیبی انتخاب می‌شود که در فنجان شما درست جواب بدهد.</p></article>
+      <article><small>۰۲</small><h3>آسیاب متناسب با دستگاه</h3><p>درجه آسیاب با اسپرسوساز صنعتی یا نیمه‌صنعتی شما هماهنگ می‌شود تا عصاره‌گیری قابل تکرار بماند.</p></article>
+      <article><small>۰۳</small><h3>تأمین منظم و تازه</h3><p>حجم و فاصله ارسال بر اساس مصرف واقعی تنظیم می‌شود؛ نه آن‌قدر کم که تمام شود و نه آن‌قدر زیاد که تازگی از دست برود.</p></article>
+    </div>
+  </section>
+
+  <section class="wholesale-process" aria-labelledby="wholesale-process-title">
+    <header><span>HOW IT WORKS</span><h2 id="wholesale-process-title">شروع همکاری، در سه قدم روشن.</h2></header>
+    <ol>
+      <li><b>نیازسنجی</b><p>دستگاه، حجم مصرف، منو و ذائقه مشتریان را با هم مرور می‌کنیم.</p></li>
+      <li><b>انتخاب و تست</b><p>ترکیب و پروفایل رُست مناسب انتخاب می‌شود تا نتیجه در دستگاه خودتان سنجیده شود.</p></li>
+      <li><b>برنامه تأمین</b><p>پس از تأیید، وزن بسته‌ها و زمان‌بندی ارسال منظم مشخص می‌شود.</p></li>
+    </ol>
+  </section>
+
+  <section class="wholesale-cta">
+    <span>برای شروع، فقط درباره دستگاه و مصرف روزانه‌ات بگو.</span>
+    <h2>باقی مسیر را با هم دقیق می‌کنیم.</h2>
+    <a href={`https://wa.me/989103060396?text=${whatsappText}`} target="_blank" rel="noreferrer">گفت‌وگو در واتساپ</a>
+  </section>
+</BaseLayout>

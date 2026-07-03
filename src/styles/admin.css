@@ -76,6 +76,79 @@ a { color: inherit; text-decoration: none; }
 .admin-primary-action { background: var(--admin-green); color: #f6eddf; }
 .admin-secondary-action { border: 1px solid var(--admin-line); background: var(--admin-paper); }
 .admin-card { border: 1px solid var(--admin-line); border-radius: 9px; background: var(--admin-paper); box-shadow: 0 16px 40px rgba(62,45,24,.04); }
+.admin-resource { overflow: hidden; }
+.admin-grid-heading {
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #e9dfd1;
+  padding: 12px 16px;
+}
+.admin-grid-heading > div { display: grid; gap: 3px; }
+.admin-grid-heading strong { color: #39342e; font-size: 12px; }
+.admin-grid-heading span { color: var(--admin-muted); font-size: 10px; }
+.admin-grid-heading > span { flex: 0 0 auto; color: #76592f; }
+.admin-grid-wrap {
+  width: 100%;
+  height: min(72vh,720px);
+  min-height: 520px;
+  overflow: hidden;
+  --ag-font-family: Dana, sans-serif;
+  --ag-font-size: 11px;
+  --ag-background-color: #fffdf8;
+  --ag-foreground-color: #3f3a34;
+  --ag-border-color: #e4dacb;
+  --ag-header-background-color: #f3ede3;
+  --ag-header-foreground-color: #5f574d;
+  --ag-odd-row-background-color: #fffcf7;
+  --ag-row-hover-color: #f8f3ea;
+  --ag-selected-row-background-color: #edf2ee;
+  --ag-input-border-color: #d8cdbd;
+  --ag-input-focus-border-color: #a67d43;
+  --ag-accent-color: #173f30;
+  --ag-checkbox-checked-color: #173f30;
+  --ag-row-border-color: #eee7dc;
+  --ag-wrapper-border-radius: 0;
+  --ag-cell-horizontal-padding: 13px;
+  --ag-icon-size: 14px;
+}
+.admin-data-grid { width: 100%; height: 100%; }
+.admin-grid-wrap .ag-root-wrapper { border: 0; border-radius: 0; }
+.admin-grid-wrap .ag-header { border-bottom-color: #ded3c3; }
+.admin-grid-wrap .ag-header-cell-label { font-weight: 700; }
+.admin-grid-wrap .ag-floating-filter { background: #faf6ef; }
+.admin-grid-wrap .ag-floating-filter-input {
+  min-height: 31px;
+  border-radius: 5px;
+  background: #fffdf9;
+  color: #4d463e;
+}
+.admin-grid-wrap .ag-cell { display: flex; align-items: center; }
+.admin-grid-wrap .ag-cell-value { min-width: 0; }
+.admin-grid-wrap .admin-status-cell { justify-content: center; }
+.admin-grid-wrap .admin-status-header .ag-header-cell-label { justify-content: center; }
+.admin-grid-wrap .ag-paging-panel {
+  min-height: 52px;
+  border-top-color: #e5dbcc;
+  color: #6d655a;
+}
+.admin-grid-wrap .ag-paging-page-size .ag-picker-field-wrapper {
+  min-height: 32px;
+  border-color: #d9cebe;
+  border-radius: 5px;
+  background: #fff;
+}
+.admin-grid-wrap .ag-overlay-loading-center,
+.admin-grid-wrap .ag-overlay-no-rows-center {
+  border: 1px solid #dfd5c4;
+  border-radius: 7px;
+  background: #fffdf8;
+  padding: 12px 18px;
+  box-shadow: 0 12px 30px rgba(50,37,20,.08);
+  color: #746e64;
+}
 .admin-list-toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 15px; border-bottom: 1px solid #eee5d7; }
 .admin-list-toolbar input, .admin-list-toolbar select {
   min-height: 38px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fff; padding: 0 11px; color: var(--admin-ink); font-size: 12px;
@@ -98,10 +171,38 @@ a { color: inherit; text-decoration: none; }
 .admin-row-actions a, .admin-row-actions button { border: 1px solid #ddd1bd; border-radius: 5px; background: #fff; padding: 5px 7px; color: #5f513e; font-size: 10px; cursor: pointer; }
 .admin-row-actions button { color: #864b43; }
 .admin-row-actions svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
-.admin-status { display: inline-flex; border-radius: 999px; background: #eee8dd; padding: 4px 8px; font-size: 10px; }
-.status-true, .status-paid, .status-sent, .status-completed { background: #e3eee8; color: #23543f; }
-.status-false, .status-rejected, .status-canceled { background: #f3e4df; color: #81443c; }
-.status-new, .status-pending, .status-processing { background: #f4ead5; color: #775522; }
+.admin-grid-wrap .admin-row-actions { width: 100%; height: 100%; }
+.admin-grid-wrap .admin-row-actions a,
+.admin-grid-wrap .admin-row-actions button { display: grid; width: 29px; height: 29px; place-items: center; padding: 0; }
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: #eee8dd;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.admin-grid-wrap .admin-status {
+  width: max-content;
+  height: 28px;
+  min-width: 58px;
+  min-height: 28px;
+  max-height: 28px;
+  align-self: center;
+  padding: 0 10px;
+}
+.status-true, .status-paid, .status-sent, .status-completed { border-color: #bdd5c9; background: #edf4f0; color: #23543f; }
+.status-false, .status-rejected, .status-canceled { border-color: #dfc0b9; background: #f8eeeb; color: #81443c; }
+.status-new, .status-pending, .status-processing { border-color: #e4c98f; background: #fff8e9; color: #8a5b14; }
+.status-weighted { border-color: #bfd0dc; background: #edf4f8; color: #294f68; }
+.status-packaged { border-color: #ddc79f; background: #fbf4e7; color: #775522; }
+.status-inStock { border-color: #bdd5c9; background: #edf4f0; color: #23543f; }
+.status-outOfStock { border-color: #dfc0b9; background: #f8eeeb; color: #81443c; }
 .admin-loading, .admin-empty { padding: 38px; text-align: center; color: var(--admin-muted); }
 .admin-pagination { display: flex; align-items: center; justify-content: space-between; padding: 13px 15px; color: var(--admin-muted); font-size: 11px; }
 .admin-pagination div { display: flex; align-items: center; gap: 9px; }
@@ -143,11 +244,51 @@ a { color: inherit; text-decoration: none; }
 .admin-payment-card-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
 .admin-payment-card-list > article { position: relative; display: grid; gap: 8px; border: 1px solid #ded2c0; border-radius: 8px; background: #fffdf8; padding: 15px; }
 .admin-payment-card-list article > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.admin-payment-card-list article > div:first-child { border-bottom: 1px solid #ece3d6; padding-bottom: 9px; }
 .admin-payment-card-list article span, .admin-payment-card-list article small { color: #786e61; font-size: 10px; }
 .admin-payment-card-list article strong { color: #173f30; font-size: 14px; letter-spacing: .06em; }
 .admin-payment-card-list article b { color: #4e473e; font-size: 10px; font-weight: 700; }
-.admin-payment-card-list article > .admin-badge { position: absolute; top: 12px; left: 12px; }
+.admin-bank-card-head {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #ece3d6;
+  padding-bottom: 9px;
+}
+.admin-bank-identity { display: inline-flex; min-width: 0; align-items: center; gap: 8px; }
+.admin-bank-identity b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-bank-card-head .admin-status { flex: 0 0 auto; }
+.admin-bank-card-number { min-height: 38px; border-bottom: 1px solid #f0e8dc; padding-bottom: 7px; }
+.admin-bank-card-number strong { white-space: nowrap; }
+.admin-bank-logo {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  background-image: url("/banks/iranian-bank-logos-32.png");
+  background-repeat: no-repeat;
+}
+.bank-bsi { background-position: 0 0; }
+.bank-mellat { background-position: -32px 0; }
+.bank-tejarat { background-position: -64px 0; }
+.bank-bmi { background-position: -96px 0; }
+.bank-sepah { background-position: -128px 0; }
+.bank-bki { background-position: 0 -32px; }
+.bank-parsian { background-position: -32px -32px; }
+.bank-maskan { background-position: -64px -32px; }
+.bank-rb { background-position: -96px -32px; }
+.bank-en { background-position: -128px -32px; }
+.bank-bpi { background-position: -32px -64px; }
+.bank-sb { background-position: -64px -64px; }
+.bank-shahr { background-position: -64px -96px; }
+.bank-ba { background-position: -96px -96px; }
+.bank-day { background-position: 0 -128px; }
+.bank-iz { background-position: -64px -128px; }
+.bank-kar { background-position: -96px -128px; }
+.bank-tourism { background-position: -128px -128px; }
+.bank-me { background-position: -64px -160px; }
+.bank-resalat { background-position: -128px -160px; }
 .admin-payment-card-list article footer { display: flex; justify-content: flex-end; gap: 6px; border-top: 1px solid #ece3d6; padding-top: 9px; }
 .admin-payment-card-list article footer button { border: 1px solid #ded2c0; border-radius: 5px; background: #fff; padding: 5px 9px; color: #5b5144; cursor: pointer; font-size: 10px; }
 .admin-payment-card-list article footer button:last-child { color: #8b453b; }
@@ -176,6 +317,7 @@ a { color: inherit; text-decoration: none; }
 .admin-native-select { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }
 .admin-dropdown { position: relative; width: 100%; }
 .admin-dropdown-control { display: flex; width: 100%; min-height: 42px; align-items: center; justify-content: space-between; gap: 9px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fffdfa; padding: 8px 11px; color: var(--admin-ink); text-align: right; cursor: pointer; }
+.admin-dropdown-control > span { display: inline-flex; min-width: 0; align-items: center; gap: 8px; }
 .admin-dropdown-control span.placeholder { color: #91887b; }
 .admin-dropdown.open .admin-dropdown-control { border-color: #a77d40; box-shadow: 0 0 0 3px rgba(167,125,64,.1); }
 .admin-dropdown.open .admin-dropdown-control svg { transform: rotate(180deg); }
@@ -184,6 +326,7 @@ a { color: inherit; text-decoration: none; }
 .admin-dropdown-panel > label input { width: 100%; min-height: 28px; border: 0; background: transparent; outline: 0; font-size: 11px; }
 .admin-dropdown-panel > div { max-height: 260px; overflow-y: auto; padding: 5px; }
 .admin-dropdown-panel > div button { display: flex; width: 100%; min-height: 35px; align-items: center; justify-content: space-between; border: 0; border-radius: 5px; background: transparent; padding: 7px 9px; color: #4f493f; text-align: right; cursor: pointer; font-size: 11px; }
+.admin-dropdown-option-label { display: inline-flex; min-width: 0; align-items: center; gap: 9px; }
 .admin-dropdown-panel > div button:hover { background: #f6f0e6; }
 .admin-dropdown-panel > div button.selected { background: #eaf1ed; color: #1e5a41; }
 .admin-persian-date { position: relative; width: 100%; }
@@ -275,6 +418,17 @@ a { color: inherit; text-decoration: none; }
   .admin-price-breakdown > div { grid-template-columns: 1fr 1fr; }
   .admin-payment-card-list, .admin-card-editor { grid-template-columns: 1fr; }
   .invoice-customer { grid-template-columns: 1fr; }
+  .admin-grid-heading { align-items: flex-start; flex-direction: column; gap: 7px; padding: 12px; }
+  .admin-grid-heading > div > span { display: none; }
+  .admin-grid-wrap { height: calc(100vh - 280px); min-height: 470px; --ag-cell-horizontal-padding: 9px; }
+  .admin-grid-wrap .ag-paging-panel {
+    min-height: 60px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px;
+  }
+  .admin-grid-wrap .ag-paging-row-summary-panel { display: none; }
 }
 
 @media print {

@@ -10,6 +10,7 @@ export function getStaticPaths() {
 }
 
 const { category } = Astro.props;
+const isPowderCategory = category.slug === "cafe-drinks";
 ---
 
 <BaseLayout
@@ -23,7 +24,9 @@ const { category } = Astro.props;
       <p class="eyebrow">{category.eyebrow}</p>
       <h1>{category.title}</h1>
       <p>{category.lead}</p>
-      <a class="button button-primary" href="/order/">انتخاب و سفارش</a>
+      <a class="button button-primary" href={isPowderCategory ? "#category-products-title" : "/order/"}>
+        {isPowderCategory ? "انتخاب محصول" : "انتخاب و سفارش"}
+      </a>
     </div>
   </section>
 

@@ -89,6 +89,10 @@ CREATE TABLE IF NOT EXISTS products (
   coffee_type varchar(20) NOT NULL CHECK (coffee_type IN ('bean','ground')),
   grind_type varchar(30) NOT NULL DEFAULT 'none' CHECK (grind_type IN ('espresso','mokaPot','frenchPress','turkish','filter','none')),
   blend_type varchar(120) NOT NULL,
+  sort_order smallint NOT NULL DEFAULT 100,
+  sale_type varchar(20) NOT NULL DEFAULT 'weighted' CHECK (sale_type IN ('weighted','packaged')),
+  package_weight_grams integer NOT NULL DEFAULT 250 CHECK (package_weight_grams IN (250,500,1000)),
+  stock_status varchar(20) NOT NULL DEFAULT 'inStock' CHECK (stock_status IN ('inStock','outOfStock')),
   purchase_price_per_kg bigint NOT NULL DEFAULT 0 CHECK (purchase_price_per_kg >= 0),
   sale_price_per_kg bigint NOT NULL DEFAULT 0 CHECK (sale_price_per_kg >= 0),
   price_per_100g bigint NOT NULL DEFAULT 0 CHECK (price_per_100g >= 0),
@@ -104,6 +108,10 @@ CREATE INDEX IF NOT EXISTS products_category_idx ON products(category_id);
 CREATE INDEX IF NOT EXISTS products_active_idx ON products(is_active);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_price_per_kg bigint NOT NULL DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sale_price_per_kg bigint NOT NULL DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order smallint NOT NULL DEFAULT 100;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sale_type varchar(20) NOT NULL DEFAULT 'weighted';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS package_weight_grams integer NOT NULL DEFAULT 250;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_status varchar(20) NOT NULL DEFAULT 'inStock';
 
 CREATE TABLE IF NOT EXISTS payment_methods (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -250,7 +258,7 @@ VALUES
    'ترکیب‌های تازه‌رست عربیکا و روبوستا با انتخاب رُست و آسیاب متناسب با دستگاه شما.',
    'خرید قهوه ترکیبی تازه رست عربیکا و روبوستا',
    'خرید قهوه ترکیبی تازه‌رست اورنزا در نسبت‌های مختلف عربیکا و روبوستا، با انتخاب وزن، درجه رُست و آسیاب مناسب اسپرسوساز، موکاپات و فرنچ‌پرس.'),
-  ('نوشیدنی‌های کافه‌ای', 'cafe-drinks',
+  ('پودرهای نوشیدنی کافه‌ای', 'cafe-drinks',
    'پودرهای منتخب برای آماده‌کردن نوشیدنی‌های گرم و کافه‌ای در خانه یا محل کار.',
    'خرید چای ماسالا، ماچا، هات چاکلت و کاپوچینو',
    'خرید آنلاین پودر چای ماسالا، ماچا، هات چاکلت و کاپوچینو با امکان انتخاب وزن و ارسال سراسر ایران.')
@@ -263,21 +271,35 @@ ON CONFLICT (slug) DO UPDATE SET
 
 INSERT INTO products
   (title_fa,title_en,category_id,description,roast_type,coffee_type,grind_type,blend_type,
-   purchase_price_per_kg,sale_price_per_kg,is_active)
+   sort_order,purchase_price_per_kg,sale_price_per_kg,is_active)
 SELECT seed.title_fa,seed.title_en,c.id,seed.description,'medium','bean','none',seed.blend_type,
-       seed.purchase_price,seed.sale_price,true
+       seed.sort_order,seed.purchase_price,seed.sale_price,true
 FROM categories c
 CROSS JOIN (VALUES
-  ('قهوه ۱۰۰٪ روبوستا','100% ROBUSTA','بسیار قوی، تلخ و پرکافئین؛ با بادی سنگین و کرمای ماندگار.','۱۰۰٪ روبوستا',700000,910000),
-  ('قهوه ۹۰٪ روبوستا','90% ROBUSTA','انرژی بالا با عطر متعادل‌تر و یادداشت‌های شکلات تلخ و فندق.','۹۰٪ روبوستا',750000,975000),
-  ('قهوه ۸۰٪ روبوستا','80% ROBUSTA','پرقدرت، خوش‌کرما و ماندگار با طعم شکلات، کارامل و آجیل.','۸۰٪ روبوستا',800000,1040000),
-  ('قهوه ۷۰٪ روبوستا','70% ROBUSTA','تعادل قدرت و عطر با یادداشت‌های کاکائو، کارامل و ادویه.','۷۰٪ روبوستا',850000,1105000),
-  ('ترکیب متعادل اورنزا','HOUSE BALANCE','متعادل، شیرین و همه‌پسند با طعم کارامل، مغزها و میوه خشک.','۵۰٪ روبوستا · ۵۰٪ عربیکا',950000,1235000),
-  ('قهوه ۷۰٪ عربیکا','70% ARABICA','معطر، نرم و شیرین با یادداشت‌های میوه، شکلات شیری و گل.','۷۰٪ عربیکا',1100000,1430000),
-  ('قهوه ۱۰۰٪ عربیکا','100% ARABICA','پیچیده، لطیف و بسیار معطر با یادداشت‌های مرکبات، گل و میوه قرمز.','۱۰۰٪ عربیکا',1250000,1625000)
-) AS seed(title_fa,title_en,description,blend_type,purchase_price,sale_price)
+  ('قهوه ۱۰۰٪ روبوستا','100% ROBUSTA','بسیار قوی، تلخ و پرکافئین؛ با بادی سنگین و کرمای ماندگار.','۱۰۰٪ روبوستا',10,700000,910000),
+  ('قهوه ۹۰٪ روبوستا','90% ROBUSTA','انرژی بالا با عطر متعادل‌تر و یادداشت‌های شکلات تلخ و فندق.','۹۰٪ روبوستا',20,750000,975000),
+  ('قهوه ۸۰٪ روبوستا','80% ROBUSTA','پرقدرت، خوش‌کرما و ماندگار با طعم شکلات، کارامل و آجیل.','۸۰٪ روبوستا',30,800000,1040000),
+  ('قهوه ۷۰٪ روبوستا','70% ROBUSTA','تعادل قدرت و عطر با یادداشت‌های کاکائو، کارامل و ادویه.','۷۰٪ روبوستا',40,850000,1105000),
+  ('ترکیب متعادل اورنزا','HOUSE BALANCE','متعادل، شیرین و همه‌پسند با طعم کارامل، مغزها و میوه خشک.','۵۰٪ روبوستا · ۵۰٪ عربیکا',50,950000,1235000),
+  ('قهوه ۷۰٪ عربیکا','70% ARABICA','معطر، نرم و شیرین با یادداشت‌های میوه، شکلات شیری و گل.','۷۰٪ عربیکا',60,1100000,1430000),
+  ('قهوه ۳۰٪ عربیکا','30% ARABICA','پرقدرت با رایحه‌ای نرم‌تر و یادداشت‌های کاکائو، فندق و کارامل.','۳۰٪ عربیکا',70,875000,1135000),
+  ('قهوه ۱۰۰٪ عربیکا','100% ARABICA','پیچیده، لطیف و بسیار معطر با یادداشت‌های مرکبات، گل و میوه قرمز.','۱۰۰٪ عربیکا',80,1250000,1625000)
+) AS seed(title_fa,title_en,description,blend_type,sort_order,purchase_price,sale_price)
 WHERE c.slug = 'coffee-blends'
   AND NOT EXISTS (SELECT 1 FROM products p WHERE p.title_fa = seed.title_fa);
+
+UPDATE products SET sort_order = CASE blend_type
+  WHEN '۱۰۰٪ روبوستا' THEN 10
+  WHEN '۹۰٪ روبوستا' THEN 20
+  WHEN '۸۰٪ روبوستا' THEN 30
+  WHEN '۷۰٪ روبوستا' THEN 40
+  WHEN '۵۰٪ روبوستا · ۵۰٪ عربیکا' THEN 50
+  WHEN '۷۰٪ عربیکا' THEN 60
+  WHEN '۳۰٪ عربیکا' THEN 70
+  WHEN '۱۰۰٪ عربیکا' THEN 80
+  ELSE sort_order
+END
+WHERE category_id = (SELECT id FROM categories WHERE slug = 'coffee-blends');
 
 INSERT INTO products
   (title_fa,title_en,category_id,description,roast_type,coffee_type,grind_type,blend_type,

@@ -5,6 +5,7 @@ export const blends = [
   { id: "r70", title: "۷۰٪ روبوستا", en: "70% ROBUSTA", note: "قدرت و عطر در تعادل", taste: "کاکائو، کارامل، ادویه", caffeine: 4, body: 4, acidity: 2, crema: 4 },
   { id: "half", title: "۵۰٪ روبوستا · ۵۰٪ عربیکا", en: "HOUSE BALANCE", note: "متعادل، شیرین و همه‌پسند", taste: "کارامل، مغزها، میوه خشک", caffeine: 3, body: 4, acidity: 3, crema: 4 },
   { id: "a70", title: "۷۰٪ عربیکا", en: "70% ARABICA", note: "معطر، نرم و شیرین", taste: "میوه، شکلات شیری، گل", caffeine: 2, body: 3, acidity: 4, crema: 3 },
+  { id: "a30", title: "۳۰٪ عربیکا", en: "30% ARABICA", note: "پرقدرت با رایحه‌ای نرم‌تر", taste: "کاکائو، فندق، کارامل", caffeine: 4, body: 4, acidity: 2, crema: 4 },
   { id: "a100", title: "۱۰۰٪ عربیکا", en: "100% ARABICA", note: "پیچیده، لطیف و بسیار معطر", taste: "مرکبات، گل، میوه‌های قرمز", caffeine: 1, body: 2, acidity: 5, crema: 2 }
 ] as const;
 
@@ -17,7 +18,9 @@ export const roasts = [
 
 export const devices = [
   { id: "turkish", title: "قهوه ترک", en: "TURKISH / CEZVE", grindFa: "بسیار ریز", grindEn: "EXTRA FINE", grind: 1, mark: "TK" },
-  { id: "espresso", title: "اسپرسوساز", en: "ESPRESSO", grindFa: "ریز", grindEn: "FINE", grind: 2, mark: "ES" },
+  { id: "espresso", title: "اسپرسوساز خانگی", en: "HOME ESPRESSO", grindFa: "ریز", grindEn: "FINE", grind: 2, mark: "ES" },
+  { id: "semi-industrial-espresso", title: "اسپرسوساز نیمه‌صنعتی", en: "SEMI-PRO ESPRESSO", grindFa: "ریز", grindEn: "FINE", grind: 2, mark: "SE" },
+  { id: "industrial-espresso", title: "اسپرسوساز صنعتی", en: "COMMERCIAL ESPRESSO", grindFa: "ریز", grindEn: "FINE", grind: 2, mark: "IE" },
   { id: "moka", title: "موکاپات", en: "MOKA POT", grindFa: "متوسط رو به ریز", grindEn: "MEDIUM FINE", grind: 3, mark: "MK" },
   { id: "aeropress", title: "ائروپرس", en: "AEROPRESS", grindFa: "متوسط رو به ریز", grindEn: "MEDIUM FINE", grind: 3, mark: "AP" },
   { id: "v60", title: "وی‌۶۰", en: "V60", grindFa: "متوسط", grindEn: "MEDIUM", grind: 4, mark: "V60" },
@@ -29,7 +32,6 @@ export const devices = [
 ] as const;
 
 export const weights = [
-  { label: "۱۰۰ گرم", grams: 100 },
   { label: "۲۵۰ گرم", grams: 250 },
   { label: "۵۰۰ گرم", grams: 500 },
   { label: "۱ کیلوگرم", grams: 1000 }

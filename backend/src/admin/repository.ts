@@ -66,8 +66,9 @@ export class AdminRepository {
     const select = resource === "products"
       ? "*, (sale_price_per_kg - purchase_price_per_kg) AS profit_per_kg"
       : "*";
+    const orderBy = resource === "products" ? "sort_order ASC, created_at ASC" : "created_at DESC";
     const result = await this.pool.query<Record<string, unknown>>(
-      `SELECT ${select} FROM ${config.table} ${whereSql} ORDER BY created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`,
+      `SELECT ${select} FROM ${config.table} ${whereSql} ORDER BY ${orderBy} LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values
     );
     return {

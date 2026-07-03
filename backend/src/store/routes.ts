@@ -21,13 +21,14 @@ export const registerStoreRoutes = (
     const result = await pool.query<Record<string, unknown>>(
       `SELECT p.*, c.title AS category_title,
         (p.sale_price_per_kg - p.purchase_price_per_kg) AS profit_per_kg,
-        round(p.sale_price_per_kg * 0.10)::bigint AS price_per_100g,
-        round(p.sale_price_per_kg * 0.25)::bigint AS price_per_250g,
-        round(p.sale_price_per_kg * 0.50)::bigint AS price_per_500g,
-        p.sale_price_per_kg AS price_per_1000g
+        CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.10)::bigint ELSE 0 END AS price_per_100g,
+        CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.25)::bigint ELSE 0 END AS price_per_250g,
+        CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.50)::bigint ELSE 0 END AS price_per_500g,
+        CASE WHEN p.sale_type = 'weighted' THEN p.sale_price_per_kg ELSE 0 END AS price_per_1000g,
+        CASE WHEN p.sale_type = 'packaged' THEN p.sale_price_per_kg ELSE 0 END AS package_price
        FROM products p JOIN categories c ON c.id = p.category_id
        WHERE p.is_active = true AND c.is_active = true${categoryFilter}
-       ORDER BY p.created_at DESC`,
+       ORDER BY p.sort_order ASC, p.created_at ASC`,
       values
     );
     return { items: result.rows.map(toPublicRecord) };

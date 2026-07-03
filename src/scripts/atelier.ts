@@ -10,6 +10,7 @@ type CatalogProduct = {
   pricePer250g: number;
   pricePer500g: number;
   pricePer1000g: number;
+  stockStatus: "inStock" | "outOfStock";
 };
 
 export const initAtelier = () => {
@@ -44,6 +45,11 @@ export const initAtelier = () => {
   const priceResult = builder.querySelector<HTMLElement>('[data-result="price"]');
   const money = new Intl.NumberFormat("fa-IR");
   let selectedProduct: CatalogProduct | null = null;
+  const requestedWeightValue = Number(new URLSearchParams(location.search).get("weight"));
+  let requestedWeight: 250 | 500 | 1000 | null =
+    [250, 500, 1000].includes(requestedWeightValue)
+      ? requestedWeightValue as 250 | 500 | 1000
+      : null;
   let quantity = 1;
   let animationTimer = 0;
 
@@ -80,26 +86,30 @@ export const initAtelier = () => {
       if (!products.length) return;
       const container = builder.querySelector<HTMLElement>(".blend-options");
       if (!container) return;
-      container.replaceChildren(...products.map((product) => {
-        const button = document.createElement("button");
-        button.className = "blend-option catalog-product-option";
-        button.type = "button";
-        button.dataset.choice = "blend";
-        button.dataset.value = product.blendType;
-        button.dataset.en = product.titleEn;
-        button.dataset.product = JSON.stringify(product);
-        button.innerHTML = `
-          <span class="option-radio"></span>
-          <span class="blend-copy">
-            <small>${product.titleEn}</small>
-            <strong>${product.titleFa}</strong>
-            <em>${product.description}</em>
-            <b>${product.blendType}</b>
-          </span>
-          <span class="catalog-price">از ${money.format(product.pricePer100g)} تومان</span>`;
-        button.setAttribute("aria-pressed", "false");
-        return button;
-      }));
+      const requestedProductId = new URLSearchParams(location.search).get("product");
+      let requestedChoice: HTMLButtonElement | null = null;
+      container.querySelectorAll<HTMLButtonElement>('[data-choice="blend"]').forEach((button) => {
+        const product = products.find((item) =>
+          item.blendType === button.dataset.value || item.titleEn === button.dataset.en
+        );
+        if (product) {
+          if (product.stockStatus === "outOfStock") {
+            button.disabled = true;
+            button.classList.add("is-unavailable");
+            button.setAttribute("aria-disabled", "true");
+            const label = document.createElement("span");
+            label.className = "blend-stock-label";
+            label.textContent = "ناموجود";
+            button.querySelector(".blend-copy")?.append(label);
+            return;
+          }
+          button.dataset.product = JSON.stringify(product);
+          if (product.id === requestedProductId) requestedChoice = button;
+        } else {
+          button.hidden = true;
+        }
+      });
+      if (requestedChoice) selectChoice(requestedChoice);
     } catch {
       // The static catalog remains visible until products are configured in admin.
     }
@@ -269,6 +279,11 @@ export const initAtelier = () => {
         processNote.textContent = "برای حفظ بیشترین عطر تا لحظه دم‌آوری.";
         unlock("weight");
         moveToSection("weight");
+        if (requestedWeight) {
+          const requestedChoice = builder.querySelector<HTMLButtonElement>(`[data-choice="weight"][data-grams="${requestedWeight}"]`);
+          requestedWeight = null;
+          if (requestedChoice) window.setTimeout(() => selectChoice(requestedChoice), 0);
+        }
       }
     }
 
@@ -297,6 +312,11 @@ export const initAtelier = () => {
       playProcess("grind", 1800);
       unlock("weight");
       moveToSection("weight", 900);
+      if (requestedWeight) {
+        const requestedChoice = builder.querySelector<HTMLButtonElement>(`[data-choice="weight"][data-grams="${requestedWeight}"]`);
+        requestedWeight = null;
+        if (requestedChoice) window.setTimeout(() => selectChoice(requestedChoice), 0);
+      }
     }
 
     if (key === "weight") {
@@ -325,7 +345,7 @@ export const initAtelier = () => {
     if (mobileGrindFeedback) mobileGrindFeedback.hidden = true;
     processDisplay.dataset.mode = "idle";
     processEyebrow.textContent = "LIVE ROASTERY";
-    processTitle.textContent = "انتخاب تو، همان لحظه";
+    processTitle.textContent = "حالا نوبت انتخاب توئه";
     processNote.textContent = "فرآیند آماده‌سازی اینجا نمایش داده می‌شود.";
     builder.querySelector<HTMLElement>("[data-preview-blend]")!.textContent = "YOUR PRIVATE BLEND";
     builder.querySelector<HTMLElement>("[data-preview-roast]")!.textContent = "ROASTED TO ORDER";

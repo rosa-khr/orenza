@@ -9,11 +9,11 @@ import Icon from "./Icon.astro";
     <h2 id="atelier-title">سفارش اختصاصی قهوه</h2>
     <p>قهوه، رُست و فرم مناسب دستگاهت را انتخاب کن؛ قیمت همان لحظه محاسبه می‌شود.</p>
     <div class="atelier-meta" aria-label="اطلاعات فرایند سفارش">
-      <span>حدود ۲ دقیقه</span>
+      <span>چند قدم تا فنجان تو</span>
       <i aria-hidden="true"></i>
-      <span>بدون پرداخت آنلاین</span>
+      <span>پرداخت پس از مرور سفارش</span>
       <i aria-hidden="true"></i>
-      <span>ارسال خلاصه در پیام‌رسان</span>
+      <span>هماهنگی نهایی در پیام‌رسان</span>
     </div>
   </header>
 
@@ -30,12 +30,19 @@ import Icon from "./Icon.astro";
       <div class="process-display" data-process-display data-mode="idle" aria-live="polite">
         <div class="process-copy">
           <span data-process-eyebrow>LIVE ROASTERY</span>
-          <strong data-process-title>انتخاب تو، همان لحظه</strong>
+          <strong data-process-title>حالا نوبت انتخاب توئه</strong>
           <small data-process-note>فرآیند آماده‌سازی اینجا نمایش داده می‌شود.</small>
         </div>
         <div class="roast-process" data-roast-process aria-hidden="true">
           <span class="heat-line heat-one"></span><span class="heat-line heat-two"></span><span class="heat-line heat-three"></span>
-          <div class="roast-drum"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="roaster-machine">
+            <span class="roaster-crown"><i></i><i></i><i></i></span>
+            <div class="roast-drum"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <span class="roaster-handle"></span>
+            <span class="roaster-foot foot-right"></span>
+            <span class="roaster-foot foot-left"></span>
+          </div>
+          <span class="roaster-tray"></span>
         </div>
         <div class="grind-process" data-grind-process aria-hidden="true">
           <div class="grinder-hopper"><i></i><i></i><i></i><i></i></div>
@@ -109,8 +116,13 @@ import Icon from "./Icon.astro";
         </header>
         <div class="roast-options">
           {roasts.map((roast) => (
-            <button class="roast-option" type="button" data-choice="roast" data-value={roast.title} data-en={roast.en} data-roast-level={roast.level}>
-              <span class={`roast-swatch roast-level-${roast.level}`}><i></i></span>
+            <button class={`roast-option roast-option-level-${roast.level}`} type="button" data-choice="roast" data-value={roast.title} data-en={roast.en} data-roast-level={roast.level}>
+              <span class="roast-card-visual">
+                <span class={`roast-swatch roast-level-${roast.level}`}><i></i></span>
+                <span class="roast-intensity" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i>
+                </span>
+              </span>
               <span><small>{roast.en}</small><strong>{roast.title}</strong><em>{roast.note}</em></span>
             </button>
           ))}

@@ -1,6 +1,8 @@
 export type RoastType = "light" | "medium" | "mediumDark" | "dark";
 export type CoffeeType = "bean" | "ground";
 export type GrindType = "espresso" | "mokaPot" | "frenchPress" | "turkish" | "filter" | "none";
+export type SaleType = "weighted" | "packaged";
+export type StockStatus = "inStock" | "outOfStock";
 export type DiscountType = "percent" | "fixed";
 export type PaymentStatus = "pending" | "paid" | "rejected";
 export type OrderStatus = "new" | "processing" | "sent" | "completed" | "canceled";
@@ -15,6 +17,10 @@ export interface Product {
   coffeeType: CoffeeType;
   grindType: GrindType;
   blendType: string;
+  sortOrder: number;
+  saleType: SaleType;
+  packageWeightGrams: 250 | 500 | 1000;
+  stockStatus: StockStatus;
   purchasePricePerKg: number;
   salePricePerKg: number;
   profitPerKg: number;

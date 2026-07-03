@@ -17,8 +17,8 @@ export const productCategories = [
   },
   {
     slug: "cafe-drinks",
-    title: "نوشیدنی‌های کافه‌ای",
-    eyebrow: "ORENZA CAFE DRINKS",
+    title: "پودرهای نوشیدنی کافه‌ای",
+    eyebrow: "ORENZA CAFE DRINK POWDERS",
     seoTitle: "خرید چای ماسالا، ماچا، هات چاکلت و کاپوچینو",
     seoDescription: "خرید آنلاین پودر چای ماسالا، ماچا لاته، هات چاکلت و کاپوچینو اورنزا با انتخاب وزن؛ مناسب خانه، محل کار و کافه.",
     lead: "چهار نوشیدنی آشنا برای وقت‌هایی که یک فنجان گرم، ساده و خوش‌ساخت می‌خواهی.",

@@ -5,7 +5,14 @@ import Icon from "./Icon.astro";
 <header class="site-header">
   <nav class="primary-nav" aria-label="ناوبری اصلی">
     <a href="/about/">درباره اورنزا</a>
-    <a href="/products/coffee-blends/">محصولات</a>
+    <details class="nav-products">
+      <summary>محصولات</summary>
+      <div class="nav-products-panel">
+        <a href="/products/coffee-blends/"><span>قهوه‌های ترکیبی</span><small>عربیکا و روبوستا</small></a>
+        <a href="/products/cafe-drinks/"><span>پودرهای نوشیدنی کافه‌ای</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+        <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
+      </div>
+    </details>
     <a href="/order/">سفارش اختصاصی</a>
   </nav>
   <a class="brand" href="/" aria-label="اورنزا، صفحه اصلی">
