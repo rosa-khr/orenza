@@ -1,5 +1,17 @@
 import { ADD_TO_CART_EVENT, type CartItemInput, type SelectionKey } from "./order-types";
 
+type CatalogProduct = {
+  id: string;
+  titleFa: string;
+  titleEn: string;
+  blendType: string;
+  description: string;
+  pricePer100g: number;
+  pricePer250g: number;
+  pricePer500g: number;
+  pricePer1000g: number;
+};
+
 export const initAtelier = () => {
   const builder = document.querySelector<HTMLElement>("[data-builder]");
   if (!builder) return;
@@ -27,7 +39,71 @@ export const initAtelier = () => {
   const grindResult = builder.querySelector<HTMLElement>("[data-grind-result]")!;
   const addCartButton = builder.querySelector<HTMLButtonElement>("[data-add-cart]")!;
   const progressItems = [...document.querySelectorAll<HTMLElement>("[data-progress-step]")];
+  const quantityOutput = builder.querySelector<HTMLOutputElement>("[data-quantity]");
+  const quantityResult = builder.querySelector<HTMLElement>('[data-result="quantity"]');
+  const priceResult = builder.querySelector<HTMLElement>('[data-result="price"]');
+  const money = new Intl.NumberFormat("fa-IR");
+  let selectedProduct: CatalogProduct | null = null;
+  let quantity = 1;
   let animationTimer = 0;
+
+  const productPrice = (product: CatalogProduct, grams: number) =>
+    Number(product[`pricePer${grams}g` as keyof CatalogProduct] || 0);
+
+  const updateWeightPrices = () => {
+    builder.querySelectorAll<HTMLButtonElement>('[data-choice="weight"]').forEach((button) => {
+      const label = button.querySelector<HTMLElement>("[data-weight-price]");
+      const grams = Number(button.dataset.grams);
+      if (label) {
+        label.textContent = selectedProduct
+          ? `${money.format(productPrice(selectedProduct, grams))} تومان`
+          : "پس از انتخاب قهوه";
+      }
+    });
+  };
+
+  const updatePrice = () => {
+    const selectedWeight = builder.querySelector<HTMLButtonElement>('[data-choice="weight"].is-selected');
+    const grams = Number(selectedWeight?.dataset.grams || 0);
+    const unitPrice = selectedProduct && grams ? productPrice(selectedProduct, grams) : 0;
+    if (quantityOutput) quantityOutput.textContent = money.format(quantity);
+    if (quantityResult) quantityResult.textContent = money.format(quantity);
+    if (priceResult) priceResult.textContent = unitPrice ? `${money.format(unitPrice * quantity)} تومان` : "—";
+  };
+
+  const loadCatalog = async () => {
+    try {
+      const response = await fetch("/api/v1/products?category=coffee-blends");
+      if (!response.ok) return;
+      const payload = await response.json() as { items?: CatalogProduct[] };
+      const products = payload.items || [];
+      if (!products.length) return;
+      const container = builder.querySelector<HTMLElement>(".blend-options");
+      if (!container) return;
+      container.replaceChildren(...products.map((product) => {
+        const button = document.createElement("button");
+        button.className = "blend-option catalog-product-option";
+        button.type = "button";
+        button.dataset.choice = "blend";
+        button.dataset.value = product.blendType;
+        button.dataset.en = product.titleEn;
+        button.dataset.product = JSON.stringify(product);
+        button.innerHTML = `
+          <span class="option-radio"></span>
+          <span class="blend-copy">
+            <small>${product.titleEn}</small>
+            <strong>${product.titleFa}</strong>
+            <em>${product.description}</em>
+            <b>${product.blendType}</b>
+          </span>
+          <span class="catalog-price">از ${money.format(product.pricePer100g)} تومان</span>`;
+        button.setAttribute("aria-pressed", "false");
+        return button;
+      }));
+    } catch {
+      // The static catalog remains visible until products are configured in admin.
+    }
+  };
 
   const unlock = (name: string) => {
     const section = sections.get(name);
@@ -132,6 +208,10 @@ export const initAtelier = () => {
     addCartButton.textContent = "افزودن به سبد سفارش";
 
     if (key === "blend") {
+      selectedProduct = choice.dataset.product ? JSON.parse(choice.dataset.product) as CatalogProduct : null;
+      quantity = 1;
+      updateWeightPrices();
+      updatePrice();
       ["grind", "device", "weight", "summary"].forEach(lock);
       const deviceSection = sections.get("device");
       if (deviceSection) deviceSection.hidden = true;
@@ -221,6 +301,7 @@ export const initAtelier = () => {
 
     if (key === "weight") {
       unlock("summary");
+      updatePrice();
       moveToSection("summary");
     }
     updateResults();
@@ -256,14 +337,26 @@ export const initAtelier = () => {
   });
 
   addCartButton.addEventListener("click", () => {
-    if (!state.blend || !state.roast || !state.grind || !state.weight) return;
+    const selectedWeight = builder.querySelector<HTMLButtonElement>('[data-choice="weight"].is-selected');
+    const weightGrams = Number(selectedWeight?.dataset.grams) as 100 | 250 | 500 | 1000;
+    if (!state.blend || !state.roast || !state.grind || !state.weight || !selectedProduct || !weightGrams) {
+      addCartButton.textContent = selectedProduct ? "انتخاب‌ها را کامل کن" : "ابتدا محصول را در پنل فعال کن";
+      return;
+    }
+    const unitPrice = productPrice(selectedProduct, weightGrams);
     const item: CartItemInput = {
+      productId: selectedProduct.id,
+      productTitle: selectedProduct.titleFa,
       blend: state.blend,
       roast: state.roast,
       grind: state.grind,
       device: state.device,
       grindSize: state.grindSize,
-      weight: state.weight
+      weight: state.weight,
+      weightGrams,
+      quantity,
+      unitPrice,
+      totalPrice: unitPrice * quantity
     };
     document.dispatchEvent(new CustomEvent(ADD_TO_CART_EVENT, { detail: item }));
     addCartButton.textContent = "به سبد اضافه شد ✓";
@@ -271,6 +364,17 @@ export const initAtelier = () => {
   });
 
   builder.querySelectorAll<HTMLButtonElement>("[data-choice]").forEach((item) => item.setAttribute("aria-pressed", "false"));
+  builder.querySelector("[data-quantity-minus]")?.addEventListener("click", () => {
+    quantity = Math.max(1, quantity - 1);
+    updatePrice();
+  });
+  builder.querySelector("[data-quantity-plus]")?.addEventListener("click", () => {
+    quantity = Math.min(50, quantity + 1);
+    updatePrice();
+  });
   updateResults();
   updateProgress();
+  updateWeightPrices();
+  updatePrice();
+  void loadCatalog();
 };

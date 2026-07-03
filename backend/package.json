@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "migrate": "node dist/migrate.js",
+    "create-admin": "node dist/create-admin.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:account": "node tests/account-smoke.mjs"
   },

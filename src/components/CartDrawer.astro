@@ -88,6 +88,26 @@ import Icon from "./Icon.astro";
         </label>
       </fieldset>
 
+      <div class="discount-entry">
+        <label><span>کد تخفیف</span><input type="text" data-discount-code dir="ltr" placeholder="مثلاً ORENZA10" /></label>
+        <button type="button" data-apply-discount>اعمال کد</button>
+        <small data-discount-status></small>
+      </div>
+
+      <section class="checkout-totals" aria-label="مبلغ سفارش">
+        <div><span>مبلغ اقلام</span><strong data-cart-subtotal>۰ تومان</strong></div>
+        <div data-cart-discount-row hidden><span>تخفیف</span><strong data-cart-discount>۰ تومان</strong></div>
+        <div><span>مبلغ نهایی</span><strong data-cart-final>۰ تومان</strong></div>
+      </section>
+
+      <section class="payment-card-info" data-payment-card hidden>
+        <span>اطلاعات کارت‌به‌کارت</span>
+        <div class="payment-card-list" data-payment-card-list></div>
+      </section>
+      <p class="checkout-payment-guide">
+        لطفاً مبلغ سفارش را کارت‌به‌کارت کرده و خلاصه سفارش را همراه با فیش واریزی در واتساپ یا بله ارسال کنید.
+      </p>
+
       <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noopener noreferrer">
         ارسال خلاصه در واتساپ <span class="message-action-icon"><Icon name="send" size={16} /></span>
       </a>

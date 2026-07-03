@@ -1,0 +1,25 @@
+---
+import { adminResources } from "../../../admin/resources";
+import AdminResourceForm from "../../../components/admin/AdminResourceForm.astro";
+import AdminResourceList from "../../../components/admin/AdminResourceList.astro";
+
+type AdminAction = "list" | "add" | "edit" | "view";
+
+export function getStaticPaths() {
+  return adminResources.flatMap((resource) =>
+    (["list", "add", "edit", "view"] as AdminAction[]).map((action) => ({
+      params: { resource: resource.key, action },
+      props: { resource, action }
+    }))
+  );
+}
+
+const { resource, action } = Astro.props as {
+  resource: (typeof adminResources)[number];
+  action: AdminAction;
+};
+---
+
+{action === "list"
+  ? <AdminResourceList resource={resource} />
+  : <AdminResourceForm resource={resource} action={action} />}

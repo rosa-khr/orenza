@@ -1,0 +1,44 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { productCategories } from "../../data/product-categories";
+
+export function getStaticPaths() {
+  return productCategories.map((category) => ({
+    params: { slug: category.slug },
+    props: { category }
+  }));
+}
+
+const { category } = Astro.props;
+---
+
+<BaseLayout
+  title={category.seoTitle}
+  description={category.seoDescription}
+  canonicalPath={`/products/${category.slug}/`}
+  keywords={[...category.keywords]}
+>
+  <section class="category-hero">
+    <div>
+      <p class="eyebrow">{category.eyebrow}</p>
+      <h1>{category.title}</h1>
+      <p>{category.lead}</p>
+      <a class="button button-primary" href="/order/">انتخاب و سفارش</a>
+    </div>
+  </section>
+
+  <section class="category-products" data-category-products data-category={category.slug} aria-labelledby="category-products-title">
+    <header>
+      <span>AVAILABLE SELECTION</span>
+      <h2 id="category-products-title">انتخاب‌های این مجموعه</h2>
+    </header>
+    <div data-category-product-list><p>در حال دریافت محصولات…</p></div>
+  </section>
+
+  <section class="category-editorial">
+    {category.content.map((paragraph) => <p>{paragraph}</p>)}
+  </section>
+  <script>
+    import "../../scripts/category-products.ts";
+  </script>
+</BaseLayout>

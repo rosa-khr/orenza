@@ -9,6 +9,7 @@ export default defineConfig({
       filter: (page) =>
         page !== "https://orenza.ir/404.html" &&
         page !== "https://orenza.ir/login/" &&
+        !page.startsWith("https://orenza.ir/admin/") &&
         !page.startsWith("https://orenza.ir/account/")
     })
   ],

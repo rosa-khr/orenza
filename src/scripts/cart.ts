@@ -18,6 +18,28 @@ type SavedAddress = {
   is_default: boolean;
 };
 
+type PaymentMethod = {
+  id: string;
+  cards: PaymentCard[];
+};
+
+type PaymentCard = {
+  id: string;
+  cardNumber: string;
+  shebaNumber: string;
+  accountNumber: string;
+  accountOwner: string;
+  bankName: string;
+};
+
+type SubmittedOrder = {
+  id: string;
+  orderNumber: string;
+  totalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+};
+
 export const initCart = () => {
   const cartLayer = document.querySelector<HTMLElement>("[data-cart-layer]");
   const cartItems = document.querySelector<HTMLOListElement>("[data-cart-items]");
@@ -47,15 +69,28 @@ export const initCart = () => {
     ...document.querySelectorAll<HTMLInputElement>('input[name="payment-method"]')
   ];
   const copyStatus = document.querySelector<HTMLElement>("[data-copy-status]");
+  const discountCode = document.querySelector<HTMLInputElement>("[data-discount-code]");
+  const applyDiscount = document.querySelector<HTMLButtonElement>("[data-apply-discount]");
+  const discountStatus = document.querySelector<HTMLElement>("[data-discount-status]");
+  const cartSubtotal = document.querySelector<HTMLElement>("[data-cart-subtotal]");
+  const cartDiscount = document.querySelector<HTMLElement>("[data-cart-discount]");
+  const cartDiscountRow = document.querySelector<HTMLElement>("[data-cart-discount-row]");
+  const cartFinal = document.querySelector<HTMLElement>("[data-cart-final]");
+  const paymentCard = document.querySelector<HTMLElement>("[data-payment-card]");
+  const paymentCardList = document.querySelector<HTMLElement>("[data-payment-card-list]");
   const numberFormatter = new Intl.NumberFormat("fa-IR");
   let lastFocused: HTMLElement | null = null;
   let accountUser: AccountUser | null = null;
   let accountRequest: Promise<void> | null = null;
+  let paymentMethod: PaymentMethod | null = null;
+  let selectedPaymentCard: PaymentCard | null = null;
+  let discountAmount = 0;
+  let submittedOrder: SubmittedOrder | null = null;
 
   const readCart = (): CartItem[] => {
     try {
       const saved = JSON.parse(localStorage.getItem("orenza-cart") || "[]");
-      return Array.isArray(saved) ? saved : [];
+      return Array.isArray(saved) ? saved.filter((item) => item?.productId && item?.weightGrams) : [];
     } catch {
       return [];
     }
@@ -63,6 +98,8 @@ export const initCart = () => {
 
   let cart = readCart();
   const saveCart = () => localStorage.setItem("orenza-cart", JSON.stringify(cart));
+  const subtotal = () => cart.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
+  const finalAmount = () => Math.max(0, subtotal() - discountAmount);
 
   const createOrderSummary = () => {
     const name = accountUser?.displayName?.trim() || customerName?.value.trim();
@@ -76,7 +113,7 @@ export const initCart = () => {
     const lines = cart.map((item, index) => {
       const device = item.device ? `، دستگاه: ${item.device}` : "";
       const grindSize = item.grindSize ? `، درجه آسیاب: ${item.grindSize}` : "";
-      return `${numberFormatter.format(index + 1)}. ${item.blend} | رست ${item.roast} | ${item.grind}${device}${grindSize} | ${item.weight}`;
+      return `${numberFormatter.format(index + 1)}. ${item.productTitle} | ${item.blend} | رست ${item.roast} | ${item.grind}${device}${grindSize} | ${item.weight} | ${numberFormatter.format(item.quantity)} عدد | ${numberFormatter.format(item.totalPrice)} تومان`;
     });
 
     return [
@@ -84,6 +121,11 @@ export const initCart = () => {
       "این سفارش قهوه را در سایت اورنزا آماده کرده‌ام:",
       "",
       ...lines,
+      "",
+      submittedOrder ? `شماره سفارش: ${submittedOrder.orderNumber}` : "",
+      `مبلغ اقلام: ${numberFormatter.format(subtotal())} تومان`,
+      discountAmount ? `تخفیف: ${numberFormatter.format(discountAmount)} تومان` : "",
+      `مبلغ نهایی: ${numberFormatter.format(finalAmount())} تومان`,
       "",
       "مشخصات تحویل",
       name ? `نام: ${name}` : "",
@@ -93,8 +135,12 @@ export const initCart = () => {
       postal ? `کد پستی: ${postal}` : "",
       shipping ? `شیوه ارسال: ${shipping}` : "",
       payment ? `شیوه پرداخت: ${payment}` : "",
+      selectedPaymentCard ? `شماره کارت: ${selectedPaymentCard.cardNumber}` : "",
+      selectedPaymentCard ? `شماره شبا: IR${selectedPaymentCard.shebaNumber}` : "",
+      selectedPaymentCard ? `شماره حساب: ${selectedPaymentCard.accountNumber}` : "",
+      selectedPaymentCard ? `به نام: ${selectedPaymentCard.accountOwner} · ${selectedPaymentCard.bankName}` : "",
       "",
-      "ممنون می‌شوم مبلغ نهایی و زمان آماده‌شدن سفارش را اعلام کنید."
+      "فیش واریزی را در ادامه همین پیام ارسال می‌کنم. سپاس."
     ].filter((line, index, all) => line || all[index - 1] !== "").join("\n");
   };
 
@@ -105,7 +151,58 @@ export const initCart = () => {
   const checkoutIsComplete = () =>
     addressInputs.every((input) => input.value.trim().length > 0 && input.checkValidity()) &&
     shippingInputs.some((input) => input.checked) &&
-    paymentInputs.some((input) => input.checked);
+    paymentInputs.some((input) => input.checked) &&
+    Boolean(paymentMethod && selectedPaymentCard) &&
+    cart.length > 0;
+
+  const updateTotals = () => {
+    if (cartSubtotal) cartSubtotal.textContent = `${numberFormatter.format(subtotal())} تومان`;
+    if (cartDiscount) cartDiscount.textContent = `− ${numberFormatter.format(discountAmount)} تومان`;
+    if (cartDiscountRow) cartDiscountRow.hidden = discountAmount === 0;
+    if (cartFinal) cartFinal.textContent = `${numberFormatter.format(finalAmount())} تومان`;
+  };
+
+  const loadPaymentMethod = async () => {
+    try {
+      const response = await fetch("/api/v1/payment-methods/active");
+      const payload = await response.json();
+      paymentMethod = response.ok ? payload.item as PaymentMethod | null : null;
+      selectedPaymentCard = paymentMethod?.cards?.[0] || null;
+      if (!paymentMethod || !selectedPaymentCard) {
+        if (copyStatus) copyStatus.textContent = "روش پرداخت فعال نیست؛ لطفاً با اورنزا تماس بگیر.";
+        return;
+      }
+      if (paymentCardList) {
+        paymentCardList.replaceChildren();
+        paymentMethod.cards.forEach((card, index) => {
+          const label = document.createElement("label");
+          const radio = document.createElement("input");
+          const copy = document.createElement("span");
+          const number = document.createElement("strong");
+          const detail = document.createElement("small");
+          radio.type = "radio";
+          radio.name = "payment-card";
+          radio.value = card.id;
+          radio.checked = index === 0;
+          number.dir = "ltr";
+          number.textContent = card.cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ");
+          detail.textContent = `${card.bankName} · ${card.accountOwner}`;
+          copy.append(number, detail);
+          label.append(radio, copy);
+          radio.addEventListener("change", () => {
+            selectedPaymentCard = card;
+            submittedOrder = null;
+            updateOrderLinks();
+          });
+          paymentCardList.append(label);
+        });
+      }
+      if (paymentCard) paymentCard.hidden = false;
+      updateOrderLinks();
+    } catch {
+      paymentMethod = null;
+    }
+  };
 
   const normalizeDigits = (value: string) =>
     value
@@ -113,6 +210,7 @@ export const initCart = () => {
       .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 
   const applyAddress = (address: SavedAddress) => {
+    submittedOrder = null;
     if (customerName) customerName.value = address.recipient_name || accountUser?.displayName || "";
     if (customerPhone) customerPhone.value = address.phone || accountUser?.phone || "";
     if (customerProvince) customerProvince.value = address.province;
@@ -226,16 +324,81 @@ export const initCart = () => {
     const message = encodeURIComponent(createOrderSummary());
     if (whatsappOrder) {
       whatsappOrder.href = `https://api.whatsapp.com/send/?phone=989103060396&text=${message}&type=phone_number&app_absent=0`;
-      whatsappOrder.classList.remove("is-disabled");
-      whatsappOrder.removeAttribute("aria-disabled");
+      whatsappOrder.classList.toggle("is-disabled", !isComplete);
+      whatsappOrder.setAttribute("aria-disabled", String(!isComplete));
     }
     if (baleOrder) {
       baleOrder.href = `https://ble.ir/share/url?url=${encodeURIComponent("https://orenza.ir")}&text=${message}`;
-      baleOrder.classList.remove("is-disabled");
-      baleOrder.removeAttribute("aria-disabled");
+      baleOrder.classList.toggle("is-disabled", !isComplete);
+      baleOrder.setAttribute("aria-disabled", String(!isComplete));
     }
     if (copyStatus && isComplete) {
       copyStatus.textContent = "سفارش آماده است؛ واتساپ یا بله را انتخاب کن.";
+    }
+  };
+
+  const registerOrder = async () => {
+    if (submittedOrder) return submittedOrder;
+    if (!paymentMethod) throw new Error("روش پرداخت فعال پیدا نشد.");
+    const shipping = shippingInputs.find((input) => input.checked)?.value;
+    const response = await fetch("/api/v1/orders", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerName: customerName?.value.trim(),
+        customerPhone: customerPhone?.value.trim(),
+        customerProvince: customerProvince?.value.trim(),
+        customerCity: customerCity?.value.trim(),
+        customerAddress: customerAddress?.value.trim(),
+        customerPostalCode: customerPostal?.value.trim(),
+        shippingMethod: shipping === "تیپاکس" ? "tipax" : "post",
+        paymentMethodId: paymentMethod.id,
+        paymentCardId: selectedPaymentCard?.id,
+        discountCode: discountCode?.value.trim() || undefined,
+        customerNote: null,
+        items: cart.map((item) => ({
+          productId: item.productId,
+          weight: item.weightGrams,
+          quantity: item.quantity,
+          grindType: item.grindSize || item.grind,
+          roastType: item.roast,
+          blendType: item.blend,
+          brewMethod: item.device || null
+        }))
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "ثبت سفارش انجام نشد.");
+    submittedOrder = payload.order as SubmittedOrder;
+    discountAmount = submittedOrder.discountAmount;
+    updateTotals();
+    updateOrderLinks();
+    return submittedOrder;
+  };
+
+  const openMessenger = async (kind: "whatsapp" | "bale") => {
+    if (!checkoutIsComplete()) {
+      showCheckoutValidation();
+      return;
+    }
+    const target = window.open("", "_blank");
+    if (copyStatus) copyStatus.textContent = "سفارش در حال ثبت است…";
+    try {
+      await registerOrder();
+      const message = encodeURIComponent(createOrderSummary());
+      const url = kind === "whatsapp"
+        ? `https://api.whatsapp.com/send/?phone=989103060396&text=${message}&type=phone_number&app_absent=0`
+        : `https://ble.ir/share/url?url=${encodeURIComponent("https://orenza.ir")}&text=${message}`;
+      if (kind === "bale") {
+        try { await navigator.clipboard.writeText(createOrderSummary()); } catch { /* share URL carries the text */ }
+      }
+      if (target) target.location.href = url;
+      else location.href = url;
+      if (copyStatus) copyStatus.textContent = `سفارش ${submittedOrder?.orderNumber} ثبت شد؛ حالا فیش را در پیام‌رسان پیوست کن.`;
+    } catch (error) {
+      target?.close();
+      if (copyStatus) copyStatus.textContent = error instanceof Error ? error.message : "ثبت سفارش انجام نشد.";
     }
   };
 
@@ -249,10 +412,12 @@ export const initCart = () => {
 
     const copy = document.createElement("div");
     const title = document.createElement("strong");
-    title.textContent = item.blend;
+    title.textContent = item.productTitle;
     const details = document.createElement("small");
-    details.textContent = [`رست ${item.roast}`, item.grind, item.device, item.grindSize, item.weight].filter(Boolean).join(" · ");
-    copy.append(title, details);
+    details.textContent = [`رست ${item.roast}`, item.grind, item.device, item.grindSize, item.weight, `${numberFormatter.format(item.quantity)} عدد`].filter(Boolean).join(" · ");
+    const itemPrice = document.createElement("b");
+    itemPrice.textContent = `${numberFormatter.format(item.totalPrice)} تومان`;
+    copy.append(title, details, itemPrice);
 
     const remove = document.createElement("button");
     remove.type = "button";
@@ -276,6 +441,7 @@ export const initCart = () => {
     cartItems?.replaceChildren(...cart.map(createCartItem));
     if (cartEmpty) cartEmpty.hidden = cart.length > 0;
     if (cartCheckout) cartCheckout.hidden = cart.length === 0;
+    updateTotals();
     updateOrderLinks();
   };
 
@@ -318,6 +484,8 @@ export const initCart = () => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-remove-cart]");
     if (!button) return;
     cart = cart.filter((item) => item.id !== Number(button.dataset.removeCart));
+    submittedOrder = null;
+    discountAmount = 0;
     saveCart();
     render();
   });
@@ -328,9 +496,51 @@ export const initCart = () => {
         input.value = normalizeDigits(input.value);
       }
       updateOrderLinks();
+      submittedOrder = null;
     });
   });
-  [...shippingInputs, ...paymentInputs].forEach((input) => input.addEventListener("change", updateOrderLinks));
+  [...shippingInputs, ...paymentInputs].forEach((input) => input.addEventListener("change", () => {
+    submittedOrder = null;
+    updateOrderLinks();
+  }));
+
+  discountCode?.addEventListener("input", () => {
+    discountAmount = 0;
+    submittedOrder = null;
+    if (discountStatus) discountStatus.textContent = "";
+    updateTotals();
+  });
+
+  applyDiscount?.addEventListener("click", async () => {
+    const code = discountCode?.value.trim();
+    if (!code) {
+      discountAmount = 0;
+      if (discountStatus) discountStatus.textContent = "کد تخفیف را وارد کن.";
+      updateTotals();
+      return;
+    }
+    applyDiscount.disabled = true;
+    try {
+      const response = await fetch("/api/v1/discounts/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, totalAmount: subtotal() })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "کد تخفیف معتبر نیست.");
+      discountAmount = Number(payload.discountAmount || 0);
+      submittedOrder = null;
+      if (discountStatus) discountStatus.textContent = "تخفیف روی سفارش اعمال شد.";
+      updateTotals();
+      updateOrderLinks();
+    } catch (error) {
+      discountAmount = 0;
+      if (discountStatus) discountStatus.textContent = error instanceof Error ? error.message : "کد تخفیف معتبر نیست.";
+      updateTotals();
+    } finally {
+      applyDiscount.disabled = false;
+    }
+  });
 
   useNewAddress?.addEventListener("click", () => {
     savedAddressList?.querySelectorAll<HTMLInputElement>('input[name="saved-address"]').forEach((input) => {
@@ -342,31 +552,19 @@ export const initCart = () => {
     if (customerPostal) customerPostal.value = "";
     if (customerFields) customerFields.hidden = false;
     if (savedAddressState) savedAddressState.textContent = "نشانی جدید را در فرم زیر وارد کن.";
+    submittedOrder = null;
     customerProvince?.focus();
     updateOrderLinks();
   });
 
   whatsappOrder?.addEventListener("click", (event) => {
-    if (checkoutIsComplete()) {
-      updateOrderLinks();
-      return;
-    }
     event.preventDefault();
-    showCheckoutValidation();
+    void openMessenger("whatsapp");
   });
 
-  baleOrder?.addEventListener("click", async (event) => {
-    if (!checkoutIsComplete()) {
-      event.preventDefault();
-      showCheckoutValidation();
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(createOrderSummary());
-      if (copyStatus) copyStatus.textContent = "پیش‌نویس سفارش در بله باز شد؛ گفت‌وگوی khoobrooz را انتخاب کن.";
-    } catch {
-      if (copyStatus) copyStatus.textContent = "پیش‌نویس سفارش در بله باز شد.";
-    }
+  baleOrder?.addEventListener("click", (event) => {
+    event.preventDefault();
+    void openMessenger("bale");
   });
 
   document.addEventListener("keydown", (event) => {
@@ -397,6 +595,8 @@ export const initCart = () => {
   document.addEventListener(ADD_TO_CART_EVENT, (event) => {
     const item = (event as CustomEvent<CartItemInput>).detail;
     cart.push({ ...item, id: Date.now() });
+    submittedOrder = null;
+    discountAmount = 0;
     saveCart();
     render();
     document.querySelectorAll<HTMLElement>("[data-cart-open]").forEach((trigger) => {
@@ -409,6 +609,7 @@ export const initCart = () => {
 
   render();
   void loadCheckoutAccount();
+  void loadPaymentMethod();
   enablePersianValidation(cartLayer || document);
   if (new URLSearchParams(location.search).get("cart") === "open") {
     window.setTimeout(open, 250);

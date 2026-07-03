@@ -1,0 +1,110 @@
+---
+import { ArrowRight, Save } from "@lucide/astro";
+import { iranianBanks, type AdminResource } from "../../admin/resources";
+import AdminShell from "./AdminShell.astro";
+
+interface Props {
+  resource: AdminResource;
+  action: "add" | "edit" | "view";
+}
+
+const { resource, action } = Astro.props;
+const labels = { add: "افزودن", edit: "ویرایش", view: "مشاهده" };
+const isView = action === "view";
+const orderReadonly = new Set([
+  "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
+  "discountAmount", "finalAmount", "customerNote"
+]);
+---
+
+<AdminShell
+  title={`${labels[action]} ${resource.singular}`}
+  description={action === "view" ? "اطلاعات ثبت‌شده را بدون امکان تغییر مرور کنید." : "فیلدهای ضروری را دقیق تکمیل کنید."}
+  active={resource.key}
+  actionLabel={labels[action]}
+>
+  <a class="admin-secondary-action" href={`/admin/${resource.key}/list/`} slot="heading-action">
+    <ArrowRight size={17} stroke-width={1.5} /> بازگشت به فهرست
+  </a>
+  <form
+    class="admin-card admin-form"
+    data-admin-resource
+    data-resource={resource.key}
+    data-mode={action}
+    novalidate
+  >
+    <div class="admin-form-grid">
+      {resource.fields.map((field) => (
+        <label class:list={["admin-field", { wide: field.type === "textarea" }]}>
+          <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
+          {field.type === "textarea" ? (
+            <textarea name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} minlength={field.required ? 2 : undefined}></textarea>
+          ) : field.type === "select" ? (
+            <select name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} data-dynamic-options={!field.options ? field.key : undefined}>
+              <option value="">انتخاب کنید</option>
+              {field.options?.map((option) => <option value={option.value}>{option.label}</option>)}
+            </select>
+          ) : (
+            <input
+              name={field.key}
+              type={field.type === "image" ? "url" : field.type}
+              required={field.required}
+              disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))}
+              min={field.min}
+              dir={field.dir}
+            />
+          )}
+          <small data-field-error={field.key}></small>
+        </label>
+      ))}
+    </div>
+    {resource.key === "products" && (
+      <section class="admin-price-breakdown" data-price-breakdown>
+        <header><span>محاسبه بر اساس وزن</span><small>مبالغ به تومان</small></header>
+        <div></div>
+      </section>
+    )}
+    {resource.key === "payment-methods" && (
+      <section class="admin-payment-cards" data-payment-cards hidden>
+        <header>
+          <div><span>کارت‌های کارت‌به‌کارت</span><small>می‌توانید چند کارت فعال برای پرداخت مشتری داشته باشید.</small></div>
+          {!isView && <button type="button" data-card-add>افزودن کارت</button>}
+        </header>
+        <div class="admin-payment-card-list" data-card-list></div>
+        {!isView && (
+          <div class="admin-card-editor" data-card-editor hidden>
+            <input type="hidden" data-card-input="id" />
+            <label><span>شماره کارت</span><input type="text" inputmode="numeric" maxlength="16" dir="ltr" data-card-input="cardNumber" /></label>
+            <label><span>شماره شبا</span><input type="text" maxlength="26" dir="ltr" placeholder="IRxxxxxxxxxxxxxxxxxxxxxxxx" data-card-input="shebaNumber" /></label>
+            <label><span>شماره حساب</span><input type="text" maxlength="40" dir="ltr" data-card-input="accountNumber" /></label>
+            <label><span>نام صاحب حساب</span><input type="text" data-card-input="accountOwner" /></label>
+            <label>
+              <span>بانک</span>
+              <select data-card-input="bankName">
+                <option value="">انتخاب بانک</option>
+                {iranianBanks.map((bank) => <option value={bank.value}>{bank.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>وضعیت کارت</span>
+              <select data-card-input="isActive">
+                <option value="true">فعال</option>
+                <option value="false">غیرفعال</option>
+              </select>
+            </label>
+            <footer><button type="button" data-card-editor-cancel>انصراف</button><button type="button" data-card-save>ذخیره کارت</button></footer>
+          </div>
+        )}
+      </section>
+    )}
+    {resource.key === "orders" && <section class="admin-order-items" data-order-items hidden></section>}
+    {!isView && (
+      <footer class="admin-form-actions">
+        <a href={`/admin/${resource.key}/list/`}>انصراف</a>
+        <button type="submit" data-admin-submit><Save size={17} stroke-width={1.45} /> ذخیره تغییرات</button>
+      </footer>
+    )}
+    <div class="admin-loading admin-form-loading" data-admin-form-loading hidden>در حال دریافت اطلاعات…</div>
+    <script is:inline type="application/json" data-resource-config set:html={JSON.stringify(resource)}></script>
+  </form>
+</AdminShell>

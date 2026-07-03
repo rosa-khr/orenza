@@ -36,30 +36,38 @@ shipped to the browser.
 
 ## Phase 2 — Product catalog
 
-- Product, blend, roast, grind and weight models
-- Price, inventory, SKU and publish state
-- Product list/create/edit pages
-- Product media and SEO fields
+Status: implemented.
+
+- Product, category, roast, grind and weight models
+- Per-weight pricing and active state
+- Product list/create/edit/view/delete pages
+- Product image URL and bilingual title
 
 ## Phase 3 — Orders and promotions
 
-- Convert the current cart to persisted server orders
-- Order statuses and timeline
-- Tipax/Post shipping methods and configurable fees
-- Card-to-card payment status and receipt upload
+Status: implemented.
+
+- Persisted server orders with server-side price calculation
+- Order and payment statuses
+- Tipax/Post selection
+- Active card-to-card payment details and receipt URL
 - Discount codes, limits and validity dates
 
 ## Phase 4 — Administration
 
-- Admin shell aligned with the Khoobrooz panel interaction model
-- Role-based access control
-- Orders, customers, products, shipping and discounts
+Status: implemented.
+
+- Astro admin shell aligned with the Khoobrooz interaction model
+- Session and role-based access control
+- Orders, products, categories, payment methods, discounts, articles and tags
 - Sent/unsent order monitoring
-- Audit log for sensitive changes
+- Responsive list/add/edit/view routes
 
 ## Phase 5 — Analytics
 
-- GTM data-layer events
-- GA4 ecommerce funnel
-- Visitor, account, cart and order conversion metrics
-- Dashboard summaries sourced from first-party order data and analytics
+Status: partially implemented.
+
+- GTM remains active.
+- First-party 30-day unique visitor count is shown in admin.
+- Dashboard summaries are sourced from orders, customers, products and visits.
+- GA4 ecommerce funnel events remain a future enhancement.

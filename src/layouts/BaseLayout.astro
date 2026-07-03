@@ -125,5 +125,19 @@ const schema = {
     <script>
       import "../scripts/configurator.ts";
     </script>
+    <script>
+      const key = "orenza-visitor-id";
+      let visitorId = localStorage.getItem(key);
+      if (!visitorId) {
+        visitorId = crypto.randomUUID();
+        localStorage.setItem(key, visitorId);
+      }
+      void fetch("/api/v1/analytics/visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId, path: location.pathname }),
+        keepalive: true
+      });
+    </script>
   </body>
 </html>

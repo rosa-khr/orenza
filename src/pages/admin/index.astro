@@ -1,0 +1,21 @@
+---
+import { Boxes, CircleCheckBig, Clock3, PackageCheck, Users } from "@lucide/astro";
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="داشبورد" description="تصویری کوتاه و روشن از وضعیت فروشگاه">
+  <section class="admin-stats" data-admin-dashboard>
+    <article><PackageCheck size={22} stroke-width={1.35} /><span>سفارش‌های جدید</span><strong data-stat="newOrders">—</strong></article>
+    <article><Clock3 size={22} stroke-width={1.35} /><span>در انتظار ارسال</span><strong data-stat="pendingShipment">—</strong></article>
+    <article><CircleCheckBig size={22} stroke-width={1.35} /><span>ارسال‌شده</span><strong data-stat="sentOrders">—</strong></article>
+    <article><Users size={22} stroke-width={1.35} /><span>مشتریان ثبت‌شده</span><strong data-stat="customers">—</strong></article>
+    <article><Users size={22} stroke-width={1.35} /><span>بازدیدکننده ۳۰ روز اخیر</span><strong data-stat="visitors">—</strong></article>
+    <article><Boxes size={22} stroke-width={1.35} /><span>محصولات فعال</span><strong data-stat="activeProducts">—</strong></article>
+  </section>
+  <section class="admin-card admin-dashboard-note">
+    <span>امروز در اورنزا</span>
+    <h2>سفارش‌هایی که نیاز به توجه دارند، اول نمایش داده می‌شوند.</h2>
+    <p>برای پیگیری پرداخت و آماده‌سازی، از بخش سفارش‌ها وارد جزئیات هر سفارش شوید.</p>
+    <a href="/admin/orders/list/">مشاهده سفارش‌ها</a>
+  </section>
+</AdminShell>

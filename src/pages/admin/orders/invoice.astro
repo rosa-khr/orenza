@@ -1,0 +1,33 @@
+---
+import { ArrowRight, Printer } from "@lucide/astro";
+import AdminShell from "../../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="فاکتور سفارش" description="نسخه قابل مشاهده و چاپ سفارش" active="orders" actionLabel="فاکتور">
+  <div class="admin-invoice-actions" slot="heading-action">
+    <a class="admin-secondary-action" href="/admin/orders/list/"><ArrowRight size={17} /> بازگشت</a>
+    <button class="admin-primary-action" type="button" data-print-invoice><Printer size={17} /> چاپ فاکتور</button>
+  </div>
+  <article class="admin-invoice admin-card" data-admin-invoice>
+    <header>
+      <div><span class="brand-mark">O</span><strong>ORENZA</strong><small>COFFEE ROASTERS</small></div>
+      <div><span>شماره سفارش</span><strong data-invoice-number>—</strong><small data-invoice-date>—</small></div>
+    </header>
+    <section class="invoice-customer">
+      <div><span>نام مشتری</span><strong data-invoice-customer>—</strong></div>
+      <div><span>شماره تماس</span><strong data-invoice-phone>—</strong></div>
+      <div><span>نشانی تحویل</span><strong data-invoice-address>—</strong></div>
+    </section>
+    <div class="invoice-table">
+      <table>
+        <thead><tr><th>محصول</th><th>وزن</th><th>تعداد</th><th>آسیاب</th><th>قیمت واحد</th><th>جمع</th></tr></thead>
+        <tbody data-invoice-items></tbody>
+      </table>
+    </div>
+    <footer>
+      <div><span>مبلغ اقلام</span><strong data-invoice-total>—</strong></div>
+      <div><span>تخفیف</span><strong data-invoice-discount>—</strong></div>
+      <div><span>مبلغ نهایی</span><strong data-invoice-final>—</strong></div>
+    </footer>
+  </article>
+</AdminShell>

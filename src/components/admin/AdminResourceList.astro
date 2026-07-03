@@ -1,0 +1,83 @@
+---
+import { Eye, Pencil, Plus, Trash2 } from "@lucide/astro";
+import type { AdminResource } from "../../admin/resources";
+import AdminShell from "./AdminShell.astro";
+
+interface Props {
+  resource: AdminResource;
+}
+
+const { resource } = Astro.props;
+const columns = resource.fields.filter((field) => field.list).slice(0, 6);
+---
+
+<AdminShell title={resource.title} description={resource.description} active={resource.key} actionLabel="لیست">
+  {resource.key !== "payment-methods" && (
+    <a class="admin-primary-action" href={`/admin/${resource.key}/add/`} slot="heading-action">
+      <Plus size={17} stroke-width={1.5} /> افزودن {resource.singular}
+    </a>
+  )}
+  <section
+    class="admin-card admin-resource"
+    data-admin-resource
+    data-resource={resource.key}
+    data-mode="list"
+  >
+    <div class="admin-list-toolbar">
+      <label>
+        <span class="sr-only">جستجو</span>
+        <input data-admin-search type="search" placeholder={`جستجو در ${resource.title}`} />
+      </label>
+      {resource.key === "orders" && (
+        <>
+          <select data-admin-filter="orderStatus" aria-label="وضعیت سفارش">
+            <option value="">همه وضعیت‌های سفارش</option>
+            <option value="new">جدید</option>
+            <option value="processing">در حال آماده‌سازی</option>
+            <option value="sent">ارسال‌شده</option>
+            <option value="completed">تکمیل‌شده</option>
+            <option value="canceled">لغوشده</option>
+          </select>
+          <select data-admin-filter="paymentStatus" aria-label="وضعیت پرداخت">
+            <option value="">همه وضعیت‌های پرداخت</option>
+            <option value="pending">در انتظار</option>
+            <option value="paid">پرداخت‌شده</option>
+            <option value="rejected">ردشده</option>
+          </select>
+          <input data-admin-filter="fromDate" type="date" aria-label="از تاریخ" />
+          <input data-admin-filter="toDate" type="date" aria-label="تا تاریخ" />
+        </>
+      )}
+    </div>
+    <div class="admin-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ردیف</th>
+            {columns.map((field) => <th>{field.label}</th>)}
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody data-admin-rows>
+          <tr><td colspan={columns.length + 2}><div class="admin-loading">در حال دریافت اطلاعات…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <footer class="admin-pagination">
+      <span data-admin-total>۰ رکورد</span>
+      <div>
+        <button type="button" data-admin-prev>قبلی</button>
+        <b data-admin-page>۱</b>
+        <button type="button" data-admin-next>بعدی</button>
+      </div>
+    </footer>
+    <template data-admin-actions>
+      <div class="admin-row-actions">
+        <a data-action="view" aria-label="مشاهده"><Eye size={16} stroke-width={1.45} /></a>
+        <a data-action="edit" aria-label="ویرایش"><Pencil size={16} stroke-width={1.45} /></a>
+        <button data-action="delete" type="button" aria-label="حذف"><Trash2 size={16} stroke-width={1.45} /></button>
+      </div>
+    </template>
+    <script is:inline type="application/json" data-resource-config set:html={JSON.stringify({ ...resource, fields: columns })}></script>
+  </section>
+</AdminShell>

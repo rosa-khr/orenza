@@ -1,0 +1,112 @@
+---
+import {
+  BadgePercent,
+  BookOpenText,
+  Boxes,
+  CreditCard,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  PackageCheck,
+  Tags,
+  X
+} from "@lucide/astro";
+import { adminResources } from "../../admin/resources";
+import "../../styles/admin.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  active?: string;
+  actionLabel?: string;
+}
+
+const { title, description = "", active = "dashboard", actionLabel } = Astro.props;
+const icons = {
+  products: Boxes,
+  categories: Tags,
+  orders: PackageCheck,
+  "payment-methods": CreditCard,
+  "discount-codes": BadgePercent,
+  articles: BookOpenText,
+  tags: Tags
+};
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#10271f" />
+    <link rel="icon" href="/favicon.svg" />
+    <title>{title} | مدیریت اورنزا</title>
+  </head>
+  <body class="admin-body">
+    <div class="admin-app" data-admin-app>
+      <button class="admin-backdrop" type="button" data-admin-menu-close aria-label="بستن منو"></button>
+      <aside class="admin-sidebar" data-admin-sidebar>
+        <header class="admin-brand">
+          <a href="/admin/"><span>O</span><div><strong>ORENZA</strong><small>COFFEE ADMIN</small></div></a>
+          <button type="button" data-admin-menu-close aria-label="بستن منو"><X size={19} stroke-width={1.5} /></button>
+        </header>
+        <nav aria-label="منوی مدیریت">
+          <a class:list={{ active: active === "dashboard" }} href="/admin/">
+            <LayoutDashboard size={18} stroke-width={1.45} /><span>داشبورد</span>
+          </a>
+          {adminResources.map((resource) => {
+            const Icon = icons[resource.key as keyof typeof icons] ?? Boxes;
+            return (
+              <a class:list={{ active: active === resource.key }} href={`/admin/${resource.key}/list/`}>
+                <Icon size={18} stroke-width={1.45} /><span>{resource.title}</span>
+              </a>
+            );
+          })}
+        </nav>
+        <button class="admin-logout" type="button" data-admin-logout>
+          <LogOut size={17} stroke-width={1.45} /> خروج از مدیریت
+        </button>
+      </aside>
+      <main class="admin-main">
+        <header class="admin-topbar">
+          <button class="admin-menu-button" type="button" data-admin-menu-open aria-label="بازکردن منو">
+            <Menu size={21} stroke-width={1.4} />
+          </button>
+          <div>
+            <small>پنل مدیریت / {actionLabel ?? title}</small>
+            <strong data-admin-user>مدیریت اورنزا</strong>
+          </div>
+          <a href="/" target="_blank" rel="noreferrer">مشاهده فروشگاه</a>
+        </header>
+        <section class="admin-content">
+          <header class="admin-page-heading">
+            <div>
+              <span>ORENZA MANAGEMENT</span>
+              <h1>{title}</h1>
+              {description && <p>{description}</p>}
+            </div>
+            <slot name="heading-action" />
+          </header>
+          <slot />
+        </section>
+      </main>
+      <div class="admin-confirm-layer" data-admin-confirm hidden>
+        <button type="button" data-confirm-dismiss aria-label="بستن"></button>
+        <section role="alertdialog" aria-modal="true" aria-labelledby="admin-confirm-title">
+          <span>ORENZA CONFIRMATION</span>
+          <h2 id="admin-confirm-title" data-confirm-title>تأیید عملیات</h2>
+          <p data-confirm-message></p>
+          <div>
+            <button type="button" data-confirm-cancel>انصراف</button>
+            <button type="button" data-confirm-accept>تأیید</button>
+          </div>
+        </section>
+      </div>
+      <div class="admin-toasts" data-admin-toasts aria-live="polite"></div>
+    </div>
+    <script>
+      import "../../scripts/admin.ts";
+    </script>
+  </body>
+</html>

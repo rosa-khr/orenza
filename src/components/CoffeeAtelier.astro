@@ -7,7 +7,7 @@ import Icon from "./Icon.astro";
   <header class="builder-header atelier-header">
     <p class="eyebrow">ORENZA COFFEE ATELIER</p>
     <h2 id="atelier-title">سفارش اختصاصی قهوه</h2>
-    <p>ترکیب و رُست را انتخاب کن؛ آسیاب مناسب دستگاهت با ما.</p>
+    <p>قهوه، رُست و فرم مناسب دستگاهت را انتخاب کن؛ قیمت همان لحظه محاسبه می‌شود.</p>
     <div class="atelier-meta" aria-label="اطلاعات فرایند سفارش">
       <span>حدود ۲ دقیقه</span>
       <i aria-hidden="true"></i>
@@ -72,11 +72,11 @@ import Icon from "./Icon.astro";
       <section class="config-section is-ready" data-config-section="blend">
         <header class="config-heading">
           <span>BLEND PROFILE</span>
-          <div><h3>ترکیب دانه</h3><p>تعادل عطر، قدرت و کافئین را انتخاب کن.</p></div>
+          <div><h3>انتخاب قهوه</h3><p>ترکیبی را انتخاب کن که به فنجان دلخواهت نزدیک‌تر است.</p></div>
         </header>
         <div class="blend-options">
           {blends.map((blend) => (
-            <button class="blend-option" type="button" data-choice="blend" data-value={blend.title} data-en={blend.en}>
+            <button class="blend-option" type="button" data-choice="blend" data-value={blend.title} data-en={blend.en} data-fallback-product>
               <span class="option-radio"></span>
               <span class="blend-copy">
                 <small>{blend.en}</small>
@@ -162,10 +162,18 @@ import Icon from "./Icon.astro";
         </header>
         <div class="weight-options">
           {weights.map((weight) => (
-            <button type="button" data-choice="weight" data-value={weight}>
-              <span class="option-radio"></span><strong>{weight}</strong>
+            <button type="button" data-choice="weight" data-value={weight.label} data-grams={weight.grams}>
+              <span class="option-radio"></span><strong>{weight.label}</strong><small data-weight-price>—</small>
             </button>
           ))}
+        </div>
+        <div class="quantity-choice">
+          <span>تعداد بسته</span>
+          <div>
+            <button type="button" data-quantity-minus aria-label="کم‌کردن تعداد">−</button>
+            <output data-quantity>۱</output>
+            <button type="button" data-quantity-plus aria-label="افزودن تعداد">+</button>
+          </div>
         </div>
       </section>
 
@@ -184,6 +192,8 @@ import Icon from "./Icon.astro";
           <div data-device-result hidden><dt>روش دم‌آوری <small>BREW METHOD</small></dt><dd data-result="device">—</dd></div>
           <div data-grind-result hidden><dt>درجه آسیاب <small>GRIND SIZE</small></dt><dd data-result="grindSize">—</dd></div>
           <div><dt>وزن <small>WEIGHT</small></dt><dd data-result="weight">—</dd></div>
+          <div><dt>تعداد <small>QUANTITY</small></dt><dd data-result="quantity">۱</dd></div>
+          <div><dt>مبلغ <small>ITEM TOTAL</small></dt><dd data-result="price">—</dd></div>
         </dl>
         <div class="result-actions">
           <button class="button button-primary" type="button" data-add-cart>افزودن به سبد سفارش</button>

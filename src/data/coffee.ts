@@ -28,4 +28,9 @@ export const devices = [
   { id: "cold", title: "کلدبرو", en: "COLD BREW", grindFa: "بسیار درشت", grindEn: "EXTRA COARSE", grind: 7, mark: "CB" }
 ] as const;
 
-export const weights = ["۲۵۰ گرم", "۵۰۰ گرم", "۱ کیلوگرم", "عمده"] as const;
+export const weights = [
+  { label: "۱۰۰ گرم", grams: 100 },
+  { label: "۲۵۰ گرم", grams: 250 },
+  { label: "۵۰۰ گرم", grams: 500 },
+  { label: "۱ کیلوگرم", grams: 1000 }
+] as const;

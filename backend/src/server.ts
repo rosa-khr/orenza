@@ -14,6 +14,8 @@ import {
   verifyPassword
 } from "./security.js";
 import { sendPasswordResetCode } from "./sms.js";
+import { registerAdminRoutes } from "./admin/routes.js";
+import { registerStoreRoutes } from "./store/routes.js";
 
 type UserRow = {
   id: string;
@@ -128,6 +130,15 @@ app.setErrorHandler((error, _request, reply) => {
   if ((error as { code?: string }).code === "23505") {
     return reply.code(409).send({ error: "این شماره موبایل یا ایمیل قبلاً ثبت شده است." });
   }
+  if ((error as { code?: string }).code === "23503") {
+    return reply.code(409).send({ error: "این رکورد به اطلاعات دیگری متصل است و قابل حذف نیست." });
+  }
+  const statusCode = (error as { statusCode?: number }).statusCode;
+  if (statusCode && statusCode >= 400 && statusCode < 500) {
+    return reply.code(statusCode).send({
+      error: error instanceof Error ? error.message : "درخواست قابل انجام نیست."
+    });
+  }
   app.log.error(error);
   return reply.code(500).send({ error: "در حال حاضر امکان انجام درخواست وجود ندارد. لطفاً دوباره تلاش کنید." });
 });
@@ -160,6 +171,24 @@ app.post("/api/v1/auth/login", { config: { rateLimit: { max: 10, timeWindow: "15
   const user = result.rows[0];
   if (!user?.password_hash || !(await verifyPassword(data.password, user.password_hash))) {
     return reply.code(401).send({ error: "شماره موبایل یا رمز عبور صحیح نیست." });
+  }
+  await query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]);
+  await setSession(reply, user.id);
+  return { user: publicUser(user) };
+});
+
+app.post("/api/v1/auth/admin-login", { config: { rateLimit: { max: 8, timeWindow: "15 minutes" } } }, async (request, reply) => {
+  const data = z.object({
+    username: z.string().trim().min(3).max(80),
+    password: passwordSchema
+  }).parse(request.body);
+  const result = await query<UserRow>(
+    "SELECT * FROM users WHERE lower(username) = lower($1) AND role = 'admin'",
+    [data.username]
+  );
+  const user = result.rows[0];
+  if (!user?.password_hash || !(await verifyPassword(data.password, user.password_hash))) {
+    return reply.code(401).send({ error: "نام کاربری یا رمز عبور صحیح نیست." });
   }
   await query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]);
   await setSession(reply, user.id);
@@ -368,6 +397,9 @@ app.delete("/api/v1/me/addresses/:id", async (request, reply) => {
   }
   return reply.code(204).send();
 });
+
+registerStoreRoutes(app, pool, currentUser);
+registerAdminRoutes(app, pool, currentUser);
 
 const port = Number(process.env.PORT || 8787);
 await app.listen({ host: "0.0.0.0", port });

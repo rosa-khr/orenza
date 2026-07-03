@@ -1,0 +1,31 @@
+---
+import "../../styles/admin.css";
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" />
+    <title>ورود مدیریت | اورنزا</title>
+  </head>
+  <body class="admin-login-body">
+    <main class="admin-login">
+      <a class="admin-login-brand" href="/"><span>O</span><strong>ORENZA</strong></a>
+      <form data-admin-login novalidate>
+        <span>MANAGEMENT ACCESS</span>
+        <h1>ورود به مدیریت</h1>
+        <p>با حساب مدیر اورنزا وارد شوید.</p>
+        <label><span>نام کاربری</span><input name="username" dir="ltr" autocomplete="username" minlength="3" required /></label>
+        <label><span>رمز عبور</span><input name="password" type="password" autocomplete="current-password" minlength="8" required /></label>
+        <small data-login-error aria-live="polite"></small>
+        <button type="submit">ورود به پنل</button>
+      </form>
+    </main>
+    <script>
+      import "../../scripts/admin.ts";
+    </script>
+  </body>
+</html>
