@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="خرید قهوه و پودرهای نوشیدنی کافه‌ای اورنزا"
+  description="همه محصولات فعال اورنزا؛ قهوه‌های ترکیبی تازه‌رست، چای ماسالا، ماچا لاته، هات چاکلت و کاپوچینو با انتخاب وزن و سفارش آنلاین."
+  canonicalPath="/products/"
+  keywords={["خرید قهوه", "خرید قهوه ترکیبی", "قهوه تازه رست", "خرید چای ماسالا", "خرید ماچا", "خرید هات چاکلت"]}
+>
+  <section class="category-hero products-parent-hero">
+    <div>
+      <p class="eyebrow">ORENZA COLLECTION</p>
+      <h1>محصولات اورنزا</h1>
+      <p>از ترکیب‌های تازه‌رست تا نوشیدنی‌های کافه‌ای؛ انتخابی روشن برای هر سلیقه و هر لحظه.</p>
+      <a class="button button-primary" href="#all-products">دیدن محصولات</a>
+    </div>
+  </section>
+
+  <section class="category-products" data-category-products data-category="" aria-labelledby="all-products">
+    <header>
+      <span>ALL PRODUCTS</span>
+      <h2 id="all-products">همه محصولات فعال</h2>
+    </header>
+    <div data-category-product-list><p>در حال دریافت محصولات…</p></div>
+  </section>
+
+  <section class="category-editorial products-parent-content">
+    <h2>قهوه‌ای متناسب با روش تو</h2>
+    <p>در اورنزا، هر ترکیب بر اساس نسبت عربیکا و روبوستا، شدت کافئین، بادی و عطر معرفی می‌شود تا انتخاب فقط بر پایه عدد نباشد؛ نتیجه‌ای را انتخاب کنی که واقعاً به ذائقه و دستگاهت نزدیک است.</p>
+    <p>محصولات وزنی با انتخاب وزن عرضه می‌شوند و محصولات بسته‌ای، وزن و قیمت ثابت خود را دارند. وضعیت موجودی هر محصول نیز پیش از سفارش مشخص است.</p>
+  </section>
+
+  <script>
+    import "../../scripts/category-products.ts";
+  </script>
+</BaseLayout>

@@ -6,6 +6,7 @@ type CategoryProduct = {
   titleEn: string;
   description: string;
   blendType: string;
+  categorySlug: string;
   roastType: "light" | "medium" | "mediumDark" | "dark";
   coffeeType: "bean" | "ground";
   saleType: "weighted" | "packaged";
@@ -29,8 +30,9 @@ if (root && list) {
     })
     .then(({ items }) => {
       list.replaceChildren();
-      const isPowderCategory = root.dataset.category === "cafe-drinks";
       items.forEach((product) => {
+        const isPowderCategory =
+          root.dataset.category === "cafe-drinks" || product.categorySlug === "cafe-drinks";
         const article = document.createElement("article");
         const eyebrow = document.createElement("span");
         const title = document.createElement("h3");

@@ -19,7 +19,7 @@ export const registerStoreRoutes = (
     const categoryFilter = category ? " AND c.slug = $1" : "";
     if (category) values.push(category);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT p.*, c.title AS category_title,
+      `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
         (p.sale_price_per_kg - p.purchase_price_per_kg) AS profit_per_kg,
         CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.10)::bigint ELSE 0 END AS price_per_100g,
         CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.25)::bigint ELSE 0 END AS price_per_250g,

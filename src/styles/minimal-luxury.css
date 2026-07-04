@@ -4139,6 +4139,7 @@ textarea:focus-visible {
 }
 .category-editorial { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(30px,7vw,90px); padding: clamp(55px,8vw,100px) 8vw; background: #15241d; color: #e9dfcf; }
 .category-editorial p { margin: 0; color: #c7bdad; font-size: clamp(.9rem,1.5vw,1.05rem); line-height: 2.2; }
+.products-parent-content h2 { grid-column: 1/-1; margin: 0; color: #f0e4d1; font-size: clamp(1.8rem,4vw,3rem); }
 @media (max-width: 760px) {
   .category-hero { min-height: 520px; padding-top: 110px; }
   .category-products [data-category-product-list] { grid-template-columns: 1fr; }

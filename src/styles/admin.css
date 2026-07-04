@@ -203,6 +203,9 @@ a { color: inherit; text-decoration: none; }
 .status-packaged { border-color: #ddc79f; background: #fbf4e7; color: #775522; }
 .status-inStock { border-color: #bdd5c9; background: #edf4f0; color: #23543f; }
 .status-outOfStock { border-color: #dfc0b9; background: #f8eeeb; color: #81443c; }
+.status-customer { border-color: #bfd0dc; background: #edf4f8; color: #294f68; }
+.status-admin { border-color: #ddc79f; background: #fbf4e7; color: #775522; }
+.admin-user-link { color: inherit; font-size: 13px; font-weight: 700; }
 .admin-loading, .admin-empty { padding: 38px; text-align: center; color: var(--admin-muted); }
 .admin-pagination { display: flex; align-items: center; justify-content: space-between; padding: 13px 15px; color: var(--admin-muted); font-size: 11px; }
 .admin-pagination div { display: flex; align-items: center; gap: 9px; }
@@ -220,6 +223,13 @@ a { color: inherit; text-decoration: none; }
 .admin-field input:focus, .admin-field select:focus, .admin-field textarea:focus { border-color: #a77d40; box-shadow: 0 0 0 3px rgba(167,125,64,.1); }
 .admin-field input:disabled, .admin-field select:disabled, .admin-field textarea:disabled { opacity: 1; background: #f3eee5; color: #544f47; }
 .admin-field small { min-height: 16px; color: #914e43; font-size: 10px; }
+.admin-permission-field { margin: 0; border: 1px solid var(--admin-line); border-radius: 8px; background: #faf6ef; padding: 14px; }
+.admin-permission-field legend { padding: 0 6px; color: #504a42; font-size: 12px; font-weight: 700; }
+.admin-permission-field legend i { color: #9e563f; font-style: normal; }
+.admin-permission-field > div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.admin-permission-field label { display: flex; min-height: 42px; align-items: center; gap: 9px; border: 1px solid #e0d6c7; border-radius: 6px; background: #fffdf8; padding: 8px 10px; cursor: pointer; font-size: 11px; }
+.admin-permission-field input { width: 16px; min-height: 16px; accent-color: var(--admin-green); }
+.admin-permission-field:disabled label { cursor: default; opacity: .72; }
 .admin-form-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; padding-top: 16px; border-top: 1px solid #eee5d7; }
 .admin-form-actions a, .admin-form-actions button { min-height: 40px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fff; padding: 8px 15px; font-size: 12px; }
 .admin-form-actions button { display: inline-flex; align-items: center; gap: 7px; border-color: var(--admin-green); background: var(--admin-green); color: white; cursor: pointer; }
@@ -321,6 +331,12 @@ a { color: inherit; text-decoration: none; }
 .admin-dropdown-control span.placeholder { color: #91887b; }
 .admin-dropdown.open .admin-dropdown-control { border-color: #a77d40; box-shadow: 0 0 0 3px rgba(167,125,64,.1); }
 .admin-dropdown.open .admin-dropdown-control svg { transform: rotate(180deg); }
+.admin-dropdown.disabled .admin-dropdown-control {
+  background: #f3eee5;
+  color: #544f47;
+  cursor: default;
+}
+.admin-dropdown.disabled .admin-dropdown-control svg { opacity: .45; }
 .admin-dropdown-panel { position: absolute; z-index: 40; top: calc(100% + 6px); right: 0; left: 0; overflow: hidden; border: 1px solid #d9cdbb; border-radius: 7px; background: #fff; box-shadow: 0 18px 42px rgba(45,34,19,.14); }
 .admin-dropdown-panel > label { display: flex; align-items: center; gap: 7px; border-bottom: 1px solid #ece3d6; background: #f9f5ee; padding: 8px 10px; color: #776c5e; }
 .admin-dropdown-panel > label input { width: 100%; min-height: 28px; border: 0; background: transparent; outline: 0; font-size: 11px; }
@@ -355,6 +371,31 @@ a { color: inherit; text-decoration: none; }
 .admin-confirm-layer section > div { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .admin-confirm-layer section > div button { min-height: 39px; border: 1px solid #d9cdbb; border-radius: 6px; background: #fff; padding: 7px 13px; cursor: pointer; font-size: 11px; }
 .admin-confirm-layer [data-confirm-accept] { border-color: var(--admin-green); background: var(--admin-green); color: #fff; }
+.admin-password-layer { position: fixed; inset: 0; z-index: 125; display: grid; place-items: center; padding: 18px; opacity: 0; transition: opacity .18s ease; }
+.admin-password-layer.show { opacity: 1; }
+.admin-password-layer > button { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(9,16,13,.62); backdrop-filter: blur(3px); }
+.admin-password-layer form { position: relative; display: grid; width: min(100%,440px); gap: 13px; border: 1px solid #d8c9b2; border-radius: 10px; background: #fffaf1; padding: 24px; box-shadow: 0 24px 70px rgba(20,15,9,.25); }
+.admin-password-layer form > span { color: #9a7139; font: 10px Georgia,serif; letter-spacing: 1.3px; }
+.admin-password-layer h2 { margin: 0; font-size: 20px; }
+.admin-password-layer p { margin: 0 0 3px; color: #70685d; font-size: 11px; line-height: 1.9; }
+.admin-password-layer label { display: grid; gap: 6px; color: #504a42; font-size: 11px; font-weight: 700; }
+.admin-password-layer input,
+.admin-password-layer select { min-height: 42px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fff; padding: 8px 11px; outline: none; }
+.admin-password-layer input { direction: ltr; }
+.admin-password-layer form > small { min-height: 17px; color: #914e43; font-size: 10px; }
+.admin-password-layer form > div { display: flex; justify-content: flex-end; gap: 8px; }
+.admin-password-layer form > div button { min-height: 39px; border: 1px solid #d9cdbb; border-radius: 6px; background: #fff; padding: 7px 13px; cursor: pointer; font-size: 11px; }
+.admin-password-layer form > div button[type="submit"] { border-color: var(--admin-green); background: var(--admin-green); color: #fff; }
+.admin-user-security { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 20px; border: 1px solid #dfd5c4; border-radius: 8px; background: #f8f3ea; padding: 14px; }
+.admin-user-security > div { display: grid; gap: 4px; }
+.admin-user-security strong { font-size: 12px; }
+.admin-user-security small { color: var(--admin-muted); font-size: 10px; }
+.admin-user-security button { min-height: 38px; border: 1px solid var(--admin-green); border-radius: 6px; background: var(--admin-green); padding: 7px 12px; color: #fff; cursor: pointer; font-size: 11px; }
+.admin-profile-grid { display: grid; gap: 18px; }
+.admin-profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; border-bottom: 1px solid #eee5d7; padding-bottom: 14px; color: #5f513e; }
+.admin-profile-section-heading > div { display: grid; gap: 4px; }
+.admin-profile-section-heading strong { font-size: 14px; }
+.admin-profile-section-heading small { color: var(--admin-muted); font-size: 10px; }
 .admin-invoice-actions { display: flex; gap: 8px; }
 .admin-invoice-actions button { border: 0; cursor: pointer; }
 .admin-invoice { padding: clamp(20px,4vw,42px); }
@@ -417,6 +458,9 @@ a { color: inherit; text-decoration: none; }
   .admin-order-items article { grid-template-columns: 1fr; }
   .admin-price-breakdown > div { grid-template-columns: 1fr 1fr; }
   .admin-payment-card-list, .admin-card-editor { grid-template-columns: 1fr; }
+  .admin-permission-field > div { grid-template-columns: 1fr 1fr; }
+  .admin-user-security { align-items: stretch; flex-direction: column; }
+  .admin-user-security button { width: 100%; }
   .invoice-customer { grid-template-columns: 1fr; }
   .admin-grid-heading { align-items: flex-start; flex-direction: column; gap: 7px; padding: 12px; }
   .admin-grid-heading > div > span { display: none; }
@@ -432,7 +476,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media print {
-  .admin-sidebar, .admin-topbar, .admin-page-heading, .admin-toasts, .admin-confirm-layer { display: none !important; }
+  .admin-sidebar, .admin-topbar, .admin-page-heading, .admin-toasts, .admin-confirm-layer, .admin-password-layer { display: none !important; }
   .admin-app { display: block; }
   .admin-content { padding: 0; }
   .admin-invoice { border: 0; box-shadow: none; }

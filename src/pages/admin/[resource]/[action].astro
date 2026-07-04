@@ -7,7 +7,9 @@ type AdminAction = "list" | "add" | "edit" | "view";
 
 export function getStaticPaths() {
   return adminResources.flatMap((resource) =>
-    (["list", "add", "edit", "view"] as AdminAction[]).map((action) => ({
+    (resource.canCreate === false
+      ? ["list", "edit", "view"]
+      : ["list", "add", "edit", "view"] as AdminAction[]).map((action) => ({
       params: { resource: resource.key, action },
       props: { resource, action }
     }))

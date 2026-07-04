@@ -34,13 +34,26 @@ const orderReadonly = new Set([
     novalidate
   >
     <div class="admin-form-grid">
-      {resource.fields.map((field) => (
+      {resource.fields.map((field) => field.type === "permissions" ? (
+        <fieldset class="admin-permission-field admin-field wide" data-admin-field={field.key} disabled={isView}>
+          <legend>{field.label}{field.required && !isView ? <i>*</i> : null}</legend>
+          <div>
+            {field.options?.map((option) => (
+              <label>
+                <input type="checkbox" name={field.key} value={option.value} />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+          <small data-field-error={field.key}></small>
+        </fieldset>
+      ) : (
         <label class:list={["admin-field", { wide: field.type === "textarea" }]} data-admin-field={field.key}>
           <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
           {field.type === "textarea" ? (
             <textarea name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} minlength={field.required ? 2 : undefined}></textarea>
           ) : field.type === "select" ? (
-            <select name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} data-dynamic-options={!field.options ? field.key : undefined}>
+            <select name={field.key} required={field.required} disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))} data-dynamic-options={!field.options ? field.key : undefined}>
               <option value="">انتخاب کنید</option>
               {field.options?.map((option) => <option value={option.value}>{option.label}</option>)}
             </select>
@@ -98,6 +111,12 @@ const orderReadonly = new Set([
       </section>
     )}
     {resource.key === "orders" && <section class="admin-order-items" data-order-items hidden></section>}
+    {resource.key === "users" && !isView && (
+      <section class="admin-user-security">
+        <div><strong>امنیت حساب</strong><small>رمز عبور کاربر را بدون ارسال کد تأیید تغییر دهید.</small></div>
+        <button type="button" data-user-password-reset>تغییر رمز عبور</button>
+      </section>
+    )}
     {!isView && (
       <footer class="admin-form-actions">
         <a href={`/admin/${resource.key}/list/`}>انصراف</a>

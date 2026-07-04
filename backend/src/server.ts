@@ -19,10 +19,14 @@ import { registerStoreRoutes } from "./store/routes.js";
 
 type UserRow = {
   id: string;
+  username: string | null;
   phone: string | null;
   email: string | null;
   password_hash: string | null;
   display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  admin_role_id: string | null;
   role: "customer" | "admin";
   created_at: Date;
 };
@@ -60,11 +64,21 @@ const publicUser = (user: UserRow) => ({
   id: user.id,
   phone: user.phone,
   email: user.email,
-  displayName: user.display_name,
+  firstName: user.first_name,
+  lastName: user.last_name,
+  displayName: user.display_name || [user.first_name, user.last_name].filter(Boolean).join(" "),
   role: user.role,
   hasPassword: Boolean(user.password_hash),
   createdAt: user.created_at
 });
+
+const splitDisplayName = (displayName: string) => {
+  const parts = displayName.trim().split(/\s+/);
+  return {
+    firstName: parts.shift() || displayName.trim(),
+    lastName: parts.join(" ") || null
+  };
+};
 
 const setSession = async (reply: FastifyReply, userId: string) => {
   const token = createSessionToken();
@@ -155,10 +169,11 @@ app.post("/api/v1/auth/register", { config: { rateLimit: { max: 8, timeWindow: "
     displayName: z.string().trim().min(2).max(100)
   }).parse(request.body);
   const passwordHash = await hashPassword(data.password);
+  const name = splitDisplayName(data.displayName);
   const result = await query<UserRow>(
-    `INSERT INTO users (phone, password_hash, display_name, last_login_at)
-     VALUES ($1, $2, $3, now()) RETURNING *`,
-    [data.phone, passwordHash, data.displayName]
+    `INSERT INTO users (phone, password_hash, display_name, first_name, last_name, last_login_at)
+     VALUES ($1, $2, $3, $4, $5, now()) RETURNING *`,
+    [data.phone, passwordHash, data.displayName, name.firstName, name.lastName]
   );
   const user = result.rows[0]!;
   await setSession(reply, user.id);
@@ -259,13 +274,25 @@ app.post("/api/v1/auth/google", { config: { rateLimit: { max: 15, timeWindow: "1
   if (!payload?.sub || !payload.email || !payload.email_verified) {
     return reply.code(401).send({ error: "حساب گوگل قابل تأیید نیست." });
   }
+  const googleDisplayName = payload.name || payload.email.split("@")[0] || "کاربر اورنزا";
+  const googleName = splitDisplayName(googleDisplayName);
   const result = await query<UserRow>(
-    `INSERT INTO users (email, display_name, google_subject, last_login_at)
-     VALUES ($1, $2, $3, now())
+    `INSERT INTO users (email, display_name, first_name, last_name, google_subject, last_login_at)
+     VALUES ($1, $2, $3, $4, $5, now())
      ON CONFLICT (google_subject) DO UPDATE
-       SET email = EXCLUDED.email, display_name = COALESCE(users.display_name, EXCLUDED.display_name), last_login_at = now()
+       SET email = EXCLUDED.email,
+           display_name = COALESCE(users.display_name, EXCLUDED.display_name),
+           first_name = COALESCE(users.first_name, EXCLUDED.first_name),
+           last_name = COALESCE(users.last_name, EXCLUDED.last_name),
+           last_login_at = now()
      RETURNING *`,
-    [payload.email.toLowerCase(), payload.name || payload.email.split("@")[0], payload.sub]
+    [
+      payload.email.toLowerCase(),
+      googleDisplayName,
+      googleName.firstName,
+      googleName.lastName,
+      payload.sub
+    ]
   );
   const user = result.rows[0]!;
   await setSession(reply, user.id);
@@ -289,9 +316,11 @@ app.patch("/api/v1/me", async (request, reply) => {
   const user = await requireUser(request, reply);
   if (!user) return;
   const data = profileSchema.parse(request.body);
+  const name = splitDisplayName(data.displayName);
   const result = await query<UserRow>(
-    "UPDATE users SET display_name = $1, phone = COALESCE($2, phone), updated_at = now() WHERE id = $3 RETURNING *",
-    [data.displayName, data.phone ?? null, user.id]
+    `UPDATE users SET display_name = $1, first_name = $2, last_name = $3,
+       phone = COALESCE($4, phone), updated_at = now() WHERE id = $5 RETURNING *`,
+    [data.displayName, name.firstName, name.lastName, data.phone ?? null, user.id]
   );
   return { user: publicUser(result.rows[0]!) };
 });

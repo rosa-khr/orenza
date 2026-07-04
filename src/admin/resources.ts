@@ -5,7 +5,8 @@ export type AdminFieldType =
   | "select"
   | "checkbox"
   | "date"
-  | "image";
+  | "image"
+  | "permissions";
 
 export type AdminField = {
   key: string;
@@ -26,11 +27,25 @@ export type AdminResource = {
   description: string;
   fields: AdminField[];
   readonly?: boolean;
+  canCreate?: boolean;
 };
 
 const yesNo = [
   { label: "فعال", value: "true" },
   { label: "غیرفعال", value: "false" }
+];
+
+const adminPermissions = [
+  { label: "داشبورد", value: "dashboard" },
+  { label: "کاربران", value: "users" },
+  { label: "نقش‌ها و دسترسی‌ها", value: "roles" },
+  { label: "محصولات", value: "products" },
+  { label: "دسته‌بندی‌ها", value: "categories" },
+  { label: "سفارش‌ها", value: "orders" },
+  { label: "روش‌های پرداخت", value: "payment-methods" },
+  { label: "کدهای تخفیف", value: "discount-codes" },
+  { label: "مقالات", value: "articles" },
+  { label: "تگ‌ها", value: "tags" }
 ];
 
 export const iranianBanks = [
@@ -57,6 +72,74 @@ export const iranianBanks = [
 ].map((bank) => ({ label: `بانک ${bank.name}`, value: bank.name, code: bank.code }));
 
 export const adminResources: AdminResource[] = [
+  {
+    key: "users",
+    title: "کاربران",
+    singular: "کاربر",
+    description: "مشخصات، سطح دسترسی و امنیت حساب‌های فروشگاه",
+    canCreate: false,
+    fields: [
+      { key: "firstName", label: "نام", type: "text", required: true, list: true },
+      { key: "lastName", label: "نام خانوادگی", type: "text", required: true, list: true },
+      { key: "phone", label: "شماره موبایل", type: "text", dir: "ltr", readonly: true, list: true },
+      { key: "email", label: "ایمیل", type: "text", dir: "ltr", readonly: true, list: true },
+      { key: "username", label: "نام کاربری مدیریت", type: "text", dir: "ltr", readonly: true },
+      {
+        key: "role",
+        label: "سطح دسترسی",
+        type: "select",
+        readonly: true,
+        list: true,
+        options: [
+          { label: "کاربر فروشگاه", value: "customer" },
+          { label: "مدیر", value: "admin" }
+        ]
+      },
+      { key: "panelRoleTitle", label: "نقش پنل", type: "text", readonly: true, list: true },
+      {
+        key: "hasPassword",
+        label: "رمز عبور",
+        type: "select",
+        readonly: true,
+        list: true,
+        options: [
+          { label: "تنظیم شده", value: "true" },
+          { label: "تنظیم نشده", value: "false" }
+        ]
+      },
+      { key: "lastLoginAt", label: "آخرین ورود", type: "text", readonly: true, list: true },
+      { key: "createdAt", label: "تاریخ عضویت", type: "text", readonly: true, list: true }
+    ]
+  },
+  {
+    key: "roles",
+    title: "نقش‌ها و دسترسی‌ها",
+    singular: "نقش",
+    description: "تعریف نقش‌های پنل و تعیین منوهای قابل دسترس",
+    fields: [
+      { key: "title", label: "عنوان نقش", type: "text", required: true, list: true },
+      { key: "slug", label: "شناسه نقش", type: "text", required: true, dir: "ltr", list: true },
+      {
+        key: "permissions",
+        label: "دسترسی منوها",
+        type: "permissions",
+        required: true,
+        options: adminPermissions
+      },
+      {
+        key: "isSystem",
+        label: "نوع نقش",
+        type: "select",
+        readonly: true,
+        list: true,
+        options: [
+          { label: "سیستمی", value: "true" },
+          { label: "سفارشی", value: "false" }
+        ]
+      },
+      { key: "isActive", label: "وضعیت", type: "select", required: true, options: yesNo, list: true }
+    ]
+  },
   {
     key: "products",
     title: "محصولات",

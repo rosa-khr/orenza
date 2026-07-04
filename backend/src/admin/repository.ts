@@ -1,6 +1,11 @@
 import type { Pool, PoolClient } from "pg";
 import { resourceConfigs, type ResourceConfig } from "./resource-config.js";
 
+const allAdminPermissions = [
+  "dashboard", "users", "roles", "products", "categories", "orders",
+  "payment-methods", "discount-codes", "articles", "tags"
+];
+
 const camel = (key: string) => key.replace(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase());
 
 export const toPublicRecord = (row: Record<string, unknown>) =>
@@ -18,6 +23,22 @@ const normalizedValues = (data: Record<string, unknown>, config: ResourceConfig,
   return Object.entries(parsed)
     .filter(([key, value]) => config.columns[key] && !readonly.has(key) && value !== undefined)
     .map(([key, value]) => [config.columns[key]!, value instanceof Date ? value.toISOString() : value] as const);
+};
+
+const selectFor = (resource: string) => {
+  if (resource === "users") {
+    return `id,username,phone,email,display_name,first_name,last_name,role,
+      admin_role_id,
+      (SELECT title FROM admin_roles WHERE id=users.admin_role_id) AS panel_role_title,
+      (password_hash IS NOT NULL) AS has_password,last_login_at,created_at,updated_at`;
+  }
+  if (resource === "roles") {
+    return `admin_roles.*,
+      ARRAY(SELECT permission_key FROM admin_role_permissions
+            WHERE role_id=admin_roles.id ORDER BY permission_key) AS permissions`;
+  }
+  if (resource === "products") return "*, (sale_price_per_kg - purchase_price_per_kg) AS profit_per_kg";
+  return "*";
 };
 
 export class AdminRepository {
@@ -63,9 +84,7 @@ export class AdminRepository {
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
     const count = await this.pool.query<{ total: string }>(`SELECT count(*) AS total FROM ${config.table} ${whereSql}`, values);
     values.push(input.pageSize, (input.page - 1) * input.pageSize);
-    const select = resource === "products"
-      ? "*, (sale_price_per_kg - purchase_price_per_kg) AS profit_per_kg"
-      : "*";
+    const select = selectFor(resource);
     const orderBy = resource === "products" ? "sort_order ASC, created_at ASC" : "created_at DESC";
     const result = await this.pool.query<Record<string, unknown>>(
       `SELECT ${select} FROM ${config.table} ${whereSql} ORDER BY ${orderBy} LIMIT $${values.length - 1} OFFSET $${values.length}`,
@@ -81,9 +100,7 @@ export class AdminRepository {
 
   async find(resource: string, id: string) {
     const config = configFor(resource);
-    const select = resource === "products"
-      ? "*, (sale_price_per_kg - purchase_price_per_kg) AS profit_per_kg"
-      : "*";
+    const select = selectFor(resource);
     const result = await this.pool.query<Record<string, unknown>>(`SELECT ${select} FROM ${config.table} WHERE id = $1`, [id]);
     const row = result.rows[0];
     if (!row) throw Object.assign(new Error("رکورد موردنظر پیدا نشد."), { statusCode: 404 });
@@ -101,6 +118,7 @@ export class AdminRepository {
   async create(resource: string, input: unknown) {
     const config = configFor(resource);
     if (resource === "orders") throw Object.assign(new Error("سفارش از جریان خرید ثبت می‌شود."), { statusCode: 405 });
+    if (resource === "users") throw Object.assign(new Error("حساب کاربری از مسیر ثبت‌نام فروشگاه ایجاد می‌شود."), { statusCode: 405 });
     const data = config.schema.parse(input);
     if (resource === "payment-methods" && (data as { isActive?: boolean }).isActive) {
       await this.pool.query(
@@ -108,7 +126,7 @@ export class AdminRepository {
         [(data as { type: string }).type]
       );
     }
-    const entries = normalizedValues(data, config);
+    const entries = normalizedValues(data, config, resource === "roles");
     const columns = entries.map(([column]) => column);
     const values = entries.map(([, value]) => value);
     const placeholders = values.map((_, index) => `$${index + 1}`);
@@ -116,6 +134,12 @@ export class AdminRepository {
       `INSERT INTO ${config.table} (${columns.join(",")}) VALUES (${placeholders.join(",")}) RETURNING *`,
       values
     );
+    if (resource === "roles") {
+      await this.syncRolePermissions(
+        String(result.rows[0]!.id),
+        (data.permissions as string[]) || []
+      );
+    }
     return toPublicRecord(result.rows[0]!);
   }
 
@@ -125,13 +149,25 @@ export class AdminRepository {
     const data = resource === "orders"
       ? config.schema.parse(input)
       : config.schema.parse({ ...existing, ...(input as Record<string, unknown>) });
+    if (resource === "users") {
+      data.displayName = [data.firstName, data.lastName].filter(Boolean).join(" ");
+    }
+    if (resource === "roles" && existing.slug === "admin") {
+      data.slug = "admin";
+      data.isActive = true;
+      data.permissions = allAdminPermissions;
+    }
     if (resource === "payment-methods" && (data as { isActive?: boolean }).isActive) {
       await this.pool.query(
         "UPDATE payment_methods SET is_active = false, updated_at = now() WHERE id <> $1 AND type = $2 AND is_active = true",
         [id, (data as { type: string }).type]
       );
     }
-    const entries = normalizedValues(data, config, resource === "orders");
+    const entries = normalizedValues(
+      data,
+      config,
+      resource === "orders" || resource === "users" || resource === "roles"
+    );
     if (!entries.length) return existing;
     const values = entries.map(([, value]) => value);
     const set = entries.map(([column], index) => `${column} = $${index + 1}`);
@@ -141,11 +177,23 @@ export class AdminRepository {
       values
     );
     if (!result.rows[0]) throw Object.assign(new Error("رکورد موردنظر پیدا نشد."), { statusCode: 404 });
+    if (resource === "roles") {
+      await this.syncRolePermissions(id, (data.permissions as string[]) || []);
+    }
     return toPublicRecord(result.rows[0]);
   }
 
   async remove(resource: string, id: string) {
     const config = configFor(resource);
+    if (resource === "users") {
+      throw Object.assign(new Error("حذف حساب کاربری از پنل مجاز نیست."), { statusCode: 405 });
+    }
+    if (resource === "roles") {
+      const role = await this.pool.query<{ is_system: boolean }>("SELECT is_system FROM admin_roles WHERE id=$1", [id]);
+      if (role.rows[0]?.is_system) {
+        throw Object.assign(new Error("نقش‌های سیستمی قابل حذف نیستند."), { statusCode: 422 });
+      }
+    }
     const result = resource === "orders"
       ? await this.pool.query(
           "DELETE FROM orders WHERE id = $1 AND order_status = 'new' AND payment_status = 'pending'",
@@ -153,6 +201,26 @@ export class AdminRepository {
         )
       : await this.pool.query(`DELETE FROM ${config.table} WHERE id = $1`, [id]);
     if (!result.rowCount) throw Object.assign(new Error("رکورد موردنظر پیدا نشد."), { statusCode: 404 });
+  }
+
+  private async syncRolePermissions(roleId: string, permissions: string[]) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("DELETE FROM admin_role_permissions WHERE role_id=$1", [roleId]);
+      for (const permission of permissions) {
+        await client.query(
+          "INSERT INTO admin_role_permissions (role_id,permission_key) VALUES ($1,$2)",
+          [roleId, permission]
+        );
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 

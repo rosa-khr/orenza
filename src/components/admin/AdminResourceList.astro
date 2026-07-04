@@ -12,7 +12,7 @@ const columns = resource.fields.filter((field) => field.list);
 ---
 
 <AdminShell title={resource.title} description={resource.description} active={resource.key} actionLabel="لیست">
-  {resource.key !== "payment-methods" && (
+  {resource.key !== "payment-methods" && resource.canCreate !== false && (
     <a class="admin-primary-action" href={`/admin/${resource.key}/add/`} slot="heading-action">
       <Plus size={17} stroke-width={1.5} /> افزودن {resource.singular}
     </a>

@@ -8,6 +8,9 @@ import {
   LogOut,
   Menu,
   PackageCheck,
+  ShieldCheck,
+  UserCog,
+  Users,
   Tags,
   X
 } from "@lucide/astro";
@@ -23,6 +26,8 @@ interface Props {
 
 const { title, description = "", active = "dashboard", actionLabel } = Astro.props;
 const icons = {
+  users: Users,
+  roles: ShieldCheck,
   products: Boxes,
   categories: Tags,
   orders: PackageCheck,
@@ -52,13 +57,16 @@ const icons = {
           <button type="button" data-admin-menu-close aria-label="بستن منو"><X size={19} stroke-width={1.5} /></button>
         </header>
         <nav aria-label="منوی مدیریت">
-          <a class:list={{ active: active === "dashboard" }} href="/admin/">
+          <a class:list={{ active: active === "dashboard" }} href="/admin/" data-admin-permission="dashboard">
             <LayoutDashboard size={18} stroke-width={1.45} /><span>داشبورد</span>
+          </a>
+          <a class:list={{ active: active === "profile" }} href="/admin/profile/">
+            <UserCog size={18} stroke-width={1.45} /><span>پروفایل مدیریت</span>
           </a>
           {adminResources.map((resource) => {
             const Icon = icons[resource.key as keyof typeof icons] ?? Boxes;
             return (
-              <a class:list={{ active: active === resource.key }} href={`/admin/${resource.key}/list/`}>
+              <a class:list={{ active: active === resource.key }} href={`/admin/${resource.key}/list/`} data-admin-permission={resource.key}>
                 <Icon size={18} stroke-width={1.45} /><span>{resource.title}</span>
               </a>
             );
@@ -75,7 +83,7 @@ const icons = {
           </button>
           <div>
             <small>پنل مدیریت / {actionLabel ?? title}</small>
-            <strong data-admin-user>مدیریت اورنزا</strong>
+            <a class="admin-user-link" href="/admin/profile/" data-admin-user>مدیریت اورنزا</a>
           </div>
           <a href="/" target="_blank" rel="noreferrer">مشاهده فروشگاه</a>
         </header>
@@ -102,6 +110,42 @@ const icons = {
             <button type="button" data-confirm-accept>تأیید</button>
           </div>
         </section>
+      </div>
+      <div class="admin-password-layer" data-admin-password-reset hidden>
+        <button type="button" data-password-reset-dismiss aria-label="بستن"></button>
+        <form data-password-reset-form novalidate>
+          <span>USER SECURITY</span>
+          <h2>تغییر رمز عبور کاربر</h2>
+          <p>رمز تازه برای <strong data-password-reset-user>کاربر</strong> ثبت می‌شود و نشست‌های قبلی او بسته خواهند شد.</p>
+          <input type="hidden" name="userId" />
+          <label><span>رمز عبور جدید</span><input name="newPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required /></label>
+          <label><span>تکرار رمز عبور جدید</span><input name="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" required /></label>
+          <small data-password-reset-error aria-live="polite"></small>
+          <div>
+            <button type="button" data-password-reset-cancel>انصراف</button>
+            <button type="submit">ثبت رمز جدید</button>
+          </div>
+        </form>
+      </div>
+      <div class="admin-password-layer" data-admin-role-assignment hidden>
+        <button type="button" data-role-assignment-dismiss aria-label="بستن"></button>
+        <form data-role-assignment-form novalidate>
+          <span>ACCESS CONTROL</span>
+          <h2>تعیین نقش پنل</h2>
+          <p>سطح دسترسی <strong data-role-assignment-user>کاربر</strong> بر اساس نقش انتخابی تنظیم می‌شود.</p>
+          <input type="hidden" name="userId" />
+          <label>
+            <span>نقش پنل</span>
+            <select name="roleId">
+              <option value="">بدون دسترسی به پنل</option>
+            </select>
+          </label>
+          <small data-role-assignment-error aria-live="polite"></small>
+          <div>
+            <button type="button" data-role-assignment-cancel>انصراف</button>
+            <button type="submit">ثبت سطح دسترسی</button>
+          </div>
+        </form>
       </div>
       <div class="admin-toasts" data-admin-toasts aria-live="polite"></div>
     </div>

@@ -96,6 +96,21 @@ export const orderAdminSchema = z.object({
   adminNote: z.string().trim().max(3000).nullable().optional()
 });
 
+export const adminUserSchema = z.object({
+  firstName: z.string().trim().min(2).max(100),
+  lastName: z.string().trim().min(2).max(100)
+});
+
+export const adminRoleSchema = z.object({
+  title: z.string().trim().min(2).max(100),
+  slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  permissions: z.array(z.enum([
+    "dashboard", "users", "roles", "products", "categories", "orders",
+    "payment-methods", "discount-codes", "articles", "tags"
+  ])).min(1),
+  isActive: z.boolean().default(true)
+});
+
 export const orderItemInputSchema = z.object({
   productId: z.string().uuid(),
   weight: z.union([z.literal(100), z.literal(250), z.literal(500), z.literal(1000)]),

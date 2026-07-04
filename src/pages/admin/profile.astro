@@ -1,0 +1,45 @@
+---
+import { KeyRound, Save } from "@lucide/astro";
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell
+  title="پروفایل مدیریت"
+  description="مشخصات حساب مدیر و رمز عبور پنل"
+  active="profile"
+  actionLabel="پروفایل"
+>
+  <section class="admin-profile-grid" data-admin-profile>
+    <form class="admin-card admin-form" data-admin-profile-form novalidate>
+      <header class="admin-profile-section-heading">
+        <div><strong>مشخصات مدیر</strong><small>نام شما در بالای پنل نمایش داده می‌شود.</small></div>
+      </header>
+      <div class="admin-form-grid">
+        <label class="admin-field"><span>نام</span><input name="firstName" minlength="2" required /></label>
+        <label class="admin-field"><span>نام خانوادگی</span><input name="lastName" minlength="2" required /></label>
+        <label class="admin-field"><span>نام کاربری</span><input name="username" dir="ltr" disabled /></label>
+        <label class="admin-field"><span>ایمیل</span><input name="email" dir="ltr" disabled /></label>
+        <label class="admin-field"><span>شماره موبایل</span><input name="phone" dir="ltr" disabled /></label>
+        <label class="admin-field"><span>سطح دسترسی</span><input name="role" value="مدیر" disabled /></label>
+      </div>
+      <footer class="admin-form-actions">
+        <button type="submit"><Save size={17} stroke-width={1.45} /> ذخیره مشخصات</button>
+      </footer>
+    </form>
+
+    <form class="admin-card admin-form" data-admin-profile-password novalidate>
+      <header class="admin-profile-section-heading">
+        <div><strong>تغییر رمز عبور</strong><small>برای امنیت حساب، رمز فعلی نیز لازم است.</small></div>
+        <KeyRound size={20} stroke-width={1.4} />
+      </header>
+      <div class="admin-form-grid">
+        <label class="admin-field wide"><span>رمز عبور فعلی</span><input name="currentPassword" type="password" minlength="8" required autocomplete="current-password" /></label>
+        <label class="admin-field"><span>رمز عبور جدید</span><input name="newPassword" type="password" minlength="8" required autocomplete="new-password" /></label>
+        <label class="admin-field"><span>تکرار رمز جدید</span><input name="confirmPassword" type="password" minlength="8" required autocomplete="new-password" /></label>
+      </div>
+      <footer class="admin-form-actions">
+        <button type="submit"><KeyRound size={17} stroke-width={1.45} /> تغییر رمز عبور</button>
+      </footer>
+    </form>
+  </section>
+</AdminShell>

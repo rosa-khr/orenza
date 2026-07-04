@@ -49,7 +49,9 @@ const statusLabels: Record<string, string> = {
   weighted: "فروش وزنی",
   packaged: "فروش بسته‌ای",
   inStock: "موجود",
-  outOfStock: "ناموجود"
+  outOfStock: "ناموجود",
+  customer: "کاربر فروشگاه",
+  admin: "مدیر"
 };
 
 const bankLogoCodes: Record<string, string> = {
@@ -142,6 +144,111 @@ const askConfirm = (title: string, message: string, acceptLabel = "تأیید") 
     accept.focus();
   });
 
+const openUserPasswordReset = (userId: string, userName: string) => {
+  const layer = document.querySelector<HTMLElement>("[data-admin-password-reset]");
+  const form = layer?.querySelector<HTMLFormElement>("[data-password-reset-form]");
+  if (!layer || !form) return;
+  const idInput = form.elements.namedItem("userId") as HTMLInputElement;
+  const passwordInput = form.elements.namedItem("newPassword") as HTMLInputElement;
+  const confirmInput = form.elements.namedItem("confirmPassword") as HTMLInputElement;
+  const error = form.querySelector<HTMLElement>("[data-password-reset-error]");
+  const userLabel = form.querySelector<HTMLElement>("[data-password-reset-user]");
+  const close = () => {
+    layer.classList.remove("show");
+    window.setTimeout(() => { layer.hidden = true; }, 180);
+    form.reset();
+    if (error) error.textContent = "";
+  };
+  form.reset();
+  idInput.value = userId;
+  if (userLabel) userLabel.textContent = userName || "کاربر انتخاب‌شده";
+  if (error) error.textContent = "";
+  layer.hidden = false;
+  requestAnimationFrame(() => layer.classList.add("show"));
+  passwordInput.focus();
+  layer.querySelectorAll<HTMLElement>("[data-password-reset-cancel], [data-password-reset-dismiss]")
+    .forEach((button) => { button.onclick = close; });
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    if (passwordInput.value !== confirmInput.value) {
+      if (error) error.textContent = "تکرار رمز با رمز عبور جدید یکسان نیست.";
+      return;
+    }
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    submit.disabled = true;
+    try {
+      const result = await api<{ message: string }>(`/api/v1/admin/users/${userId}/reset-password`, {
+        method: "POST",
+        body: JSON.stringify({ newPassword: passwordInput.value })
+      });
+      close();
+      toast(result.message);
+    } catch (reason) {
+      if (error) error.textContent = reason instanceof Error ? reason.message : "تغییر رمز انجام نشد.";
+    } finally {
+      submit.disabled = false;
+    }
+  };
+};
+
+const openUserRoleAssignment = async (
+  userId: string,
+  userName: string,
+  currentRoleId: string | null
+) => {
+  const layer = document.querySelector<HTMLElement>("[data-admin-role-assignment]");
+  const form = layer?.querySelector<HTMLFormElement>("[data-role-assignment-form]");
+  if (!layer || !form) return;
+  const roleSelect = form.elements.namedItem("roleId") as HTMLSelectElement;
+  const idInput = form.elements.namedItem("userId") as HTMLInputElement;
+  const error = form.querySelector<HTMLElement>("[data-role-assignment-error]");
+  const userLabel = form.querySelector<HTMLElement>("[data-role-assignment-user]");
+  const close = () => {
+    layer.classList.remove("show");
+    window.setTimeout(() => { layer.hidden = true; }, 180);
+    if (error) error.textContent = "";
+  };
+  idInput.value = userId;
+  if (userLabel) userLabel.textContent = userName || "کاربر انتخاب‌شده";
+  roleSelect.innerHTML = '<option value="">بدون دسترسی به پنل</option>';
+  if (error) error.textContent = "";
+  layer.hidden = false;
+  requestAnimationFrame(() => layer.classList.add("show"));
+  try {
+    const result = await api<{ roles: { id: string; title: string }[] }>("/api/v1/admin/assignable-roles");
+    result.roles.forEach((role) => roleSelect.add(new Option(role.title, role.id)));
+    roleSelect.value = currentRoleId || "";
+    roleSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    enhanceDropdowns(form);
+  } catch (reason) {
+    if (error) error.textContent = reason instanceof Error ? reason.message : "دریافت نقش‌ها انجام نشد.";
+  }
+  layer.querySelectorAll<HTMLElement>("[data-role-assignment-cancel], [data-role-assignment-dismiss]")
+    .forEach((button) => { button.onclick = close; });
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    submit.disabled = true;
+    try {
+      const result = await api<{ message: string }>(`/api/v1/admin/users/${userId}/assign-role`, {
+        method: "POST",
+        body: JSON.stringify({ roleId: roleSelect.value || null })
+      });
+      close();
+      toast(result.message);
+      window.setTimeout(() => location.reload(), 450);
+    } catch (reason) {
+      if (error) error.textContent = reason instanceof Error ? reason.message : "ثبت نقش انجام نشد.";
+    } finally {
+      submit.disabled = false;
+    }
+  };
+};
+
 const enhanceDropdowns = (root: ParentNode = document) => {
   if (!document.body.dataset.dropdownOutsideReady) {
     document.body.dataset.dropdownOutsideReady = "true";
@@ -171,6 +278,14 @@ const enhanceDropdowns = (root: ParentNode = document) => {
     const panel = dropdown.querySelector<HTMLElement>(".admin-dropdown-panel")!;
     const search = panel.querySelector<HTMLInputElement>("input")!;
     const optionsRoot = panel.querySelector<HTMLElement>(":scope > div")!;
+    const syncDisabled = () => {
+      control.disabled = select.disabled;
+      dropdown.classList.toggle("disabled", select.disabled);
+      if (select.disabled) {
+        panel.hidden = true;
+        dropdown.classList.remove("open");
+      }
+    };
     const syncLabel = () => {
       const selected = select.selectedOptions[0];
       value.replaceChildren();
@@ -215,6 +330,7 @@ const enhanceDropdowns = (root: ParentNode = document) => {
       });
     };
     control.addEventListener("click", () => {
+      if (select.disabled) return;
       const willOpen = panel.hidden;
       document.querySelectorAll<HTMLElement>(".admin-dropdown-panel").forEach((item) => { item.hidden = true; });
       document.querySelectorAll(".admin-dropdown.open").forEach((item) => item.classList.remove("open"));
@@ -224,7 +340,12 @@ const enhanceDropdowns = (root: ParentNode = document) => {
     });
     search.addEventListener("input", render);
     select.addEventListener("change", syncLabel);
+    new MutationObserver(syncDisabled).observe(select, {
+      attributes: true,
+      attributeFilter: ["disabled"]
+    });
     syncLabel();
+    syncDisabled();
   });
 };
 
@@ -336,15 +457,42 @@ const initChrome = async () => {
     button.addEventListener("click", () => app?.classList.remove("menu-open"))
   );
   document.querySelector("[data-admin-logout]")?.addEventListener("click", async () => {
-    await api("/api/v1/auth/logout", { method: "POST" });
-    location.href = "/admin/login/";
+    try {
+      await fetch("/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      });
+    } finally {
+      location.replace("/admin/login/");
+    }
   });
   if (!app) return;
   try {
     const { user } = await api<{ user: { displayName: string | null; role: string } }>("/api/v1/me");
-    if (user.role !== "admin") throw new Error("این حساب دسترسی مدیریت ندارد.");
+    if (user.role !== "admin") {
+      location.replace("/admin/login/?reason=access");
+      return;
+    }
     const label = document.querySelector<HTMLElement>("[data-admin-user]");
     if (label) label.textContent = user.displayName || "مدیر اورنزا";
+    const access = await api<{ permissions: string[]; role: { title: string } | null }>("/api/v1/admin/access");
+    const allowed = new Set(access.permissions);
+    document.querySelectorAll<HTMLElement>("[data-admin-permission]").forEach((item) => {
+      const permission = item.dataset.adminPermission || "";
+      if (!allowed.has(permission)) item.remove();
+    });
+    const segments = location.pathname.split("/").filter(Boolean);
+    const requiredPermission = segments.length <= 1
+      ? "dashboard"
+      : segments[1] === "profile"
+        ? null
+        : segments[1];
+    if (requiredPermission && !allowed.has(requiredPermission)) {
+      const first = access.permissions[0];
+      location.replace(first === "dashboard" || !first ? "/admin/" : `/admin/${first}/list/`);
+    }
   } catch (error) {
     toast(error instanceof Error ? error.message : "دسترسی مدیریت تأیید نشد.", "error");
   }
@@ -353,6 +501,15 @@ const initChrome = async () => {
 const initLogin = () => {
   const form = document.querySelector<HTMLFormElement>("[data-admin-login]");
   if (!form) return;
+  void fetch("/api/v1/me", { credentials: "include" })
+    .then(async (response) => response.ok ? response.json() : null)
+    .then((payload) => {
+      if (payload?.user?.role === "admin") {
+        const next = new URLSearchParams(location.search).get("next");
+        location.replace(next?.startsWith("/admin/") ? next : "/admin/");
+      }
+    })
+    .catch(() => undefined);
   const error = form.querySelector<HTMLElement>("[data-login-error]");
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -397,6 +554,11 @@ const displayValue = (value: unknown, field: ResourceField) => {
   const option = field.options?.find((item) => String(item.value) === String(value));
   if (option) return option.label;
   if (statusLabels[String(value)]) return statusLabels[String(value)];
+  if (["createdAt", "updatedAt", "lastLoginAt"].includes(field.key)) {
+    return new Date(String(value)).toLocaleString("fa-IR-u-ca-persian", {
+      year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+    });
+  }
   if (field.type === "number") return money.format(Number(value));
   if (field.type === "date") return new Date(String(value)).toLocaleDateString("fa-IR");
   return String(value);
@@ -449,7 +611,9 @@ const gridIcons = {
   trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 5v5m4-5v5"/></svg>',
   invoice: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>',
   approve: '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',
-  cancel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>'
+  cancel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>',
+  key: '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8m-3 3 3 3m-6 0 3 3"/></svg>',
+  role: '<svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>'
 };
 
 const fetchAllAdminRows = async (resource: string) => {
@@ -574,13 +738,22 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     if (config.key === "orders") {
       actions.append(link(`/admin/orders/invoice/?id=${id}`, "مشاهده و چاپ فاکتور", gridIcons.invoice));
     }
+    if (config.key === "users") {
+      const userName = [row.firstName, row.lastName].filter(Boolean).join(" ") || String(row.phone || row.email || "کاربر");
+      actions.append(
+        button("تعیین نقش پنل", gridIcons.role, () =>
+          void openUserRoleAssignment(id, userName, row.adminRoleId ? String(row.adminRoleId) : null)
+        ),
+        button("تغییر رمز عبور", gridIcons.key, () => openUserPasswordReset(id, userName))
+      );
+    }
     if (isPendingOrder) {
       actions.append(
         button("تأیید سفارش", gridIcons.approve, () => void changeOrderStatus(row, "approve")),
         button("لغو سفارش", gridIcons.cancel, () => void changeOrderStatus(row, "cancel"))
       );
     }
-    if (config.key !== "orders" || isPendingOrder) {
+    if (config.key !== "users" && (config.key !== "orders" || isPendingOrder)) {
       actions.append(button("حذف", gridIcons.trash, () => void deleteRow(id)));
     }
     return actions;
@@ -599,7 +772,10 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       pinned: "right"
     },
     ...config.fields.map((field): ColDef<Record<string, unknown>> => {
-      const isStatus = ["isActive", "isPublished", "orderStatus", "paymentStatus", "saleType", "stockStatus"].includes(field.key);
+      const isStatus = [
+        "isActive", "isPublished", "orderStatus", "paymentStatus", "saleType", "stockStatus",
+        "role", "hasPassword", "isSystem"
+      ].includes(field.key);
       return {
         headerName: field.label,
         field: field.key,
@@ -626,9 +802,9 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       headerName: "عملیات",
       field: "id",
       pinned: "left",
-      width: config.key === "orders" ? 230 : 132,
-      minWidth: config.key === "orders" ? 230 : 132,
-      maxWidth: config.key === "orders" ? 230 : 132,
+      width: config.key === "orders" ? 230 : config.key === "users" ? 205 : 132,
+      minWidth: config.key === "orders" ? 230 : config.key === "users" ? 205 : 132,
+      maxWidth: config.key === "orders" ? 230 : config.key === "users" ? 205 : 132,
       filter: false,
       sortable: false,
       cellRenderer: actionRenderer
@@ -690,6 +866,13 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
 };
 
 const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
+  if (key === "permissions") {
+    const selected = new Set(Array.isArray(value) ? value.map(String) : []);
+    form.querySelectorAll<HTMLInputElement>('input[name="permissions"]').forEach((input) => {
+      input.checked = selected.has(input.value);
+    });
+    return;
+  }
   const input = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
   if (!input) return;
   let normalizedValue = "";
@@ -902,6 +1085,13 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     updateProductProfit();
   }
   const id = new URLSearchParams(location.search).get("id");
+  if (config.key === "users" && id) {
+    form.querySelector("[data-user-password-reset]")?.addEventListener("click", () => {
+      const firstName = (form.elements.namedItem("firstName") as HTMLInputElement | null)?.value || "";
+      const lastName = (form.elements.namedItem("lastName") as HTMLInputElement | null)?.value || "";
+      openUserPasswordReset(id, `${firstName} ${lastName}`.trim());
+    });
+  }
   const loading = form.querySelector<HTMLElement>("[data-admin-form-loading]");
   if (mode !== "add") {
     if (!id) {
@@ -939,11 +1129,16 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     config.fields.forEach((field) => {
       if (field.readonly) return;
       const raw = data.get(field.key);
-      if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : Number(raw);
+      if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
+      else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : Number(raw);
       else if (field.key === "isActive" || field.key === "isPublished") body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;
     });
+    if (config.key === "roles" && !(body.permissions as string[] | undefined)?.length) {
+      toast("حداقل یک دسترسی برای نقش انتخاب کنید.", "error");
+      return;
+    }
     const button = form.querySelector<HTMLButtonElement>("[data-admin-submit]")!;
     button.disabled = true;
     button.textContent = "در حال ذخیره…";
@@ -998,6 +1193,95 @@ const initDashboard = async () => {
   }
 };
 
+const initAdminProfile = async () => {
+  const root = document.querySelector<HTMLElement>("[data-admin-profile]");
+  if (!root) return;
+  const profileForm = root.querySelector<HTMLFormElement>("[data-admin-profile-form]")!;
+  const passwordForm = root.querySelector<HTMLFormElement>("[data-admin-profile-password]")!;
+  try {
+    const { user } = await api<{
+      user: {
+        firstName: string | null;
+        lastName: string | null;
+        username: string | null;
+        email: string | null;
+        phone: string | null;
+        role: string;
+        panelRoleTitle: string | null;
+      }
+    }>("/api/v1/admin/profile");
+    const set = (name: string, value: string | null) => {
+      const input = profileForm.elements.namedItem(name) as HTMLInputElement | null;
+      if (input) input.value = value || "";
+    };
+    set("firstName", user.firstName);
+    set("lastName", user.lastName);
+    set("username", user.username);
+    set("email", user.email);
+    set("phone", user.phone);
+    set("role", user.panelRoleTitle || (user.role === "admin" ? "مدیر" : "کاربر فروشگاه"));
+  } catch (error) {
+    toast(error instanceof Error ? error.message : "دریافت پروفایل مدیریت انجام نشد.", "error");
+  }
+
+  profileForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!profileForm.checkValidity()) {
+      profileForm.reportValidity();
+      return;
+    }
+    const data = new FormData(profileForm);
+    const submit = profileForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    submit.disabled = true;
+    try {
+      const { user } = await api<{ user: { displayName: string } }>("/api/v1/admin/profile", {
+        method: "PATCH",
+        body: JSON.stringify({
+          firstName: data.get("firstName"),
+          lastName: data.get("lastName")
+        })
+      });
+      const label = document.querySelector<HTMLElement>("[data-admin-user]");
+      if (label) label.textContent = user.displayName;
+      toast("مشخصات مدیریت ذخیره شد.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "ذخیره مشخصات انجام نشد.", "error");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  passwordForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!passwordForm.checkValidity()) {
+      passwordForm.reportValidity();
+      return;
+    }
+    const data = new FormData(passwordForm);
+    if (data.get("newPassword") !== data.get("confirmPassword")) {
+      toast("تکرار رمز با رمز عبور جدید یکسان نیست.", "error");
+      return;
+    }
+    const submit = passwordForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    submit.disabled = true;
+    try {
+      const result = await api<{ message: string }>("/api/v1/admin/profile/change-password", {
+        method: "POST",
+        body: JSON.stringify({
+          currentPassword: data.get("currentPassword"),
+          newPassword: data.get("newPassword")
+        })
+      });
+      passwordForm.reset();
+      toast(result.message);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "تغییر رمز عبور انجام نشد.", "error");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+};
+
 const initInvoice = async () => {
   const root = document.querySelector<HTMLElement>("[data-admin-invoice]");
   if (!root) return;
@@ -1039,4 +1323,5 @@ initLogin();
 void initChrome();
 initResource();
 void initDashboard();
+void initAdminProfile();
 void initInvoice();

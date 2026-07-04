@@ -1,5 +1,7 @@
 import {
   articleSchema,
+  adminUserSchema,
+  adminRoleSchema,
   categorySchema,
   discountCodeSchema,
   orderAdminSchema,
@@ -20,6 +22,25 @@ export type ResourceConfig = {
 const audit = { createdAt: "created_at", updatedAt: "updated_at" };
 
 export const resourceConfigs: Record<string, ResourceConfig> = {
+  roles: {
+    table: "admin_roles",
+    columns: {
+      title: "title", slug: "slug", isSystem: "is_system", isActive: "is_active", ...audit
+    },
+    search: ["title", "slug"],
+    schema: adminRoleSchema
+  },
+  users: {
+    table: "users",
+    columns: {
+      firstName: "first_name", lastName: "last_name", displayName: "display_name",
+      username: "username", phone: "phone", email: "email", role: "role",
+      lastLoginAt: "last_login_at", ...audit
+    },
+    search: ["first_name", "last_name", "display_name", "phone", "email", "username"],
+    schema: adminUserSchema,
+    adminReadonly: ["username", "phone", "email", "lastLoginAt", "createdAt", "updatedAt"]
+  },
   products: {
     table: "products",
     columns: {

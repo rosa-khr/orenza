@@ -19,8 +19,53 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS username varchar(80);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name varchar(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name varchar(100);
+UPDATE users
+SET first_name = split_part(display_name, ' ', 1),
+    last_name = NULLIF(trim(substring(display_name from length(split_part(display_name, ' ', 1)) + 1)), '')
+WHERE display_name IS NOT NULL AND first_name IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique
   ON users(lower(username)) WHERE username IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS admin_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title varchar(100) NOT NULL,
+  slug varchar(80) NOT NULL UNIQUE,
+  is_system boolean NOT NULL DEFAULT false,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS admin_role_permissions (
+  role_id uuid NOT NULL REFERENCES admin_roles(id) ON DELETE CASCADE,
+  permission_key varchar(80) NOT NULL,
+  PRIMARY KEY (role_id, permission_key)
+);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_role_id uuid REFERENCES admin_roles(id) ON DELETE SET NULL;
+
+INSERT INTO admin_roles (title,slug,is_system,is_active) VALUES
+  ('مدیر کل','admin',true,true),
+  ('کاربر سفارشات','orders',true,true),
+  ('کارشناس SEO','seo',true,true)
+ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title,is_system=true,is_active=true,updated_at=now();
+
+INSERT INTO admin_role_permissions (role_id,permission_key)
+SELECT r.id,p.permission_key
+FROM admin_roles r
+JOIN (VALUES
+  ('admin','dashboard'),('admin','users'),('admin','roles'),('admin','products'),
+  ('admin','categories'),('admin','orders'),('admin','payment-methods'),
+  ('admin','discount-codes'),('admin','articles'),('admin','tags'),
+  ('orders','dashboard'),('orders','orders'),
+  ('seo','dashboard'),('seo','products'),('seo','categories'),('seo','articles'),('seo','tags')
+) AS p(role_slug,permission_key) ON p.role_slug=r.slug
+ON CONFLICT DO NOTHING;
+
+UPDATE users SET admin_role_id=(SELECT id FROM admin_roles WHERE slug='admin')
+WHERE role='admin' AND admin_role_id IS NULL;
 
 CREATE TABLE IF NOT EXISTS user_addresses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
