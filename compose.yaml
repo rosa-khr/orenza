@@ -51,7 +51,7 @@ services:
         PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     image: orenza-coffee:latest
     ports:
-      - "8080:80"
+      - "127.0.0.1:3001:80"
     depends_on:
       api:
         condition: service_healthy
