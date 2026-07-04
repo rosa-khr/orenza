@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Pool } from "pg";
 import { z } from "zod";
 import { toPublicRecord } from "../admin/repository.js";
+import { getPublicSiteSettings, getSiteSettings } from "../site-settings.js";
 import { OrderService } from "./order-service.js";
 
 type SessionUser = { id: string } | null;
@@ -12,6 +13,28 @@ export const registerStoreRoutes = (
   getCurrentUser: (request: FastifyRequest) => Promise<SessionUser>
 ) => {
   const orderService = new OrderService(pool);
+
+  app.get("/api/v1/site-settings", async (_request, reply) => {
+    reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return { item: await getPublicSiteSettings(pool) };
+  });
+
+  app.get("/api/v1/indexing-policy", async (_request, reply) => {
+    const settings = await getSiteSettings(pool);
+    reply.header("Cache-Control", "no-store");
+    if (!settings.searchIndexingEnabled) {
+      reply.header("X-Robots-Tag", "noindex, nofollow, noarchive");
+    }
+    return reply.code(204).send();
+  });
+
+  app.get("/api/v1/site-settings/robots.txt", async (_request, reply) => {
+    const settings = await getSiteSettings(pool);
+    reply.type("text/plain; charset=utf-8").header("Cache-Control", "no-store");
+    return settings.searchIndexingEnabled
+      ? "User-agent: *\nAllow: /\n\nSitemap: https://orenza.ir/sitemap-index.xml\n"
+      : "User-agent: *\nDisallow: /\n";
+  });
 
   app.get("/api/v1/products", async (request) => {
     const { category } = z.object({ category: z.string().trim().max(180).optional() }).parse(request.query);

@@ -1,0 +1,66 @@
+---
+import { Save, ScrollText } from "@lucide/astro";
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell
+  title="تنظیمات سایت"
+  description="اطلاعات عمومی، هویت بصری، سئو و وضعیت ایندکس فروشگاه"
+  active="site-settings"
+  actionLabel="تنظیمات"
+>
+  <a class="admin-secondary-action" href="/admin/service-scripts/list/" slot="heading-action">
+    <ScrollText size={17} stroke-width={1.5} /> اسکریپت‌های سرویس
+  </a>
+
+  <form class="admin-site-settings" data-admin-site-settings novalidate>
+    <section class="admin-card">
+      <header><span>GENERAL SETTINGS</span><h2>اطلاعات عمومی</h2><p>اطلاعاتی که در هویت برند و راه‌های ارتباطی نمایش داده می‌شود.</p></header>
+      <div class="admin-form-grid">
+        <label class="admin-field"><span>نام فارسی برند</span><input name="brandName" required minlength="2" /></label>
+        <label class="admin-field"><span>نام انگلیسی برند</span><input name="brandNameEn" required minlength="2" dir="ltr" /></label>
+        <label class="admin-field wide"><span>شعار کوتاه</span><input name="brandTagline" required minlength="3" /></label>
+        <label class="admin-field"><span>شماره تماس</span><input name="supportPhone" required dir="ltr" /></label>
+        <label class="admin-field"><span>ایمیل پشتیبانی</span><input name="supportEmail" type="email" required dir="ltr" /></label>
+        <label class="admin-field"><span>لینک واتساپ</span><input name="whatsappUrl" type="url" required dir="ltr" /></label>
+        <label class="admin-field"><span>لینک بله</span><input name="baleUrl" type="url" required dir="ltr" /></label>
+        <label class="admin-field"><span>لینک اینستاگرام</span><input name="instagramUrl" type="url" required dir="ltr" /></label>
+        <label class="admin-field wide"><span>نشانی مجموعه</span><textarea name="address"></textarea></label>
+      </div>
+    </section>
+
+    <section class="admin-card">
+      <header><span>BRANDING & FOOTER</span><h2>هویت بصری و فوتر</h2><p>لوگو، favicon و متن‌های ثابت پایین صفحات.</p></header>
+      <div class="admin-form-grid">
+        <label class="admin-field"><span>آدرس لوگو</span><input name="logoUrl" type="url" dir="ltr" placeholder="https://... یا خالی" /></label>
+        <label class="admin-field"><span>آدرس favicon</span><input name="faviconUrl" required dir="ltr" /></label>
+        <label class="admin-field wide"><span>عنوان ارتباط با ما در فوتر</span><input name="footerHeading" required /></label>
+        <label class="admin-field wide"><span>متن راهنمای فوتر</span><textarea name="footerDescription" required></textarea></label>
+        <label class="admin-field wide"><span>متن کپی‌رایت</span><input name="footerCopyright" required /></label>
+      </div>
+    </section>
+
+    <section class="admin-card">
+      <header><span>HOMEPAGE SEO</span><h2>سئوی صفحه اصلی</h2><p>عنوان و توضیحات اصلی نتایج جست‌وجو و اشتراک‌گذاری اجتماعی.</p></header>
+      <div class="admin-form-grid">
+        <label class="admin-field wide"><span>عنوان SEO</span><input name="homepageSeoTitle" required minlength="10" maxlength="220" /></label>
+        <label class="admin-field wide"><span>توضیحات Meta</span><textarea name="homepageSeoDescription" required minlength="30" maxlength="500"></textarea></label>
+        <label class="admin-field wide"><span>کلمات کلیدی، جداشده با ویرگول</span><textarea name="homepageSeoKeywords" required></textarea></label>
+        <label class="admin-field wide"><span>تصویر Open Graph</span><input name="homepageOgImageUrl" required dir="ltr" /></label>
+      </div>
+    </section>
+
+    <section class="admin-card admin-indexing-setting">
+      <header><span>SEARCH ENGINE INDEXING</span><h2>دسترسی موتورهای جست‌وجو</h2><p>غیرفعال‌کردن این گزینه، robots.txt و هدر noindex را هم‌زمان فعال می‌کند.</p></header>
+      <label>
+        <input type="checkbox" name="searchIndexingEnabled" />
+        <span><strong>ایندکس سایت فعال باشد</strong><small>برای سایت منتشرشده روشن بماند؛ در محیط آزمایشی خاموشش کنید.</small></span>
+      </label>
+    </section>
+
+    <footer class="admin-site-settings-actions">
+      <small data-site-settings-state>در حال دریافت تنظیمات…</small>
+      <button type="submit"><Save size={17} stroke-width={1.45} /> ذخیره تنظیمات</button>
+    </footer>
+  </form>
+</AdminShell>

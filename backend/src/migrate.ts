@@ -58,9 +58,10 @@ FROM admin_roles r
 JOIN (VALUES
   ('admin','dashboard'),('admin','users'),('admin','roles'),('admin','products'),
   ('admin','categories'),('admin','orders'),('admin','payment-methods'),
-  ('admin','discount-codes'),('admin','articles'),('admin','tags'),
+  ('admin','discount-codes'),('admin','articles'),('admin','tags'),('admin','site-settings'),
   ('orders','dashboard'),('orders','orders'),
-  ('seo','dashboard'),('seo','products'),('seo','categories'),('seo','articles'),('seo','tags')
+  ('seo','dashboard'),('seo','products'),('seo','categories'),('seo','articles'),('seo','tags'),
+  ('seo','site-settings')
 ) AS p(role_slug,permission_key) ON p.role_slug=r.slug
 ON CONFLICT DO NOTHING;
 
@@ -109,6 +110,51 @@ CREATE TABLE IF NOT EXISTS password_reset_codes (
 
 CREATE INDEX IF NOT EXISTS password_reset_codes_user_idx
   ON password_reset_codes(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  id smallint PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  brand_name varchar(120) NOT NULL DEFAULT 'اورنزا',
+  brand_name_en varchar(120) NOT NULL DEFAULT 'ORENZA',
+  brand_tagline varchar(240) NOT NULL DEFAULT 'قهوه تازه، برای سلیقه تو.',
+  support_phone varchar(30) NOT NULL DEFAULT '09103060396',
+  support_email varchar(254) NOT NULL DEFAULT 'order.orenzacoffee@gmail.com',
+  whatsapp_url varchar(500) NOT NULL DEFAULT 'https://wa.me/989103060396',
+  bale_url varchar(500) NOT NULL DEFAULT 'https://ble.ir/khoobrooz',
+  instagram_url varchar(500) NOT NULL DEFAULT 'https://instagram.com/orenza.ir',
+  address text,
+  footer_heading varchar(300) NOT NULL DEFAULT 'هر انتخابی داستان خودش را دارد؛ بیایید داستان مناسب شما را پیدا کنیم.',
+  footer_description varchar(500) NOT NULL DEFAULT 'طعم دلخواه و دستگاهت را بگو؛ ترکیب مناسب را با هم پیدا می‌کنیم.',
+  footer_copyright varchar(300) NOT NULL DEFAULT '© ۲۰۲۶ قهوه اورنزا؛ تمامی حقوق محفوظ است.',
+  logo_url varchar(500),
+  favicon_url varchar(500) NOT NULL DEFAULT '/favicon.svg',
+  homepage_seo_title varchar(220) NOT NULL DEFAULT 'خرید قهوه تازه رست با آسیاب دلخواه',
+  homepage_seo_description varchar(500) NOT NULL DEFAULT 'قهوه تازه رست اورنزا را با ترکیب عربیکا و روبوستا، درجه رست و آسیاب مناسب دستگاهتان سفارش دهید؛ آماده‌سازی تازه و ارسال سراسر ایران.',
+  homepage_seo_keywords text[] NOT NULL DEFAULT ARRAY['خرید قهوه تازه رست','قهوه اسپرسو','قهوه عربیکا','قهوه روبوستا','آسیاب قهوه','قهوه اورنزا'],
+  homepage_og_image_url varchar(500) NOT NULL DEFAULT '/images/orenza-leopard-label.png',
+  search_indexing_enabled boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS service_scripts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title varchar(120) NOT NULL,
+  provider varchar(30) NOT NULL CHECK (provider IN ('gtm','ga4','searchConsole')),
+  service_key varchar(220) NOT NULL,
+  placement varchar(20) NOT NULL DEFAULT 'head' CHECK (placement IN ('head','body')),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS service_scripts_provider_key_unique
+  ON service_scripts(provider, service_key);
+
+INSERT INTO service_scripts (title,provider,service_key,placement,is_active)
+VALUES ('Google Tag Manager','gtm','GTM-MZ387RQX','head',true)
+ON CONFLICT (provider,service_key) DO NOTHING;
 CREATE INDEX IF NOT EXISTS password_reset_codes_expiry_idx
   ON password_reset_codes(expires_at);
 

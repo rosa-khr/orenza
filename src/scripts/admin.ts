@@ -456,17 +456,19 @@ const initChrome = async () => {
   document.querySelectorAll("[data-admin-menu-close]").forEach((button) =>
     button.addEventListener("click", () => app?.classList.remove("menu-open"))
   );
-  document.querySelector("[data-admin-logout]")?.addEventListener("click", async () => {
-    try {
-      await fetch("/api/v1/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: "{}"
-      });
-    } finally {
-      location.replace("/admin/login/");
-    }
+  document.querySelectorAll<HTMLElement>("[data-admin-logout]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      try {
+        await fetch("/api/v1/auth/logout", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: "{}"
+        });
+      } finally {
+        location.replace("/admin/login/");
+      }
+    });
   });
   if (!app) return;
   try {
@@ -475,9 +477,13 @@ const initChrome = async () => {
       location.replace("/admin/login/?reason=access");
       return;
     }
-    const label = document.querySelector<HTMLElement>("[data-admin-user]");
-    if (label) label.textContent = user.displayName || "مدیر اورنزا";
     const access = await api<{ permissions: string[]; role: { title: string } | null }>("/api/v1/admin/access");
+    document.querySelectorAll<HTMLElement>("[data-admin-user]").forEach((label) => {
+      label.textContent = user.displayName || "مدیر اورنزا";
+    });
+    document.querySelectorAll<HTMLElement>("[data-admin-role]").forEach((label) => {
+      label.textContent = access.role?.title || "پنل مدیریت";
+    });
     const allowed = new Set(access.permissions);
     document.querySelectorAll<HTMLElement>("[data-admin-permission]").forEach((item) => {
       const permission = item.dataset.adminPermission || "";
@@ -488,7 +494,9 @@ const initChrome = async () => {
       ? "dashboard"
       : segments[1] === "profile"
         ? null
-        : segments[1];
+        : segments[1] === "service-scripts"
+          ? "site-settings"
+          : segments[1];
     if (requiredPermission && !allowed.has(requiredPermission)) {
       const first = access.permissions[0];
       location.replace(first === "dashboard" || !first ? "/admin/" : `/admin/${first}/list/`);
@@ -1282,6 +1290,98 @@ const initAdminProfile = async () => {
   });
 };
 
+type SiteSettingsPayload = {
+  brandName: string;
+  brandNameEn: string;
+  brandTagline: string;
+  supportPhone: string;
+  supportEmail: string;
+  whatsappUrl: string;
+  baleUrl: string;
+  instagramUrl: string;
+  address: string | null;
+  footerHeading: string;
+  footerDescription: string;
+  footerCopyright: string;
+  logoUrl: string | null;
+  faviconUrl: string;
+  homepageSeoTitle: string;
+  homepageSeoDescription: string;
+  homepageSeoKeywords: string[];
+  homepageOgImageUrl: string;
+  searchIndexingEnabled: boolean;
+};
+
+const initSiteSettings = async () => {
+  const form = document.querySelector<HTMLFormElement>("[data-admin-site-settings]");
+  if (!form) return;
+  const state = form.querySelector<HTMLElement>("[data-site-settings-state]");
+  const input = (name: string) =>
+    form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
+  try {
+    const { item } = await api<{ item: SiteSettingsPayload }>("/api/v1/admin/site-settings");
+    Object.entries(item).forEach(([key, value]) => {
+      const field = form.elements.namedItem(key) as HTMLInputElement | HTMLTextAreaElement | null;
+      if (!field) return;
+      if (field instanceof HTMLInputElement && field.type === "checkbox") {
+        field.checked = Boolean(value);
+      } else {
+        field.value = Array.isArray(value) ? value.join("، ") : value === null ? "" : String(value);
+      }
+    });
+    if (state) state.textContent = "تنظیمات آماده و قابل ویرایش است.";
+  } catch (error) {
+    if (state) state.textContent = "دریافت تنظیمات انجام نشد.";
+    toast(error instanceof Error ? error.message : "دریافت تنظیمات انجام نشد.", "error");
+  }
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    submit.disabled = true;
+    if (state) state.textContent = "در حال ذخیره…";
+    try {
+      await api("/api/v1/admin/site-settings", {
+        method: "PUT",
+        body: JSON.stringify({
+          brandName: input("brandName").value,
+          brandNameEn: input("brandNameEn").value,
+          brandTagline: input("brandTagline").value,
+          supportPhone: input("supportPhone").value,
+          supportEmail: input("supportEmail").value,
+          whatsappUrl: input("whatsappUrl").value,
+          baleUrl: input("baleUrl").value,
+          instagramUrl: input("instagramUrl").value,
+          address: input("address").value || null,
+          footerHeading: input("footerHeading").value,
+          footerDescription: input("footerDescription").value,
+          footerCopyright: input("footerCopyright").value,
+          logoUrl: input("logoUrl").value || null,
+          faviconUrl: input("faviconUrl").value,
+          homepageSeoTitle: input("homepageSeoTitle").value,
+          homepageSeoDescription: input("homepageSeoDescription").value,
+          homepageSeoKeywords: input("homepageSeoKeywords").value
+            .split(/[,،]/)
+            .map((keyword) => keyword.trim())
+            .filter(Boolean),
+          homepageOgImageUrl: input("homepageOgImageUrl").value,
+          searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked
+        })
+      });
+      if (state) state.textContent = "آخرین تغییرات ذخیره شد.";
+      toast("تنظیمات سایت ذخیره شد.");
+    } catch (error) {
+      if (state) state.textContent = "ذخیره تنظیمات انجام نشد.";
+      toast(error instanceof Error ? error.message : "ذخیره تنظیمات انجام نشد.", "error");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+};
+
 const initInvoice = async () => {
   const root = document.querySelector<HTMLElement>("[data-admin-invoice]");
   if (!root) return;
@@ -1324,4 +1424,5 @@ void initChrome();
 initResource();
 void initDashboard();
 void initAdminProfile();
+void initSiteSettings();
 void initInvoice();

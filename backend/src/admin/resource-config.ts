@@ -8,6 +8,7 @@ import {
   paymentCardSchema,
   paymentMethodSchema,
   productSchema,
+  serviceScriptSchema,
   tagSchema
 } from "../store/schemas.js";
 
@@ -106,6 +107,15 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     columns: { title: "title", slug: "slug", ...audit },
     search: ["title", "slug"],
     schema: tagSchema
+  },
+  "service-scripts": {
+    table: "service_scripts",
+    columns: {
+      title: "title", provider: "provider", serviceKey: "service_key",
+      placement: "placement", isActive: "is_active", ...audit
+    },
+    search: ["title", "provider", "service_key"],
+    schema: serviceScriptSchema
   },
   orders: {
     table: "orders",

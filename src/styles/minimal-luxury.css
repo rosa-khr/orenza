@@ -727,6 +727,13 @@ textarea:focus-visible {
   gap: 9px;
 }
 
+.site-header .brand > img[data-site-logo] {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  object-fit: contain;
+}
+
 .site-header .brand-mark {
   width: 38px;
   height: 38px;
@@ -2138,6 +2145,12 @@ textarea:focus-visible {
 
 .footer-brand {
   grid-column: 1 / -1;
+}
+
+.footer-brand > img[data-site-logo] {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
 }
 
 .footer-brand p {

@@ -76,54 +76,44 @@ const schema = {
 <!doctype html>
 <html lang="fa" dir="rtl">
   <head>
-    <!-- Google Tag Manager -->
-    <script is:inline>
-      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-      })(window,document,'script','dataLayer','GTM-MZ387RQX');
-    </script>
-    <!-- End Google Tag Manager -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="theme-color" content="#0b0b0a" />
-    <meta name="description" content={description} />
-    <meta name="keywords" content={keywords.join(", ")} />
-    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"} />
+    <meta name="description" content={description} data-site-meta="description" />
+    <meta name="keywords" content={keywords.join(", ")} data-site-meta="keywords" />
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"} data-site-meta="robots" />
     <meta name="author" content="Orenza Coffee" />
     <meta property="og:type" content={pageType} />
     <meta property="og:locale" content="fa_IR" />
     <meta property="og:site_name" content="Orenza Coffee" />
-    <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={fullTitle} data-site-meta="og:title" />
+    <meta property="og:description" content={description} data-site-meta="og:description" />
     <meta property="og:url" content={canonical.toString()} />
-    <meta property="og:image" content={socialImage.toString()} />
+    <meta property="og:image" content={socialImage.toString()} data-site-meta="og:image" />
     <meta property="og:image:alt" content="نشان تصویری پلنگ ایرانی اورنزا" />
     <meta property="og:image:width" content="620" />
     <meta property="og:image:height" content="895" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={fullTitle} />
-    <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={socialImage.toString()} />
+    <meta name="twitter:title" content={fullTitle} data-site-meta="twitter:title" />
+    <meta name="twitter:description" content={description} data-site-meta="twitter:description" />
+    <meta name="twitter:image" content={socialImage.toString()} data-site-meta="twitter:image" />
     <link rel="canonical" href={canonical.toString()} />
     <link rel="alternate" hreflang="fa-IR" href={canonical.toString()} />
     <link rel="alternate" hreflang="x-default" href={canonical.toString()} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" data-site-favicon />
     {!noindex && <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)}></script>}
     <title>{fullTitle}</title>
   </head>
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MZ387RQX"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
     <Header />
     <main id="top"><slot /></main>
     <Footer />
     <CartDrawer />
     <script>
       import "../scripts/configurator.ts";
+    </script>
+    <script>
+      import "../scripts/site-settings.ts";
     </script>
     <script>
       const key = "orenza-visitor-id";

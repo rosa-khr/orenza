@@ -106,9 +106,52 @@ export const adminRoleSchema = z.object({
   slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   permissions: z.array(z.enum([
     "dashboard", "users", "roles", "products", "categories", "orders",
-    "payment-methods", "discount-codes", "articles", "tags"
+    "payment-methods", "discount-codes", "articles", "tags", "site-settings"
   ])).min(1),
   isActive: z.boolean().default(true)
+});
+
+export const siteSettingsSchema = z.object({
+  brandName: z.string().trim().min(2).max(120),
+  brandNameEn: z.string().trim().min(2).max(120),
+  brandTagline: z.string().trim().min(3).max(240),
+  supportPhone: z.string().trim().min(7).max(30),
+  supportEmail: z.string().trim().email().max(254),
+  whatsappUrl: z.string().url().max(500),
+  baleUrl: z.string().url().max(500),
+  instagramUrl: z.string().url().max(500),
+  address: z.string().trim().max(1000).nullable().optional(),
+  footerHeading: z.string().trim().min(10).max(300),
+  footerDescription: z.string().trim().min(10).max(500),
+  footerCopyright: z.string().trim().min(5).max(300),
+  logoUrl: optionalUrl,
+  faviconUrl: z.string().trim().min(1).max(500),
+  homepageSeoTitle: z.string().trim().min(10).max(220),
+  homepageSeoDescription: z.string().trim().min(30).max(500),
+  homepageSeoKeywords: z.array(z.string().trim().min(2).max(100)).min(1).max(30),
+  homepageOgImageUrl: z.string().trim().min(1).max(500),
+  searchIndexingEnabled: z.boolean()
+});
+
+export const serviceScriptSchema = z.object({
+  title: z.string().trim().min(2).max(120),
+  provider: z.enum(["gtm", "ga4", "searchConsole"]),
+  serviceKey: z.string().trim().min(4).max(220),
+  placement: z.enum(["head", "body"]).default("head"),
+  isActive: z.boolean().default(true)
+}).superRefine((data, context) => {
+  const patterns = {
+    gtm: /^GTM-[A-Z0-9]+$/,
+    ga4: /^G-[A-Z0-9]+$/,
+    searchConsole: /^[A-Za-z0-9_-]+$/
+  };
+  if (!patterns[data.provider].test(data.serviceKey)) {
+    context.addIssue({
+      code: "custom",
+      message: "شناسه واردشده با سرویس انتخابی سازگار نیست.",
+      path: ["serviceKey"]
+    });
+  }
 });
 
 export const orderItemInputSchema = z.object({

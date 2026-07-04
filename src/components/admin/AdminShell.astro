@@ -9,7 +9,9 @@ import {
   Menu,
   PackageCheck,
   ShieldCheck,
-  UserCog,
+  Settings,
+  UserRound,
+  ChevronDown,
   Users,
   Tags,
   X
@@ -34,7 +36,8 @@ const icons = {
   "payment-methods": CreditCard,
   "discount-codes": BadgePercent,
   articles: BookOpenText,
-  tags: Tags
+  tags: Tags,
+  "service-scripts": Settings
 };
 ---
 
@@ -60,10 +63,7 @@ const icons = {
           <a class:list={{ active: active === "dashboard" }} href="/admin/" data-admin-permission="dashboard">
             <LayoutDashboard size={18} stroke-width={1.45} /><span>داشبورد</span>
           </a>
-          <a class:list={{ active: active === "profile" }} href="/admin/profile/">
-            <UserCog size={18} stroke-width={1.45} /><span>پروفایل مدیریت</span>
-          </a>
-          {adminResources.map((resource) => {
+          {adminResources.filter((resource) => !resource.navHidden).map((resource) => {
             const Icon = icons[resource.key as keyof typeof icons] ?? Boxes;
             return (
               <a class:list={{ active: active === resource.key }} href={`/admin/${resource.key}/list/`} data-admin-permission={resource.key}>
@@ -71,6 +71,9 @@ const icons = {
               </a>
             );
           })}
+          <a class:list={{ active: active === "site-settings" }} href="/admin/site-settings/" data-admin-permission="site-settings">
+            <Settings size={18} stroke-width={1.45} /><span>تنظیمات سایت</span>
+          </a>
         </nav>
         <button class="admin-logout" type="button" data-admin-logout>
           <LogOut size={17} stroke-width={1.45} /> خروج از مدیریت
@@ -81,11 +84,24 @@ const icons = {
           <button class="admin-menu-button" type="button" data-admin-menu-open aria-label="بازکردن منو">
             <Menu size={21} stroke-width={1.4} />
           </button>
-          <div>
+          <div class="admin-topbar-context">
             <small>پنل مدیریت / {actionLabel ?? title}</small>
-            <a class="admin-user-link" href="/admin/profile/" data-admin-user>مدیریت اورنزا</a>
+            <strong>{title}</strong>
           </div>
-          <a href="/" target="_blank" rel="noreferrer">مشاهده فروشگاه</a>
+          <div class="admin-topbar-actions">
+            <a class="admin-store-link" href="/" target="_blank" rel="noreferrer">مشاهده فروشگاه</a>
+            <details class="admin-profile-menu">
+              <summary>
+                <span class="admin-profile-avatar"><UserRound size={18} stroke-width={1.45} /></span>
+                <span><strong data-admin-user>مدیریت اورنزا</strong><small data-admin-role>پنل مدیریت</small></span>
+                <ChevronDown size={15} stroke-width={1.45} />
+              </summary>
+              <div>
+                <a href="/admin/profile/"><UserRound size={16} stroke-width={1.45} /><span>پروفایل و امنیت</span></a>
+                <button type="button" data-admin-logout><LogOut size={16} stroke-width={1.45} /><span>خروج از حساب</span></button>
+              </div>
+            </details>
+          </div>
         </header>
         <section class="admin-content">
           <header class="admin-page-heading">

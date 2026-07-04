@@ -28,6 +28,7 @@ export type AdminResource = {
   fields: AdminField[];
   readonly?: boolean;
   canCreate?: boolean;
+  navHidden?: boolean;
 };
 
 const yesNo = [
@@ -45,7 +46,8 @@ const adminPermissions = [
   { label: "روش‌های پرداخت", value: "payment-methods" },
   { label: "کدهای تخفیف", value: "discount-codes" },
   { label: "مقالات", value: "articles" },
-  { label: "تگ‌ها", value: "tags" }
+  { label: "تگ‌ها", value: "tags" },
+  { label: "تنظیمات سایت", value: "site-settings" }
 ];
 
 export const iranianBanks = [
@@ -135,6 +137,40 @@ export const adminResources: AdminResource[] = [
         options: [
           { label: "سیستمی", value: "true" },
           { label: "سفارشی", value: "false" }
+        ]
+      },
+      { key: "isActive", label: "وضعیت", type: "select", required: true, options: yesNo, list: true }
+    ]
+  },
+  {
+    key: "service-scripts",
+    title: "اسکریپت‌های سرویس",
+    singular: "اسکریپت سرویس",
+    description: "مدیریت امن سرویس‌های تحلیل، تگ منیجر و تأیید مالکیت",
+    navHidden: true,
+    fields: [
+      { key: "title", label: "عنوان", type: "text", required: true, list: true },
+      {
+        key: "provider",
+        label: "سرویس",
+        type: "select",
+        required: true,
+        list: true,
+        options: [
+          { label: "Google Tag Manager", value: "gtm" },
+          { label: "Google Analytics 4", value: "ga4" },
+          { label: "Google Search Console", value: "searchConsole" }
+        ]
+      },
+      { key: "serviceKey", label: "شناسه سرویس", type: "text", required: true, dir: "ltr", list: true },
+      {
+        key: "placement",
+        label: "محل بارگذاری",
+        type: "select",
+        required: true,
+        options: [
+          { label: "داخل Head", value: "head" },
+          { label: "ابتدای Body", value: "body" }
         ]
       },
       { key: "isActive", label: "وضعیت", type: "select", required: true, options: yesNo, list: true }

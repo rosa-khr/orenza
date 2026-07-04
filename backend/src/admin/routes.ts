@@ -2,13 +2,14 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { Pool } from "pg";
 import { z } from "zod";
 import { hashPassword, hashSessionToken, verifyPassword } from "../security.js";
+import { getSiteSettings, updateSiteSettings } from "../site-settings.js";
 import { AdminRepository } from "./repository.js";
 
 type AdminUser = { id: string; role: "customer" | "admin"; admin_role_id: string | null };
 
 const allPermissions = [
   "dashboard", "users", "roles", "products", "categories", "orders",
-  "payment-methods", "discount-codes", "articles", "tags"
+  "payment-methods", "discount-codes", "articles", "tags", "site-settings"
 ] as const;
 
 export const registerAdminRoutes = (
@@ -66,7 +67,11 @@ export const registerAdminRoutes = (
     return { user, permissions };
   };
   const permissionForResource = (resource: string) =>
-    resource === "payment-cards" ? "payment-methods" : resource;
+    resource === "payment-cards"
+      ? "payment-methods"
+      : resource === "service-scripts"
+        ? "site-settings"
+        : resource;
 
   app.get("/api/v1/admin/access", async (request, reply) => {
     const admin = await requireAdmin(request, reply);
@@ -247,6 +252,16 @@ export const registerAdminRoutes = (
         visitors: Number(row.visitors)
       }
     };
+  });
+
+  app.get("/api/v1/admin/site-settings", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "site-settings"))) return;
+    return { item: await getSiteSettings(pool) };
+  });
+
+  app.put("/api/v1/admin/site-settings", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "site-settings"))) return;
+    return { item: await updateSiteSettings(pool, request.body) };
   });
 
   app.get("/api/v1/admin/:resource", async (request, reply) => {
