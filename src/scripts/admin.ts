@@ -489,6 +489,9 @@ const initChrome = async () => {
       const permission = item.dataset.adminPermission || "";
       if (!allowed.has(permission)) item.remove();
     });
+    document.querySelectorAll<HTMLDetailsElement>(".admin-nav-group").forEach((group) => {
+      if (!group.querySelector("a")) group.remove();
+    });
     const segments = location.pathname.split("/").filter(Boolean);
     const requiredPermission = segments.length <= 1
       ? "dashboard"
@@ -1402,6 +1405,7 @@ const initInvoice = async () => {
     set("[data-invoice-address]", String(item.customerAddress || "—"));
     set("[data-invoice-total]", `${money.format(Number(item.totalAmount || 0))} تومان`);
     set("[data-invoice-discount]", `${money.format(Number(item.discountAmount || 0))} تومان`);
+    set("[data-invoice-tax]", `${money.format(Number(item.taxAmount || 0))} تومان`);
     set("[data-invoice-final]", `${money.format(Number(item.finalAmount || 0))} تومان`);
     const rows = root.querySelector<HTMLTableSectionElement>("[data-invoice-items]");
     if (rows) rows.innerHTML = (item.items || []).map((orderItem) => `

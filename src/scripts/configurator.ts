@@ -9,13 +9,13 @@ initMotion();
 initAccountHeader();
 
 document.addEventListener("pointerdown", (event) => {
-  document.querySelectorAll<HTMLDetailsElement>(".nav-products[open]").forEach((menu) => {
-    if (!menu.contains(event.target as Node)) menu.removeAttribute("open");
+  document.querySelectorAll<HTMLElement>(".nav-products.is-open").forEach((menu) => {
+    if (!menu.contains(event.target as Node)) menu.classList.remove("is-open");
   });
 });
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
-    document.querySelectorAll<HTMLDetailsElement>(".nav-products[open]").forEach((menu) => menu.removeAttribute("open"));
+    document.querySelectorAll<HTMLElement>(".nav-products.is-open").forEach((menu) => menu.classList.remove("is-open"));
   }
 });

@@ -3,17 +3,20 @@ import Icon from "./Icon.astro";
 ---
 
 <header class="site-header">
+  <button class="mobile-nav-toggle" type="button" data-mobile-nav-open aria-label="باز کردن منوی سایت">
+    <span></span><span></span><span></span>
+  </button>
   <nav class="primary-nav" aria-label="ناوبری اصلی">
     <a href="/about/">درباره اورنزا</a>
-    <details class="nav-products">
-      <summary>محصولات</summary>
+    <div class="nav-products">
+      <a class="nav-products-link" href="/products/">محصولات</a>
+      <button class="nav-products-toggle" type="button" aria-label="نمایش زیرمجموعه محصولات" aria-expanded="false"></button>
       <div class="nav-products-panel">
-        <a href="/products/"><span>همه محصولات</span><small>مجموعه کامل اورنزا</small></a>
         <a href="/products/coffee-blends/"><span>قهوه‌های ترکیبی</span><small>عربیکا و روبوستا</small></a>
         <a href="/products/cafe-drinks/"><span>پودرهای نوشیدنی کافه‌ای</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
         <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
       </div>
-    </details>
+    </div>
     <a href="/order/">سفارش اختصاصی</a>
   </nav>
   <a class="brand" href="/" aria-label="اورنزا، صفحه اصلی">
@@ -34,5 +37,33 @@ import Icon from "./Icon.astro";
       <Icon name="cart" size={21} />
       <span data-cart-count>۰</span>
     </button>
+  </div>
+  <div class="mobile-nav-drawer" data-mobile-nav hidden aria-hidden="true">
+    <button class="mobile-nav-backdrop" type="button" data-mobile-nav-close aria-label="بستن منو"></button>
+    <aside class="mobile-nav-panel" aria-label="منوی موبایل">
+      <header>
+        <span class="brand-mark" aria-hidden="true" data-site-logo-mark-mobile>O</span>
+        <div><strong>ORENZA</strong><small>COFFEE ROASTERS</small></div>
+        <button type="button" data-mobile-nav-close aria-label="بستن منو"><Icon name="close" size={19} /></button>
+      </header>
+      <nav>
+        <a href="/products/"><span>محصولات</span><small>همه انتخاب‌های فعال اورنزا</small></a>
+        <a href="/products/coffee-blends/"><span>قهوه‌های ترکیبی</span><small>عربیکا و روبوستا</small></a>
+        <a href="/products/cafe-drinks/"><span>پودرهای نوشیدنی کافه‌ای</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+        <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
+        <a href="/order/"><span>سفارش اختصاصی</span><small>انتخاب ترکیب، رُست و آسیاب</small></a>
+        <a href="/about/"><span>درباره اورنزا</span><small>داستان رُست و انتخاب دانه</small></a>
+        <a href="/contact/"><span>ارتباط با ما</span><small>مشاوره و پیگیری سفارش</small></a>
+      </nav>
+      <footer>
+        <strong data-mobile-account-name>حساب کاربری</strong>
+        <div>
+          <a href="/account/profile/">حساب کاربری</a>
+          <a href="/account/addresses/">نشانی‌ها</a>
+          <a href="/account/security/">تغییر رمز عبور</a>
+        </div>
+        <a class="mobile-login-link" href="/login/">ورود یا ساخت حساب</a>
+      </footer>
+    </aside>
   </div>
 </header>

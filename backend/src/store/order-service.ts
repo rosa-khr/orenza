@@ -80,34 +80,42 @@ export class OrderService {
       });
       const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
       const discount = await resolveDiscount(client, data.discountCode, totalAmount);
-      const finalAmount = totalAmount - discount.amount;
-      const payment = await client.query<{ id: string }>(
-        "SELECT id FROM payment_methods WHERE id = $1 AND is_active = true FOR SHARE",
+      const taxableAmount = Math.max(0, totalAmount - discount.amount);
+      const taxAmount = Math.round(taxableAmount * 0.10);
+      const finalAmount = taxableAmount + taxAmount;
+      const payment = await client.query<{ id: string; type: "cardToCard" | "bankGateway" | "zarinpal" }>(
+        "SELECT id,type FROM payment_methods WHERE id = $1 AND is_active = true FOR SHARE",
         [data.paymentMethodId]
       );
-      if (!payment.rows[0]) {
+      const paymentMethod = payment.rows[0];
+      if (!paymentMethod) {
         throw Object.assign(new Error("روش پرداخت انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
       }
-      const paymentCard = await client.query<{ id: string }>(
-        `SELECT id FROM payment_cards
-         WHERE id = $1 AND payment_method_id = $2 AND is_active = true FOR SHARE`,
-        [data.paymentCardId, data.paymentMethodId]
-      );
-      if (!paymentCard.rows[0]) {
-        throw Object.assign(new Error("کارت انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
+      if (paymentMethod.type === "cardToCard") {
+        if (!data.paymentCardId) {
+          throw Object.assign(new Error("برای کارت‌به‌کارت، انتخاب کارت الزامی است."), { statusCode: 422 });
+        }
+        const paymentCard = await client.query<{ id: string }>(
+          `SELECT id FROM payment_cards
+           WHERE id = $1 AND payment_method_id = $2 AND is_active = true FOR SHARE`,
+          [data.paymentCardId, data.paymentMethodId]
+        );
+        if (!paymentCard.rows[0]) {
+          throw Object.assign(new Error("کارت انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
+        }
       }
       const order = await client.query<Record<string, unknown>>(
         `INSERT INTO orders
           (order_number,user_id,customer_name,customer_phone,customer_address,customer_province,
-           customer_city,customer_postal_code,shipping_method,total_amount,discount_amount,final_amount,
+           customer_city,customer_postal_code,shipping_method,total_amount,discount_amount,tax_amount,final_amount,
            discount_code_id,payment_method_id,payment_card_id,payment_status,order_status,customer_note)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending','new',$16)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'pending','new',$17)
          RETURNING *`,
         [
           nextOrderNumber(), userId, data.customerName, data.customerPhone, data.customerAddress,
           data.customerProvince, data.customerCity, data.customerPostalCode, data.shippingMethod,
-          totalAmount, discount.amount, finalAmount, discount.id, data.paymentMethodId,
-          data.paymentCardId, data.customerNote ?? null
+          totalAmount, discount.amount, taxAmount, finalAmount, discount.id, data.paymentMethodId,
+          data.paymentCardId ?? null, data.customerNote ?? null
         ]
       );
       for (const item of items) {
@@ -130,7 +138,39 @@ export class OrderService {
   async validateDiscount(code: string, totalAmount: number) {
     return withTransaction(this.pool, async (client) => {
       const discount = await resolveDiscount(client, code, totalAmount);
-      return { code: code.toUpperCase(), discountAmount: discount.amount, finalAmount: totalAmount - discount.amount };
+      const taxableAmount = Math.max(0, totalAmount - discount.amount);
+      const taxAmount = Math.round(taxableAmount * 0.10);
+      return { code: code.toUpperCase(), discountAmount: discount.amount, taxAmount, finalAmount: taxableAmount + taxAmount };
     });
+  }
+
+  async markPaymentStarted(orderId: string, authority: string) {
+    await this.pool.query(
+      `UPDATE orders SET payment_authority = $2, payment_status = 'pending', updated_at = now()
+       WHERE id = $1 AND payment_status = 'pending'`,
+      [orderId, authority]
+    );
+  }
+
+  async markPaymentVerified(orderId: string, authority: string, refId: string) {
+    const result = await this.pool.query<Record<string, unknown>>(
+      `UPDATE orders
+          SET payment_authority = $2, payment_ref_id = $3, payment_status = 'paid', order_status = 'processing', updated_at = now()
+        WHERE id = $1 AND payment_status = 'pending'
+        RETURNING *`,
+      [orderId, authority, refId]
+    );
+    return result.rows[0] ? toPublicRecord(result.rows[0]) : null;
+  }
+
+  async markPaymentRejected(orderId: string, authority: string | null) {
+    const result = await this.pool.query<Record<string, unknown>>(
+      `UPDATE orders
+          SET payment_authority = COALESCE($2, payment_authority), payment_status = 'rejected', updated_at = now()
+        WHERE id = $1 AND payment_status = 'pending'
+        RETURNING *`,
+      [orderId, authority]
+    );
+    return result.rows[0] ? toPublicRecord(result.rows[0]) : null;
   }
 }

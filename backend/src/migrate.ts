@@ -286,10 +286,13 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping_method varchar(30) NOT NULL CHECK (shipping_method IN ('tipax','post')),
   total_amount bigint NOT NULL CHECK (total_amount >= 0),
   discount_amount bigint NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
+  tax_amount bigint NOT NULL DEFAULT 0 CHECK (tax_amount >= 0),
   final_amount bigint NOT NULL CHECK (final_amount >= 0),
   discount_code_id uuid REFERENCES discount_codes(id) ON DELETE SET NULL,
   payment_method_id uuid NOT NULL REFERENCES payment_methods(id) ON DELETE RESTRICT,
   payment_card_id uuid REFERENCES payment_cards(id) ON DELETE RESTRICT,
+  payment_authority varchar(80),
+  payment_ref_id varchar(80),
   payment_status varchar(20) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending','paid','rejected')),
   order_status varchar(20) NOT NULL DEFAULT 'new' CHECK (order_status IN ('new','processing','sent','completed','canceled')),
   payment_receipt_url text,
@@ -330,6 +333,9 @@ ALTER TABLE payment_methods ALTER COLUMN account_owner DROP NOT NULL;
 ALTER TABLE payment_methods ALTER COLUMN bank_name DROP NOT NULL;
 ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS merchant_id varchar(80);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_card_id uuid REFERENCES payment_cards(id) ON DELETE RESTRICT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount bigint NOT NULL DEFAULT 0 CHECK (tax_amount >= 0);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_authority varchar(80);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_ref_id varchar(80);
 DROP INDEX IF EXISTS one_active_payment_method;
 CREATE UNIQUE INDEX IF NOT EXISTS one_active_payment_method_type ON payment_methods(type) WHERE is_active = true;
 
@@ -432,12 +438,12 @@ ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, updated_at=now();
 
 INSERT INTO payment_methods
   (title,type,card_number,account_owner,bank_name,merchant_id,is_active)
-SELECT seed.title,seed.type,NULL,NULL,NULL,NULL,seed.is_active
+SELECT seed.title,seed.type,NULL,NULL,NULL,seed.merchant_id,seed.is_active
 FROM (VALUES
-  ('کارت‌به‌کارت','cardToCard',true),
-  ('درگاه بانکی','bankGateway',false),
-  ('زرین‌پال','zarinpal',false)
-) AS seed(title,type,is_active)
+  ('کارت‌به‌کارت','cardToCard',NULL,true),
+  ('درگاه بانکی','bankGateway',NULL,false),
+  ('زرین‌پال','zarinpal',COALESCE(NULLIF('${process.env.ZARINPAL_MERCHANT_ID || ""}',''),'ce8cd299-d1e0-4a87-a168-43b36bc8a624'),false)
+) AS seed(title,type,merchant_id,is_active)
 WHERE NOT EXISTS (SELECT 1 FROM payment_methods p WHERE p.type = seed.type);
 `;
 

@@ -116,7 +116,9 @@ export interface Order {
   discountAmount: number;
   finalAmount: number;
   paymentMethodId: string;
-  paymentCardId: string;
+  paymentCardId: string | null;
+  paymentAuthority: string | null;
+  paymentRefId: string | null;
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   paymentReceiptUrl: string | null;

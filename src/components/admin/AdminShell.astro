@@ -39,6 +39,13 @@ const icons = {
   tags: Tags,
   "service-scripts": Settings
 };
+const navGroups = [
+  { title: "فروشگاه", icon: Boxes, resources: ["products", "categories"] },
+  { title: "سفارش و پرداخت", icon: CreditCard, resources: ["orders", "payment-methods", "discount-codes"] },
+  { title: "محتوا و سئو", icon: BookOpenText, resources: ["articles", "tags", "site-settings"] },
+  { title: "کاربران و دسترسی", icon: ShieldCheck, resources: ["users", "roles"] }
+];
+const resourceByKey = new Map(adminResources.filter((resource) => !resource.navHidden).map((resource) => [resource.key, resource]));
 ---
 
 <!doctype html>
@@ -63,17 +70,30 @@ const icons = {
           <a class:list={{ active: active === "dashboard" }} href="/admin/" data-admin-permission="dashboard">
             <LayoutDashboard size={18} stroke-width={1.45} /><span>داشبورد</span>
           </a>
-          {adminResources.filter((resource) => !resource.navHidden).map((resource) => {
-            const Icon = icons[resource.key as keyof typeof icons] ?? Boxes;
+          {navGroups.map((group) => {
+            const GroupIcon = group.icon;
+            const isOpen = group.resources.includes(active);
             return (
-              <a class:list={{ active: active === resource.key }} href={`/admin/${resource.key}/list/`} data-admin-permission={resource.key}>
-                <Icon size={18} stroke-width={1.45} /><span>{resource.title}</span>
-              </a>
+              <details class="admin-nav-group" open={isOpen}>
+                <summary><GroupIcon size={18} stroke-width={1.45} /><span>{group.title}</span><ChevronDown size={14} stroke-width={1.45} /></summary>
+                <div>
+                  {group.resources.map((key) => {
+                    if (key === "site-settings") {
+                      return <a class:list={{ active: active === "site-settings" }} href="/admin/site-settings/" data-admin-permission="site-settings"><Settings size={17} stroke-width={1.45} /><span>تنظیمات سایت</span></a>;
+                    }
+                    const resource = resourceByKey.get(key);
+                    if (!resource) return null;
+                    const Icon = icons[resource.key as keyof typeof icons] ?? Boxes;
+                    return (
+                      <a class:list={{ active: active === resource.key }} href={`/admin/${resource.key}/list/`} data-admin-permission={resource.key}>
+                        <Icon size={17} stroke-width={1.45} /><span>{resource.title}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </details>
             );
           })}
-          <a class:list={{ active: active === "site-settings" }} href="/admin/site-settings/" data-admin-permission="site-settings">
-            <Settings size={18} stroke-width={1.45} /><span>تنظیمات سایت</span>
-          </a>
         </nav>
         <button class="admin-logout" type="button" data-admin-logout>
           <LogOut size={17} stroke-width={1.45} /> خروج از مدیریت
@@ -97,7 +117,7 @@ const icons = {
                 <ChevronDown size={15} stroke-width={1.45} />
               </summary>
               <div>
-                <a href="/admin/profile/"><UserRound size={16} stroke-width={1.45} /><span>پروفایل و امنیت</span></a>
+                <a href="/admin/profile/"><UserRound size={16} stroke-width={1.45} /><span>حساب مدیریت و امنیت</span></a>
                 <button type="button" data-admin-logout><LogOut size={16} stroke-width={1.45} /><span>خروج از حساب</span></button>
               </div>
             </details>

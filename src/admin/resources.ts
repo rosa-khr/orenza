@@ -290,6 +290,7 @@ export const adminResources: AdminResource[] = [
       { key: "customerAddress", label: "نشانی تحویل", type: "textarea" },
       { key: "totalAmount", label: "مبلغ کل", type: "number", list: true },
       { key: "discountAmount", label: "تخفیف", type: "number" },
+      { key: "taxAmount", label: "مالیات", type: "number", list: true },
       { key: "finalAmount", label: "مبلغ نهایی", type: "number", list: true },
       {
         key: "paymentStatus",
@@ -324,9 +325,22 @@ export const adminResources: AdminResource[] = [
     key: "payment-methods",
     title: "روش‌های پرداخت",
     singular: "روش پرداخت",
-    description: "اطلاعات کارت‌به‌کارت قابل نمایش در سفارش",
+    description: "فعال‌سازی کارت‌به‌کارت و درگاه پرداخت سایت",
+    canCreate: false,
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
+      {
+        key: "type",
+        label: "نوع روش",
+        type: "select",
+        readonly: true,
+        list: true,
+        options: [
+          { label: "کارت‌به‌کارت", value: "cardToCard" },
+          { label: "درگاه بانکی", value: "bankGateway" },
+          { label: "زرین‌پال", value: "zarinpal" }
+        ]
+      },
       { key: "merchantId", label: "شناسه پذیرنده / Merchant ID", type: "text", dir: "ltr" },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]

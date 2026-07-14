@@ -173,7 +173,7 @@ export const createOrderSchema = z.object({
   customerPostalCode: z.string().transform(normalizePhone).pipe(z.string().regex(/^\d{10}$/)),
   shippingMethod: z.enum(["tipax", "post"]),
   paymentMethodId: z.string().uuid(),
-  paymentCardId: z.string().uuid(),
+  paymentCardId: z.string().uuid().nullable().optional(),
   discountCode: z.string().trim().max(60).optional(),
   customerNote: z.string().trim().max(2000).nullable().optional(),
   items: z.array(orderItemInputSchema).min(1).max(30)

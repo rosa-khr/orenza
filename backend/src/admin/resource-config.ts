@@ -122,15 +122,17 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     columns: {
       orderNumber: "order_number", customerName: "customer_name", customerPhone: "customer_phone",
       customerAddress: "customer_address", totalAmount: "total_amount", discountAmount: "discount_amount",
-      finalAmount: "final_amount", paymentMethodId: "payment_method_id", paymentStatus: "payment_status",
-      orderStatus: "order_status", paymentReceiptUrl: "payment_receipt_url", customerNote: "customer_note",
+      taxAmount: "tax_amount", finalAmount: "final_amount", paymentMethodId: "payment_method_id",
+      paymentCardId: "payment_card_id", paymentAuthority: "payment_authority", paymentRefId: "payment_ref_id",
+      paymentStatus: "payment_status", orderStatus: "order_status", paymentReceiptUrl: "payment_receipt_url", customerNote: "customer_note",
       adminNote: "admin_note", ...audit
     },
     search: ["order_number", "customer_name", "customer_phone"],
     schema: orderAdminSchema,
     adminReadonly: [
       "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
-      "discountAmount", "finalAmount", "paymentMethodId", "customerNote"
+      "discountAmount", "taxAmount", "finalAmount", "paymentMethodId", "paymentCardId",
+      "paymentAuthority", "paymentRefId", "customerNote"
     ]
   }
 };

@@ -1,0 +1,57 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="نتیجه پرداخت سفارش اورنزا"
+  description="نتیجه پرداخت سفارش قهوه اورنزا و ادامه پیگیری آماده‌سازی سفارش."
+  canonicalPath="/payment-result/"
+  keywords={["نتیجه پرداخت اورنزا", "پرداخت سفارش قهوه", "زرین پال اورنزا"]}
+>
+  <main class="payment-result-page" data-payment-result>
+    <section class="payment-result-card">
+      <span data-payment-eyebrow>PAYMENT RESULT</span>
+      <h1 data-payment-title>در حال بررسی نتیجه پرداخت...</h1>
+      <p data-payment-copy>چند لحظه صبر کن؛ نتیجه پرداخت سفارش در همین صفحه نمایش داده می‌شود.</p>
+      <dl class="payment-result-meta" hidden data-payment-meta>
+        <div><dt>شماره سفارش</dt><dd data-payment-order>—</dd></div>
+        <div><dt>کد پیگیری</dt><dd data-payment-ref>—</dd></div>
+      </dl>
+      <div class="payment-result-actions">
+        <a href="/order/?cart=open">بازگشت به سبد سفارش</a>
+        <a href="/account/orders/">مشاهده سفارش‌ها</a>
+      </div>
+    </section>
+  </main>
+  <script is:inline>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const status = params.get("status");
+      const order = params.get("order") || "";
+      const ref = params.get("ref") || "";
+      const reason = params.get("reason") || "";
+      const root = document.querySelector("[data-payment-result]");
+      const eyebrow = document.querySelector("[data-payment-eyebrow]");
+      const title = document.querySelector("[data-payment-title]");
+      const copy = document.querySelector("[data-payment-copy]");
+      const meta = document.querySelector("[data-payment-meta]");
+      const orderNode = document.querySelector("[data-payment-order]");
+      const refNode = document.querySelector("[data-payment-ref]");
+      if (!root || !title || !copy || !eyebrow) return;
+      if (status === "success") {
+        root.classList.add("is-success");
+        eyebrow.textContent = "PAYMENT CONFIRMED";
+        title.textContent = "پرداخت با موفقیت ثبت شد.";
+        copy.textContent = "سفارش تو در صف آماده‌سازی اورنزا قرار گرفت. اگر نکته‌ای درباره ارسال داری، از بخش سفارش‌ها یا پیام‌رسان با ما در تماس باش.";
+        if (meta) meta.hidden = false;
+        if (orderNode) orderNode.textContent = order || "ثبت‌شده";
+        if (refNode) refNode.textContent = ref || "—";
+        return;
+      }
+      root.classList.add("is-failed");
+      eyebrow.textContent = "PAYMENT NOT COMPLETED";
+      title.textContent = "پرداخت کامل نشد.";
+      copy.textContent = reason || "اگر مبلغی از حساب شما کم شده باشد، معمولاً طبق روال بانکی برگشت می‌خورد. می‌توانی دوباره از سبد سفارش اقدام کنی.";
+    })();
+  </script>
+</BaseLayout>

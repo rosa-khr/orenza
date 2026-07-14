@@ -34,7 +34,7 @@ import Icon from "./Icon.astro";
         <Icon name="user" size={18} />
         <div>
           <strong data-checkout-profile>اطلاعات حساب کاربری</strong>
-          <small>نام و شماره تماس از پروفایل شما برداشته می‌شود.</small>
+          <small>نام و شماره تماس از حساب کاربری شما برداشته می‌شود.</small>
         </div>
         <a href="/account/profile/?next=%2Forder%2F%3Fcart%3Dopen">ویرایش</a>
       </div>
@@ -82,10 +82,9 @@ import Icon from "./Icon.astro";
 
       <fieldset class="checkout-choice payment-choice">
         <legend><span>PAYMENT METHOD</span>شیوه پرداخت</legend>
-        <label class="choice-card">
-          <input type="radio" name="payment-method" value="کارت به کارت" checked required />
-          <span><strong>کارت به کارت</strong><small>اطلاعات کارت پس از تأیید سفارش برایت ارسال می‌شود.</small></span>
-        </label>
+        <div class="checkout-choice-grid payment-method-grid" data-payment-method-list>
+          <p class="payment-method-state">در حال دریافت روش‌های پرداخت...</p>
+        </div>
       </fieldset>
 
       <div class="discount-entry">
@@ -97,6 +96,7 @@ import Icon from "./Icon.astro";
       <section class="checkout-totals" aria-label="مبلغ سفارش">
         <div><span>مبلغ اقلام</span><strong data-cart-subtotal>۰ تومان</strong></div>
         <div data-cart-discount-row hidden><span>تخفیف</span><strong data-cart-discount>۰ تومان</strong></div>
+        <div><span>مالیات ارزش افزوده ۱۰٪</span><strong data-cart-tax>۰ تومان</strong></div>
         <div><span>مبلغ نهایی</span><strong data-cart-final>۰ تومان</strong></div>
       </section>
 
@@ -104,9 +104,14 @@ import Icon from "./Icon.astro";
         <span>اطلاعات کارت‌به‌کارت</span>
         <div class="payment-card-list" data-payment-card-list></div>
       </section>
-      <p class="checkout-payment-guide">
-        لطفاً مبلغ سفارش را کارت‌به‌کارت کرده و خلاصه سفارش را همراه با فیش واریزی در واتساپ یا بله ارسال کنید.
+      <p class="checkout-payment-guide" data-payment-guide>
+        ارسال و آماده‌سازی سفارش ممکن است ۳ تا ۵ روز کاری زمان‌بر باشد. لطفاً پس از ثبت سفارش، مبلغ نهایی را کارت‌به‌کارت کرده و خلاصه سفارش را همراه با فیش واریزی در واتساپ یا بله ارسال کنید.
       </p>
+
+      <button class="checkout-register-order" type="button" data-register-order>
+        ثبت سفارش و آماده‌سازی پیام
+      </button>
+      <div class="checkout-order-state" data-order-state hidden aria-live="polite"></div>
 
       <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noopener noreferrer">
         ارسال خلاصه در واتساپ <span class="message-action-icon"><Icon name="send" size={16} /></span>
@@ -117,4 +122,12 @@ import Icon from "./Icon.astro";
       <small data-copy-status>برای ارسال سفارش، اطلاعات تحویل و شیوه ارسال را کامل کن.</small>
     </div>
   </aside>
+  <div class="cart-added-choice" data-cart-added-choice hidden role="status" aria-live="polite">
+    <div>
+      <span>به سبد اضافه شد</span>
+      <strong data-cart-added-title>انتخاب اورنزا</strong>
+    </div>
+    <button type="button" data-cart-continue>ادامه انتخاب</button>
+    <button type="button" data-cart-view>رفتن به سبد</button>
+  </div>
 </div>
