@@ -1,4 +1,5 @@
 import { ADD_TO_CART_EVENT, type CartItemInput } from "./order-types";
+import { productDetailUrl, productSlug } from "./product-url";
 
 type CategoryProduct = {
   id: string;
@@ -17,6 +18,7 @@ type CategoryProduct = {
   pricePer250g: number | string;
   pricePer500g: number | string;
   pricePer1000g: number | string;
+  imageUrl: string | null;
 };
 
 const root = document.querySelector<HTMLElement>("[data-category-products]");
@@ -36,14 +38,37 @@ if (root && list) {
         const article = document.createElement("article");
         const eyebrow = document.createElement("span");
         const title = document.createElement("h3");
+        const titleLink = document.createElement("a");
         const description = document.createElement("p");
         const footer = document.createElement("div");
         const blend = document.createElement("small");
         const price = document.createElement("strong");
+        const detailUrl = productDetailUrl(product);
+        const media = document.createElement("a");
+        const detailLink = document.createElement("a");
+        media.className = "category-product-media";
+        media.href = detailUrl;
+        media.setAttribute("aria-label", `مشاهده ${product.titleFa}`);
+        if (product.imageUrl) {
+          const image = document.createElement("img");
+          image.src = product.imageUrl;
+          image.alt = product.titleFa;
+          image.loading = "lazy";
+          media.append(image);
+        } else {
+          const placeholder = document.createElement("span");
+          placeholder.textContent = "ORENZA";
+          media.append(placeholder);
+        }
         eyebrow.textContent = product.titleEn;
-        title.textContent = product.titleFa;
+        titleLink.href = detailUrl;
+        titleLink.textContent = product.titleFa;
+        title.append(titleLink);
         description.textContent = product.description;
         blend.textContent = product.blendType;
+        detailLink.className = "category-product-detail-link";
+        detailLink.href = detailUrl;
+        detailLink.textContent = "مشاهده جزئیات محصول";
         article.classList.add("category-purchasable");
         if (product.stockStatus === "outOfStock") {
           article.classList.add("is-out-of-stock");
@@ -51,8 +76,8 @@ if (root && list) {
           unavailable.className = "category-stock-label";
           unavailable.textContent = "ناموجود";
           price.textContent = "فعلاً امکان سفارش این محصول نیست";
-          footer.append(blend, price, unavailable);
-          article.append(eyebrow, title, description, footer);
+          footer.append(blend, price, unavailable, detailLink);
+          article.append(media, eyebrow, title, description, footer);
           list.append(article);
           return;
         }
@@ -125,7 +150,7 @@ if (root && list) {
           actionButton.textContent = isPowderCategory ? "افزودن به سبد" : "ادامه و انتخاب رُست";
           actionButton.addEventListener("click", () => {
             if (isPowderCategory) addPackagedToCart();
-            else location.href = `/order/?product=${encodeURIComponent(product.id)}&weight=${selectedWeight}`;
+            else location.href = `/order/?product=${encodeURIComponent(productSlug(product.titleEn))}&weight=${selectedWeight}`;
           });
           controls.append(weights, actionButton);
           update();
@@ -138,8 +163,8 @@ if (root && list) {
           actionButton.addEventListener("click", addPackagedToCart);
           controls.append(packageLabel, actionButton);
         }
-        footer.append(blend, price, controls);
-        article.append(eyebrow, title, description, footer);
+        footer.append(blend, price, controls, detailLink);
+        article.append(media, eyebrow, title, description, footer);
         list.append(article);
       });
       if (!items.length) list.innerHTML = "<p>محصول فعالی در این مجموعه وجود ندارد.</p>";

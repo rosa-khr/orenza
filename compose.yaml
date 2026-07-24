@@ -36,6 +36,13 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       ADMIN_NAME: ${ADMIN_NAME:-مدیر اورنزا}
       PORT: 8787
+      PAYMENT_RECEIPT_DIR: /app/data/payment-receipts
+      INVOICE_SIGNATURE_DIR: /app/data/invoice-signatures
+      PRODUCT_IMAGE_DIR: /app/data/product-images
+    volumes:
+      - orenza-payment-receipts:/app/data/payment-receipts
+      - orenza-invoice-signatures:/app/data/invoice-signatures
+      - orenza-product-images:/app/data/product-images
     depends_on:
       db:
         condition: service_healthy
@@ -61,3 +68,6 @@ services:
 
 volumes:
   orenza-postgres:
+  orenza-payment-receipts:
+  orenza-invoice-signatures:
+  orenza-product-images:

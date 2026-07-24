@@ -4,6 +4,13 @@ import { z } from "zod";
 import { hashPassword, hashSessionToken, verifyPassword } from "../security.js";
 import { getSiteSettings, updateSiteSettings } from "../site-settings.js";
 import { AdminRepository } from "./repository.js";
+import { openPaymentReceipt } from "../payment-receipts.js";
+import {
+  openInvoiceSignature,
+  removeInvoiceSignature,
+  saveInvoiceSignature
+} from "../invoice-signatures.js";
+import { saveProductImage } from "../product-images.js";
 
 type AdminUser = { id: string; role: "customer" | "admin"; admin_role_id: string | null };
 
@@ -234,10 +241,18 @@ export const registerAdminRoutes = (
       customers: string;
       active_products: string;
       visitors: string;
+      processing_orders: string;
+      ready_orders: string;
+      completed_orders: string;
+      canceled_orders: string;
     }>(`SELECT
       (SELECT count(*) FROM orders WHERE order_status = 'new') AS new_orders,
-      (SELECT count(*) FROM orders WHERE order_status IN ('new','processing')) AS pending_shipment,
+      (SELECT count(*) FROM orders WHERE order_status IN ('new','processing','ready')) AS pending_shipment,
       (SELECT count(*) FROM orders WHERE order_status = 'sent') AS sent_orders,
+      (SELECT count(*) FROM orders WHERE order_status = 'processing') AS processing_orders,
+      (SELECT count(*) FROM orders WHERE order_status = 'ready') AS ready_orders,
+      (SELECT count(*) FROM orders WHERE order_status = 'completed') AS completed_orders,
+      (SELECT count(*) FROM orders WHERE order_status = 'canceled') AS canceled_orders,
       (SELECT count(*) FROM users WHERE role = 'customer') AS customers,
       (SELECT count(*) FROM products WHERE is_active = true) AS active_products,
       (SELECT count(DISTINCT visitor_id) FROM site_visits WHERE visited_on >= current_date - 29) AS visitors`);
@@ -250,6 +265,14 @@ export const registerAdminRoutes = (
         customers: Number(row.customers),
         activeProducts: Number(row.active_products),
         visitors: Number(row.visitors)
+      },
+      orderStatuses: {
+        new: Number(row.new_orders),
+        processing: Number(row.processing_orders),
+        ready: Number(row.ready_orders),
+        sent: Number(row.sent_orders),
+        completed: Number(row.completed_orders),
+        canceled: Number(row.canceled_orders)
       }
     };
   });
@@ -262,6 +285,146 @@ export const registerAdminRoutes = (
   app.put("/api/v1/admin/site-settings", async (request, reply) => {
     if (!(await requirePermission(request, reply, "site-settings"))) return;
     return { item: await updateSiteSettings(pool, request.body) };
+  });
+
+  app.get("/api/v1/admin/invoice-settings", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "orders"))) return;
+    const settings = await getSiteSettings(pool);
+    return {
+      item: {
+        brandName: settings.brandName,
+        brandNameEn: settings.brandNameEn,
+        supportPhone: settings.supportPhone,
+        supportEmail: settings.supportEmail,
+        instagramUrl: settings.instagramUrl,
+        websiteUrl: settings.websiteUrl,
+        address: settings.address,
+        invoiceNationalId: settings.invoiceNationalId,
+        invoiceSignatureUrl: settings.invoiceSignatureUrl
+      }
+    };
+  });
+
+  app.post("/api/v1/admin/site-settings/invoice-signature", {
+    bodyLimit: 6 * 1024 * 1024
+  }, async (request, reply) => {
+    if (!(await requirePermission(request, reply, "site-settings"))) return;
+    const part = await request.file();
+    if (!part || part.fieldname !== "signature") {
+      return reply.code(422).send({ error: "تصویر امضای فروشنده را انتخاب کنید." });
+    }
+    const saved = await saveInvoiceSignature(await part.toBuffer());
+    try {
+      const previous = await pool.query<{ invoice_signature_url: string | null }>(
+        "SELECT invoice_signature_url FROM site_settings WHERE id=1"
+      );
+      await pool.query(
+        "UPDATE site_settings SET invoice_signature_url=$1,updated_at=now() WHERE id=1",
+        [saved.url]
+      );
+      const oldFileName = previous.rows[0]?.invoice_signature_url?.split("/").pop();
+      if (oldFileName) await removeInvoiceSignature(oldFileName);
+      return { url: saved.url };
+    } catch (error) {
+      await removeInvoiceSignature(saved.fileName);
+      throw error;
+    }
+  });
+
+  app.delete("/api/v1/admin/site-settings/invoice-signature", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "site-settings"))) return;
+    const previous = await pool.query<{ invoice_signature_url: string | null }>(
+      "SELECT invoice_signature_url FROM site_settings WHERE id=1"
+    );
+    await pool.query(
+      "UPDATE site_settings SET invoice_signature_url=NULL,updated_at=now() WHERE id=1"
+    );
+    const oldFileName = previous.rows[0]?.invoice_signature_url?.split("/").pop();
+    if (oldFileName) await removeInvoiceSignature(oldFileName);
+    return { success: true };
+  });
+
+  app.get("/api/v1/admin/invoice-signatures/:fileName", async (request, reply) => {
+    if (!(await requireAdmin(request, reply))) return;
+    const { fileName } = z.object({
+      fileName: z.string().regex(/^[0-9a-f-]+\.(?:jpg|png|webp)$/)
+    }).parse(request.params);
+    const signature = openInvoiceSignature(fileName);
+    if (!signature) return reply.code(404).send({ error: "تصویر امضا پیدا نشد." });
+    reply.type(signature.mime).header("Cache-Control", "private, max-age=300");
+    return reply.send(signature.stream);
+  });
+
+  app.post("/api/v1/admin/product-images", {
+    bodyLimit: 6 * 1024 * 1024
+  }, async (request, reply) => {
+    if (!(await requirePermission(request, reply, "products"))) return;
+    const part = await request.file();
+    if (!part || part.fieldname !== "image") {
+      return reply.code(422).send({ error: "تصویر محصول را انتخاب کنید." });
+    }
+    return saveProductImage(await part.toBuffer());
+  });
+
+  app.get("/api/v1/admin/payment-receipts/:fileName", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "orders"))) return;
+    const { fileName } = z.object({
+      fileName: z.string().regex(/^[0-9a-f-]+\.(?:jpg|png|webp)$/)
+    }).parse(request.params);
+    const receipt = openPaymentReceipt(fileName);
+    if (!receipt) return reply.code(404).send({ error: "فیش پیدا نشد." });
+    reply.type(receipt.mime).header("Cache-Control", "private, max-age=300");
+    return reply.send(receipt.stream);
+  });
+
+  app.post("/api/v1/admin/orders/:id/payment-decision", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "orders"))) return;
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const data = z.object({
+      decision: z.enum(["approve", "reject"]),
+      adminNote: z.string().trim().max(3000).nullable().optional()
+    }).parse(request.body);
+    const result = await pool.query<Record<string, unknown>>(
+      `UPDATE orders
+          SET payment_status = $2::varchar,
+              order_status = CASE WHEN $2::varchar = 'paid' THEN 'processing' ELSE order_status END,
+              admin_note = COALESCE($3, admin_note),
+              updated_at = now()
+        WHERE id = $1
+          AND payment_status = 'pending'
+          AND payment_ref_id IS NOT NULL
+          AND payment_receipt_url IS NOT NULL
+      RETURNING *`,
+      [id, data.decision === "approve" ? "paid" : "rejected", data.adminNote ?? null]
+    );
+    if (!result.rows[0]) {
+      return reply.code(422).send({ error: "سفارش پیدا نشد، قبلاً بررسی شده یا مدارک پرداخت کامل نیست." });
+    }
+    return { item: result.rows[0] };
+  });
+
+  app.post("/api/v1/admin/orders/:id/fulfillment-transition", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "orders"))) return;
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const { action } = z.object({
+      action: z.enum(["ready", "sent"])
+    }).parse(request.body);
+    const expectedStatus = action === "ready" ? "processing" : "ready";
+    const result = await pool.query<Record<string, unknown>>(
+      `UPDATE orders
+          SET order_status=$2,updated_at=now()
+        WHERE id=$1
+          AND order_status=$3
+      RETURNING *`,
+      [id, action, expectedStatus]
+    );
+    if (!result.rows[0]) {
+      const required = action === "ready"
+        ? "سفارش باید در حال آماده‌سازی باشد."
+        : "ابتدا باید وضعیت آماده ارسال سفارش ثبت شود.";
+      return reply.code(422).send({ error: required });
+    }
+    return { item: result.rows[0] };
   });
 
   app.get("/api/v1/admin/:resource", async (request, reply) => {

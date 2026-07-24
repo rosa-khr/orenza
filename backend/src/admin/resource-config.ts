@@ -46,6 +46,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "products",
     columns: {
       titleFa: "title_fa", titleEn: "title_en", categoryId: "category_id", description: "description",
+      productContent: "product_content",
       roastType: "roast_type", coffeeType: "coffee_type", grindType: "grind_type", blendType: "blend_type",
       sortOrder: "sort_order",
       saleType: "sale_type", packageWeightGrams: "package_weight_grams",

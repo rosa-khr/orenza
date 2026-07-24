@@ -104,22 +104,30 @@ import Icon from "./Icon.astro";
         <span>اطلاعات کارت‌به‌کارت</span>
         <div class="payment-card-list" data-payment-card-list></div>
       </section>
+      <section class="payment-proof" data-payment-proof hidden>
+        <header>
+          <strong>ثبت اطلاعات واریز</strong>
+          <small>پس از واریز مبلغ نهایی، کد پیگیری و تصویر فیش را وارد کن.</small>
+        </header>
+        <label>
+          <span>کد پیگیری تراکنش</span>
+          <input type="text" inputmode="numeric" maxlength="80" data-payment-ref placeholder="کد درج‌شده روی رسید بانکی" />
+        </label>
+        <label class="payment-receipt-picker">
+          <span>تصویر فیش واریزی</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp" data-payment-receipt />
+          <small data-payment-receipt-name>JPG، PNG یا WebP تا ۵ مگابایت</small>
+        </label>
+      </section>
       <p class="checkout-payment-guide" data-payment-guide>
-        ارسال و آماده‌سازی سفارش ممکن است ۳ تا ۵ روز کاری زمان‌بر باشد. لطفاً پس از ثبت سفارش، مبلغ نهایی را کارت‌به‌کارت کرده و خلاصه سفارش را همراه با فیش واریزی در واتساپ یا بله ارسال کنید.
+        مبلغ نهایی را به یکی از کارت‌های بالا واریز کن. پس از ثبت کد پیگیری و فیش، سفارش برای تأیید مدیریت ارسال می‌شود و آماده‌سازی بعد از تأیید آغاز خواهد شد.
       </p>
 
       <button class="checkout-register-order" type="button" data-register-order>
-        ثبت سفارش و آماده‌سازی پیام
+        ثبت سفارش و ارسال برای تأیید
       </button>
       <div class="checkout-order-state" data-order-state hidden aria-live="polite"></div>
-
-      <a class="checkout-button whatsapp-button" data-whatsapp-order href="#" target="_blank" rel="noopener noreferrer">
-        ارسال خلاصه در واتساپ <span class="message-action-icon"><Icon name="send" size={16} /></span>
-      </a>
-      <a class="checkout-button bale-button" data-bale-order href="https://ble.ir/khoobrooz" target="_blank" rel="noopener noreferrer">
-        بازکردن پیش‌نویس در بله <span class="message-action-icon"><Icon name="send" size={16} /></span>
-      </a>
-      <small data-copy-status>برای ارسال سفارش، اطلاعات تحویل و شیوه ارسال را کامل کن.</small>
+      <small data-copy-status>پس از تکمیل اطلاعات، روی ثبت سفارش بزن؛ اگر موردی ناقص باشد همان‌جا مشخص می‌شود.</small>
     </div>
   </aside>
   <div class="cart-added-choice" data-cart-added-choice hidden role="status" aria-live="polite">

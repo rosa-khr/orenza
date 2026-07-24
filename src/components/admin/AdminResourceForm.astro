@@ -60,7 +60,7 @@ const orderReadonly = new Set([
           ) : (
             <input
               name={field.key}
-              type={field.type === "image" ? "url" : field.type}
+              type={field.type === "image" && resource.key !== "products" ? "url" : field.type === "image" ? "text" : field.type}
               required={field.required}
               disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))}
               min={field.min}
@@ -75,6 +75,24 @@ const orderReadonly = new Set([
       <section class="admin-price-breakdown" data-price-breakdown>
         <header><span>محاسبه بر اساس وزن</span><small>مبالغ به تومان</small></header>
         <div></div>
+      </section>
+    )}
+    {resource.key === "products" && (
+      <section class="admin-product-image-upload" data-product-image-upload>
+        <div class="admin-product-image-preview">
+          <img data-product-image-preview hidden alt="پیش‌نمایش تصویر محصول" />
+          <span data-product-image-placeholder>تصویر محصول هنوز بارگذاری نشده است.</span>
+        </div>
+        <div>
+          <strong>بارگذاری تصویر محصول</strong>
+          <small>JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر مربع یا عمودی نتیجه بهتری دارد.</small>
+          {!isView && (
+            <label>
+              انتخاب و بارگذاری تصویر
+              <input type="file" accept="image/jpeg,image/png,image/webp" data-product-image-input />
+            </label>
+          )}
+        </div>
       </section>
     )}
     {resource.key === "payment-methods" && (
@@ -111,6 +129,29 @@ const orderReadonly = new Set([
       </section>
     )}
     {resource.key === "orders" && <section class="admin-order-items" data-order-items hidden></section>}
+    {resource.key === "orders" && (
+      <section class="admin-payment-review" data-payment-review hidden>
+        <header><div><strong>بررسی واریز کارت‌به‌کارت</strong><small>کد پیگیری و تصویر فیش را با گردش حساب تطبیق دهید.</small></div></header>
+        <a data-payment-receipt target="_blank" rel="noopener noreferrer"><img data-payment-receipt-image alt="تصویر فیش واریزی مشتری" /></a>
+        {!isView && <footer><button type="button" data-payment-reject>رد پرداخت</button><button type="button" data-payment-approve>تأیید پرداخت</button></footer>}
+      </section>
+    )}
+    {resource.key === "orders" && (
+      <section class="admin-order-workflow" data-order-workflow hidden>
+        <header>
+          <div><strong>فرآیند آماده‌سازی و ارسال</strong><small data-order-workflow-state>وضعیت جاری سفارش</small></div>
+        </header>
+        <div class="admin-order-workflow-steps">
+          <span data-workflow-stage="processing"><i>۱</i> در حال آماده‌سازی</span>
+          <span data-workflow-stage="ready"><i>۲</i> آماده ارسال</span>
+          <span data-workflow-stage="sent"><i>۳</i> ارسال‌شده</span>
+        </div>
+        <footer>
+          <button type="button" data-order-mark-ready hidden>آماده ارسال</button>
+          <button type="button" data-order-mark-sent hidden>ثبت ارسال سفارش</button>
+        </footer>
+      </section>
+    )}
     {resource.key === "users" && !isView && (
       <section class="admin-user-security">
         <div><strong>امنیت حساب</strong><small>رمز عبور کاربر را بدون ارسال کد تأیید تغییر دهید.</small></div>

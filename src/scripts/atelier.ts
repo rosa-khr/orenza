@@ -1,4 +1,5 @@
 import { ADD_TO_CART_EVENT, type CartItemInput, type SelectionKey } from "./order-types";
+import { productSlug } from "./product-url";
 
 type CatalogProduct = {
   id: string;
@@ -52,6 +53,7 @@ export const initAtelier = () => {
       : null;
   let quantity = 1;
   let animationTimer = 0;
+  let navigationTimer = 0;
 
   const productPrice = (product: CatalogProduct, grams: number) =>
     Number(product[`pricePer${grams}g` as keyof CatalogProduct] || 0);
@@ -104,7 +106,11 @@ export const initAtelier = () => {
             return;
           }
           button.dataset.product = JSON.stringify(product);
-          if (product.id === requestedProductId) requestedChoice = button;
+          if (
+            product.id === requestedProductId ||
+            product.titleEn === requestedProductId ||
+            productSlug(product.titleEn) === requestedProductId
+          ) requestedChoice = button;
         } else {
           button.hidden = true;
         }
@@ -178,14 +184,17 @@ export const initAtelier = () => {
     });
   };
 
-  const moveToSection = (name: string, delay = 420) => {
-    if (!window.matchMedia("(max-width: 760px)").matches) return;
+  const moveToSection = (name: string, delay = 180) => {
     const section = sections.get(name);
     if (!section) return;
-    window.setTimeout(() => {
-      section.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-        block: "start"
+    window.clearTimeout(navigationTimer);
+    navigationTimer = window.setTimeout(() => {
+      requestAnimationFrame(() => {
+        section.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+          block: "start",
+          inline: "nearest"
+        });
       });
     }, delay);
   };
@@ -247,7 +256,7 @@ export const initAtelier = () => {
       processNote.textContent = english;
       playProcess("roast");
       unlock("grind");
-      moveToSection("grind", 850);
+      moveToSection("grind", 280);
     }
 
     if (key === "grind") {
@@ -311,7 +320,7 @@ export const initAtelier = () => {
       builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = english;
       playProcess("grind", 1800);
       unlock("weight");
-      moveToSection("weight", 900);
+      moveToSection("weight", 280);
       if (requestedWeight) {
         const requestedChoice = builder.querySelector<HTMLButtonElement>(`[data-choice="weight"][data-grams="${requestedWeight}"]`);
         requestedWeight = null;
@@ -353,7 +362,7 @@ export const initAtelier = () => {
     addCartButton.textContent = "افزودن به سبد سفارش";
     updateResults();
     updateProgress();
-    sections.get("blend")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    moveToSection("blend", 80);
   });
 
   addCartButton.addEventListener("click", () => {

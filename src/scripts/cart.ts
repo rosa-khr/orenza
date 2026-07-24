@@ -20,8 +20,8 @@ type SavedAddress = {
 
 type PaymentMethod = {
   id: string;
+  type: "cardToCard" | "zarinpal";
   title: string;
-  type: "cardToCard" | "bankGateway" | "zarinpal";
   cards: PaymentCard[];
 };
 
@@ -49,8 +49,6 @@ export const initCart = () => {
   const cartEmpty = document.querySelector<HTMLElement>("[data-cart-empty]");
   const cartCheckout = document.querySelector<HTMLElement>("[data-cart-checkout]");
   const cartCountElements = document.querySelectorAll<HTMLElement>("[data-cart-count]");
-  const whatsappOrder = document.querySelector<HTMLAnchorElement>("[data-whatsapp-order]");
-  const baleOrder = document.querySelector<HTMLAnchorElement>("[data-bale-order]");
   const customerName = document.querySelector<HTMLInputElement>("[data-customer-name]");
   const customerPhone = document.querySelector<HTMLInputElement>("[data-customer-phone]");
   const customerProvince = document.querySelector<HTMLInputElement>("[data-customer-province]");
@@ -68,8 +66,9 @@ export const initCart = () => {
   const shippingInputs = [
     ...document.querySelectorAll<HTMLInputElement>('input[name="shipping-method"]')
   ];
-  const paymentMethodList = document.querySelector<HTMLElement>("[data-payment-method-list]");
-  const paymentGuide = document.querySelector<HTMLElement>("[data-payment-guide]");
+  const paymentInputs = [
+    ...document.querySelectorAll<HTMLInputElement>('input[name="payment-method"]')
+  ];
   const copyStatus = document.querySelector<HTMLElement>("[data-copy-status]");
   const discountCode = document.querySelector<HTMLInputElement>("[data-discount-code]");
   const applyDiscount = document.querySelector<HTMLButtonElement>("[data-apply-discount]");
@@ -81,6 +80,11 @@ export const initCart = () => {
   const cartFinal = document.querySelector<HTMLElement>("[data-cart-final]");
   const paymentCard = document.querySelector<HTMLElement>("[data-payment-card]");
   const paymentCardList = document.querySelector<HTMLElement>("[data-payment-card-list]");
+  const paymentMethodList = document.querySelector<HTMLElement>("[data-payment-method-list]");
+  const paymentProof = document.querySelector<HTMLElement>("[data-payment-proof]");
+  const paymentRef = document.querySelector<HTMLInputElement>("[data-payment-ref]");
+  const paymentReceipt = document.querySelector<HTMLInputElement>("[data-payment-receipt]");
+  const paymentReceiptName = document.querySelector<HTMLElement>("[data-payment-receipt-name]");
   const registerOrderButton = document.querySelector<HTMLButtonElement>("[data-register-order]");
   const orderState = document.querySelector<HTMLElement>("[data-order-state]");
   const addedChoice = document.querySelector<HTMLElement>("[data-cart-added-choice]");
@@ -91,22 +95,10 @@ export const initCart = () => {
   let lastFocused: HTMLElement | null = null;
   let accountUser: AccountUser | null = null;
   let accountRequest: Promise<void> | null = null;
-  let paymentMethods: PaymentMethod[] = [];
   let paymentMethod: PaymentMethod | null = null;
   let selectedPaymentCard: PaymentCard | null = null;
   let discountAmount = 0;
   let submittedOrder: SubmittedOrder | null = null;
-
-  const paymentInputs = () => [
-    ...document.querySelectorAll<HTMLInputElement>('input[name="payment-method"]')
-  ];
-
-  const paymentLabel = (method: PaymentMethod | null) => {
-    if (!method) return "";
-    if (method.type === "zarinpal") return "پرداخت آنلاین زرین‌پال";
-    if (method.type === "cardToCard") return "کارت‌به‌کارت";
-    return method.title;
-  };
 
   const readCart = (): CartItem[] => {
     try {
@@ -124,51 +116,6 @@ export const initCart = () => {
   const taxAmount = () => submittedOrder ? Number(submittedOrder.taxAmount || 0) : Math.round(taxableAmount() * 0.10);
   const finalAmount = () => submittedOrder ? Number(submittedOrder.finalAmount || 0) : taxableAmount() + taxAmount();
 
-  const createOrderSummary = () => {
-    const name = accountUser?.displayName?.trim() || customerName?.value.trim();
-    const phone = accountUser?.phone?.trim() || customerPhone?.value.trim();
-    const province = customerProvince?.value.trim();
-    const city = customerCity?.value.trim();
-    const address = customerAddress?.value.trim();
-    const postal = customerPostal?.value.trim();
-    const shipping = shippingInputs.find((input) => input.checked)?.value;
-    const payment = paymentLabel(paymentMethod);
-    const lines = cart.map((item, index) => {
-      const device = item.device ? `، دستگاه: ${item.device}` : "";
-      const grindSize = item.grindSize ? `، درجه آسیاب: ${item.grindSize}` : "";
-      return `${numberFormatter.format(index + 1)}. ${item.productTitle} | ${item.blend} | رست ${item.roast} | ${item.grind}${device}${grindSize} | ${item.weight} | ${numberFormatter.format(item.quantity)} عدد | ${numberFormatter.format(item.totalPrice)} تومان`;
-    });
-
-    return [
-      "سلام، وقت بخیر.",
-      "این سفارش قهوه را در سایت اورنزا آماده کرده‌ام:",
-      "",
-      ...lines,
-      "",
-      submittedOrder ? `شماره سفارش: ${submittedOrder.orderNumber}` : "",
-      `مبلغ اقلام: ${numberFormatter.format(subtotal())} تومان`,
-      discountAmount ? `تخفیف: ${numberFormatter.format(discountAmount)} تومان` : "",
-      `مالیات ارزش افزوده ۱۰٪: ${numberFormatter.format(taxAmount())} تومان`,
-      `مبلغ نهایی: ${numberFormatter.format(finalAmount())} تومان`,
-      "زمان آماده‌سازی و ارسال: ۳ تا ۵ روز کاری",
-      "",
-      "مشخصات تحویل",
-      name ? `نام: ${name}` : "",
-      phone ? `شماره تماس: ${phone}` : "",
-      province && city ? `شهر: ${province}، ${city}` : "",
-      address ? `نشانی کامل: ${address}` : "",
-      postal ? `کد پستی: ${postal}` : "",
-      shipping ? `شیوه ارسال: ${shipping}` : "",
-      payment ? `شیوه پرداخت: ${payment}` : "",
-      selectedPaymentCard ? `شماره کارت: ${selectedPaymentCard.cardNumber}` : "",
-      selectedPaymentCard ? `شماره شبا: IR${selectedPaymentCard.shebaNumber}` : "",
-      selectedPaymentCard ? `شماره حساب: ${selectedPaymentCard.accountNumber}` : "",
-      selectedPaymentCard ? `به نام: ${selectedPaymentCard.accountOwner} · ${selectedPaymentCard.bankName}` : "",
-      "",
-      "فیش واریزی را در ادامه همین پیام ارسال می‌کنم. سپاس."
-    ].filter((line, index, all) => line || all[index - 1] !== "").join("\n");
-  };
-
   const addressInputs = [customerName, customerPhone, customerProvince, customerCity, customerAddress, customerPostal].filter(
     (input): input is HTMLInputElement | HTMLTextAreaElement => Boolean(input)
   );
@@ -176,8 +123,9 @@ export const initCart = () => {
   const checkoutIsComplete = () =>
     addressInputs.every((input) => input.value.trim().length > 0 && input.checkValidity()) &&
     shippingInputs.some((input) => input.checked) &&
-    Boolean(paymentMethod) &&
-    (paymentMethod?.type !== "cardToCard" || Boolean(selectedPaymentCard)) &&
+    paymentInputs.some((input) => input.checked) &&
+    Boolean(paymentMethod && selectedPaymentCard) &&
+    Boolean(paymentRef?.value.trim() && paymentReceipt?.files?.[0]) &&
     cart.length > 0;
 
   const updateTotals = () => {
@@ -188,119 +136,55 @@ export const initCart = () => {
     if (cartFinal) cartFinal.textContent = `${numberFormatter.format(finalAmount())} تومان`;
   };
 
-  const selectPaymentMethod = (methodId: string) => {
-    paymentMethod = paymentMethods.find((method) => method.id === methodId) || null;
-    selectedPaymentCard = paymentMethod?.type === "cardToCard" ? paymentMethod.cards?.[0] || null : null;
-    submittedOrder = null;
-    updateSubmittedState();
-    renderPaymentCards();
-    updatePaymentCopy();
-    updateOrderLinks();
-  };
-
-  const renderPaymentMethods = () => {
-    if (!paymentMethodList) return;
-    paymentMethodList.replaceChildren();
-    if (!paymentMethods.length) {
-      const state = document.createElement("p");
-      state.className = "payment-method-state";
-      state.textContent = "فعلاً روش پرداخت فعالی ثبت نشده است.";
-      paymentMethodList.append(state);
-      return;
-    }
-    paymentMethods.forEach((method, index) => {
-      const label = document.createElement("label");
-      label.className = `choice-card payment-method-card payment-method-card-${method.type}`;
-      const radio = document.createElement("input");
-      radio.type = "radio";
-      radio.name = "payment-method";
-      radio.value = method.id;
-      radio.required = true;
-      radio.checked = paymentMethod?.id === method.id || (!paymentMethod && index === 0);
-      const copy = document.createElement("span");
-      const title = document.createElement("strong");
-      const detail = document.createElement("small");
-      title.textContent = paymentLabel(method);
-      detail.textContent = method.type === "zarinpal"
-        ? "ثبت سفارش و پرداخت امن آنلاین؛ وضعیت پرداخت خودکار ثبت می‌شود."
-        : "ثبت سفارش، کارت‌به‌کارت و ارسال فیش در واتساپ یا بله.";
-      copy.append(title, detail);
-      label.append(radio, copy);
-      radio.addEventListener("change", () => selectPaymentMethod(method.id));
-      paymentMethodList.append(label);
-    });
-    const checked = paymentInputs().find((input) => input.checked);
-    if (checked) selectPaymentMethod(checked.value);
-  };
-
-  const renderPaymentCards = () => {
-    if (!paymentCardList) return;
-    paymentCardList.replaceChildren();
-    if (!paymentMethod || paymentMethod.type !== "cardToCard") {
-      if (paymentCard) paymentCard.hidden = true;
-      return;
-    }
-    paymentMethod.cards.forEach((card, index) => {
-      const label = document.createElement("label");
-      const radio = document.createElement("input");
-      const copy = document.createElement("span");
-      const number = document.createElement("strong");
-      const detail = document.createElement("small");
-      radio.type = "radio";
-      radio.name = "payment-card";
-      radio.value = card.id;
-      radio.checked = selectedPaymentCard?.id === card.id || (!selectedPaymentCard && index === 0);
-      if (radio.checked) selectedPaymentCard = card;
-      number.dir = "ltr";
-      number.textContent = card.cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ");
-      detail.textContent = `${card.bankName} · ${card.accountOwner}`;
-      copy.append(number, detail);
-      label.append(radio, copy);
-      radio.addEventListener("change", () => {
-        selectedPaymentCard = card;
-        submittedOrder = null;
-        updateOrderLinks();
-      });
-      paymentCardList.append(label);
-    });
-    if (paymentCard) paymentCard.hidden = !paymentMethod.cards.length;
-  };
-
-  const updatePaymentCopy = () => {
-    if (registerOrderButton) {
-      registerOrderButton.textContent = paymentMethod?.type === "zarinpal"
-        ? "ثبت سفارش و پرداخت آنلاین"
-        : "ثبت سفارش کارت‌به‌کارت";
-    }
-    if (paymentGuide) {
-      paymentGuide.textContent = paymentMethod?.type === "zarinpal"
-        ? "ارسال و آماده‌سازی سفارش ممکن است ۳ تا ۵ روز کاری زمان‌بر باشد. پس از ثبت سفارش به زرین‌پال منتقل می‌شوی و وضعیت پرداخت به‌صورت خودکار برای اورنزا ثبت می‌شود."
-        : "ارسال و آماده‌سازی سفارش ممکن است ۳ تا ۵ روز کاری زمان‌بر باشد. لطفاً پس از ثبت سفارش، مبلغ نهایی را کارت‌به‌کارت کرده و خلاصه سفارش را همراه با فیش واریزی در واتساپ یا بله ارسال کنید.";
-    }
-    if (whatsappOrder) whatsappOrder.hidden = paymentMethod?.type === "zarinpal";
-    if (baleOrder) baleOrder.hidden = paymentMethod?.type === "zarinpal";
-  };
-
   const loadPaymentMethod = async () => {
     try {
       const response = await fetch("/api/v1/payment-methods/active");
       const payload = await response.json();
-      paymentMethods = response.ok ? ((payload.methods || (payload.item ? [payload.item] : [])) as PaymentMethod[]) : [];
-      paymentMethod = paymentMethods.find((method) => method.type === "zarinpal") || paymentMethods.find((method) => method.type === "cardToCard") || paymentMethods[0] || null;
-      selectedPaymentCard = paymentMethod?.type === "cardToCard" ? paymentMethod.cards?.[0] || null : null;
-      renderPaymentMethods();
-      renderPaymentCards();
-      updatePaymentCopy();
-      if (!paymentMethod || (paymentMethod.type === "cardToCard" && !selectedPaymentCard)) {
+      paymentMethod = response.ok ? payload.item as PaymentMethod | null : null;
+      selectedPaymentCard = paymentMethod?.cards?.[0] || null;
+      if (!paymentMethod || !selectedPaymentCard) {
         if (copyStatus) copyStatus.textContent = "روش پرداخت فعال نیست؛ لطفاً با اورنزا تماس بگیر.";
         return;
       }
+      if (paymentMethodList) {
+        paymentMethodList.replaceChildren();
+        const label = document.createElement("label");
+        label.className = "choice-card";
+        label.innerHTML = `<input type="radio" name="payment-method" value="کارت‌به‌کارت" checked required /><span><strong>${paymentMethod.title || "کارت‌به‌کارت"}</strong><small>بررسی فیش توسط مدیریت</small></span>`;
+        paymentMethodList.append(label);
+        paymentInputs.splice(0, paymentInputs.length, ...paymentMethodList.querySelectorAll<HTMLInputElement>('input[name="payment-method"]'));
+        paymentInputs.forEach((input) => input.addEventListener("change", updateOrderLinks));
+      }
+      if (paymentCardList) {
+        paymentCardList.replaceChildren();
+        paymentMethod.cards.forEach((card, index) => {
+          const label = document.createElement("label");
+          const radio = document.createElement("input");
+          const copy = document.createElement("span");
+          const number = document.createElement("strong");
+          const detail = document.createElement("small");
+          radio.type = "radio";
+          radio.name = "payment-card";
+          radio.value = card.id;
+          radio.checked = index === 0;
+          number.dir = "ltr";
+          number.textContent = card.cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ");
+          detail.textContent = `${card.bankName} · ${card.accountOwner}`;
+          copy.append(number, detail);
+          label.append(radio, copy);
+          radio.addEventListener("change", () => {
+            selectedPaymentCard = card;
+            submittedOrder = null;
+            updateOrderLinks();
+          });
+          paymentCardList.append(label);
+        });
+      }
+      if (paymentCard) paymentCard.hidden = false;
+      if (paymentProof) paymentProof.hidden = false;
       updateOrderLinks();
     } catch {
-      paymentMethods = [];
       paymentMethod = null;
-      renderPaymentMethods();
-      updatePaymentCopy();
     }
   };
 
@@ -413,33 +297,39 @@ export const initCart = () => {
       if (copyStatus) copyStatus.textContent = "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.";
       return;
     }
-    const shippingChoice = document.querySelector<HTMLElement>("[data-shipping-choice]");
-    shippingChoice?.scrollIntoView({ behavior: "smooth", block: "center" });
-    shippingInputs[0]?.focus();
-    if (copyStatus) copyStatus.textContent = "لطفاً تیپاکس یا پست را برای ارسال انتخاب کن.";
+    if (!shippingInputs.some((input) => input.checked)) {
+      const shippingChoice = document.querySelector<HTMLElement>("[data-shipping-choice]");
+      shippingChoice?.scrollIntoView({ behavior: "smooth", block: "center" });
+      shippingInputs[0]?.focus();
+      if (copyStatus) copyStatus.textContent = "لطفاً تیپاکس یا پست را برای ارسال انتخاب کن.";
+      return;
+    }
+    if (!paymentMethod || !selectedPaymentCard || !paymentInputs.some((input) => input.checked)) {
+      paymentCard?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (copyStatus) copyStatus.textContent = "لطفاً یکی از کارت‌های فعال را انتخاب کن.";
+      return;
+    }
+    if (!paymentRef?.value.trim()) {
+      paymentRef?.scrollIntoView({ behavior: "smooth", block: "center" });
+      paymentRef?.focus();
+      if (copyStatus) copyStatus.textContent = "کد پیگیری تراکنش را وارد کن.";
+      return;
+    }
+    if (!paymentReceipt?.files?.[0]) {
+      paymentReceipt?.scrollIntoView({ behavior: "smooth", block: "center" });
+      paymentReceipt?.focus();
+      if (copyStatus) copyStatus.textContent = "تصویر فیش واریزی را انتخاب کن.";
+      return;
+    }
+    if (!cart.length && copyStatus) copyStatus.textContent = "سبد سفارش خالی است.";
   };
 
   const updateOrderLinks = () => {
     const isComplete = checkoutIsComplete();
-    const message = encodeURIComponent(createOrderSummary());
-    const isOnlinePayment = paymentMethod?.type === "zarinpal";
-    if (whatsappOrder) {
-      whatsappOrder.href = `https://api.whatsapp.com/send/?phone=989103060396&text=${message}&type=phone_number&app_absent=0`;
-      whatsappOrder.hidden = isOnlinePayment;
-      whatsappOrder.classList.toggle("is-disabled", !isComplete || isOnlinePayment);
-      whatsappOrder.setAttribute("aria-disabled", String(!isComplete || isOnlinePayment));
-    }
-    if (baleOrder) {
-      baleOrder.href = `https://ble.ir/share/url?url=${encodeURIComponent("https://orenza.ir")}&text=${message}`;
-      baleOrder.hidden = isOnlinePayment;
-      baleOrder.classList.toggle("is-disabled", !isComplete || isOnlinePayment);
-      baleOrder.setAttribute("aria-disabled", String(!isComplete || isOnlinePayment));
-    }
     if (copyStatus && isComplete) {
-      copyStatus.textContent = isOnlinePayment
-        ? "سفارش آماده است؛ با ثبت سفارش وارد صفحه امن پرداخت می‌شوی."
-        : "سفارش آماده است؛ بعد از ثبت، خلاصه را در واتساپ یا بله بفرست.";
+      copyStatus.textContent = "اطلاعات پرداخت کامل است؛ سفارش را برای تأیید مدیریت ثبت کن.";
     }
+    if (registerOrderButton) registerOrderButton.disabled = Boolean(submittedOrder);
   };
 
   const updateSubmittedState = () => {
@@ -452,7 +342,7 @@ export const initCart = () => {
     orderState.hidden = false;
     orderState.innerHTML = `
       <strong>سفارش ${submittedOrder.orderNumber} ثبت شد.</strong>
-      <span>${paymentMethod?.type === "zarinpal" ? "در حال انتقال به صفحه پرداخت امن هستی." : "حالا فقط خلاصه سفارش و فیش واریزی را در واتساپ یا بله ارسال کن تا پیگیری آماده‌سازی شروع شود."}</span>
+      <span>فیش و کد پیگیری دریافت شد. سفارش در انتظار تأیید پرداخت توسط مدیریت است.</span>
     `;
   };
 
@@ -460,11 +350,7 @@ export const initCart = () => {
     if (submittedOrder) return submittedOrder;
     if (!paymentMethod) throw new Error("روش پرداخت فعال پیدا نشد.");
     const shipping = shippingInputs.find((input) => input.checked)?.value;
-    const response = await fetch("/api/v1/orders", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const orderPayload = {
         customerName: customerName?.value.trim(),
         customerPhone: customerPhone?.value.trim(),
         customerProvince: customerProvince?.value.trim(),
@@ -473,7 +359,8 @@ export const initCart = () => {
         customerPostalCode: customerPostal?.value.trim(),
         shippingMethod: shipping === "تیپاکس" ? "tipax" : "post",
         paymentMethodId: paymentMethod.id,
-        paymentCardId: paymentMethod.type === "cardToCard" ? selectedPaymentCard?.id : null,
+        paymentCardId: selectedPaymentCard?.id,
+        paymentRefId: normalizeDigits(paymentRef?.value.trim() || ""),
         discountCode: discountCode?.value.trim() || undefined,
         customerNote: null,
         items: cart.map((item) => ({
@@ -485,7 +372,14 @@ export const initCart = () => {
           blendType: item.blend,
           brewMethod: item.device || null
         }))
-      })
+      };
+    const formData = new FormData();
+    formData.append("payload", JSON.stringify(orderPayload));
+    formData.append("receipt", paymentReceipt!.files![0]!);
+    const response = await fetch("/api/v1/orders/card-transfer", {
+      method: "POST",
+      credentials: "include",
+      body: formData
     });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "ثبت سفارش انجام نشد.");
@@ -497,18 +391,6 @@ export const initCart = () => {
     return submittedOrder;
   };
 
-  const startZarinpalPayment = async (orderId: string) => {
-    const response = await fetch("/api/v1/payments/zarinpal/request", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId })
-    });
-    const payload = await response.json();
-    if (!response.ok || !payload.url) throw new Error(payload.error || "اتصال به زرین‌پال انجام نشد.");
-    window.location.href = payload.url;
-  };
-
   const submitOrderOnly = async () => {
     if (!checkoutIsComplete()) {
       showCheckoutValidation();
@@ -518,41 +400,15 @@ export const initCart = () => {
     if (copyStatus) copyStatus.textContent = "در حال ثبت سفارش…";
     try {
       const order = await registerOrder();
-      if (paymentMethod?.type === "zarinpal") {
-        if (copyStatus) copyStatus.textContent = "سفارش ثبت شد؛ در حال انتقال به زرین‌پال…";
-        await startZarinpalPayment(order.id);
-        return;
-      }
-      if (copyStatus) copyStatus.textContent = `سفارش ${order.orderNumber} ثبت شد؛ حالا پیام‌رسان دلخواهت را انتخاب کن.`;
+      localStorage.removeItem("orenza-cart");
+      cart = [];
+      if (copyStatus) copyStatus.textContent = `سفارش ${order.orderNumber} با موفقیت ثبت شد؛ در حال انتقال…`;
+      if (registerOrderButton) registerOrderButton.textContent = "سفارش ثبت شد ✓";
+      window.location.assign(`/order-success/?order=${encodeURIComponent(order.orderNumber)}`);
     } catch (error) {
       if (copyStatus) copyStatus.textContent = error instanceof Error ? error.message : "ثبت سفارش انجام نشد.";
     } finally {
-      if (registerOrderButton) registerOrderButton.disabled = false;
-    }
-  };
-
-  const openMessenger = async (kind: "whatsapp" | "bale") => {
-    if (!checkoutIsComplete()) {
-      showCheckoutValidation();
-      return;
-    }
-    const target = window.open("", "_blank");
-    if (copyStatus) copyStatus.textContent = "سفارش در حال ثبت است…";
-    try {
-      await registerOrder();
-      const message = encodeURIComponent(createOrderSummary());
-      const url = kind === "whatsapp"
-        ? `https://api.whatsapp.com/send/?phone=989103060396&text=${message}&type=phone_number&app_absent=0`
-        : `https://ble.ir/share/url?url=${encodeURIComponent("https://orenza.ir")}&text=${message}`;
-      if (kind === "bale") {
-        try { await navigator.clipboard.writeText(createOrderSummary()); } catch { /* share URL carries the text */ }
-      }
-      if (target) target.location.href = url;
-      else location.href = url;
-      if (copyStatus) copyStatus.textContent = `سفارش ${submittedOrder?.orderNumber} ثبت شد؛ حالا فیش را در پیام‌رسان پیوست کن.`;
-    } catch (error) {
-      target?.close();
-      if (copyStatus) copyStatus.textContent = error instanceof Error ? error.message : "ثبت سفارش انجام نشد.";
+      if (registerOrderButton) registerOrderButton.disabled = Boolean(submittedOrder);
     }
   };
 
@@ -669,7 +525,7 @@ export const initCart = () => {
       updateSubmittedState();
     });
   });
-  shippingInputs.forEach((input) => input.addEventListener("change", () => {
+  [...shippingInputs, ...paymentInputs].forEach((input) => input.addEventListener("change", () => {
     submittedOrder = null;
     updateSubmittedState();
     updateOrderLinks();
@@ -681,6 +537,25 @@ export const initCart = () => {
     updateSubmittedState();
     if (discountStatus) discountStatus.textContent = "";
     updateTotals();
+  });
+
+  paymentRef?.addEventListener("input", () => {
+    paymentRef.value = normalizeDigits(paymentRef.value);
+    submittedOrder = null;
+    updateSubmittedState();
+    updateOrderLinks();
+  });
+  paymentReceipt?.addEventListener("change", () => {
+    const file = paymentReceipt.files?.[0];
+    if (file && file.size > 5 * 1024 * 1024) {
+      paymentReceipt.value = "";
+      if (paymentReceiptName) paymentReceiptName.textContent = "حجم تصویر نباید بیشتر از ۵ مگابایت باشد.";
+    } else if (paymentReceiptName) {
+      paymentReceiptName.textContent = file?.name || "JPG، PNG یا WebP تا ۵ مگابایت";
+    }
+    submittedOrder = null;
+    updateSubmittedState();
+    updateOrderLinks();
   });
 
   applyDiscount?.addEventListener("click", async () => {
@@ -731,16 +606,6 @@ export const initCart = () => {
     customerProvince?.focus();
     updateOrderLinks();
     updateSubmittedState();
-  });
-
-  whatsappOrder?.addEventListener("click", (event) => {
-    event.preventDefault();
-    void openMessenger("whatsapp");
-  });
-
-  baleOrder?.addEventListener("click", (event) => {
-    event.preventDefault();
-    void openMessenger("bale");
   });
 
   registerOrderButton?.addEventListener("click", () => { void submitOrderOnly(); });

@@ -2,6 +2,12 @@ import { z } from "zod";
 import { normalizePhone } from "../security.js";
 
 const optionalUrl = z.union([z.string().url(), z.literal(""), z.null()]).transform((value) => value || null);
+const productImageUrl = z.union([
+  z.string().url(),
+  z.string().regex(/^\/api\/v1\/product-images\/[0-9a-f-]+\.(?:jpg|png|webp)$/),
+  z.literal(""),
+  z.null()
+]).transform((value) => value || null);
 const money = z.number().int().min(0).max(10_000_000_000);
 const slug = z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
@@ -19,6 +25,7 @@ export const productSchema = z.object({
   titleEn: z.string().trim().min(2).max(220),
   categoryId: z.string().uuid(),
   description: z.string().trim().min(10).max(5000),
+  productContent: z.string().trim().max(100_000).nullable().optional(),
   roastType: z.enum(["light", "medium", "mediumDark", "dark"]),
   coffeeType: z.enum(["bean", "ground"]),
   grindType: z.enum(["espresso", "mokaPot", "frenchPress", "turkish", "filter", "none"]).default("none"),
@@ -30,7 +37,7 @@ export const productSchema = z.object({
   purchasePricePerKg: money,
   salePricePerKg: money,
   isActive: z.boolean().default(true),
-  imageUrl: optionalUrl.optional()
+  imageUrl: productImageUrl.optional()
 });
 
 export const paymentMethodSchema = z.object({
@@ -91,7 +98,7 @@ export const tagSchema = z.object({
 
 export const orderAdminSchema = z.object({
   paymentStatus: z.enum(["pending", "paid", "rejected"]),
-  orderStatus: z.enum(["new", "processing", "sent", "completed", "canceled"]),
+  orderStatus: z.enum(["new", "processing", "ready", "sent", "completed", "canceled"]),
   paymentReceiptUrl: optionalUrl.optional(),
   adminNote: z.string().trim().max(3000).nullable().optional()
 });
@@ -120,6 +127,7 @@ export const siteSettingsSchema = z.object({
   whatsappUrl: z.string().url().max(500),
   baleUrl: z.string().url().max(500),
   instagramUrl: z.string().url().max(500),
+  websiteUrl: z.string().url().max(500),
   address: z.string().trim().max(1000).nullable().optional(),
   footerHeading: z.string().trim().min(10).max(300),
   footerDescription: z.string().trim().min(10).max(500),
@@ -130,7 +138,8 @@ export const siteSettingsSchema = z.object({
   homepageSeoDescription: z.string().trim().min(30).max(500),
   homepageSeoKeywords: z.array(z.string().trim().min(2).max(100)).min(1).max(30),
   homepageOgImageUrl: z.string().trim().min(1).max(500),
-  searchIndexingEnabled: z.boolean()
+  searchIndexingEnabled: z.boolean(),
+  invoiceNationalId: z.string().trim().min(10).max(20)
 });
 
 export const serviceScriptSchema = z.object({
@@ -174,6 +183,8 @@ export const createOrderSchema = z.object({
   shippingMethod: z.enum(["tipax", "post"]),
   paymentMethodId: z.string().uuid(),
   paymentCardId: z.string().uuid().nullable().optional(),
+  paymentRefId: z.string().trim().min(4).max(80).optional(),
+  paymentReceiptUrl: z.string().trim().max(500).optional(),
   discountCode: z.string().trim().max(60).optional(),
   customerNote: z.string().trim().max(2000).nullable().optional(),
   items: z.array(orderItemInputSchema).min(1).max(30)

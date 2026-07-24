@@ -1,6 +1,7 @@
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import multipart from "@fastify/multipart";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { OAuth2Client } from "google-auth-library";
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
@@ -59,6 +60,9 @@ await app.register(cors, {
   credentials: true
 });
 await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
+await app.register(multipart, {
+  limits: { files: 1, fileSize: 5 * 1024 * 1024, fields: 2, parts: 3 }
+});
 
 const publicUser = (user: UserRow) => ({
   id: user.id,

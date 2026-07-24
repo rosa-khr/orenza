@@ -1,5 +1,5 @@
 ---
-import { ArrowRight, Printer } from "@lucide/astro";
+import { ArrowRight, Globe, Mail, Phone, Printer } from "@lucide/astro";
 import AdminShell from "../../../components/admin/AdminShell.astro";
 ---
 
@@ -9,26 +9,85 @@ import AdminShell from "../../../components/admin/AdminShell.astro";
     <button class="admin-primary-action" type="button" data-print-invoice><Printer size={17} /> چاپ فاکتور</button>
   </div>
   <article class="admin-invoice admin-card" data-admin-invoice>
-    <header>
-      <div><span class="brand-mark">O</span><strong>ORENZA</strong><small>COFFEE ROASTERS</small></div>
-      <div><span>شماره سفارش</span><strong data-invoice-number>—</strong><small data-invoice-date>—</small></div>
+    <header class="invoice-document-header">
+      <div class="invoice-brand">
+        <span class="brand-mark">O</span>
+        <div><strong data-invoice-brand-en>ORENZA</strong><small>COFFEE ROASTERS</small></div>
+      </div>
+      <div class="invoice-title">
+        <span>صورتحساب فروش کالا</span>
+        <h1>فاکتور رسمی فروش</h1>
+      </div>
+      <dl class="invoice-meta">
+        <div><dt>شماره فاکتور</dt><dd data-invoice-number>—</dd></div>
+        <div><dt>تاریخ صدور</dt><dd data-invoice-date>—</dd></div>
+      </dl>
     </header>
-    <section class="invoice-customer">
-      <div><span>نام مشتری</span><strong data-invoice-customer>—</strong></div>
-      <div><span>شماره تماس</span><strong data-invoice-phone>—</strong></div>
-      <div><span>نشانی تحویل</span><strong data-invoice-address>—</strong></div>
+
+    <section class="invoice-parties">
+      <article class="invoice-party">
+        <h2><span>فروشنده</span><small>SELLER INFORMATION</small></h2>
+        <div class="invoice-party-grid">
+          <div><span>نام مجموعه</span><strong data-invoice-seller-name>اورنزا</strong></div>
+          <div><span>شناسه ملی</span><strong data-invoice-national-id>۰۰۲۱۴۱۱۴۱۷</strong></div>
+          <div><span>شماره تماس</span><strong data-invoice-seller-phone>—</strong></div>
+          <div><span>ایمیل</span><strong data-invoice-seller-email>—</strong></div>
+          <div class="wide"><span>نشانی فروشنده</span><strong data-invoice-seller-address>—</strong></div>
+        </div>
+      </article>
+      <article class="invoice-party">
+        <h2><span>خریدار</span><small>BUYER INFORMATION</small></h2>
+        <div class="invoice-party-grid">
+          <div><span>نام خریدار</span><strong data-invoice-customer>—</strong></div>
+          <div><span>شماره تماس</span><strong data-invoice-phone>—</strong></div>
+          <div class="wide"><span>نشانی تحویل</span><strong data-invoice-address>—</strong></div>
+        </div>
+      </article>
     </section>
+
     <div class="invoice-table">
       <table>
-        <thead><tr><th>محصول</th><th>وزن</th><th>تعداد</th><th>آسیاب</th><th>قیمت واحد</th><th>جمع</th></tr></thead>
+        <thead><tr><th>ردیف</th><th>شرح کالا</th><th>وزن</th><th>تعداد</th><th>نوع آسیاب</th><th>مبلغ واحد</th><th>مبلغ کل</th></tr></thead>
         <tbody data-invoice-items></tbody>
       </table>
     </div>
-    <footer>
-      <div><span>مبلغ اقلام</span><strong data-invoice-total>—</strong></div>
-      <div><span>تخفیف</span><strong data-invoice-discount>—</strong></div>
-      <div><span>مالیات ارزش افزوده ۱۰٪</span><strong data-invoice-tax>—</strong></div>
-      <div><span>مبلغ نهایی</span><strong data-invoice-final>—</strong></div>
+
+    <footer class="invoice-footer">
+      <div class="invoice-closing">
+        <section class="invoice-signature">
+          <div class="invoice-signature-heading"><span>مهر و امضای فروشنده</span><small>SELLER SIGNATURE</small></div>
+          <div class="invoice-signature-image">
+            <img data-invoice-signature hidden alt="امضای فروشنده" />
+            <span data-invoice-signature-empty>محل امضا و مهر فروشنده</span>
+          </div>
+          <strong data-invoice-signature-name>اورنزا</strong>
+        </section>
+        <section class="invoice-summary">
+          <div><span>جمع مبلغ اقلام</span><strong data-invoice-total>—</strong></div>
+          <div><span>تخفیف</span><strong data-invoice-discount>—</strong></div>
+          <div><span>مالیات ارزش افزوده ۱۰٪</span><strong data-invoice-tax>—</strong></div>
+          <div class="invoice-grand-total"><span>مبلغ قابل پرداخت</span><strong data-invoice-final>—</strong></div>
+        </section>
+      </div>
+      <div class="invoice-footer-note">
+        <div>
+          <strong>کیفیت اتفاقی نیست؛ حاصل دقت در انتخاب است.</strong>
+          <span>از اعتماد، همراهی و انتخاب ارزشمند شما سپاسگزاریم.</span>
+        </div>
+        <div class="invoice-contact-list">
+          <a data-invoice-footer-phone-link><Phone size={13} stroke-width={1.6} /><span data-invoice-footer-phone>—</span></a>
+          <a data-invoice-footer-email-link><Mail size={13} stroke-width={1.6} /><span data-invoice-footer-email>—</span></a>
+          <a data-invoice-footer-instagram target="_blank" rel="noopener noreferrer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="18" height="18" x="3" y="3" rx="5"></rect>
+              <circle cx="12" cy="12" r="4"></circle>
+              <circle cx="17.5" cy="6.5" r=".75" fill="currentColor" stroke="none"></circle>
+            </svg>
+            <span>Instagram</span>
+          </a>
+          <a data-invoice-footer-website target="_blank" rel="noopener noreferrer"><Globe size={13} stroke-width={1.6} /><span>orenza.ir</span></a>
+        </div>
+      </div>
     </footer>
   </article>
 </AdminShell>

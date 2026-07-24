@@ -33,6 +33,7 @@ const statusLabels: Record<string, string> = {
   false: "غیرفعال",
   new: "جدید",
   processing: "در حال آماده‌سازی",
+  ready: "آماده ارسال",
   sent: "ارسال‌شده",
   completed: "تکمیل‌شده",
   canceled: "لغوشده",
@@ -86,10 +87,13 @@ const createBankLogo = (code: string, label: string) => {
 };
 
 const api = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+  const headers = options.body instanceof FormData
+    ? options.headers
+    : { "Content-Type": "application/json", ...(options.headers || {}) };
   const response = await fetch(path, {
     credentials: "include",
     ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+    headers
   });
   if (response.status === 401) {
     if (!location.pathname.startsWith("/admin/login")) {
@@ -622,6 +626,8 @@ const gridIcons = {
   trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 5v5m4-5v5"/></svg>',
   invoice: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>',
   approve: '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',
+  ready: '<svg viewBox="0 0 24 24"><path d="M4 7h16v11H4z"/><path d="M8 7V4h8v3M8 13l2.5 2.5L16 10"/></svg>',
+  truck: '<svg viewBox="0 0 24 24"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
   cancel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>',
   key: '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8m-3 3 3 3m-6 0 3 3"/></svg>',
   role: '<svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>'
@@ -718,6 +724,31 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     }
   };
 
+  const changeFulfillmentStatus = async (
+    row: Record<string, unknown>,
+    action: "ready" | "sent"
+  ) => {
+    const isReadyAction = action === "ready";
+    const accepted = await askConfirm(
+      isReadyAction ? "ثبت آماده ارسال" : "ثبت ارسال سفارش",
+      isReadyAction
+        ? "آماده‌سازی این سفارش تکمیل شده و سفارش وارد صف ارسال شود؟"
+        : "ارسال این سفارش به مشتری ثبت شود؟",
+      isReadyAction ? "بله، آماده ارسال است" : "بله، ارسال شد"
+    );
+    if (!accepted) return;
+    try {
+      await api(`/api/v1/admin/orders/${row.id}/fulfillment-transition`, {
+        method: "POST",
+        body: JSON.stringify({ action })
+      });
+      toast(isReadyAction ? "سفارش آماده ارسال شد." : "ارسال سفارش ثبت شد.");
+      await loadRows();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "تغییر مرحله سفارش انجام نشد.", "error");
+    }
+  };
+
   const actionRenderer = ({ data }: ICellRendererParams<Record<string, unknown>>) => {
     const row = data;
     const actions = document.createElement("div");
@@ -732,12 +763,13 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       anchor.innerHTML = icon;
       return anchor;
     };
-    const button = (label: string, icon: string, onClick: () => void) => {
+    const button = (label: string, icon: string, onClick: () => void, showLabel = false) => {
       const element = document.createElement("button");
       element.type = "button";
       element.title = label;
       element.setAttribute("aria-label", label);
-      element.innerHTML = icon;
+      element.innerHTML = showLabel ? `${icon}<span>${label}</span>` : icon;
+      if (showLabel) element.classList.add("admin-row-action-labeled");
       element.addEventListener("click", onClick);
       return element;
     };
@@ -746,6 +778,8 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       link(`/admin/${config.key}/edit/?id=${id}`, "ویرایش", gridIcons.pencil)
     );
     const isPendingOrder = config.key === "orders" && row.orderStatus === "new" && row.paymentStatus === "pending";
+    const isPreparingOrder = config.key === "orders" && row.orderStatus === "processing";
+    const isReadyOrder = config.key === "orders" && row.orderStatus === "ready";
     if (config.key === "orders") {
       actions.append(link(`/admin/orders/invoice/?id=${id}`, "مشاهده و چاپ فاکتور", gridIcons.invoice));
     }
@@ -762,6 +796,16 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       actions.append(
         button("تأیید سفارش", gridIcons.approve, () => void changeOrderStatus(row, "approve")),
         button("لغو سفارش", gridIcons.cancel, () => void changeOrderStatus(row, "cancel"))
+      );
+    }
+    if (isPreparingOrder) {
+      actions.append(
+        button("آماده ارسال", gridIcons.ready, () => void changeFulfillmentStatus(row, "ready"), true)
+      );
+    }
+    if (isReadyOrder) {
+      actions.append(
+        button("ثبت ارسال سفارش", gridIcons.truck, () => void changeFulfillmentStatus(row, "sent"))
       );
     }
     if (config.key !== "users" && (config.key !== "orders" || isPendingOrder)) {
@@ -813,9 +857,9 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       headerName: "عملیات",
       field: "id",
       pinned: "left",
-      width: config.key === "orders" ? 230 : config.key === "users" ? 205 : 132,
-      minWidth: config.key === "orders" ? 230 : config.key === "users" ? 205 : 132,
-      maxWidth: config.key === "orders" ? 230 : config.key === "users" ? 205 : 132,
+      width: config.key === "orders" ? 250 : config.key === "users" ? 205 : 132,
+      minWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : 132,
+      maxWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : 132,
       filter: false,
       sortable: false,
       cellRenderer: actionRenderer
@@ -1038,10 +1082,57 @@ const initPaymentCards = (form: HTMLFormElement, paymentMethodId: string, readon
   void load();
 };
 
+const initProductImageUpload = (form: HTMLFormElement) => {
+  const root = form.querySelector<HTMLElement>("[data-product-image-upload]");
+  const urlInput = form.elements.namedItem("imageUrl") as HTMLInputElement | null;
+  const fileInput = root?.querySelector<HTMLInputElement>("[data-product-image-input]");
+  const preview = root?.querySelector<HTMLImageElement>("[data-product-image-preview]");
+  const placeholder = root?.querySelector<HTMLElement>("[data-product-image-placeholder]");
+  const render = () => {
+    const url = urlInput?.value.trim() || "";
+    if (preview) {
+      preview.hidden = !url;
+      if (url) preview.src = url;
+      else preview.removeAttribute("src");
+    }
+    if (placeholder) placeholder.hidden = Boolean(url);
+  };
+  urlInput?.addEventListener("input", render);
+  fileInput?.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      fileInput.value = "";
+      toast("حجم تصویر محصول نباید بیشتر از ۵ مگابایت باشد.", "error");
+      return;
+    }
+    const body = new FormData();
+    body.append("image", file);
+    fileInput.disabled = true;
+    try {
+      const result = await api<{ url: string }>("/api/v1/admin/product-images", {
+        method: "POST",
+        body
+      });
+      if (urlInput) urlInput.value = result.url;
+      render();
+      toast("تصویر محصول بارگذاری شد؛ برای ثبت روی محصول، تغییرات را ذخیره کنید.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "بارگذاری تصویر محصول انجام نشد.", "error");
+    } finally {
+      fileInput.disabled = false;
+      fileInput.value = "";
+    }
+  });
+  render();
+  return render;
+};
+
 const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: string) => {
   await loadLookups(form);
   enhanceDropdowns(form);
   enhancePersianDates(form);
+  const refreshProductImage = config.key === "products" ? initProductImageUpload(form) : undefined;
   const updateProductProfit = () => {
     if (config.key !== "products") return;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
@@ -1113,8 +1204,13 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     try {
       const { item } = await api<{ item: Record<string, unknown> }>(`/api/v1/admin/${config.key}/${id}`);
       config.fields.forEach((field) => setFormValue(form, field.key, item[field.key]));
+      refreshProductImage?.();
       updateProductProfit();
-      if (config.key === "orders") renderOrderItems(form, item.items);
+      if (config.key === "orders") {
+        renderOrderItems(form, item.items);
+        initPaymentReview(form, id, item);
+        initOrderWorkflow(form, id, item);
+      }
       if (config.key === "payment-methods") {
         const merchant = (form.elements.namedItem("merchantId") as HTMLElement | null)?.closest<HTMLElement>(".admin-field");
         if (merchant) merchant.hidden = item.type === "cardToCard";
@@ -1181,6 +1277,115 @@ const renderOrderItems = (form: HTMLFormElement, items: unknown) => {
     </article>`).join("")}`;
 };
 
+const initPaymentReview = (
+  form: HTMLFormElement,
+  orderId: string,
+  item: Record<string, unknown>
+) => {
+  const root = form.querySelector<HTMLElement>("[data-payment-review]");
+  const receiptUrl = String(item.paymentReceiptUrl || "");
+  const reference = String(item.paymentRefId || "");
+  if (!root || !receiptUrl || !reference) return;
+  root.hidden = false;
+  const link = root.querySelector<HTMLAnchorElement>("[data-payment-receipt]");
+  const image = root.querySelector<HTMLImageElement>("[data-payment-receipt-image]");
+  if (link) link.href = receiptUrl;
+  if (image) image.src = receiptUrl;
+
+  const decide = async (decision: "approve" | "reject") => {
+    const label = decision === "approve" ? "تأیید" : "رد";
+    if (!window.confirm(`آیا از ${label} پرداخت با کد پیگیری ${reference} مطمئن هستید؟`)) return;
+    const approve = root.querySelector<HTMLButtonElement>("[data-payment-approve]");
+    const reject = root.querySelector<HTMLButtonElement>("[data-payment-reject]");
+    if (approve) approve.disabled = true;
+    if (reject) reject.disabled = true;
+    try {
+      const adminNote = (form.elements.namedItem("adminNote") as HTMLTextAreaElement | null)?.value.trim() || null;
+      await api(`/api/v1/admin/orders/${orderId}/payment-decision`, {
+        method: "POST",
+        body: JSON.stringify({ decision, adminNote })
+      });
+      toast(`پرداخت سفارش ${label} شد.`);
+      window.setTimeout(() => location.reload(), 450);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "بررسی پرداخت انجام نشد.", "error");
+      if (approve) approve.disabled = false;
+      if (reject) reject.disabled = false;
+    }
+  };
+  root.querySelector("[data-payment-approve]")?.addEventListener("click", () => { void decide("approve"); });
+  root.querySelector("[data-payment-reject]")?.addEventListener("click", () => { void decide("reject"); });
+  if (item.paymentStatus !== "pending") {
+    root.querySelectorAll<HTMLButtonElement>("footer button").forEach((button) => { button.disabled = true; });
+  }
+};
+
+const initOrderWorkflow = (
+  form: HTMLFormElement,
+  orderId: string,
+  item: Record<string, unknown>
+) => {
+  const root = form.querySelector<HTMLElement>("[data-order-workflow]");
+  if (!root) return;
+  root.hidden = false;
+  const status = String(item.orderStatus || "new");
+  const state = root.querySelector<HTMLElement>("[data-order-workflow-state]");
+  const readyButton = root.querySelector<HTMLButtonElement>("[data-order-mark-ready]");
+  const sentButton = root.querySelector<HTMLButtonElement>("[data-order-mark-sent]");
+  const stages = ["processing", "ready", "sent"];
+  const currentIndex = stages.indexOf(status);
+
+  root.querySelectorAll<HTMLElement>("[data-workflow-stage]").forEach((stage, index) => {
+    stage.classList.toggle("done", currentIndex > index);
+    stage.classList.toggle("current", currentIndex === index);
+  });
+
+  if (state) {
+    if (status === "processing") {
+      state.textContent = "سفارش در حال آماده‌سازی است.";
+    } else if (status === "ready") {
+      state.textContent = "سفارش آماده است و در صف ارسال قرار دارد.";
+    } else if (status === "sent") {
+      state.textContent = "ارسال سفارش به مشتری ثبت شده است.";
+    } else if (status === "completed") {
+      state.textContent = "فرآیند این سفارش تکمیل شده است.";
+    } else if (status === "canceled") {
+      state.textContent = "این سفارش لغو شده است.";
+    }
+  }
+  if (readyButton) readyButton.hidden = status !== "processing";
+  if (sentButton) sentButton.hidden = status !== "ready";
+
+  const transition = async (action: "ready" | "sent") => {
+    const isReadyAction = action === "ready";
+    const accepted = await askConfirm(
+      isReadyAction ? "ثبت آماده ارسال" : "ثبت ارسال سفارش",
+      isReadyAction
+        ? "آماده‌سازی این سفارش تکمیل شده و سفارش وارد صف ارسال شود؟"
+        : "ارسال این سفارش به مشتری ثبت شود؟",
+      isReadyAction ? "بله، آماده ارسال است" : "بله، ارسال شد"
+    );
+    if (!accepted) return;
+    if (readyButton) readyButton.disabled = true;
+    if (sentButton) sentButton.disabled = true;
+    try {
+      await api(`/api/v1/admin/orders/${orderId}/fulfillment-transition`, {
+        method: "POST",
+        body: JSON.stringify({ action })
+      });
+      toast(isReadyAction ? "سفارش آماده ارسال شد." : "ارسال سفارش ثبت شد.");
+      window.setTimeout(() => location.reload(), 350);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "تغییر مرحله سفارش انجام نشد.", "error");
+      if (readyButton) readyButton.disabled = false;
+      if (sentButton) sentButton.disabled = false;
+    }
+  };
+
+  readyButton?.addEventListener("click", () => { void transition("ready"); });
+  sentButton?.addEventListener("click", () => { void transition("sent"); });
+};
+
 const initResource = () => {
   const root = document.querySelector<HTMLElement>("[data-admin-resource]");
   if (!root) return;
@@ -1194,11 +1399,46 @@ const initResource = () => {
 const initDashboard = async () => {
   if (!document.querySelector("[data-admin-dashboard]")) return;
   try {
-    const { stats } = await api<{ stats: Record<string, number> }>("/api/v1/admin/dashboard");
+    const { stats, orderStatuses } = await api<{
+      stats: Record<string, number>;
+      orderStatuses: Record<string, number>;
+    }>("/api/v1/admin/dashboard");
     Object.entries(stats).forEach(([key, value]) => {
       const element = document.querySelector<HTMLElement>(`[data-stat="${key}"]`);
       if (element) element.textContent = faNumber.format(value);
     });
+    const statusKeys = ["new", "processing", "ready", "sent", "completed", "canceled"];
+    const colors: Record<string, string> = {
+      new: "#c9994e",
+      processing: "#d9b15f",
+      ready: "#4f8b72",
+      sent: "#2d6650",
+      completed: "#173f30",
+      canceled: "#a55d51"
+    };
+    const total = statusKeys.reduce((sum, key) => sum + Number(orderStatuses[key] || 0), 0);
+    const totalElement = document.querySelector<HTMLElement>("[data-order-status-total]");
+    if (totalElement) totalElement.textContent = faNumber.format(total);
+    statusKeys.forEach((key) => {
+      const row = document.querySelector<HTMLElement>(`[data-order-status-row="${key}"]`);
+      const value = Number(orderStatuses[key] || 0);
+      const count = row?.querySelector<HTMLElement>("strong");
+      if (count) count.textContent = faNumber.format(value);
+    });
+    const chart = document.querySelector<HTMLElement>("[data-order-status-chart]");
+    if (chart) {
+      if (!total) {
+        chart.style.background = "#e8dfd2";
+      } else {
+        let position = 0;
+        const segments = statusKeys.map((key) => {
+          const start = position;
+          position += (Number(orderStatuses[key] || 0) / total) * 100;
+          return `${colors[key]} ${start}% ${position}%`;
+        });
+        chart.style.background = `conic-gradient(${segments.join(",")})`;
+      }
+    }
   } catch (error) {
     toast(error instanceof Error ? error.message : "آمار داشبورد دریافت نشد.", "error");
   }
@@ -1302,6 +1542,7 @@ type SiteSettingsPayload = {
   whatsappUrl: string;
   baleUrl: string;
   instagramUrl: string;
+  websiteUrl: string;
   address: string | null;
   footerHeading: string;
   footerDescription: string;
@@ -1313,6 +1554,8 @@ type SiteSettingsPayload = {
   homepageSeoKeywords: string[];
   homepageOgImageUrl: string;
   searchIndexingEnabled: boolean;
+  invoiceNationalId: string;
+  invoiceSignatureUrl: string | null;
 };
 
 const initSiteSettings = async () => {
@@ -1321,6 +1564,19 @@ const initSiteSettings = async () => {
   const state = form.querySelector<HTMLElement>("[data-site-settings-state]");
   const input = (name: string) =>
     form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
+  const signatureInput = form.querySelector<HTMLInputElement>("[data-invoice-signature-input]");
+  const signaturePreview = form.querySelector<HTMLImageElement>("[data-invoice-signature-preview]");
+  const signaturePlaceholder = form.querySelector<HTMLElement>("[data-invoice-signature-placeholder]");
+  const signatureRemove = form.querySelector<HTMLButtonElement>("[data-invoice-signature-remove]");
+  const showSignature = (url: string | null) => {
+    if (signaturePreview) {
+      signaturePreview.hidden = !url;
+      if (url) signaturePreview.src = `${url}?v=${Date.now()}`;
+      else signaturePreview.removeAttribute("src");
+    }
+    if (signaturePlaceholder) signaturePlaceholder.hidden = Boolean(url);
+    if (signatureRemove) signatureRemove.hidden = !url;
+  };
   try {
     const { item } = await api<{ item: SiteSettingsPayload }>("/api/v1/admin/site-settings");
     Object.entries(item).forEach(([key, value]) => {
@@ -1332,11 +1588,53 @@ const initSiteSettings = async () => {
         field.value = Array.isArray(value) ? value.join("، ") : value === null ? "" : String(value);
       }
     });
+    showSignature(item.invoiceSignatureUrl);
     if (state) state.textContent = "تنظیمات آماده و قابل ویرایش است.";
   } catch (error) {
     if (state) state.textContent = "دریافت تنظیمات انجام نشد.";
     toast(error instanceof Error ? error.message : "دریافت تنظیمات انجام نشد.", "error");
   }
+  signatureInput?.addEventListener("change", async () => {
+    const file = signatureInput.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      signatureInput.value = "";
+      toast("حجم تصویر امضا نباید بیشتر از ۵ مگابایت باشد.", "error");
+      return;
+    }
+    const body = new FormData();
+    body.append("signature", file);
+    signatureInput.disabled = true;
+    if (state) state.textContent = "در حال بارگذاری امضا…";
+    try {
+      const result = await api<{ url: string }>("/api/v1/admin/site-settings/invoice-signature", {
+        method: "POST",
+        body
+      });
+      showSignature(result.url);
+      toast("امضای فروشنده بارگذاری شد.");
+      if (state) state.textContent = "امضای جدید روی فاکتورها قرار گرفت.";
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "بارگذاری امضا انجام نشد.", "error");
+      if (state) state.textContent = "بارگذاری امضا انجام نشد.";
+    } finally {
+      signatureInput.disabled = false;
+      signatureInput.value = "";
+    }
+  });
+  signatureRemove?.addEventListener("click", async () => {
+    if (!window.confirm("تصویر امضای فروشنده از فاکتورها حذف شود؟")) return;
+    signatureRemove.disabled = true;
+    try {
+      await api("/api/v1/admin/site-settings/invoice-signature", { method: "DELETE" });
+      showSignature(null);
+      toast("تصویر امضا حذف شد.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "حذف امضا انجام نشد.", "error");
+    } finally {
+      signatureRemove.disabled = false;
+    }
+  });
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!form.checkValidity()) {
@@ -1358,6 +1656,7 @@ const initSiteSettings = async () => {
           whatsappUrl: input("whatsappUrl").value,
           baleUrl: input("baleUrl").value,
           instagramUrl: input("instagramUrl").value,
+          websiteUrl: input("websiteUrl").value,
           address: input("address").value || null,
           footerHeading: input("footerHeading").value,
           footerDescription: input("footerDescription").value,
@@ -1371,7 +1670,8 @@ const initSiteSettings = async () => {
             .map((keyword) => keyword.trim())
             .filter(Boolean),
           homepageOgImageUrl: input("homepageOgImageUrl").value,
-          searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked
+          searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked,
+          invoiceNationalId: input("invoiceNationalId").value
         })
       });
       if (state) state.textContent = "آخرین تغییرات ذخیره شد.";
@@ -1391,9 +1691,12 @@ const initInvoice = async () => {
   const id = new URLSearchParams(location.search).get("id");
   if (!id) { toast("شناسه سفارش وجود ندارد.", "error"); return; }
   try {
-    const { item } = await api<{ item: Record<string, unknown> & { items?: Record<string, unknown>[] } }>(
-      `/api/v1/admin/orders/${id}`
-    );
+    const [{ item }, { item: settings }] = await Promise.all([
+      api<{ item: Record<string, unknown> & { items?: Record<string, unknown>[] } }>(
+        `/api/v1/admin/orders/${id}`
+      ),
+      api<{ item: Record<string, unknown> }>("/api/v1/admin/invoice-settings")
+    ]);
     const set = (selector: string, value: string) => {
       const element = root.querySelector<HTMLElement>(selector);
       if (element) element.textContent = value;
@@ -1407,9 +1710,39 @@ const initInvoice = async () => {
     set("[data-invoice-discount]", `${money.format(Number(item.discountAmount || 0))} تومان`);
     set("[data-invoice-tax]", `${money.format(Number(item.taxAmount || 0))} تومان`);
     set("[data-invoice-final]", `${money.format(Number(item.finalAmount || 0))} تومان`);
+    set("[data-invoice-seller-name]", String(settings.brandName || "اورنزا"));
+    set("[data-invoice-signature-name]", String(settings.brandName || "اورنزا"));
+    set("[data-invoice-brand-en]", String(settings.brandNameEn || "ORENZA"));
+    set("[data-invoice-national-id]", String(settings.invoiceNationalId || "۰۰۲۱۴۱۱۴۱۷"));
+    set("[data-invoice-seller-phone]", String(settings.supportPhone || "—"));
+    set("[data-invoice-footer-phone]", String(settings.supportPhone || "—"));
+    set("[data-invoice-seller-email]", String(settings.supportEmail || "—"));
+    set("[data-invoice-footer-email]", String(settings.supportEmail || "—"));
+    set("[data-invoice-seller-address]", String(settings.address || "—"));
+    const phoneLink = root.querySelector<HTMLAnchorElement>("[data-invoice-footer-phone-link]");
+    const emailLink = root.querySelector<HTMLAnchorElement>("[data-invoice-footer-email-link]");
+    const instagramLink = root.querySelector<HTMLAnchorElement>("[data-invoice-footer-instagram]");
+    const websiteLink = root.querySelector<HTMLAnchorElement>("[data-invoice-footer-website]");
+    if (phoneLink) phoneLink.href = `tel:${String(settings.supportPhone || "").replace(/\s/g, "")}`;
+    if (emailLink) emailLink.href = `mailto:${String(settings.supportEmail || "")}`;
+    if (instagramLink) instagramLink.href = String(settings.instagramUrl || "https://instagram.com/orenza.ir");
+    if (websiteLink) {
+      const websiteUrl = String(settings.websiteUrl || "https://orenza.ir");
+      websiteLink.href = websiteUrl;
+      const label = websiteLink.querySelector("span");
+      if (label) label.textContent = websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    }
+    const signature = root.querySelector<HTMLImageElement>("[data-invoice-signature]");
+    const signatureEmpty = root.querySelector<HTMLElement>("[data-invoice-signature-empty]");
+    if (signature && settings.invoiceSignatureUrl) {
+      signature.src = String(settings.invoiceSignatureUrl);
+      signature.hidden = false;
+      if (signatureEmpty) signatureEmpty.hidden = true;
+    }
     const rows = root.querySelector<HTMLTableSectionElement>("[data-invoice-items]");
-    if (rows) rows.innerHTML = (item.items || []).map((orderItem) => `
+    if (rows) rows.innerHTML = (item.items || []).map((orderItem, index) => `
       <tr>
+        <td>${faNumber.format(index + 1)}</td>
         <td>${orderItem.productTitle || "قهوه اورنزا"}</td>
         <td>${faNumber.format(Number(orderItem.weight || 0))} گرم</td>
         <td>${faNumber.format(Number(orderItem.quantity || 0))}</td>

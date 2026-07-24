@@ -1,5 +1,5 @@
 ---
-import { Boxes, CircleCheckBig, Clock3, PackageCheck, Users } from "@lucide/astro";
+import { Boxes, ChartPie, CircleCheckBig, Clock3, PackageCheck, Users } from "@lucide/astro";
 import AdminShell from "../../components/admin/AdminShell.astro";
 ---
 
@@ -11,6 +11,25 @@ import AdminShell from "../../components/admin/AdminShell.astro";
     <article><Users size={22} stroke-width={1.35} /><span>مشتریان ثبت‌شده</span><strong data-stat="customers">—</strong></article>
     <article><Users size={22} stroke-width={1.35} /><span>بازدیدکننده ۳۰ روز اخیر</span><strong data-stat="visitors">—</strong></article>
     <article><Boxes size={22} stroke-width={1.35} /><span>محصولات فعال</span><strong data-stat="activeProducts">—</strong></article>
+  </section>
+  <section class="admin-card admin-order-report" data-order-status-report>
+    <header>
+      <div><span>ORDER STATUS REPORT</span><h2>گزارش وضعیت سفارش‌ها</h2><p>تعداد کل سفارش‌ها به تفکیک آخرین مرحله ثبت‌شده</p></div>
+      <ChartPie size={23} stroke-width={1.35} />
+    </header>
+    <div class="admin-order-report-body">
+      <div class="admin-order-donut" data-order-status-chart>
+        <div><strong data-order-status-total>—</strong><span>کل سفارش‌ها</span></div>
+      </div>
+      <div class="admin-order-status-legend">
+        <article data-order-status-row="new"><i></i><span>جدید</span><strong>—</strong></article>
+        <article data-order-status-row="processing"><i></i><span>در حال آماده‌سازی</span><strong>—</strong></article>
+        <article data-order-status-row="ready"><i></i><span>آماده ارسال</span><strong>—</strong></article>
+        <article data-order-status-row="sent"><i></i><span>ارسال‌شده</span><strong>—</strong></article>
+        <article data-order-status-row="completed"><i></i><span>تکمیل‌شده</span><strong>—</strong></article>
+        <article data-order-status-row="canceled"><i></i><span>لغوشده</span><strong>—</strong></article>
+      </div>
+    </div>
   </section>
   <section class="admin-card admin-dashboard-note">
     <span>امروز در اورنزا</span>

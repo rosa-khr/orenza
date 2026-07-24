@@ -1,0 +1,73 @@
+---
+import { ArrowLeft, ArrowRight, Check, Link2, PackageOpen, Scale, ShoppingBag } from "@lucide/astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="جزئیات محصول اورنزا"
+  description="مشخصات، قیمت و توضیحات کامل محصولات اورنزا"
+  canonicalPath="/products/detail/"
+  keywords={["محصولات اورنزا", "خرید قهوه", "قهوه تازه رست", "خرید نوشیدنی کافه‌ای"]}
+>
+  <main class="product-detail-page" data-product-detail>
+    <a class="product-detail-back" href="/products/"><ArrowRight size={17} /> بازگشت به محصولات</a>
+
+    <section class="product-detail-stage">
+      <figure class="product-detail-media">
+        <img data-product-detail-image hidden alt="" />
+        <div data-product-detail-image-placeholder><PackageOpen size={48} stroke-width={1} /><span>ORENZA</span></div>
+      </figure>
+
+      <div class="product-detail-copy">
+        <span class="eyebrow" data-product-detail-en>ORENZA PRODUCT</span>
+        <h1 data-product-detail-title>در حال دریافت محصول…</h1>
+        <p data-product-detail-description>لطفاً چند لحظه صبر کنید.</p>
+        <div class="product-detail-specs">
+          <div><span>ترکیب</span><strong data-product-detail-blend>—</strong></div>
+          <div><span>پروفایل رُست</span><strong data-product-detail-roast>—</strong></div>
+          <div><span>وضعیت</span><strong data-product-detail-stock>—</strong></div>
+        </div>
+        <div class="product-detail-purchase" data-product-detail-purchase hidden>
+          <div class="product-detail-price"><span>قیمت انتخاب شما</span><strong data-product-detail-price>—</strong></div>
+          <div class="product-detail-weights" data-product-detail-weights>
+            <button type="button" data-weight="250">۲۵۰ گرم</button>
+            <button type="button" data-weight="500">۵۰۰ گرم</button>
+            <button type="button" data-weight="1000">۱ کیلوگرم</button>
+          </div>
+          <button class="product-detail-action" type="button" data-product-detail-action>
+            <ShoppingBag size={18} stroke-width={1.5} /><span>انتخاب و سفارش</span>
+          </button>
+          <small><Check size={14} /> تازه‌رست و آماده‌سازی پس از ثبت سفارش</small>
+        </div>
+        <p class="product-detail-error" data-product-detail-error hidden></p>
+      </div>
+    </section>
+
+    <section class="product-detail-content" data-product-detail-content-section hidden>
+      <header>
+        <Scale size={22} stroke-width={1.35} />
+        <div><span>PRODUCT GUIDE</span><h2 data-product-detail-content-title>راهنمای انتخاب محصول</h2></div>
+      </header>
+      <div data-product-detail-content></div>
+    </section>
+
+    <nav class="product-detail-internal-links" aria-labelledby="product-links-title" hidden data-product-detail-links>
+      <header>
+        <Link2 size={21} stroke-width={1.4} aria-hidden="true" />
+        <div>
+          <span>EXPLORE ORENZA</span>
+          <h2 id="product-links-title">محصولات و مسیرهای مرتبط</h2>
+        </div>
+      </header>
+      <div class="product-detail-link-grid" data-product-detail-link-grid></div>
+      <a class="product-detail-all-link" href="/products/">
+        مشاهده همه محصولات اورنزا
+        <ArrowLeft size={16} stroke-width={1.5} aria-hidden="true" />
+      </a>
+    </nav>
+  </main>
+
+  <script>
+    import "../../scripts/product-detail.ts";
+  </script>
+</BaseLayout>

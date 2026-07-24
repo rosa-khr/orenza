@@ -1,0 +1,62 @@
+---
+import { Check, Clock3, House } from "@lucide/astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="سفارش شما ثبت شد"
+  description="سفارش شما با موفقیت در اورنزا ثبت شد و پس از تأیید پرداخت وارد مرحله آماده‌سازی می‌شود."
+  canonicalPath="/order-success/"
+  keywords={["ثبت سفارش اورنزا", "پیگیری سفارش قهوه"]}
+  noindex
+>
+  <div class="order-success-page">
+    <section class="order-success-card" aria-labelledby="order-success-title">
+      <div class="order-success-mark" aria-hidden="true">
+        <Check size={38} stroke-width={1.8} />
+      </div>
+
+      <span class="order-success-eyebrow">ORDER RECEIVED</span>
+      <h1 id="order-success-title">ممنون از انتخاب و همراهی شما</h1>
+      <p>
+        سفارش شما با موفقیت ثبت شد. فیش واریزی توسط تیم اورنزا بررسی می‌شود و
+        پس از تأیید، آماده‌سازی قهوه‌تان را آغاز می‌کنیم.
+      </p>
+
+      <div class="order-success-number" hidden data-success-order-wrap>
+        <span>شماره سفارش</span>
+        <strong dir="ltr" data-success-order></strong>
+      </div>
+
+      <div class="order-success-status">
+        <Clock3 size={20} stroke-width={1.7} aria-hidden="true" />
+        <div>
+          <strong>در انتظار تأیید پرداخت</strong>
+          <small>پس از بررسی فیش، وضعیت سفارش به «در حال آماده‌سازی» تغییر می‌کند.</small>
+        </div>
+      </div>
+
+      <blockquote>
+        <strong>کیفیت اتفاقی نیست.</strong>
+        <span>سپاس که برای تجربه‌ی قهوه‌ای باکیفیت، اورنزا را انتخاب کردید.</span>
+      </blockquote>
+
+      <a class="order-success-home" href="/">
+        <House size={19} stroke-width={1.7} aria-hidden="true" />
+        بازگشت به سایت
+      </a>
+    </section>
+  </div>
+
+  <script is:inline>
+    (() => {
+      const orderNumber = new URLSearchParams(location.search).get("order");
+      const wrap = document.querySelector("[data-success-order-wrap]");
+      const value = document.querySelector("[data-success-order]");
+      if (orderNumber && wrap && value) {
+        value.textContent = orderNumber;
+        wrap.hidden = false;
+      }
+    })();
+  </script>
+</BaseLayout>

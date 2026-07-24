@@ -149,6 +149,12 @@ export class AdminRepository {
     const data = resource === "orders"
       ? config.schema.parse(input)
       : config.schema.parse({ ...existing, ...(input as Record<string, unknown>) });
+    if (resource === "orders" && data.paymentStatus === "paid" && existing.paymentStatus !== "paid") {
+      if (!existing.paymentRefId || !existing.paymentReceiptUrl) {
+        throw Object.assign(new Error("بدون کد پیگیری و فیش واریزی، پرداخت قابل تأیید نیست."), { statusCode: 422 });
+      }
+      data.orderStatus = "processing";
+    }
     if (resource === "users") {
       data.displayName = [data.firstName, data.lastName].filter(Boolean).join(" ");
     }

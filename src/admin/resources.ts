@@ -187,6 +187,7 @@ export const adminResources: AdminResource[] = [
       { key: "titleEn", label: "عنوان انگلیسی", type: "text", required: true, dir: "ltr" },
       { key: "categoryId", label: "دسته‌بندی", type: "select", required: true },
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
+      { key: "productContent", label: "محتوای کامل صفحه محصول", type: "textarea" },
       {
         key: "roastType",
         label: "پروفایل رُست",
@@ -292,6 +293,7 @@ export const adminResources: AdminResource[] = [
       { key: "discountAmount", label: "تخفیف", type: "number" },
       { key: "taxAmount", label: "مالیات", type: "number", list: true },
       { key: "finalAmount", label: "مبلغ نهایی", type: "number", list: true },
+      { key: "paymentRefId", label: "کد پیگیری واریز", type: "text", dir: "ltr", list: true, readonly: true },
       {
         key: "paymentStatus",
         label: "وضعیت پرداخت",
@@ -311,12 +313,13 @@ export const adminResources: AdminResource[] = [
         options: [
           { label: "جدید", value: "new" },
           { label: "در حال آماده‌سازی", value: "processing" },
+          { label: "آماده ارسال", value: "ready" },
           { label: "ارسال‌شده", value: "sent" },
           { label: "تکمیل‌شده", value: "completed" },
           { label: "لغوشده", value: "canceled" }
         ]
       },
-      { key: "paymentReceiptUrl", label: "فیش واریزی", type: "image", dir: "ltr" },
+      { key: "paymentReceiptUrl", label: "فیش واریزی", type: "image", dir: "ltr", readonly: true },
       { key: "customerNote", label: "یادداشت مشتری", type: "textarea" },
       { key: "adminNote", label: "یادداشت مدیریت", type: "textarea" }
     ]

@@ -4,6 +4,8 @@ import { z } from "zod";
 import { toPublicRecord } from "../admin/repository.js";
 import { getPublicSiteSettings, getSiteSettings } from "../site-settings.js";
 import { OrderService } from "./order-service.js";
+import { removePaymentReceipt, savePaymentReceipt } from "../payment-receipts.js";
+import { openProductImage } from "../product-images.js";
 
 type SessionUser = { id: string } | null;
 
@@ -109,6 +111,34 @@ export const registerStoreRoutes = (
     return { items: result.rows.map(toPublicRecord) };
   });
 
+  app.get("/api/v1/products/:id", async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
+        (p.sale_price_per_kg - p.purchase_price_per_kg) AS profit_per_kg,
+        CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.25)::bigint ELSE 0 END AS price_per_250g,
+        CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.50)::bigint ELSE 0 END AS price_per_500g,
+        CASE WHEN p.sale_type = 'weighted' THEN p.sale_price_per_kg ELSE 0 END AS price_per_1000g,
+        CASE WHEN p.sale_type = 'packaged' THEN p.sale_price_per_kg ELSE 0 END AS package_price
+       FROM products p JOIN categories c ON c.id=p.category_id
+       WHERE p.id=$1 AND p.is_active=true AND c.is_active=true`,
+      [id]
+    );
+    if (!result.rows[0]) return reply.code(404).send({ error: "محصول پیدا نشد." });
+    reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return { item: toPublicRecord(result.rows[0]) };
+  });
+
+  app.get("/api/v1/product-images/:fileName", async (request, reply) => {
+    const { fileName } = z.object({
+      fileName: z.string().regex(/^[0-9a-f-]+\.(?:jpg|png|webp)$/)
+    }).parse(request.params);
+    const image = openProductImage(fileName);
+    if (!image) return reply.code(404).send({ error: "تصویر محصول پیدا نشد." });
+    reply.type(image.mime).header("Cache-Control", "public, max-age=31536000, immutable");
+    return reply.send(image.stream);
+  });
+
   app.get("/api/v1/payment-methods/active", async () => {
     const result = await pool.query<PaymentMethodRow>(
       `SELECT id,title,type,merchant_id
@@ -151,6 +181,36 @@ export const registerStoreRoutes = (
     const user = await getCurrentUser(request);
     const order = await orderService.create(request.body, user?.id ?? null);
     return reply.code(201).send({ order });
+  });
+
+  app.post("/api/v1/orders/card-transfer", {
+    bodyLimit: 6 * 1024 * 1024,
+    config: { rateLimit: { max: 8, timeWindow: "15 minutes" } }
+  }, async (request, reply) => {
+    const part = await request.file();
+    if (!part || part.fieldname !== "receipt") {
+      return reply.code(422).send({ error: "تصویر فیش واریزی را انتخاب کنید." });
+    }
+    const buffer = await part.toBuffer();
+    const payloadField = part.fields.payload;
+    const rawPayload = payloadField && "value" in payloadField ? String(payloadField.value) : "";
+    if (!rawPayload) return reply.code(422).send({ error: "اطلاعات سفارش کامل نیست." });
+
+    let parsedPayload: unknown;
+    try {
+      parsedPayload = JSON.parse(rawPayload);
+    } catch {
+      return reply.code(422).send({ error: "اطلاعات سفارش معتبر نیست." });
+    }
+    const saved = await savePaymentReceipt(buffer);
+    try {
+      const user = await getCurrentUser(request);
+      const order = await orderService.create({ ...(parsedPayload as Record<string, unknown>), paymentReceiptUrl: saved.url }, user?.id ?? null);
+      return reply.code(201).send({ order });
+    } catch (error) {
+      await removePaymentReceipt(saved.fileName);
+      throw error;
+    }
   });
 
   app.post("/api/v1/payments/zarinpal/request", { config: { rateLimit: { max: 8, timeWindow: "10 minutes" } } }, async (request, reply) => {

@@ -5,7 +5,7 @@ export type SaleType = "weighted" | "packaged";
 export type StockStatus = "inStock" | "outOfStock";
 export type DiscountType = "percent" | "fixed";
 export type PaymentStatus = "pending" | "paid" | "rejected";
-export type OrderStatus = "new" | "processing" | "sent" | "completed" | "canceled";
+export type OrderStatus = "new" | "processing" | "ready" | "sent" | "completed" | "canceled";
 
 export interface Product {
   id: string;

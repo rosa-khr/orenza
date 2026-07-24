@@ -1,5 +1,5 @@
 ---
-import { Save, ScrollText } from "@lucide/astro";
+import { Save, ScrollText, Trash2, Upload } from "@lucide/astro";
 import AdminShell from "../../components/admin/AdminShell.astro";
 ---
 
@@ -25,6 +25,7 @@ import AdminShell from "../../components/admin/AdminShell.astro";
         <label class="admin-field"><span>لینک واتساپ</span><input name="whatsappUrl" type="url" required dir="ltr" /></label>
         <label class="admin-field"><span>لینک بله</span><input name="baleUrl" type="url" required dir="ltr" /></label>
         <label class="admin-field"><span>لینک اینستاگرام</span><input name="instagramUrl" type="url" required dir="ltr" /></label>
+        <label class="admin-field"><span>آدرس وب‌سایت</span><input name="websiteUrl" type="url" required dir="ltr" value="https://orenza.ir" /></label>
         <label class="admin-field wide"><span>نشانی مجموعه</span><textarea name="address"></textarea></label>
       </div>
     </section>
@@ -37,6 +38,36 @@ import AdminShell from "../../components/admin/AdminShell.astro";
         <label class="admin-field wide"><span>عنوان ارتباط با ما در فوتر</span><input name="footerHeading" required /></label>
         <label class="admin-field wide"><span>متن راهنمای فوتر</span><textarea name="footerDescription" required></textarea></label>
         <label class="admin-field wide"><span>متن کپی‌رایت</span><input name="footerCopyright" required /></label>
+      </div>
+    </section>
+
+    <section class="admin-card">
+      <header><span>OFFICIAL INVOICE</span><h2>اطلاعات فاکتور رسمی</h2><p>شناسه ملی و امضای فروشنده در تمام نسخه‌های چاپی فاکتور نمایش داده می‌شود.</p></header>
+      <div class="admin-form-grid">
+        <label class="admin-field">
+          <span>شناسه ملی فروشنده</span>
+          <input name="invoiceNationalId" required minlength="10" maxlength="20" inputmode="numeric" value="۰۰۲۱۴۱۱۴۱۷" />
+        </label>
+        <div class="admin-signature-setting wide" data-invoice-signature-setting>
+          <div class="admin-signature-preview">
+            <img data-invoice-signature-preview hidden alt="پیش‌نمایش امضای فروشنده" />
+            <span data-invoice-signature-placeholder>هنوز تصویری برای امضا ثبت نشده است.</span>
+          </div>
+          <div>
+            <strong>تصویر امضای فروشنده</strong>
+            <small>ترجیحاً PNG با پس‌زمینه شفاف؛ JPG، PNG یا WebP تا ۵ مگابایت</small>
+            <div class="admin-signature-actions">
+              <label>
+                <Upload size={16} stroke-width={1.5} />
+                انتخاب و بارگذاری امضا
+                <input type="file" name="invoiceSignature" accept="image/jpeg,image/png,image/webp" data-invoice-signature-input />
+              </label>
+              <button type="button" data-invoice-signature-remove hidden>
+                <Trash2 size={15} stroke-width={1.5} /> حذف امضا
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 

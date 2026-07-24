@@ -103,19 +103,24 @@ export class OrderService {
         if (!paymentCard.rows[0]) {
           throw Object.assign(new Error("کارت انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
         }
+        if (!data.paymentRefId || !data.paymentReceiptUrl) {
+          throw Object.assign(new Error("برای کارت‌به‌کارت، کد پیگیری و تصویر فیش الزامی است."), { statusCode: 422 });
+        }
       }
       const order = await client.query<Record<string, unknown>>(
         `INSERT INTO orders
           (order_number,user_id,customer_name,customer_phone,customer_address,customer_province,
            customer_city,customer_postal_code,shipping_method,total_amount,discount_amount,tax_amount,final_amount,
-           discount_code_id,payment_method_id,payment_card_id,payment_status,order_status,customer_note)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'pending','new',$17)
+           discount_code_id,payment_method_id,payment_card_id,payment_ref_id,payment_receipt_url,
+           payment_status,order_status,customer_note)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'pending','new',$19)
          RETURNING *`,
         [
           nextOrderNumber(), userId, data.customerName, data.customerPhone, data.customerAddress,
           data.customerProvince, data.customerCity, data.customerPostalCode, data.shippingMethod,
           totalAmount, discount.amount, taxAmount, finalAmount, discount.id, data.paymentMethodId,
-          data.paymentCardId ?? null, data.customerNote ?? null
+          data.paymentCardId ?? null, data.paymentRefId ?? null, data.paymentReceiptUrl ?? null,
+          data.customerNote ?? null
         ]
       );
       for (const item of items) {
