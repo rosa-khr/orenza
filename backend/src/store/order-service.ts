@@ -1,6 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 import { createOrderSchema } from "./schemas.js";
 import { toPublicRecord, withTransaction } from "../admin/repository.js";
+import { notifyNewOrder, type NewOrder } from "../order-notifications.js";
 
 type ProductPriceRow = {
   id: string;
@@ -49,7 +50,7 @@ export class OrderService {
 
   async create(input: unknown, userId: string | null) {
     const data = createOrderSchema.parse(input);
-    return withTransaction(this.pool, async (client) => {
+    const createdOrder = await withTransaction<NewOrder>(this.pool, async (client) => {
       const productIds = [...new Set(data.items.map((item) => item.productId))];
       const products = await client.query<ProductPriceRow>(
         `SELECT id, title_fa, is_active, sale_price_per_kg, sale_type, package_weight_grams, stock_status
@@ -136,8 +137,10 @@ export class OrderService {
         );
       }
       if (discount.id) await client.query("UPDATE discount_codes SET used_count = used_count + 1 WHERE id = $1", [discount.id]);
-      return { ...toPublicRecord(order.rows[0]!), items };
+      return { ...toPublicRecord(order.rows[0]!), items } as unknown as NewOrder;
     });
+    void notifyNewOrder(this.pool, createdOrder);
+    return createdOrder;
   }
 
   async validateDiscount(code: string, totalAmount: number) {

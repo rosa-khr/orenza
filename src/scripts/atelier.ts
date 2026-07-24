@@ -184,17 +184,27 @@ export const initAtelier = () => {
     });
   };
 
-  const moveToSection = (name: string, delay = 180) => {
+  const moveToSection = (name: string, delay = 120) => {
     const section = sections.get(name);
     if (!section) return;
     window.clearTimeout(navigationTimer);
     navigationTimer = window.setTimeout(() => {
       requestAnimationFrame(() => {
-        section.scrollIntoView({
+        const headerHeight = document.querySelector<HTMLElement>(".site-header")?.offsetHeight || 0;
+        const progressHeight = document.querySelector<HTMLElement>(".order-progress")?.offsetHeight || 0;
+        const targetTop = Math.max(
+          0,
+          window.scrollY + section.getBoundingClientRect().top - headerHeight - progressHeight - 16
+        );
+        window.scrollTo({
+          top: targetTop,
           behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-          block: "start",
-          inline: "nearest"
         });
+        const heading = section.querySelector<HTMLElement>("h3");
+        if (heading) {
+          heading.tabIndex = -1;
+          heading.focus({ preventScroll: true });
+        }
       });
     }, delay);
   };
@@ -256,7 +266,7 @@ export const initAtelier = () => {
       processNote.textContent = english;
       playProcess("roast");
       unlock("grind");
-      moveToSection("grind", 280);
+      moveToSection("grind", 160);
     }
 
     if (key === "grind") {
@@ -320,7 +330,7 @@ export const initAtelier = () => {
       builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = english;
       playProcess("grind", 1800);
       unlock("weight");
-      moveToSection("weight", 280);
+      moveToSection("weight", 160);
       if (requestedWeight) {
         const requestedChoice = builder.querySelector<HTMLButtonElement>(`[data-choice="weight"][data-grams="${requestedWeight}"]`);
         requestedWeight = null;

@@ -118,3 +118,30 @@ docker compose exec api node dist/create-admin.js
 5. انجام یک سفارش آزمایشی از `/order/`
 
 صفحات پنل `noindex` هستند و در sitemap قرار نمی‌گیرند.
+
+## اعلان سفارش جدید
+
+پس از ثبت موفق سفارش، API بدون معطل‌کردن پاسخ مشتری، اعلان ایمیل و تلگرام را
+ارسال می‌کند. نبودن یا قطع‌بودن هر سرویس باعث لغو سفارش نمی‌شود.
+
+برای ایمیل، تنظیمات SMTP را در `.env` وارد کنید. در Gmail باید تأیید دومرحله‌ای
+فعال و به‌جای رمز اصلی حساب، App Password استفاده شود:
+
+```dotenv
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=order.orenzacoffee@gmail.com
+SMTP_PASS=
+SMTP_FROM=Orenza Orders <order.orenzacoffee@gmail.com>
+ORDER_NOTIFICATION_EMAIL=order.orenzacoffee@gmail.com
+```
+
+برای تلگرام، Bot را با BotFather بسازید، آن را مدیر کانال سفارش‌ها کنید و سپس
+این دو مقدار را وارد کنید. شناسه کانال می‌تواند نام عمومی مانند
+`@orenza_orders` یا شناسه عددی کانال باشد:
+
+```dotenv
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_ORDER_CHAT_ID=
+```
