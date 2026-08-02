@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import type { Pool } from "pg";
-import { createInvoicePdf, readEmailBrandLogo, readEmailFonts, type InvoiceBranding } from "./invoice-pdf.js";
+import { createInvoicePdf, readEmailBrandLogo, type InvoiceBranding } from "./invoice-pdf.js";
 import { readInvoiceSignature } from "./invoice-signatures.js";
 import { readPaymentReceipt } from "./payment-receipts.js";
 
@@ -158,21 +158,18 @@ export const sendOrderEmail = async (
   });
   const tableRows = order.items.map((item) => `
     <tr>
-      <td style="padding:12px 10px;border-bottom:1px solid #eee5d8;text-align:right">
+      <td style="padding:9px 10px;border-bottom:1px solid #eee5d8;text-align:right">
         <strong style="display:block;color:#173f30">${escapeHtml(item.productTitle)}</strong>
-        <span style="color:#817568;font-size:12px">${escapeHtml(itemLabel(item))}</span>
+        <span style="color:#817568;font-size:11px">${escapeHtml(itemLabel(item))}</span>
       </td>
-      <td style="padding:12px 10px;border-bottom:1px solid #eee5d8;text-align:center;white-space:nowrap">${money.format(item.quantity)}</td>
-      <td style="padding:12px 10px;border-bottom:1px solid #eee5d8;text-align:left;white-space:nowrap">${money.format(Number(item.totalPrice))} تومان</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #eee5d8;text-align:center;white-space:nowrap">${money.format(item.quantity)}</td>
+      <td style="padding:9px 10px;border-bottom:1px solid #eee5d8;text-align:left;white-space:nowrap">${money.format(Number(item.totalPrice))} تومان</td>
     </tr>`).join("");
-  const [invoicePdf, brandLogo, emailFonts] = await Promise.all([
+  const [invoicePdf, brandLogo] = await Promise.all([
     createInvoicePdf(order, branding),
-    readEmailBrandLogo(),
-    readEmailFonts()
+    readEmailBrandLogo()
   ]);
   const logoCid = `orenza-logo-${order.id}@orenza`;
-  const regularFontCid = `dana-regular-${order.id}@orenza`;
-  const demiBoldFontCid = `dana-demibold-${order.id}@orenza`;
   const receiptCid = paymentReceipt ? `payment-receipt-${order.id}@orenza` : undefined;
   await transporter.sendMail({
     from: process.env.SMTP_FROM?.trim() || user || recipient,
@@ -204,52 +201,57 @@ export const sendOrderEmail = async (
     ].filter(Boolean).join("\n"),
     html: `
       <style>
-        @font-face { font-family:'Dana'; src:url('cid:${regularFontCid}') format('truetype'); font-style:normal; font-weight:400; }
-        @font-face { font-family:'Dana'; src:url('cid:${demiBoldFontCid}') format('truetype'); font-style:normal; font-weight:600 800; }
         .orenza-email, .orenza-email * { font-family:'Dana',Tahoma,Arial,sans-serif !important; }
+        .orenza-email { font-size:13px; line-height:1.75; }
+        .orenza-email strong { font-weight:600; }
+        @media only screen and (max-width:600px) {
+          .orenza-email { padding:10px !important; }
+          .orenza-email-content { padding:18px 14px !important; }
+          .orenza-email-header { padding:18px 16px !important; }
+        }
       </style>
-      <div class="orenza-email" dir="rtl" style="margin:0;background:#f3eee6;padding:28px 12px;font-family:'Dana',Tahoma,Arial,sans-serif;line-height:1.9;color:#302c27">
+      <div class="orenza-email" dir="rtl" style="margin:0;background:#f3eee6;padding:20px 10px;font-family:'Dana',Tahoma,Arial,sans-serif;font-size:13px;line-height:1.75;color:#302c27">
         <div style="max-width:680px;margin:auto;overflow:hidden;border-radius:16px;background:#fffdf9;box-shadow:0 8px 30px rgba(52,38,21,.10)">
-          <div style="background:#1e1d1a;padding:26px 30px;color:#fff">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;direction:ltr">
-              <div style="display:flex;align-items:center;gap:12px">
-                <img src="cid:${logoCid}" width="54" height="54" alt="Orenza" style="display:block;border:0">
-                <div><strong style="display:block;color:#e2c58d;font-size:20px;letter-spacing:4px">${escapeHtml(branding.brandNameEn)}</strong><span style="color:#a9987c;font-size:10px;letter-spacing:2px">COFFEE ROASTERS</span></div>
+          <div class="orenza-email-header" style="background:#1e1d1a;padding:20px 24px;color:#fff">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;direction:ltr">
+              <div style="display:flex;align-items:center;gap:10px">
+                <img src="cid:${logoCid}" width="46" height="46" alt="Orenza" style="display:block;border:0;background:transparent">
+                <div><strong style="display:block;color:#e2c58d;font-size:17px;line-height:1.4;letter-spacing:3px">${escapeHtml(branding.brandNameEn)}</strong><span style="color:#a9987c;font-size:9px;letter-spacing:1.5px">COFFEE ROASTERS</span></div>
               </div>
-              <span style="direction:rtl;color:#d8c9b2;font-size:13px">سفارش جدید ثبت شد</span>
+              <span style="direction:rtl;color:#d8c9b2;font-size:12px">سفارش جدید ثبت شد</span>
             </div>
           </div>
-          <div style="padding:28px 30px">
-            <div style="margin-bottom:20px;border-right:4px solid #b88a42;padding-right:14px">
-              <span style="color:#8e806d;font-size:12px">شماره سفارش</span>
-              <h1 style="margin:2px 0;color:#173f30;font-size:23px;direction:ltr;text-align:right">${escapeHtml(order.orderNumber)}</h1>
+          <div class="orenza-email-content" style="padding:22px 24px">
+            <div style="margin-bottom:16px;border-right:3px solid #b88a42;padding-right:12px">
+              <span style="color:#8e806d;font-size:11px">شماره سفارش</span>
+              <h1 style="margin:2px 0;color:#173f30;font-size:19px;line-height:1.5;direction:ltr;text-align:right">${escapeHtml(order.orderNumber)}</h1>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-              <div style="border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">مشتری</span><strong>${escapeHtml(order.customerName)}</strong></div>
-              <div style="border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">شماره تماس</span><strong style="direction:ltr">${escapeHtml(order.customerPhone)}</strong></div>
-              <div style="border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">تاریخ ثبت</span><strong>${escapeHtml(orderDate.format(new Date(order.createdAt)))}</strong></div>
-              <div style="border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">وضعیت سفارش</span><strong>${escapeHtml(orderStatusLabel(order.orderStatus))}</strong></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+              <div style="border:1px solid #e5dbc9;border-radius:9px;background:#faf6ef;padding:10px"><span style="display:block;color:#897d6e;font-size:10px">مشتری</span><strong>${escapeHtml(order.customerName)}</strong></div>
+              <div style="border:1px solid #e5dbc9;border-radius:9px;background:#faf6ef;padding:10px"><span style="display:block;color:#897d6e;font-size:10px">شماره تماس</span><strong style="direction:ltr">${escapeHtml(order.customerPhone)}</strong></div>
+              <div style="border:1px solid #e5dbc9;border-radius:9px;background:#faf6ef;padding:10px"><span style="display:block;color:#897d6e;font-size:10px">تاریخ ثبت</span><strong>${escapeHtml(orderDate.format(new Date(order.createdAt)))}</strong></div>
+              <div style="border:1px solid #e5dbc9;border-radius:9px;background:#faf6ef;padding:10px"><span style="display:block;color:#897d6e;font-size:10px">وضعیت سفارش</span><strong>${escapeHtml(orderStatusLabel(order.orderStatus))}</strong></div>
               <div style="grid-column:1/-1;border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">نشانی و روش ارسال</span><strong>${escapeHtml(`${order.customerProvince}، ${order.customerCity}، ${order.customerAddress}`)}</strong><br><span style="color:#746b60;font-size:12px">${escapeHtml(shippingLabel(order.shippingMethod))} · کدپستی ${escapeHtml(order.customerPostalCode)}</span></div>
               <div style="border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">روش پرداخت</span><strong>${escapeHtml(order.paymentMethodTitle || "—")}</strong></div>
               <div style="border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">وضعیت پرداخت</span><strong>${escapeHtml(paymentStatusLabel(order.paymentStatus))}</strong></div>
               ${order.paymentRefId ? `<div style="grid-column:1/-1;border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">کد پیگیری پرداخت</span><strong>${escapeHtml(order.paymentRefId)}</strong></div>` : ""}
               ${order.customerNote ? `<div style="grid-column:1/-1;border:1px solid #e5dbc9;border-radius:10px;background:#faf6ef;padding:12px"><span style="display:block;color:#897d6e;font-size:11px">یادداشت مشتری</span><strong>${escapeHtml(order.customerNote)}</strong></div>` : ""}
             </div>
-            <table role="presentation" style="width:100%;border-collapse:collapse;border:1px solid #ded3c2;border-radius:10px;font-size:13px">
-              <thead><tr style="background:#173f30;color:#fff"><th style="padding:10px;text-align:right">محصول</th><th style="padding:10px;text-align:center">تعداد</th><th style="padding:10px;text-align:left">مبلغ</th></tr></thead>
+            <table role="presentation" style="width:100%;border-collapse:collapse;border:1px solid #ded3c2;border-radius:10px;font-size:12px">
+              <thead><tr style="background:#173f30;color:#fff"><th style="padding:8px 10px;text-align:right">محصول</th><th style="padding:8px 10px;text-align:center">تعداد</th><th style="padding:8px 10px;text-align:left">مبلغ</th></tr></thead>
               <tbody>${tableRows}</tbody>
             </table>
             <div style="margin-top:18px;overflow:hidden;border:1px solid #ded3c2;border-radius:12px">
               <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #eee5d8"><span>جمع اقلام</span><strong>${money.format(Number(order.totalAmount))} تومان</strong></div>
               <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #eee5d8"><span>تخفیف</span><strong>${money.format(Number(order.discountAmount))} تومان</strong></div>
               <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #eee5d8"><span>مالیات ارزش افزوده</span><strong>${money.format(Number(order.taxAmount))} تومان</strong></div>
-              <div style="background:#173f30;padding:14px 18px;color:#fff;text-align:center"><span style="display:block;color:#b9c9c2;font-size:12px">مبلغ نهایی سفارش</span><strong style="font-size:22px">${money.format(Number(order.finalAmount))} تومان</strong></div>
+              <div style="background:#173f30;padding:11px 16px;color:#fff;text-align:center"><span style="display:block;color:#b9c9c2;font-size:10px">مبلغ نهایی سفارش</span><strong style="font-size:18px">${money.format(Number(order.finalAmount))} تومان</strong></div>
             </div>
             ${paymentReceipt && receiptCid ? `<div style="margin-top:18px;border:1px solid #ded3c2;border-radius:12px;background:#faf6ef;padding:14px;text-align:center"><strong style="display:block;margin-bottom:10px;color:#173f30">تصویر فیش واریزی مشتری</strong><img src="cid:${receiptCid}" alt="فیش واریزی" style="display:block;max-width:100%;max-height:420px;margin:auto;border-radius:8px;border:1px solid #e0d5c5"></div>` : ""}
             <p style="margin:16px 0 0;color:#70675d;text-align:center;font-size:12px">فاکتور رسمی این سفارش با شناسه ملی ${escapeHtml(branding.invoiceNationalId)} به‌صورت PDF پیوست شده است.${paymentReceipt ? " تصویر فیش واریزی نیز در پیوست‌های ایمیل قرار دارد." : ""}</p>
-            <p style="margin:20px 0 0;text-align:center"><a href="${escapeHtml(orderAdminUrl(order))}" style="display:inline-block;border-radius:9px;background:#b88a42;padding:11px 22px;color:#fff;text-decoration:none;font-weight:600">مشاهده سفارش در پنل مدیریت</a></p>
+            <p style="margin:16px 0 0;text-align:center"><a href="${escapeHtml(orderAdminUrl(order))}" style="display:inline-block;border-radius:8px;background:#b88a42;padding:9px 18px;color:#fff;text-decoration:none;font-size:12px;font-weight:600">مشاهده سفارش در پنل مدیریت</a></p>
           </div>
-          <div style="border-top:1px solid #e6dccd;background:#f8f3ea;padding:18px 30px;text-align:center"><strong style="display:block;color:#173f30">کیفیت اتفاقی نیست؛ حاصل دقت در انتخاب است.</strong><span style="color:#7e7467;font-size:12px">از اعتماد، همراهی و انتخاب ارزشمند شما سپاسگزاریم.</span></div>
+          <div style="border-top:1px solid #e6dccd;background:#f8f3ea;padding:14px 20px;text-align:center"><strong style="display:block;color:#173f30;font-size:12px">کیفیت اتفاقی نیست؛ حاصل دقت در انتخاب است.</strong><span style="color:#7e7467;font-size:11px">از اعتماد، همراهی و انتخاب ارزشمند شما سپاسگزاریم.</span></div>
         </div>
       </div>`,
     attachments: [
@@ -270,20 +272,6 @@ export const sendOrderEmail = async (
         content: brandLogo,
         contentType: "image/png",
         cid: logoCid,
-        contentDisposition: "inline"
-      },
-      {
-        filename: "Dana-Regular.ttf",
-        content: emailFonts.regular,
-        contentType: "font/ttf",
-        cid: regularFontCid,
-        contentDisposition: "inline"
-      },
-      {
-        filename: "Dana-DemiBold.ttf",
-        content: emailFonts.demiBold,
-        contentType: "font/ttf",
-        cid: demiBoldFontCid,
         contentDisposition: "inline"
       }
     ]

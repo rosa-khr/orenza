@@ -66,15 +66,6 @@ export const readEmailBrandLogo = async () => {
   return readFile(logoPath);
 };
 
-export const readEmailFonts = async () => {
-  const root = assetRoot();
-  const [regular, demiBold] = await Promise.all([
-    readFile(path.join(root, "fonts/Dana-Regular.ttf")),
-    readFile(path.join(root, "fonts/Dana-DemiBold.ttf"))
-  ]);
-  return { regular, demiBold };
-};
-
 const asDataUri = (data: Buffer, mime: string) => `data:${mime};base64,${data.toString("base64")}`;
 
 const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
