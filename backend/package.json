@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "migrate": "node dist/migrate.js",
     "create-admin": "node dist/create-admin.js",
+    "test:email": "node dist/test-order-email.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:account": "node tests/account-smoke.mjs"
   },
@@ -21,6 +22,7 @@
     "google-auth-library": "^10.4.1",
     "nodemailer": "^9.0.3",
     "pg": "^8.16.3",
+    "puppeteer-core": "24.37.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {

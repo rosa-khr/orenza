@@ -124,6 +124,11 @@ docker compose exec api node dist/create-admin.js
 پس از ثبت موفق سفارش، API بدون معطل‌کردن پاسخ مشتری، اعلان ایمیل و تلگرام را
 ارسال می‌کند. نبودن یا قطع‌بودن هر سرویس باعث لغو سفارش نمی‌شود.
 
+ایمیل سفارش با هویت بصری اورنزا ارسال می‌شود و یک فاکتور رسمی PDF با فونت
+دانا، لوگو، شناسه ملی، جزئیات خریدار، اقلام، مالیات، مبلغ نهایی و امضای ثبت‌شده
+در تنظیمات پنل به آن پیوست می‌شود. در سفارش کارت‌به‌کارت، تصویر فیش واریزی نیز
+به‌صورت خودکار به همان ایمیل پیوست خواهد شد.
+
 برای ایمیل، تنظیمات SMTP را در `.env` وارد کنید. در Gmail باید تأیید دومرحله‌ای
 فعال و به‌جای رمز اصلی حساب، App Password استفاده شود:
 
@@ -144,4 +149,25 @@ ORDER_NOTIFICATION_EMAIL=order.orenzacoffee@gmail.com
 ```dotenv
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_ORDER_CHAT_ID=
+```
+
+### تست ایمیل سفارش روی لوکال
+
+برای تست قالب و محتوای ایمیل بدون استفاده از رمز Gmail، سرویس Mailpit را همراه
+پروژه اجرا کنید:
+
+```bash
+docker compose -f compose.yaml -f compose.email-test.yaml up -d --build
+docker compose -f compose.yaml -f compose.email-test.yaml exec api npm run test:email
+```
+
+صندوق ایمیل تست در `http://127.0.0.1:8025` در دسترس است. در این حالت اعلان
+تلگرام غیرفعال است. برای ارسال واقعی به صندوق Gmail اورنزا، مقادیر SMTP فایل
+`.env`، به‌خصوص `SMTP_PASS`، باید با App Password حساب اورنزا تکمیل شوند.
+
+برای تست ارسال واقعی Gmail هنگام ثبت سفارش از سایت لوکال، Chrome headless باید
+روی میزبان با پورت دیباگ `9222` فعال باشد و پروژه با override زیر اجرا شود:
+
+```bash
+docker compose -f compose.yaml -f compose.local.yaml up -d --build
 ```

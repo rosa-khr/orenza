@@ -1,0 +1,27 @@
+services:
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.local
+    environment:
+      PUBLIC_SITE_URL: http://127.0.0.1:3001
+      CHROMIUM_REMOTE_URL: http://host.docker.internal:9222
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: Orenza Orders <order.orenzacoffee@gmail.com>
+      ORDER_NOTIFICATION_EMAIL: order.orenzacoffee@gmail.com
+      TELEGRAM_BOT_TOKEN: ""
+      TELEGRAM_ORDER_CHAT_ID: ""
+    depends_on:
+      mailpit:
+        condition: service_started

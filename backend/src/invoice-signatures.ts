@@ -1,5 +1,5 @@
 import { createReadStream } from "node:fs";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const signatureDirectory =
@@ -53,4 +53,13 @@ export const openInvoiceSignature = (fileName: string) => {
   const extension = path.extname(safeName).slice(1);
   const mime = extension === "jpg" ? "image/jpeg" : `image/${extension}`;
   return { stream: createReadStream(path.join(signatureDirectory, safeName)), mime };
+};
+
+export const readInvoiceSignature = async (fileName: string) => {
+  const safeName = path.basename(fileName);
+  if (safeName !== fileName || !/^[0-9a-f-]+\.(?:jpg|png|webp)$/.test(safeName)) return null;
+  const extension = path.extname(safeName).slice(1);
+  const mime = extension === "jpg" ? "image/jpeg" : `image/${extension}`;
+  const data = await readFile(path.join(signatureDirectory, safeName)).catch(() => null);
+  return data ? { data, mime } : null;
 };
