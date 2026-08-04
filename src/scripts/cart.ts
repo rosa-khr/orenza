@@ -105,6 +105,7 @@ export const initCart = () => {
   let selectedPaymentCard: PaymentCard | null = null;
   let selectedReceipt: File | null = null;
   let receiptSelectionId = 0;
+  let addedChoiceTimer: number | null = null;
   let alertFocusTarget: HTMLElement | null = null;
   let alertAfterClose: (() => void) | null = null;
   let alertTimer: number | null = null;
@@ -567,15 +568,24 @@ export const initCart = () => {
 
   const showAddedChoice = (item: CartItemInput) => {
     if (!addedChoice) return;
+    if (addedChoiceTimer !== null) window.clearTimeout(addedChoiceTimer);
     if (addedChoiceTitle) addedChoiceTitle.textContent = item.productTitle || item.blend || "انتخاب اورنزا";
     addedChoice.hidden = false;
     addedChoice.classList.remove("is-visible");
     requestAnimationFrame(() => addedChoice.classList.add("is-visible"));
-    window.setTimeout(() => addedChoice.classList.remove("is-visible"), 5200);
+    addedChoiceTimer = window.setTimeout(() => {
+      addedChoice.classList.remove("is-visible");
+      window.setTimeout(() => { addedChoice.hidden = true; }, 220);
+      addedChoiceTimer = null;
+    }, 5200);
   };
 
   const hideAddedChoice = () => {
     if (!addedChoice) return;
+    if (addedChoiceTimer !== null) {
+      window.clearTimeout(addedChoiceTimer);
+      addedChoiceTimer = null;
+    }
     addedChoice.classList.remove("is-visible");
     window.setTimeout(() => { addedChoice.hidden = true; }, 220);
   };

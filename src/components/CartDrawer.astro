@@ -130,14 +130,6 @@ import Icon from "./Icon.astro";
       <small data-copy-status>پس از تکمیل اطلاعات، روی ثبت سفارش بزن؛ اگر موردی ناقص باشد همان‌جا مشخص می‌شود.</small>
     </div>
   </aside>
-  <div class="cart-added-choice" data-cart-added-choice hidden role="status" aria-live="polite">
-    <div>
-      <span>به سبد اضافه شد</span>
-      <strong data-cart-added-title>انتخاب اورنزا</strong>
-    </div>
-    <button type="button" data-cart-continue>ادامه انتخاب</button>
-    <button type="button" data-cart-view>رفتن به سبد</button>
-  </div>
   <div class="checkout-alert" data-checkout-alert hidden role="alertdialog" aria-modal="true" aria-labelledby="checkout-alert-title" aria-describedby="checkout-alert-message">
     <button class="checkout-alert-backdrop" type="button" data-checkout-alert-close aria-label="بستن هشدار"></button>
     <section class="checkout-alert-card">
@@ -148,4 +140,13 @@ import Icon from "./Icon.astro";
       <button type="button" data-checkout-alert-close data-checkout-alert-action>متوجه شدم</button>
     </section>
   </div>
+</div>
+
+<div class="cart-added-choice" data-cart-added-choice hidden role="dialog" aria-label="محصول به سبد خرید اضافه شد" aria-live="polite">
+  <div>
+    <span>به سبد اضافه شد</span>
+    <strong data-cart-added-title>انتخاب اورنزا</strong>
+  </div>
+  <button type="button" data-cart-continue>ادامه خرید</button>
+  <button type="button" data-cart-view>رفتن به سبد خرید</button>
 </div>
