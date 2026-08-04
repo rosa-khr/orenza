@@ -111,11 +111,11 @@ import Icon from "./Icon.astro";
         </header>
         <label>
           <span>کد پیگیری تراکنش</span>
-          <input type="text" inputmode="numeric" maxlength="80" data-payment-ref placeholder="کد درج‌شده روی رسید بانکی" />
+          <input type="text" inputmode="numeric" minlength="4" maxlength="80" data-payment-ref placeholder="کد درج‌شده روی رسید بانکی" required />
         </label>
         <label class="payment-receipt-picker">
           <span>تصویر فیش واریزی</span>
-          <input type="file" accept="image/*,.heic,.heif" data-payment-receipt />
+          <input type="file" accept="image/*,.heic,.heif" data-payment-receipt required />
           <small data-payment-receipt-name>عکس دوربین یا گالری؛ حجم به‌صورت خودکار بهینه می‌شود</small>
         </label>
       </section>
@@ -123,7 +123,7 @@ import Icon from "./Icon.astro";
         مبلغ نهایی را به یکی از کارت‌های بالا واریز کن. پس از ثبت کد پیگیری و فیش، سفارش برای تأیید مدیریت ارسال می‌شود و آماده‌سازی بعد از تأیید آغاز خواهد شد.
       </p>
 
-      <button class="checkout-register-order" type="button" data-register-order>
+      <button class="checkout-register-order" type="button" data-register-order disabled aria-disabled="true">
         ثبت سفارش و ارسال برای تأیید
       </button>
       <div class="checkout-order-state" data-order-state hidden aria-live="polite"></div>

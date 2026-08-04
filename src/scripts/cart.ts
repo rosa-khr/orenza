@@ -132,12 +132,45 @@ export const initCart = () => {
   );
 
   const checkoutIsComplete = () =>
-    addressInputs.every((input) => input.value.trim().length > 0 && input.checkValidity()) &&
+    addressInputs.every((input) => {
+      input.setCustomValidity("");
+      return input.value.trim().length > 0 && input.checkValidity();
+    }) &&
     shippingInputs.some((input) => input.checked) &&
     paymentInputs.some((input) => input.checked) &&
     Boolean(paymentMethod && selectedPaymentCard) &&
-    Boolean(paymentRef?.value.trim() && selectedReceipt) &&
+    Boolean(paymentRef?.value.trim() && paymentRef.checkValidity() && selectedReceipt) &&
     cart.length > 0;
+
+  const setCheckoutFieldError = (
+    control: HTMLInputElement | HTMLTextAreaElement,
+    message = ""
+  ) => {
+    const label = control.closest("label");
+    if (!label) return;
+    let error = label.querySelector<HTMLElement>(".checkout-field-error");
+    if (!error) {
+      error = document.createElement("small");
+      error.className = "checkout-field-error";
+      error.setAttribute("aria-live", "polite");
+      label.append(error);
+    }
+    label.classList.toggle("is-invalid", Boolean(message));
+    control.setAttribute("aria-invalid", message ? "true" : "false");
+    error.textContent = message;
+    error.hidden = !message;
+  };
+
+  const validateCheckoutField = (control: HTMLInputElement | HTMLTextAreaElement) => {
+    control.setCustomValidity("");
+    if (control.value.trim() && control.checkValidity()) {
+      setCheckoutFieldError(control);
+      return true;
+    }
+    validateControlFa(control);
+    setCheckoutFieldError(control, control.validationMessage || "این فیلد را کامل کن.");
+    return false;
+  };
 
   const updateTotals = () => {
     if (cartSubtotal) cartSubtotal.textContent = `${numberFormatter.format(subtotal())} تومان`;
@@ -266,7 +299,10 @@ export const initCart = () => {
     if (customerCity) customerCity.value = address.city;
     if (customerAddress) customerAddress.value = address.address_line;
     if (customerPostal) customerPostal.value = address.postal_code;
-    addressInputs.forEach((input) => input.setCustomValidity(""));
+    addressInputs.forEach((input) => {
+      input.setCustomValidity("");
+      setCheckoutFieldError(input);
+    });
     if (customerFields) customerFields.hidden = true;
     if (savedAddressState) savedAddressState.textContent = `ارسال به نشانی «${address.label}»`;
     updateOrderLinks();
@@ -387,10 +423,17 @@ export const initCart = () => {
 
   const updateOrderLinks = () => {
     const isComplete = checkoutIsComplete();
-    if (copyStatus && isComplete) {
-      copyStatus.textContent = "اطلاعات پرداخت کامل است؛ سفارش را برای تأیید مدیریت ثبت کن.";
+    if (copyStatus) {
+      copyStatus.classList.toggle("is-ready", isComplete);
+      copyStatus.textContent = isComplete
+        ? "اطلاعات کامل است؛ اکنون می‌توانی سفارش را ثبت کنی."
+        : "برای فعال‌شدن دکمه ثبت سفارش، همه فیلدهای اجباری و اطلاعات پرداخت را کامل کن.";
     }
-    if (registerOrderButton) registerOrderButton.disabled = Boolean(submittedOrder);
+    if (registerOrderButton) {
+      const disabled = Boolean(submittedOrder) || !isComplete;
+      registerOrderButton.disabled = disabled;
+      registerOrderButton.setAttribute("aria-disabled", String(disabled));
+    }
   };
 
   const updateSubmittedState = () => {
@@ -598,9 +641,17 @@ export const initCart = () => {
       if (input === customerPhone || input === customerPostal) {
         input.value = normalizeDigits(input.value);
       }
-      updateOrderLinks();
+      input.setCustomValidity("");
+      if (input.getAttribute("aria-invalid") === "true" && input.value.trim() && input.checkValidity()) {
+        setCheckoutFieldError(input);
+      }
       submittedOrder = null;
       updateSubmittedState();
+      updateOrderLinks();
+    });
+    input.addEventListener("blur", () => {
+      validateCheckoutField(input);
+      updateOrderLinks();
     });
   });
   [...shippingInputs, ...paymentInputs].forEach((input) => input.addEventListener("change", () => {
@@ -619,8 +670,16 @@ export const initCart = () => {
 
   paymentRef?.addEventListener("input", () => {
     paymentRef.value = normalizeDigits(paymentRef.value);
+    paymentRef.setCustomValidity("");
+    if (paymentRef.getAttribute("aria-invalid") === "true" && paymentRef.value.trim() && paymentRef.checkValidity()) {
+      setCheckoutFieldError(paymentRef);
+    }
     submittedOrder = null;
     updateSubmittedState();
+    updateOrderLinks();
+  });
+  paymentRef?.addEventListener("blur", () => {
+    validateCheckoutField(paymentRef);
     updateOrderLinks();
   });
   const loadReceiptImage = async (file: File) => {
@@ -692,6 +751,8 @@ export const initCart = () => {
     const selectionId = ++receiptSelectionId;
     const file = paymentReceipt.files?.[0];
     selectedReceipt = null;
+    paymentReceipt.closest("label")?.classList.remove("is-invalid");
+    paymentReceipt.setAttribute("aria-invalid", "false");
     if (!file) {
       if (paymentReceiptName) paymentReceiptName.textContent = "عکس دوربین یا گالری؛ حجم به‌صورت خودکار بهینه می‌شود";
     } else {
@@ -700,6 +761,8 @@ export const initCart = () => {
         const prepared = await prepareReceipt(file);
         if (selectionId !== receiptSelectionId) return;
         selectedReceipt = prepared;
+        paymentReceipt.closest("label")?.classList.remove("is-invalid");
+        paymentReceipt.setAttribute("aria-invalid", "false");
         if (paymentReceiptName) {
           const size = Math.max(1, Math.round(prepared.size / 1024));
           paymentReceiptName.textContent = `${prepared.name} · ${numberFormatter.format(size)} کیلوبایت · آماده ارسال`;
@@ -708,6 +771,8 @@ export const initCart = () => {
         if (selectionId !== receiptSelectionId) return;
         paymentReceipt.value = "";
         selectedReceipt = null;
+        paymentReceipt.closest("label")?.classList.add("is-invalid");
+        paymentReceipt.setAttribute("aria-invalid", "true");
         if (paymentReceiptName) {
           const message = error instanceof Error
             ? error.message
