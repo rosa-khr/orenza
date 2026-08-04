@@ -97,6 +97,8 @@ export const initCart = () => {
   let accountRequest: Promise<void> | null = null;
   let paymentMethod: PaymentMethod | null = null;
   let selectedPaymentCard: PaymentCard | null = null;
+  let selectedReceipt: File | null = null;
+  let receiptSelectionId = 0;
   let discountAmount = 0;
   let submittedOrder: SubmittedOrder | null = null;
 
@@ -125,7 +127,7 @@ export const initCart = () => {
     shippingInputs.some((input) => input.checked) &&
     paymentInputs.some((input) => input.checked) &&
     Boolean(paymentMethod && selectedPaymentCard) &&
-    Boolean(paymentRef?.value.trim() && paymentReceipt?.files?.[0]) &&
+    Boolean(paymentRef?.value.trim() && selectedReceipt) &&
     cart.length > 0;
 
   const updateTotals = () => {
@@ -315,7 +317,7 @@ export const initCart = () => {
       if (copyStatus) copyStatus.textContent = "کد پیگیری تراکنش را وارد کن.";
       return;
     }
-    if (!paymentReceipt?.files?.[0]) {
+    if (!selectedReceipt) {
       paymentReceipt?.scrollIntoView({ behavior: "smooth", block: "center" });
       paymentReceipt?.focus();
       if (copyStatus) copyStatus.textContent = "تصویر فیش واریزی را انتخاب کن.";
@@ -349,6 +351,7 @@ export const initCart = () => {
   const registerOrder = async () => {
     if (submittedOrder) return submittedOrder;
     if (!paymentMethod) throw new Error("روش پرداخت فعال پیدا نشد.");
+    if (!selectedReceipt) throw new Error("تصویر فیش واریزی را انتخاب کن.");
     const shipping = shippingInputs.find((input) => input.checked)?.value;
     const orderPayload = {
         customerName: customerName?.value.trim(),
@@ -375,14 +378,26 @@ export const initCart = () => {
       };
     const formData = new FormData();
     formData.append("payload", JSON.stringify(orderPayload));
-    formData.append("receipt", paymentReceipt!.files![0]!);
+    formData.append("receipt", selectedReceipt, selectedReceipt.name);
     const response = await fetch("/api/v1/orders/card-transfer", {
       method: "POST",
       credentials: "include",
       body: formData
     });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "ثبت سفارش انجام نشد.");
+    const responseText = await response.text();
+    let payload: { error?: string; order?: SubmittedOrder } = {};
+    try {
+      payload = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      // Nginx and mobile networks may return an HTML error page instead of JSON.
+    }
+    if (!response.ok) {
+      const fallback = response.status === 413
+        ? "حجم تصویر فیش زیاد است؛ یک تصویر کوچک‌تر انتخاب کن."
+        : "ثبت سفارش انجام نشد؛ اتصال اینترنت را بررسی و دوباره تلاش کن.";
+      throw new Error(payload.error || fallback);
+    }
+    if (!payload.order) throw new Error("پاسخ ثبت سفارش کامل نبود؛ دوباره تلاش کن.");
     submittedOrder = payload.order as SubmittedOrder;
     discountAmount = submittedOrder.discountAmount;
     updateTotals();
@@ -406,7 +421,10 @@ export const initCart = () => {
       if (registerOrderButton) registerOrderButton.textContent = "سفارش ثبت شد ✓";
       window.location.assign(`/order-success/?order=${encodeURIComponent(order.orderNumber)}`);
     } catch (error) {
-      if (copyStatus) copyStatus.textContent = error instanceof Error ? error.message : "ثبت سفارش انجام نشد.";
+      const message = error instanceof TypeError
+        ? "ارتباط با سرور برقرار نشد؛ اینترنت موبایل را بررسی و دوباره تلاش کن."
+        : error instanceof Error ? error.message : "ثبت سفارش انجام نشد.";
+      if (copyStatus) copyStatus.textContent = message;
     } finally {
       if (registerOrderButton) registerOrderButton.disabled = Boolean(submittedOrder);
     }
@@ -545,13 +563,97 @@ export const initCart = () => {
     updateSubmittedState();
     updateOrderLinks();
   });
-  paymentReceipt?.addEventListener("change", () => {
+  const loadReceiptImage = async (file: File) => {
+    if ("createImageBitmap" in window) {
+      try {
+        const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+        return {
+          width: bitmap.width,
+          height: bitmap.height,
+          draw: (context: CanvasRenderingContext2D, width: number, height: number) => {
+            context.drawImage(bitmap, 0, 0, width, height);
+            bitmap.close();
+          }
+        };
+      } catch {
+        // Safari may only decode some camera formats through an image element.
+      }
+    }
+
+    const url = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      return {
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        draw: (context: CanvasRenderingContext2D, width: number, height: number) => {
+          context.drawImage(image, 0, 0, width, height);
+        }
+      };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const prepareReceipt = async (file: File) => {
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    const maxUploadSize = 4.5 * 1024 * 1024;
+    if (allowedTypes.has(file.type) && file.size <= maxUploadSize) return file;
+    if (!file.type.startsWith("image/") && !/\.(?:heic|heif)$/i.test(file.name)) {
+      throw new Error("فیش باید یک فایل تصویری باشد.");
+    }
+
+    const source = await loadReceiptImage(file);
+    const maxSide = 1800;
+    const scale = Math.min(1, maxSide / Math.max(source.width, source.height));
+    const width = Math.max(1, Math.round(source.width * scale));
+    const height = Math.max(1, Math.round(source.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("مرورگر نتوانست تصویر فیش را آماده کند.");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+    source.draw(context, width, height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+    canvas.width = 1;
+    canvas.height = 1;
+    if (!blob || blob.size > maxUploadSize) {
+      throw new Error("حجم تصویر فیش زیاد است؛ لطفاً از فیش اسکرین‌شات بگیر و همان را انتخاب کن.");
+    }
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "payment-receipt";
+    return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+  };
+
+  paymentReceipt?.addEventListener("change", async () => {
+    const selectionId = ++receiptSelectionId;
     const file = paymentReceipt.files?.[0];
-    if (file && file.size > 5 * 1024 * 1024) {
-      paymentReceipt.value = "";
-      if (paymentReceiptName) paymentReceiptName.textContent = "حجم تصویر نباید بیشتر از ۵ مگابایت باشد.";
-    } else if (paymentReceiptName) {
-      paymentReceiptName.textContent = file?.name || "JPG، PNG یا WebP تا ۵ مگابایت";
+    selectedReceipt = null;
+    if (!file) {
+      if (paymentReceiptName) paymentReceiptName.textContent = "عکس دوربین یا گالری؛ حجم به‌صورت خودکار بهینه می‌شود";
+    } else {
+      if (paymentReceiptName) paymentReceiptName.textContent = "در حال آماده‌سازی تصویر…";
+      try {
+        const prepared = await prepareReceipt(file);
+        if (selectionId !== receiptSelectionId) return;
+        selectedReceipt = prepared;
+        if (paymentReceiptName) {
+          const size = Math.max(1, Math.round(prepared.size / 1024));
+          paymentReceiptName.textContent = `${prepared.name} · ${numberFormatter.format(size)} کیلوبایت · آماده ارسال`;
+        }
+      } catch (error) {
+        if (selectionId !== receiptSelectionId) return;
+        paymentReceipt.value = "";
+        selectedReceipt = null;
+        if (paymentReceiptName) {
+          paymentReceiptName.textContent = error instanceof Error
+            ? error.message
+            : "تصویر فیش قابل پردازش نیست؛ تصویر دیگری انتخاب کن.";
+        }
+      }
     }
     submittedOrder = null;
     updateSubmittedState();
