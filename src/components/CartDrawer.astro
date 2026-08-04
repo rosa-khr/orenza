@@ -141,11 +141,11 @@ import Icon from "./Icon.astro";
   <div class="checkout-alert" data-checkout-alert hidden role="alertdialog" aria-modal="true" aria-labelledby="checkout-alert-title" aria-describedby="checkout-alert-message">
     <button class="checkout-alert-backdrop" type="button" data-checkout-alert-close aria-label="بستن هشدار"></button>
     <section class="checkout-alert-card">
-      <span class="checkout-alert-icon" aria-hidden="true">!</span>
+      <span class="checkout-alert-icon" data-checkout-alert-icon aria-hidden="true">!</span>
       <small>ORDER NOTICE</small>
-      <h3 id="checkout-alert-title">امکان ثبت سفارش نیست</h3>
+      <h3 id="checkout-alert-title" data-checkout-alert-title>امکان ثبت سفارش نیست</h3>
       <p id="checkout-alert-message" data-checkout-alert-message></p>
-      <button type="button" data-checkout-alert-close>متوجه شدم</button>
+      <button type="button" data-checkout-alert-close data-checkout-alert-action>متوجه شدم</button>
     </section>
   </div>
 </div>

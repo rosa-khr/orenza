@@ -2861,6 +2861,8 @@ body.mobile-nav-is-open {
 }
 
 .checkout-alert {
+  --checkout-alert-color: #a6443e;
+  --checkout-alert-soft: rgba(166, 68, 62, .1);
   position: fixed;
   z-index: 1400;
   inset: 0;
@@ -2869,6 +2871,16 @@ body.mobile-nav-is-open {
   padding: 20px;
   opacity: 0;
   transition: opacity 180ms ease;
+}
+
+.checkout-alert.is-error {
+  --checkout-alert-color: #a6443e;
+  --checkout-alert-soft: rgba(166, 68, 62, .1);
+}
+
+.checkout-alert.is-success {
+  --checkout-alert-color: #246447;
+  --checkout-alert-soft: rgba(36, 100, 71, .1);
 }
 
 .checkout-alert.is-visible { opacity: 1; }
@@ -2887,7 +2899,7 @@ body.mobile-nav-is-open {
   display: grid;
   width: min(420px, 100%);
   justify-items: center;
-  border: 1px solid rgba(178, 130, 59, .38);
+  border: 1px solid var(--checkout-alert-color);
   border-radius: 16px;
   background: #fffaf1;
   box-shadow: 0 24px 70px rgba(16, 24, 20, .32);
@@ -2905,17 +2917,17 @@ body.mobile-nav-is-open {
   height: 52px;
   place-items: center;
   margin-bottom: 14px;
-  border: 1px solid #b98232;
+  border: 1px solid var(--checkout-alert-color);
   border-radius: 50%;
-  background: rgba(185, 130, 50, .1);
-  color: #9a641d;
+  background: var(--checkout-alert-soft);
+  color: var(--checkout-alert-color);
   font-family: Georgia, serif;
   font-size: 1.55rem;
   font-weight: 700;
 }
 
 .checkout-alert-card > small {
-  color: #aa7b38;
+  color: var(--checkout-alert-color);
   font-size: .62rem;
   font-weight: 700;
   letter-spacing: .16em;
@@ -2926,6 +2938,9 @@ body.mobile-nav-is-open {
   color: var(--green);
   font-size: 1rem;
 }
+
+.checkout-alert.is-error .checkout-alert-card h3 { color: #8e3732; }
+.checkout-alert.is-success .checkout-alert-card h3 { color: #1d553b; }
 
 .checkout-alert-card p {
   margin: 0;
@@ -2938,9 +2953,9 @@ body.mobile-nav-is-open {
   width: 100%;
   min-height: 46px;
   margin-top: 20px;
-  border: 1px solid var(--green);
+  border: 1px solid var(--checkout-alert-color);
   border-radius: 8px;
-  background: var(--green);
+  background: var(--checkout-alert-color);
   color: #fffaf1;
   cursor: pointer;
   font: inherit;

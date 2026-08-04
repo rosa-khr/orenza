@@ -92,7 +92,10 @@ export const initCart = () => {
   const continueChoice = document.querySelector<HTMLButtonElement>("[data-cart-continue]");
   const viewCartChoice = document.querySelector<HTMLButtonElement>("[data-cart-view]");
   const checkoutAlert = document.querySelector<HTMLElement>("[data-checkout-alert]");
+  const checkoutAlertTitle = document.querySelector<HTMLElement>("[data-checkout-alert-title]");
   const checkoutAlertMessage = document.querySelector<HTMLElement>("[data-checkout-alert-message]");
+  const checkoutAlertIcon = document.querySelector<HTMLElement>("[data-checkout-alert-icon]");
+  const checkoutAlertAction = document.querySelector<HTMLButtonElement>("[data-checkout-alert-action]");
   const checkoutAlertCloseButtons = document.querySelectorAll<HTMLButtonElement>("[data-checkout-alert-close]");
   const numberFormatter = new Intl.NumberFormat("fa-IR");
   let lastFocused: HTMLElement | null = null;
@@ -103,6 +106,8 @@ export const initCart = () => {
   let selectedReceipt: File | null = null;
   let receiptSelectionId = 0;
   let alertFocusTarget: HTMLElement | null = null;
+  let alertAfterClose: (() => void) | null = null;
+  let alertTimer: number | null = null;
   let discountAmount = 0;
   let submittedOrder: SubmittedOrder | null = null;
 
@@ -201,23 +206,57 @@ export const initCart = () => {
 
   const closeCheckoutAlert = () => {
     if (!checkoutAlert || checkoutAlert.hidden) return;
+    if (alertTimer !== null) {
+      window.clearTimeout(alertTimer);
+      alertTimer = null;
+    }
     checkoutAlert.classList.remove("is-visible");
     window.setTimeout(() => {
       checkoutAlert.hidden = true;
       alertFocusTarget?.focus();
       alertFocusTarget = null;
+      const afterClose = alertAfterClose;
+      alertAfterClose = null;
+      afterClose?.();
     }, 180);
   };
 
-  const showCheckoutAlert = (message: string, focusTarget?: HTMLElement | null) => {
+  const showCheckoutAlert = (
+    message: string,
+    focusTarget?: HTMLElement | null,
+    variant: "error" | "success" = "error"
+  ) => {
     if (copyStatus) copyStatus.textContent = message;
     if (!checkoutAlert || !checkoutAlertMessage) return;
+    if (alertTimer !== null) window.clearTimeout(alertTimer);
+    alertAfterClose = null;
     alertFocusTarget = focusTarget || null;
+    checkoutAlert.classList.toggle("is-error", variant === "error");
+    checkoutAlert.classList.toggle("is-success", variant === "success");
+    if (checkoutAlertTitle) {
+      checkoutAlertTitle.textContent = variant === "success" ? "سفارش با موفقیت ثبت شد" : "امکان ثبت سفارش نیست";
+    }
+    if (checkoutAlertIcon) checkoutAlertIcon.textContent = variant === "success" ? "✓" : "!";
+    if (checkoutAlertAction) checkoutAlertAction.textContent = variant === "success" ? "مشاهده سفارش" : "متوجه شدم";
     checkoutAlertMessage.textContent = message;
     checkoutAlert.hidden = false;
     requestAnimationFrame(() => checkoutAlert.classList.add("is-visible"));
     checkoutAlert.querySelector<HTMLButtonElement>(".checkout-alert-card button")?.focus();
   };
+
+  const showOrderSuccessAlert = (orderNumber: string) => new Promise<void>((resolve) => {
+    if (!checkoutAlert) {
+      resolve();
+      return;
+    }
+    showCheckoutAlert(
+      `سفارش ${orderNumber} ثبت شد و برای بررسی پرداخت به مدیریت ارسال گردید. تا چند لحظه دیگر به صفحه تأیید سفارش منتقل می‌شوی.`,
+      null,
+      "success"
+    );
+    alertAfterClose = resolve;
+    alertTimer = window.setTimeout(closeCheckoutAlert, 3200);
+  });
 
   const applyAddress = (address: SavedAddress) => {
     submittedOrder = null;
@@ -439,6 +478,7 @@ export const initCart = () => {
       cart = [];
       if (copyStatus) copyStatus.textContent = `سفارش ${order.orderNumber} با موفقیت ثبت شد؛ در حال انتقال…`;
       if (registerOrderButton) registerOrderButton.textContent = "سفارش ثبت شد ✓";
+      await showOrderSuccessAlert(order.orderNumber);
       window.location.assign(`/order-success/?order=${encodeURIComponent(order.orderNumber)}`);
     } catch (error) {
       const message = error instanceof TypeError
