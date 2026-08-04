@@ -91,6 +91,9 @@ export const initCart = () => {
   const addedChoiceTitle = document.querySelector<HTMLElement>("[data-cart-added-title]");
   const continueChoice = document.querySelector<HTMLButtonElement>("[data-cart-continue]");
   const viewCartChoice = document.querySelector<HTMLButtonElement>("[data-cart-view]");
+  const checkoutAlert = document.querySelector<HTMLElement>("[data-checkout-alert]");
+  const checkoutAlertMessage = document.querySelector<HTMLElement>("[data-checkout-alert-message]");
+  const checkoutAlertCloseButtons = document.querySelectorAll<HTMLButtonElement>("[data-checkout-alert-close]");
   const numberFormatter = new Intl.NumberFormat("fa-IR");
   let lastFocused: HTMLElement | null = null;
   let accountUser: AccountUser | null = null;
@@ -99,6 +102,7 @@ export const initCart = () => {
   let selectedPaymentCard: PaymentCard | null = null;
   let selectedReceipt: File | null = null;
   let receiptSelectionId = 0;
+  let alertFocusTarget: HTMLElement | null = null;
   let discountAmount = 0;
   let submittedOrder: SubmittedOrder | null = null;
 
@@ -194,6 +198,26 @@ export const initCart = () => {
     value
       .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
       .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+
+  const closeCheckoutAlert = () => {
+    if (!checkoutAlert || checkoutAlert.hidden) return;
+    checkoutAlert.classList.remove("is-visible");
+    window.setTimeout(() => {
+      checkoutAlert.hidden = true;
+      alertFocusTarget?.focus();
+      alertFocusTarget = null;
+    }, 180);
+  };
+
+  const showCheckoutAlert = (message: string, focusTarget?: HTMLElement | null) => {
+    if (copyStatus) copyStatus.textContent = message;
+    if (!checkoutAlert || !checkoutAlertMessage) return;
+    alertFocusTarget = focusTarget || null;
+    checkoutAlertMessage.textContent = message;
+    checkoutAlert.hidden = false;
+    requestAnimationFrame(() => checkoutAlert.classList.add("is-visible"));
+    checkoutAlert.querySelector<HTMLButtonElement>(".checkout-alert-card button")?.focus();
+  };
 
   const applyAddress = (address: SavedAddress) => {
     submittedOrder = null;
@@ -294,36 +318,32 @@ export const initCart = () => {
     const firstInvalid = addressInputs.find((input) => !input.value.trim() || !input.checkValidity());
     if (firstInvalid) {
       validateControlFa(firstInvalid);
-      firstInvalid.reportValidity();
-      firstInvalid.focus();
-      if (copyStatus) copyStatus.textContent = "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.";
+      firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      showCheckoutAlert(firstInvalid.validationMessage || "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.", firstInvalid);
       return;
     }
     if (!shippingInputs.some((input) => input.checked)) {
       const shippingChoice = document.querySelector<HTMLElement>("[data-shipping-choice]");
       shippingChoice?.scrollIntoView({ behavior: "smooth", block: "center" });
-      shippingInputs[0]?.focus();
-      if (copyStatus) copyStatus.textContent = "لطفاً تیپاکس یا پست را برای ارسال انتخاب کن.";
+      showCheckoutAlert("لطفاً تیپاکس یا پست را برای ارسال انتخاب کن.", shippingInputs[0]);
       return;
     }
     if (!paymentMethod || !selectedPaymentCard || !paymentInputs.some((input) => input.checked)) {
       paymentCard?.scrollIntoView({ behavior: "smooth", block: "center" });
-      if (copyStatus) copyStatus.textContent = "لطفاً یکی از کارت‌های فعال را انتخاب کن.";
+      showCheckoutAlert("لطفاً یکی از کارت‌های فعال را انتخاب کن.", paymentInputs[0]);
       return;
     }
     if (!paymentRef?.value.trim()) {
       paymentRef?.scrollIntoView({ behavior: "smooth", block: "center" });
-      paymentRef?.focus();
-      if (copyStatus) copyStatus.textContent = "کد پیگیری تراکنش را وارد کن.";
+      showCheckoutAlert("کد پیگیری تراکنش را وارد کن.", paymentRef);
       return;
     }
     if (!selectedReceipt) {
       paymentReceipt?.scrollIntoView({ behavior: "smooth", block: "center" });
-      paymentReceipt?.focus();
-      if (copyStatus) copyStatus.textContent = "تصویر فیش واریزی را انتخاب کن.";
+      showCheckoutAlert("تصویر فیش واریزی را از دوربین یا گالری انتخاب کن.", paymentReceipt);
       return;
     }
-    if (!cart.length && copyStatus) copyStatus.textContent = "سبد سفارش خالی است.";
+    if (!cart.length) showCheckoutAlert("سبد سفارش خالی است.");
   };
 
   const updateOrderLinks = () => {
@@ -424,7 +444,7 @@ export const initCart = () => {
       const message = error instanceof TypeError
         ? "ارتباط با سرور برقرار نشد؛ اینترنت موبایل را بررسی و دوباره تلاش کن."
         : error instanceof Error ? error.message : "ثبت سفارش انجام نشد.";
-      if (copyStatus) copyStatus.textContent = message;
+      showCheckoutAlert(message, registerOrderButton);
     } finally {
       if (registerOrderButton) registerOrderButton.disabled = Boolean(submittedOrder);
     }
@@ -649,9 +669,11 @@ export const initCart = () => {
         paymentReceipt.value = "";
         selectedReceipt = null;
         if (paymentReceiptName) {
-          paymentReceiptName.textContent = error instanceof Error
+          const message = error instanceof Error
             ? error.message
             : "تصویر فیش قابل پردازش نیست؛ تصویر دیگری انتخاب کن.";
+          paymentReceiptName.textContent = message;
+          showCheckoutAlert(message, paymentReceipt);
         }
       }
     }
@@ -665,6 +687,7 @@ export const initCart = () => {
     if (!code) {
       discountAmount = 0;
       if (discountStatus) discountStatus.textContent = "کد تخفیف را وارد کن.";
+      showCheckoutAlert("برای اعمال تخفیف، ابتدا کد تخفیف را وارد کن.", discountCode);
       updateTotals();
       return;
     }
@@ -687,7 +710,9 @@ export const initCart = () => {
       discountAmount = 0;
       submittedOrder = null;
       updateSubmittedState();
-      if (discountStatus) discountStatus.textContent = error instanceof Error ? error.message : "کد تخفیف معتبر نیست.";
+      const message = error instanceof Error ? error.message : "کد تخفیف معتبر نیست.";
+      if (discountStatus) discountStatus.textContent = message;
+      showCheckoutAlert(message, discountCode);
       updateTotals();
     } finally {
       applyDiscount.disabled = false;
@@ -711,6 +736,7 @@ export const initCart = () => {
   });
 
   registerOrderButton?.addEventListener("click", () => { void submitOrderOnly(); });
+  checkoutAlertCloseButtons.forEach((button) => button.addEventListener("click", closeCheckoutAlert));
   continueChoice?.addEventListener("click", hideAddedChoice);
   viewCartChoice?.addEventListener("click", () => {
     hideAddedChoice();
@@ -720,13 +746,18 @@ export const initCart = () => {
   document.addEventListener("keydown", (event) => {
     if (!cartLayer || cartLayer.hidden) return;
     if (event.key === "Escape") {
+      if (checkoutAlert && !checkoutAlert.hidden) {
+        closeCheckoutAlert();
+        return;
+      }
       close();
       return;
     }
     if (event.key !== "Tab") return;
 
+    const focusRoot = checkoutAlert && !checkoutAlert.hidden ? checkoutAlert : cartLayer;
     const focusable = [
-      ...cartLayer.querySelectorAll<HTMLElement>(
+      ...focusRoot.querySelectorAll<HTMLElement>(
         'button:not([disabled]), a[href]:not([aria-disabled="true"]), input:not([disabled]), textarea:not([disabled])'
       )
     ].filter((element) => element.offsetParent !== null);

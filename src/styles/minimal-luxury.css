@@ -2860,6 +2860,101 @@ body.mobile-nav-is-open {
   line-height: 1.8;
 }
 
+.checkout-alert {
+  position: fixed;
+  z-index: 1400;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.checkout-alert.is-visible { opacity: 1; }
+
+.checkout-alert-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgba(18, 17, 14, .72);
+  backdrop-filter: blur(5px);
+}
+
+.checkout-alert-card {
+  position: relative;
+  display: grid;
+  width: min(420px, 100%);
+  justify-items: center;
+  border: 1px solid rgba(178, 130, 59, .38);
+  border-radius: 16px;
+  background: #fffaf1;
+  box-shadow: 0 24px 70px rgba(16, 24, 20, .32);
+  padding: 28px 24px 22px;
+  text-align: center;
+  transform: translateY(14px) scale(.98);
+  transition: transform 180ms ease;
+}
+
+.checkout-alert.is-visible .checkout-alert-card { transform: translateY(0) scale(1); }
+
+.checkout-alert-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  margin-bottom: 14px;
+  border: 1px solid #b98232;
+  border-radius: 50%;
+  background: rgba(185, 130, 50, .1);
+  color: #9a641d;
+  font-family: Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.checkout-alert-card > small {
+  color: #aa7b38;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+
+.checkout-alert-card h3 {
+  margin: 7px 0 8px;
+  color: var(--green);
+  font-size: 1rem;
+}
+
+.checkout-alert-card p {
+  margin: 0;
+  color: #655d52;
+  font-size: .82rem;
+  line-height: 2;
+}
+
+.checkout-alert-card > button {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 20px;
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  background: var(--green);
+  color: #fffaf1;
+  cursor: pointer;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .checkout-alert { align-items: end; padding: 12px; }
+  .checkout-alert-card { width: 100%; border-radius: 18px; padding: 24px 18px 18px; }
+  .checkout-alert-card p { font-size: .86rem; }
+  .checkout-alert-card > button { min-height: 50px; }
+}
+
 .message-action-icon {
   display: grid;
   width: 32px;
