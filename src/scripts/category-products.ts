@@ -21,10 +21,37 @@ type CategoryProduct = {
   imageUrl: string | null;
 };
 
+type CategoryInfo = {
+  title: string;
+  slug: string;
+  imageUrl: string | null;
+};
+
 const root = document.querySelector<HTMLElement>("[data-category-products]");
 const list = root?.querySelector<HTMLElement>("[data-category-product-list]");
 if (root && list) {
   const money = new Intl.NumberFormat("fa-IR");
+  const categorySlug = root.dataset.category || "";
+  if (categorySlug) {
+    fetch(`/api/v1/categories/${encodeURIComponent(categorySlug)}`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error();
+        return response.json() as Promise<{ item: CategoryInfo }>;
+      })
+      .then(({ item }) => {
+        if (!item.imageUrl) return;
+        const hero = document.querySelector<HTMLElement>(`[data-category-hero][data-category-slug="${item.slug}"]`);
+        const banner = hero?.querySelector<HTMLImageElement>("[data-category-hero-banner]");
+        if (!hero || !banner) return;
+        banner.src = item.imageUrl;
+        banner.alt = `بنر ${item.title}`;
+        banner.hidden = false;
+        hero.classList.add("has-category-banner");
+      })
+      .catch(() => {
+        // The category keeps its default editorial background when no banner is available.
+      });
+  }
   fetch(`/api/v1/products?category=${encodeURIComponent(root.dataset.category || "")}`)
     .then(async (response) => {
       if (!response.ok) throw new Error();

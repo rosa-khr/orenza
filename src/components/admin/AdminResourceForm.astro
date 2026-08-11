@@ -11,6 +11,8 @@ interface Props {
 const { resource, action } = Astro.props;
 const labels = { add: "افزودن", edit: "ویرایش", view: "مشاهده" };
 const isView = action === "view";
+const supportsCatalogImage = resource.key === "products" || resource.key === "categories";
+const catalogImageLabel = resource.key === "categories" ? "بنر دسته‌بندی" : "تصویر محصول";
 const orderReadonly = new Set([
   "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
   "discountAmount", "finalAmount", "customerNote"
@@ -60,7 +62,7 @@ const orderReadonly = new Set([
           ) : (
             <input
               name={field.key}
-              type={field.type === "image" && resource.key !== "products" ? "url" : field.type === "image" ? "text" : field.type}
+              type={field.type === "image" ? "text" : field.type}
               required={field.required}
               disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))}
               min={field.min}
@@ -77,19 +79,19 @@ const orderReadonly = new Set([
         <div></div>
       </section>
     )}
-    {resource.key === "products" && (
-      <section class="admin-product-image-upload" data-product-image-upload>
+    {supportsCatalogImage && (
+      <section class="admin-product-image-upload" data-catalog-image-upload>
         <div class="admin-product-image-preview">
-          <img data-product-image-preview hidden alt="پیش‌نمایش تصویر محصول" />
-          <span data-product-image-placeholder>تصویر محصول هنوز بارگذاری نشده است.</span>
+          <img data-catalog-image-preview hidden alt={`پیش‌نمایش ${catalogImageLabel}`} />
+          <span data-catalog-image-placeholder>{catalogImageLabel} هنوز بارگذاری نشده است.</span>
         </div>
         <div>
-          <strong>بارگذاری تصویر محصول</strong>
-          <small>JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر مربع یا عمودی نتیجه بهتری دارد.</small>
+          <strong>بارگذاری {catalogImageLabel}</strong>
+          <small>{resource.key === "categories" ? "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر افقی و عریض نتیجه بهتری دارد." : "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر مربع یا عمودی نتیجه بهتری دارد."}</small>
           {!isView && (
             <label>
-              انتخاب و بارگذاری تصویر
-              <input type="file" accept="image/jpeg,image/png,image/webp" data-product-image-input />
+              انتخاب و بارگذاری {catalogImageLabel}
+              <input type="file" accept="image/jpeg,image/png,image/webp" data-catalog-image-input />
             </label>
           )}
         </div>

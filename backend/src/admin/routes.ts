@@ -366,6 +366,17 @@ export const registerAdminRoutes = (
     return saveProductImage(await part.toBuffer());
   });
 
+  app.post("/api/v1/admin/category-images", {
+    bodyLimit: 6 * 1024 * 1024
+  }, async (request, reply) => {
+    if (!(await requirePermission(request, reply, "categories"))) return;
+    const part = await request.file();
+    if (!part || part.fieldname !== "image") {
+      return reply.code(422).send({ error: "بنر دسته‌بندی را انتخاب کنید." });
+    }
+    return saveProductImage(await part.toBuffer());
+  });
+
   app.get("/api/v1/admin/payment-receipts/:fileName", async (request, reply) => {
     if (!(await requirePermission(request, reply, "orders"))) return;
     const { fileName } = z.object({

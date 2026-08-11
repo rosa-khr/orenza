@@ -262,6 +262,8 @@ export const adminResources: AdminResource[] = [
       { key: "salePricePerKg", label: "قیمت فروش واحد (تومان)", type: "number", required: true, min: 0, list: true },
       { key: "profitPerKg", label: "سود واحد (تومان)", type: "number", list: true, readonly: true },
       { key: "imageUrl", label: "تصویر محصول", type: "image", dir: "ltr" },
+      { key: "showInBestSellers", label: "نمایش در پرفروش‌ترین‌ها", type: "select", options: yesNo, list: true },
+      { key: "showInDiscounts", label: "نمایش در محصولات تخفیف‌دار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
   },
@@ -274,6 +276,7 @@ export const adminResources: AdminResource[] = [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
       { key: "description", label: "توضیحات", type: "textarea" },
+      { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }

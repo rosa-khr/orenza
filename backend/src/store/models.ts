@@ -29,6 +29,8 @@ export interface Product {
   pricePer500g: number;
   pricePer1000g: number;
   isActive: boolean;
+  showInBestSellers: boolean;
+  showInDiscounts: boolean;
   imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +41,7 @@ export interface Category {
   title: string;
   slug: string;
   description: string | null;
+  imageUrl: string | null;
   seoTitle: string;
   seoDescription: string;
   isActive: boolean;

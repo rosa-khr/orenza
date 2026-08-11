@@ -26,19 +26,19 @@ export const initAtelier = () => {
     ])
   );
 
-  const processDisplay = builder.querySelector<HTMLElement>("[data-process-display]")!;
-  const processEyebrow = builder.querySelector<HTMLElement>("[data-process-eyebrow]")!;
-  const processTitle = builder.querySelector<HTMLElement>("[data-process-title]")!;
-  const processNote = builder.querySelector<HTMLElement>("[data-process-note]")!;
-  const grindReadout = builder.querySelector<HTMLElement>("[data-grind-readout]")!;
-  const grindFa = builder.querySelector<HTMLElement>("[data-grind-fa]")!;
-  const grindEn = builder.querySelector<HTMLElement>("[data-grind-en]")!;
-  const grindScale = builder.querySelector<HTMLElement>("[data-grind-scale]")!;
+  const processDisplay = builder.querySelector<HTMLElement>("[data-process-display]");
+  const processEyebrow = builder.querySelector<HTMLElement>("[data-process-eyebrow]");
+  const processTitle = builder.querySelector<HTMLElement>("[data-process-title]");
+  const processNote = builder.querySelector<HTMLElement>("[data-process-note]");
+  const grindReadout = builder.querySelector<HTMLElement>("[data-grind-readout]");
+  const grindFa = builder.querySelector<HTMLElement>("[data-grind-fa]");
+  const grindEn = builder.querySelector<HTMLElement>("[data-grind-en]");
+  const grindScale = builder.querySelector<HTMLElement>("[data-grind-scale]");
   const mobileGrindFeedback = builder.querySelector<HTMLElement>("[data-mobile-grind-feedback]");
   const mobileGrindFa = builder.querySelector<HTMLElement>("[data-mobile-grind-fa]");
   const mobileGrindEn = builder.querySelector<HTMLElement>("[data-mobile-grind-en]");
-  const deviceResult = builder.querySelector<HTMLElement>("[data-device-result]")!;
-  const grindResult = builder.querySelector<HTMLElement>("[data-grind-result]")!;
+  const deviceResults = [...builder.querySelectorAll<HTMLElement>("[data-device-result]")];
+  const grindResults = [...builder.querySelectorAll<HTMLElement>("[data-grind-result]")];
   const addCartButton = builder.querySelector<HTMLButtonElement>("[data-add-cart]")!;
   const progressItems = [...document.querySelectorAll<HTMLElement>("[data-progress-step]")];
   const quantityOutput = builder.querySelector<HTMLOutputElement>("[data-quantity]");
@@ -54,6 +54,7 @@ export const initAtelier = () => {
   let quantity = 1;
   let animationTimer = 0;
   let navigationTimer = 0;
+  let currentSectionName = "blend";
 
   const productPrice = (product: CatalogProduct, grams: number) =>
     Number(product[`pricePer${grams}g` as keyof CatalogProduct] || 0);
@@ -133,11 +134,12 @@ export const initAtelier = () => {
     const section = sections.get(name);
     if (!section) return;
     section.classList.add("is-locked");
-    section.classList.remove("is-ready");
+    section.classList.remove("is-ready", "is-current");
     section.setAttribute("aria-disabled", "true");
   };
 
   const playProcess = (mode: "roast" | "grind", duration = 1500) => {
+    if (!processDisplay) return;
     window.clearTimeout(animationTimer);
     processDisplay.dataset.mode = mode;
     processDisplay.classList.remove("is-running");
@@ -147,13 +149,12 @@ export const initAtelier = () => {
 
   const updateResults = () => {
     (Object.keys(state) as SelectionKey[]).forEach((key) => {
-      const result = builder.querySelector<HTMLElement>(`[data-result="${key}"]`);
-      if (result) result.textContent = state[key] || "—";
+      builder.querySelectorAll<HTMLElement>(`[data-result="${key}"]`).forEach((result) => {
+        result.textContent = state[key] || "—";
+      });
     });
-    deviceResult.hidden = !state.device;
-    grindResult.hidden = !state.grindSize;
-    const previewWeight = builder.querySelector<HTMLElement>("[data-preview-weight]");
-    if (previewWeight) previewWeight.textContent = state.weight || "250 g";
+    deviceResults.forEach((result) => { result.hidden = !state.device; });
+    grindResults.forEach((result) => { result.hidden = !state.grindSize; });
   };
 
   const updateProgress = () => {
@@ -165,15 +166,7 @@ export const initAtelier = () => {
       weight: Boolean(state.weight),
       summary: false
     };
-    const active = !state.blend
-      ? "blend"
-      : !state.roast
-        ? "roast"
-        : !grindIsComplete
-          ? "grind"
-          : !state.weight
-            ? "weight"
-            : "summary";
+    const active = currentSectionName === "device" ? "grind" : currentSectionName;
 
     progressItems.forEach((item) => {
       const step = item.dataset.progressStep || "";
@@ -190,16 +183,13 @@ export const initAtelier = () => {
     window.clearTimeout(navigationTimer);
     navigationTimer = window.setTimeout(() => {
       requestAnimationFrame(() => {
-        const headerHeight = document.querySelector<HTMLElement>(".site-header")?.offsetHeight || 0;
-        const progressHeight = document.querySelector<HTMLElement>(".order-progress")?.offsetHeight || 0;
-        const targetTop = Math.max(
-          0,
-          window.scrollY + section.getBoundingClientRect().top - headerHeight - progressHeight - 16
-        );
-        window.scrollTo({
-          top: targetTop,
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        sections.forEach((item) => {
+          const isCurrent = item === section;
+          item.classList.toggle("is-current", isCurrent);
+          item.setAttribute("aria-hidden", String(!isCurrent));
         });
+        currentSectionName = name;
+        updateProgress();
         const heading = section.querySelector<HTMLElement>("h3");
         if (heading) {
           heading.tabIndex = -1;
@@ -244,12 +234,11 @@ export const initAtelier = () => {
       ["grind", "device", "weight", "summary"].forEach(lock);
       const deviceSection = sections.get("device");
       if (deviceSection) deviceSection.hidden = true;
-      builder.querySelector<HTMLElement>("[data-preview-blend]")!.textContent = english;
       unlock("roast");
-      processDisplay.dataset.mode = "idle";
-      processEyebrow.textContent = "BLEND PROFILE";
-      processTitle.textContent = value;
-      processNote.textContent = "ویژگی‌های فنجان بر اساس نسبت انتخابی تنظیم شد.";
+      if (processDisplay) processDisplay.dataset.mode = "idle";
+      if (processEyebrow) processEyebrow.textContent = "BLEND PROFILE";
+      if (processTitle) processTitle.textContent = value;
+      if (processNote) processNote.textContent = "ویژگی‌های فنجان بر اساس نسبت انتخابی تنظیم شد.";
       moveToSection("roast");
     }
 
@@ -259,18 +248,16 @@ export const initAtelier = () => {
       if (deviceSection) deviceSection.hidden = true;
       const roastLevel = Number(choice.dataset.roastLevel || 2);
       const colors = ["#9a6540", "#714329", "#4b2b1d", "#281914"];
-      processDisplay.style.setProperty("--bean-color", colors[roastLevel - 1]);
-      builder.querySelector<HTMLElement>("[data-preview-roast]")!.textContent = english;
-      processEyebrow.textContent = "ROASTING NOW";
-      processTitle.textContent = `رُست ${value}`;
-      processNote.textContent = english;
+      processDisplay?.style.setProperty("--bean-color", colors[roastLevel - 1]);
+      if (processEyebrow) processEyebrow.textContent = "ROASTING NOW";
+      if (processTitle) processTitle.textContent = `رُست ${value}`;
+      if (processNote) processNote.textContent = english;
       playProcess("roast");
       unlock("grind");
       moveToSection("grind", 160);
     }
 
     if (key === "grind") {
-      builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = english;
       const deviceSection = sections.get("device");
       if (mobileGrindFeedback) mobileGrindFeedback.hidden = true;
 
@@ -279,23 +266,23 @@ export const initAtelier = () => {
         unlock("device");
         lock("weight");
         lock("summary");
-        processDisplay.dataset.mode = "grind";
-        processEyebrow.textContent = "GRIND CALIBRATION";
-        processTitle.textContent = "دستگاهت را انتخاب کن";
-        processNote.textContent = "اندازه ذرات بر اساس روش دم‌آوری محاسبه می‌شود.";
-        grindReadout.hidden = true;
+        if (processDisplay) processDisplay.dataset.mode = "grind";
+        if (processEyebrow) processEyebrow.textContent = "GRIND CALIBRATION";
+        if (processTitle) processTitle.textContent = "دستگاهت را انتخاب کن";
+        if (processNote) processNote.textContent = "اندازه ذرات بر اساس روش دم‌آوری محاسبه می‌شود.";
+        if (grindReadout) grindReadout.hidden = true;
         moveToSection("device");
       } else {
         if (deviceSection) deviceSection.hidden = true;
         delete state.device;
         delete state.grindSize;
-        deviceResult.hidden = true;
-        grindResult.hidden = true;
-        grindReadout.hidden = true;
-        processDisplay.dataset.mode = "idle";
-        processEyebrow.textContent = "WHOLE BEAN";
-        processTitle.textContent = "دان کامل";
-        processNote.textContent = "برای حفظ بیشترین عطر تا لحظه دم‌آوری.";
+        deviceResults.forEach((result) => { result.hidden = true; });
+        grindResults.forEach((result) => { result.hidden = true; });
+        if (grindReadout) grindReadout.hidden = true;
+        if (processDisplay) processDisplay.dataset.mode = "idle";
+        if (processEyebrow) processEyebrow.textContent = "WHOLE BEAN";
+        if (processTitle) processTitle.textContent = "دان کامل";
+        if (processNote) processNote.textContent = "برای حفظ بیشترین عطر تا لحظه دم‌آوری.";
         unlock("weight");
         moveToSection("weight");
         if (requestedWeight) {
@@ -312,8 +299,8 @@ export const initAtelier = () => {
       const grindEnValue = choice.dataset.grindEn!;
       const grindLevel = Number(choice.dataset.grindLevel || 4);
       state.grindSize = `${grindFaValue} · ${grindEnValue}`;
-      grindFa.textContent = grindFaValue;
-      grindEn.textContent = grindEnValue;
+      if (grindFa) grindFa.textContent = grindFaValue;
+      if (grindEn) grindEn.textContent = grindEnValue;
       if (mobileGrindFa) mobileGrindFa.textContent = grindFaValue;
       if (mobileGrindEn) mobileGrindEn.textContent = grindEnValue;
       if (mobileGrindFeedback) {
@@ -321,13 +308,12 @@ export const initAtelier = () => {
         mobileGrindFeedback.classList.remove("is-running");
         requestAnimationFrame(() => mobileGrindFeedback.classList.add("is-running"));
       }
-      grindScale.style.setProperty("--grind-position", `${(grindLevel / 7) * 100}%`);
-      processDisplay.style.setProperty("--particle-size", `${Math.max(1.4, grindLevel * 0.55)}px`);
-      grindReadout.hidden = false;
-      processEyebrow.textContent = "GRINDING NOW";
-      processTitle.textContent = value;
-      processNote.textContent = `${grindFaValue} · ${grindEnValue}`;
-      builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = english;
+      grindScale?.style.setProperty("--grind-position", `${(grindLevel / 7) * 100}%`);
+      processDisplay?.style.setProperty("--particle-size", `${Math.max(1.4, grindLevel * 0.55)}px`);
+      if (grindReadout) grindReadout.hidden = false;
+      if (processEyebrow) processEyebrow.textContent = "GRINDING NOW";
+      if (processTitle) processTitle.textContent = value;
+      if (processNote) processNote.textContent = `${grindFaValue} · ${grindEnValue}`;
       playProcess("grind", 1800);
       unlock("weight");
       moveToSection("weight", 160);
@@ -353,6 +339,15 @@ export const initAtelier = () => {
     selectChoice(choice);
   });
 
+  progressItems.forEach((item) => {
+    item.querySelector<HTMLButtonElement>("[data-step-nav]")?.addEventListener("click", () => {
+      const target = item.dataset.progressStep || "";
+      const section = sections.get(target);
+      if (!section?.classList.contains("is-ready") || section.hidden) return;
+      moveToSection(target, 0);
+    });
+  });
+
   builder.querySelector<HTMLButtonElement>("[data-restart]")?.addEventListener("click", () => {
     (Object.keys(state) as SelectionKey[]).forEach((key) => delete state[key]);
     builder.querySelectorAll(".is-selected").forEach((item) => item.classList.remove("is-selected"));
@@ -360,15 +355,12 @@ export const initAtelier = () => {
     ["roast", "grind", "device", "weight", "summary"].forEach(lock);
     const deviceSection = sections.get("device");
     if (deviceSection) deviceSection.hidden = true;
-    grindReadout.hidden = true;
+    if (grindReadout) grindReadout.hidden = true;
     if (mobileGrindFeedback) mobileGrindFeedback.hidden = true;
-    processDisplay.dataset.mode = "idle";
-    processEyebrow.textContent = "LIVE ROASTERY";
-    processTitle.textContent = "حالا نوبت انتخاب توئه";
-    processNote.textContent = "فرآیند آماده‌سازی اینجا نمایش داده می‌شود.";
-    builder.querySelector<HTMLElement>("[data-preview-blend]")!.textContent = "YOUR PRIVATE BLEND";
-    builder.querySelector<HTMLElement>("[data-preview-roast]")!.textContent = "ROASTED TO ORDER";
-    builder.querySelector<HTMLElement>("[data-preview-device]")!.textContent = "WHOLE BEAN / GROUND";
+    if (processDisplay) processDisplay.dataset.mode = "idle";
+    if (processEyebrow) processEyebrow.textContent = "LIVE ROASTERY";
+    if (processTitle) processTitle.textContent = "حالا نوبت انتخاب توئه";
+    if (processNote) processNote.textContent = "فرآیند آماده‌سازی اینجا نمایش داده می‌شود.";
     addCartButton.textContent = "افزودن به سبد سفارش";
     updateResults();
     updateProgress();

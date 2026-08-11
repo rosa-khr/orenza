@@ -15,6 +15,7 @@ export const categorySchema = z.object({
   title: z.string().trim().min(2).max(160),
   slug,
   description: z.string().trim().max(2000).nullable().optional(),
+  imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().min(10).max(220),
   seoDescription: z.string().trim().min(30).max(500),
   isActive: z.boolean().default(true)
@@ -36,6 +37,8 @@ export const productSchema = z.object({
   stockStatus: z.enum(["inStock", "outOfStock"]).default("inStock"),
   purchasePricePerKg: money,
   salePricePerKg: money,
+  showInBestSellers: z.boolean().default(false),
+  showInDiscounts: z.boolean().default(false),
   isActive: z.boolean().default(true),
   imageUrl: productImageUrl.optional()
 });

@@ -52,6 +52,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
       saleType: "sale_type", packageWeightGrams: "package_weight_grams",
       stockStatus: "stock_status",
       purchasePricePerKg: "purchase_price_per_kg", salePricePerKg: "sale_price_per_kg",
+      showInBestSellers: "show_in_best_sellers", showInDiscounts: "show_in_discounts",
       isActive: "is_active", imageUrl: "image_url", ...audit
     },
     search: ["title_fa", "title_en", "blend_type"],
@@ -61,7 +62,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "categories",
     columns: {
       title: "title", slug: "slug", description: "description", seoTitle: "seo_title",
-      seoDescription: "seo_description", isActive: "is_active", ...audit
+      seoDescription: "seo_description", imageUrl: "image_url", isActive: "is_active", ...audit
     },
     search: ["title", "slug"],
     schema: categorySchema

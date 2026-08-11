@@ -1082,12 +1082,13 @@ const initPaymentCards = (form: HTMLFormElement, paymentMethodId: string, readon
   void load();
 };
 
-const initProductImageUpload = (form: HTMLFormElement) => {
-  const root = form.querySelector<HTMLElement>("[data-product-image-upload]");
+const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "categories") => {
+  const root = form.querySelector<HTMLElement>("[data-catalog-image-upload]");
   const urlInput = form.elements.namedItem("imageUrl") as HTMLInputElement | null;
-  const fileInput = root?.querySelector<HTMLInputElement>("[data-product-image-input]");
-  const preview = root?.querySelector<HTMLImageElement>("[data-product-image-preview]");
-  const placeholder = root?.querySelector<HTMLElement>("[data-product-image-placeholder]");
+  const fileInput = root?.querySelector<HTMLInputElement>("[data-catalog-image-input]");
+  const preview = root?.querySelector<HTMLImageElement>("[data-catalog-image-preview]");
+  const placeholder = root?.querySelector<HTMLElement>("[data-catalog-image-placeholder]");
+  const imageLabel = resource === "categories" ? "بنر دسته‌بندی" : "تصویر محصول";
   const render = () => {
     const url = urlInput?.value.trim() || "";
     if (preview) {
@@ -1103,22 +1104,23 @@ const initProductImageUpload = (form: HTMLFormElement) => {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       fileInput.value = "";
-      toast("حجم تصویر محصول نباید بیشتر از ۵ مگابایت باشد.", "error");
+      toast(`حجم ${imageLabel} نباید بیشتر از ۵ مگابایت باشد.`, "error");
       return;
     }
     const body = new FormData();
     body.append("image", file);
     fileInput.disabled = true;
     try {
-      const result = await api<{ url: string }>("/api/v1/admin/product-images", {
+      const endpoint = resource === "categories" ? "category-images" : "product-images";
+      const result = await api<{ url: string }>(`/api/v1/admin/${endpoint}`, {
         method: "POST",
         body
       });
       if (urlInput) urlInput.value = result.url;
       render();
-      toast("تصویر محصول بارگذاری شد؛ برای ثبت روی محصول، تغییرات را ذخیره کنید.");
+      toast(`${imageLabel} بارگذاری شد؛ برای ثبت نهایی، تغییرات را ذخیره کنید.`);
     } catch (error) {
-      toast(error instanceof Error ? error.message : "بارگذاری تصویر محصول انجام نشد.", "error");
+      toast(error instanceof Error ? error.message : `بارگذاری ${imageLabel} انجام نشد.`, "error");
     } finally {
       fileInput.disabled = false;
       fileInput.value = "";
@@ -1132,7 +1134,9 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   await loadLookups(form);
   enhanceDropdowns(form);
   enhancePersianDates(form);
-  const refreshProductImage = config.key === "products" ? initProductImageUpload(form) : undefined;
+  const refreshCatalogImage = config.key === "products" || config.key === "categories"
+    ? initCatalogImageUpload(form, config.key)
+    : undefined;
   const updateProductProfit = () => {
     if (config.key !== "products") return;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
@@ -1204,7 +1208,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     try {
       const { item } = await api<{ item: Record<string, unknown> }>(`/api/v1/admin/${config.key}/${id}`);
       config.fields.forEach((field) => setFormValue(form, field.key, item[field.key]));
-      refreshProductImage?.();
+      refreshCatalogImage?.();
       updateProductProfit();
       if (config.key === "orders") {
         renderOrderItems(form, item.items);
@@ -1238,7 +1242,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       const raw = data.get(field.key);
       if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : Number(raw);
-      else if (field.key === "isActive" || field.key === "isPublished") body[field.key] = raw === "true";
+      else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts"].includes(field.key)) body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;
     });
@@ -1411,10 +1415,10 @@ const initDashboard = async () => {
     const colors: Record<string, string> = {
       new: "#c9994e",
       processing: "#d9b15f",
-      ready: "#4f8b72",
-      sent: "#2d6650",
-      completed: "#173f30",
-      canceled: "#a55d51"
+      ready: "#293b32",
+      sent: "#293b32",
+      completed: "#293b32",
+      canceled: "#b72d3a"
     };
     const total = statusKeys.reduce((sum, key) => sum + Number(orderStatuses[key] || 0), 0);
     const totalElement = document.querySelector<HTMLElement>("[data-order-status-total]");

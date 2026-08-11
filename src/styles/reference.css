@@ -171,8 +171,8 @@
 }
 
 .order-summary .button-primary {
-  background: #173f30;
-  border-color: #173f30;
+  background: var(--green);
+  border-color: var(--green);
   color: #f5ead5;
 }
 
@@ -455,15 +455,15 @@
 }
 
 .whatsapp-button {
-  background: #173f30;
-  border-color: #173f30;
+  background: var(--green);
+  border-color: var(--green);
   color: #f5ead5;
 }
 
 .bale-button {
   background: transparent;
   border-color: #587565;
-  color: #244b3a;
+  color: var(--green);
 }
 
 .cart-remove {
@@ -473,12 +473,12 @@
   place-items: center;
   padding: 0 !important;
   border: 1px solid rgba(124, 72, 41, 0.3) !important;
-  color: #85472f !important;
+  color: var(--red) !important;
 }
 
 .cart-remove:hover {
-  background: #7f3e2b !important;
-  border-color: #7f3e2b !important;
+  background: var(--red) !important;
+  border-color: var(--red) !important;
   color: #f4e7d2 !important;
 }
 

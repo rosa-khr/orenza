@@ -19,7 +19,8 @@ const isPowderCategory = category.slug === "cafe-drinks";
   canonicalPath={`/products/${category.slug}/`}
   keywords={[...category.keywords]}
 >
-  <section class="category-hero">
+  <section class="category-hero" data-category-hero data-category-slug={category.slug}>
+    <img class="category-hero-banner" data-category-hero-banner hidden alt={`بنر ${category.title}`} />
     <div>
       <p class="eyebrow">{category.eyebrow}</p>
       <h1>{category.title}</h1>

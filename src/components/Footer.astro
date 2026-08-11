@@ -30,20 +30,25 @@ import Icon from "./Icon.astro";
 
   <div class="footer-main">
     <div class="footer-brand">
-      <span class="brand-mark" data-site-logo-mark>O</span>
-      <img data-site-logo hidden alt="لوگوی اورنزا" />
-      <strong data-site-brand-name-en>ORENZA</strong>
+       <a class="brand" href="/" aria-label="اورنزا، صفحه اصلی">
+    <span class="brand-mark" aria-hidden="true" data-site-logo-mark>O</span>
+    <img
+      class="brand-wordmark"
+      src="/images/orenza-wordmark-gold-v2.png"
+      alt="ORENZA Coffee Specialty Roasters"
+      width="1352"
+      height="488"
+    />
+  </a>
       <p data-site-brand-tagline>قهوه تازه، برای سلیقه تو.</p>
     </div>
 
-    <nav class="footer-links" aria-label="دسترسی سریع فوتر">
-      <span>دسترسی سریع</span>
-      <a href="/about/">داستان برند</a>
-      <a href="/products/coffee-blends/">قهوه‌های ترکیبی</a>
-      <a href="/products/cafe-drinks/">نوشیدنی‌های کافه‌ای</a>
-      <a href="/order/">ساخت قهوه</a>
+    <nav class="footer-links" aria-label="منوی اصلی فوتر">
+      <span>منوی اورنزا</span>
+      <a href="/about/">درباره اورنزا</a>
+      <a href="/products/">محصولات</a>
+      <a href="/order/">سفارش اختصاصی</a>
       <a href="/contact/">ارتباط با ما</a>
-      <button type="button" data-cart-open>سبد سفارش</button>
     </nav>
 
     <div class="footer-contact">

@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS categories (
   title varchar(160) NOT NULL,
   slug varchar(180) NOT NULL UNIQUE,
   description text,
+  image_url text,
   seo_title varchar(220),
   seo_description varchar(500),
   is_active boolean NOT NULL DEFAULT true,
@@ -198,6 +199,8 @@ CREATE TABLE IF NOT EXISTS products (
   price_per_250g bigint NOT NULL DEFAULT 0 CHECK (price_per_250g >= 0),
   price_per_500g bigint NOT NULL DEFAULT 0 CHECK (price_per_500g >= 0),
   price_per_1000g bigint NOT NULL DEFAULT 0 CHECK (price_per_1000g >= 0),
+  show_in_best_sellers boolean NOT NULL DEFAULT false,
+  show_in_discounts boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
   image_url text,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -212,6 +215,8 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS sale_type varchar(20) NOT NULL DEF
 ALTER TABLE products ADD COLUMN IF NOT EXISTS package_weight_grams integer NOT NULL DEFAULT 250;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_status varchar(20) NOT NULL DEFAULT 'inStock';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS product_content text;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS show_in_best_sellers boolean NOT NULL DEFAULT false;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS show_in_discounts boolean NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS payment_methods (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -335,6 +340,7 @@ ALTER TABLE order_items ADD COLUMN IF NOT EXISTS blend_type varchar(120);
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS brew_method varchar(100);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_title varchar(220);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(500);
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
 ALTER TABLE payment_methods DROP CONSTRAINT IF EXISTS payment_methods_type_check;
 ALTER TABLE payment_methods ADD CONSTRAINT payment_methods_type_check CHECK (type IN ('cardToCard','bankGateway','zarinpal'));
 ALTER TABLE payment_methods ALTER COLUMN card_number DROP NOT NULL;

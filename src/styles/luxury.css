@@ -2154,8 +2154,8 @@ footer {
 }
 
 .cart-remove:hover {
-  background: #7f3e2b !important;
-  border-color: #7f3e2b !important;
+  background: var(--red) !important;
+  border-color: var(--red) !important;
   color: #f4e7d2 !important;
 }
 

@@ -21,11 +21,13 @@ import Icon from "./Icon.astro";
   </nav>
   <a class="brand" href="/" aria-label="اورنزا، صفحه اصلی">
     <span class="brand-mark" aria-hidden="true" data-site-logo-mark>O</span>
-    <img data-site-logo hidden alt="لوگوی اورنزا" />
-    <span class="brand-lockup">
-      <span class="brand-name" data-site-brand-name-en>ORENZA</span>
-      <small>COFFEE ROASTERS</small>
-    </span>
+    <img
+      class="brand-wordmark"
+      src="/images/orenza-wordmark-gold-v2.png"
+      alt="ORENZA Coffee Specialty Roasters"
+      width="1352"
+      height="488"
+    />
   </a>
   <div class="header-actions">
     <a href="/contact/">ارتباط با ما</a>
@@ -43,7 +45,7 @@ import Icon from "./Icon.astro";
     <aside class="mobile-nav-panel" aria-label="منوی موبایل">
       <header>
         <span class="brand-mark" aria-hidden="true" data-site-logo-mark-mobile>O</span>
-        <div><strong>ORENZA</strong><small>COFFEE ROASTERS</small></div>
+        <img class="mobile-brand-wordmark" src="/images/orenza-wordmark-gold-v2.png" alt="ORENZA Coffee Specialty Roasters" width="1352" height="488" />
         <button type="button" data-mobile-nav-close aria-label="بستن منو"><Icon name="close" size={19} /></button>
       </header>
       <nav>

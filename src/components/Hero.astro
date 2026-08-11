@@ -3,8 +3,18 @@ import Icon from "./Icon.astro";
 ---
 
 <section class="hero" aria-labelledby="hero-title">
+  <div class="hero-media" aria-hidden="true">
+    <img
+      src="/images/orenza-crema-macro-hero-v3.webp"
+      alt=""
+      width="1672"
+      height="941"
+      loading="eager"
+      fetchpriority="high"
+    />
+  </div>
   <div class="hero-copy">
-    <p class="eyebrow">ORENZA · قهوه تازه‌رُست</p>
+    <p class="eyebrow">ORENZA · دانه، دقت، فنجان</p>
     <h1 id="hero-title">کیفیت،<br /><em>اتفاقی نیست.</em></h1>
     <p class="hero-lead">ترکیب، رُست و آسیاب را با سلیقه و دستگاه تو هماهنگ می‌کنیم؛ برای فنجانی که هر روز با اطمینان تکرار شود.</p>
     <div class="hero-actions">
@@ -12,18 +22,4 @@ import Icon from "./Icon.astro";
       <a class="text-link" href="/about/">داستان اورنزا</a>
     </div>
   </div>
-
-  <div class="hero-product" aria-label="پاکت قهوه مشکی مات و چهارطرف‌دوخت اورنزا">
-    <div class="product-mockup">
-      <img
-        src="/images/orenza-bag-mockup-v3.webp"
-        alt="پاکت ساده مشکی مات قهوه اورنزا با یک لیبل کرمی، ایستاده روی سطح سنگی"
-        width="1024"
-        height="1536"
-        loading="eager"
-        fetchpriority="high"
-      />
-    </div>
-  </div>
-
 </section>
