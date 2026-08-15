@@ -713,7 +713,8 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
         method: "PUT",
         body: JSON.stringify({
           orderStatus: action === "approve" ? "processing" : "canceled",
-          paymentStatus: row.paymentStatus || "pending",
+          // تأیید سفارش یعنی فیش پرداخت هم توسط ادمین تأیید شده است.
+          paymentStatus: action === "approve" ? "paid" : row.paymentStatus || "pending",
           adminNote: action === "cancel" ? "سفارش توسط مدیر لغو شد." : null
         })
       });
@@ -1557,6 +1558,8 @@ type SiteSettingsPayload = {
   homepageSeoDescription: string;
   homepageSeoKeywords: string[];
   homepageOgImageUrl: string;
+  homepageBannerDesktopUrl: string | null;
+  homepageBannerMobileUrl: string | null;
   searchIndexingEnabled: boolean;
   invoiceNationalId: string;
   invoiceSignatureUrl: string | null;
@@ -1572,6 +1575,7 @@ const initSiteSettings = async () => {
   const signaturePreview = form.querySelector<HTMLImageElement>("[data-invoice-signature-preview]");
   const signaturePlaceholder = form.querySelector<HTMLElement>("[data-invoice-signature-placeholder]");
   const signatureRemove = form.querySelector<HTMLButtonElement>("[data-invoice-signature-remove]");
+  const bannerUrls: Record<"desktop" | "mobile", string | null> = { desktop: null, mobile: null };
   const showSignature = (url: string | null) => {
     if (signaturePreview) {
       signaturePreview.hidden = !url;
@@ -1580,6 +1584,20 @@ const initSiteSettings = async () => {
     }
     if (signaturePlaceholder) signaturePlaceholder.hidden = Boolean(url);
     if (signatureRemove) signatureRemove.hidden = !url;
+  };
+  const showBanner = (kind: "desktop" | "mobile", url: string | null) => {
+    bannerUrls[kind] = url;
+    const setting = form.querySelector<HTMLElement>(`[data-homepage-banner-setting="${kind}"]`);
+    const preview = setting?.querySelector<HTMLImageElement>("[data-homepage-banner-preview]");
+    const placeholder = setting?.querySelector<HTMLElement>("[data-homepage-banner-placeholder]");
+    const remove = setting?.querySelector<HTMLButtonElement>("[data-homepage-banner-remove]");
+    if (preview) {
+      preview.hidden = !url;
+      if (url) preview.src = `${url}?v=${Date.now()}`;
+      else preview.removeAttribute("src");
+    }
+    if (placeholder) placeholder.hidden = Boolean(url);
+    if (remove) remove.hidden = !url;
   };
   try {
     const { item } = await api<{ item: SiteSettingsPayload }>("/api/v1/admin/site-settings");
@@ -1593,6 +1611,8 @@ const initSiteSettings = async () => {
       }
     });
     showSignature(item.invoiceSignatureUrl);
+    showBanner("desktop", item.homepageBannerDesktopUrl);
+    showBanner("mobile", item.homepageBannerMobileUrl);
     if (state) state.textContent = "تنظیمات آماده و قابل ویرایش است.";
   } catch (error) {
     if (state) state.textContent = "دریافت تنظیمات انجام نشد.";
@@ -1625,6 +1645,47 @@ const initSiteSettings = async () => {
       signatureInput.disabled = false;
       signatureInput.value = "";
     }
+  });
+  (['desktop', 'mobile'] as const).forEach((kind) => {
+    const setting = form.querySelector<HTMLElement>(`[data-homepage-banner-setting="${kind}"]`);
+    const bannerInput = setting?.querySelector<HTMLInputElement>("[data-homepage-banner-input]");
+    const bannerRemove = setting?.querySelector<HTMLButtonElement>("[data-homepage-banner-remove]");
+    bannerInput?.addEventListener("change", async () => {
+      const file = bannerInput.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        bannerInput.value = "";
+        toast("حجم بنر نباید بیشتر از ۵ مگابایت باشد.", "error");
+        return;
+      }
+      const body = new FormData();
+      body.append("banner", file);
+      bannerInput.disabled = true;
+      if (state) state.textContent = `در حال بارگذاری بنر ${kind === "desktop" ? "دسکتاپ" : "موبایل"}…`;
+      try {
+        const result = await api<{ url: string }>(`/api/v1/admin/site-settings/homepage-banner/${kind}`, { method: "POST", body });
+        showBanner(kind, result.url);
+        toast(`بنر ${kind === "desktop" ? "دسکتاپ" : "موبایل"} بارگذاری شد.`);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : "بارگذاری بنر انجام نشد.", "error");
+      } finally {
+        bannerInput.disabled = false;
+        bannerInput.value = "";
+      }
+    });
+    bannerRemove?.addEventListener("click", async () => {
+      if (!window.confirm(`بنر ${kind === "desktop" ? "دسکتاپ" : "موبایل"} حذف شود؟`)) return;
+      bannerRemove.disabled = true;
+      try {
+        await api(`/api/v1/admin/site-settings/homepage-banner/${kind}`, { method: "DELETE" });
+        showBanner(kind, null);
+        toast("بنر حذف شد.");
+      } catch (error) {
+        toast(error instanceof Error ? error.message : "حذف بنر انجام نشد.", "error");
+      } finally {
+        bannerRemove.disabled = false;
+      }
+    });
   });
   signatureRemove?.addEventListener("click", async () => {
     if (!window.confirm("تصویر امضای فروشنده از فاکتورها حذف شود؟")) return;
@@ -1674,6 +1735,8 @@ const initSiteSettings = async () => {
             .map((keyword) => keyword.trim())
             .filter(Boolean),
           homepageOgImageUrl: input("homepageOgImageUrl").value,
+          homepageBannerDesktopUrl: bannerUrls.desktop,
+          homepageBannerMobileUrl: bannerUrls.mobile,
           searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked,
           invoiceNationalId: input("invoiceNationalId").value
         })

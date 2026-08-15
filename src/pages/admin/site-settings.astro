@@ -72,6 +72,47 @@ import AdminShell from "../../components/admin/AdminShell.astro";
     </section>
 
     <section class="admin-card">
+      <header><span>HOMEPAGE BANNERS</span><h2>بنر صفحه اصلی</h2><p>برای نمایش بهتر در هر دستگاه، بنر دسکتاپ و موبایل را جداگانه بارگذاری کنید.</p></header>
+      <div class="admin-banner-guidance">
+        <strong>راهنمای آماده‌سازی بنر</strong>
+        <span>دسکتاپ: <b dir="ltr">1920 × 820 px</b> · موبایل: <b dir="ltr">900 × 1200 px</b></span>
+        <small>فرمت پیشنهادی WebP، حجم ترجیحاً کمتر از ۵ مگابایت. متن و سوژه اصلی را نزدیک مرکز تصویر نگه دارید تا در برش‌های مختلف دیده شوند.</small>
+      </div>
+      <div class="admin-homepage-banners">
+        <div class="admin-banner-setting" data-homepage-banner-setting="desktop">
+          <div class="admin-banner-preview">
+            <img data-homepage-banner-preview hidden alt="پیش‌نمایش بنر دسکتاپ صفحه اصلی" />
+            <span data-homepage-banner-placeholder>بنر دسکتاپ ثبت نشده است.</span>
+          </div>
+          <div>
+            <strong>بنر دسکتاپ</strong>
+            <small>ابعاد پیشنهادی: ۱۹۲۰ در ۸۲۰ پیکسل</small>
+            <label class="admin-upload-button">
+              <Upload size={16} stroke-width={1.5} /> انتخاب بنر دسکتاپ
+              <input type="file" accept="image/jpeg,image/png,image/webp" data-homepage-banner-input />
+            </label>
+            <button type="button" class="admin-remove-banner" data-homepage-banner-remove hidden><Trash2 size={15} stroke-width={1.5} /> حذف بنر</button>
+          </div>
+        </div>
+        <div class="admin-banner-setting" data-homepage-banner-setting="mobile">
+          <div class="admin-banner-preview">
+            <img data-homepage-banner-preview hidden alt="پیش‌نمایش بنر موبایل صفحه اصلی" />
+            <span data-homepage-banner-placeholder>بنر موبایل ثبت نشده است.</span>
+          </div>
+          <div>
+            <strong>بنر موبایل</strong>
+            <small>ابعاد پیشنهادی: ۹۰۰ در ۱۲۰۰ پیکسل</small>
+            <label class="admin-upload-button">
+              <Upload size={16} stroke-width={1.5} /> انتخاب بنر موبایل
+              <input type="file" accept="image/jpeg,image/png,image/webp" data-homepage-banner-input />
+            </label>
+            <button type="button" class="admin-remove-banner" data-homepage-banner-remove hidden><Trash2 size={15} stroke-width={1.5} /> حذف بنر</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card">
       <header><span>HOMEPAGE SEO</span><h2>سئوی صفحه اصلی</h2><p>عنوان و توضیحات اصلی نتایج جست‌وجو و اشتراک‌گذاری اجتماعی.</p></header>
       <div class="admin-form-grid">
         <label class="admin-field wide"><span>عنوان SEO</span><input name="homepageSeoTitle" required minlength="10" maxlength="220" /></label>

@@ -111,6 +111,7 @@ export const initCart = () => {
   let alertTimer: number | null = null;
   let discountAmount = 0;
   let submittedOrder: SubmittedOrder | null = null;
+  const maxReceiptUploadSize = 1 * 1024 * 1024;
 
   const readCart = (): CartItem[] => {
     try {
@@ -679,7 +680,8 @@ export const initCart = () => {
   });
 
   paymentRef?.addEventListener("input", () => {
-    paymentRef.value = normalizeDigits(paymentRef.value);
+    // ارقام فارسی به انگلیسی تبدیل می‌شوند و هر کاراکتر غیرعددی همان لحظه حذف می‌شود.
+    paymentRef.value = normalizeDigits(paymentRef.value).replace(/[^0-9]/g, "");
     paymentRef.setCustomValidity("");
     if (paymentRef.getAttribute("aria-invalid") === "true" && paymentRef.value.trim() && paymentRef.checkValidity()) {
       setCheckoutFieldError(paymentRef);
@@ -728,8 +730,10 @@ export const initCart = () => {
 
   const prepareReceipt = async (file: File) => {
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-    const maxUploadSize = 4.5 * 1024 * 1024;
-    if (allowedTypes.has(file.type) && file.size <= maxUploadSize) return file;
+    if (file.size > maxReceiptUploadSize) {
+      throw new Error("حجم تصویر فیش نباید بیشتر از ۱ مگابایت باشد.");
+    }
+    if (allowedTypes.has(file.type)) return file;
     if (!file.type.startsWith("image/") && !/\.(?:heic|heif)$/i.test(file.name)) {
       throw new Error("فیش باید یک فایل تصویری باشد.");
     }
@@ -750,8 +754,8 @@ export const initCart = () => {
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
     canvas.width = 1;
     canvas.height = 1;
-    if (!blob || blob.size > maxUploadSize) {
-      throw new Error("حجم تصویر فیش زیاد است؛ لطفاً از فیش اسکرین‌شات بگیر و همان را انتخاب کن.");
+    if (!blob || blob.size > maxReceiptUploadSize) {
+      throw new Error("حجم تصویر فیش باید کمتر از ۱ مگابایت باشد؛ لطفاً از فیش اسکرین‌شات بگیر و دوباره انتخاب کن.");
     }
     const baseName = file.name.replace(/\.[^.]+$/, "") || "payment-receipt";
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: Date.now() });

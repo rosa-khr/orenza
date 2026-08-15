@@ -23,6 +23,8 @@ type PublicSiteSettings = {
   homepageSeoDescription: string;
   homepageSeoKeywords: string[];
   homepageOgImageUrl: string;
+  homepageBannerDesktopUrl: string | null;
+  homepageBannerMobileUrl: string | null;
   searchIndexingEnabled: boolean;
   scripts: PublicServiceScript[];
 };
@@ -97,6 +99,10 @@ const applySettings = (settings: PublicSiteSettings) => {
   setHref("[data-site-whatsapp-link]", settings.whatsappUrl);
   setHref("[data-site-bale-link]", settings.baleUrl);
   setHref("[data-site-instagram-link]", settings.instagramUrl);
+  const desktopBanner = document.querySelector<HTMLImageElement>("[data-site-homepage-banner-desktop]");
+  if (desktopBanner && settings.homepageBannerDesktopUrl) desktopBanner.src = settings.homepageBannerDesktopUrl;
+  const mobileBanner = document.querySelector<HTMLElement>("[data-site-homepage-banner-mobile]");
+  if (mobileBanner && settings.homepageBannerMobileUrl) mobileBanner.setAttribute("srcset", settings.homepageBannerMobileUrl);
 
   document.querySelectorAll<HTMLElement>("[data-site-address]").forEach((element) => {
     element.textContent = settings.address || "";

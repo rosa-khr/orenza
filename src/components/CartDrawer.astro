@@ -111,11 +111,15 @@ import Icon from "./Icon.astro";
         </header>
         <label>
           <span>کد پیگیری تراکنش</span>
-          <input type="text" inputmode="numeric" minlength="4" maxlength="80" data-payment-ref placeholder="کد درج‌شده روی رسید بانکی" required />
+          <input type="text" inputmode="numeric" pattern="[0-9]+" minlength="4" maxlength="80" data-payment-ref placeholder="کد درج‌شده روی رسید بانکی" required />
         </label>
         <label class="payment-receipt-picker">
           <span>تصویر فیش واریزی</span>
-          <input type="file" accept="image/*,.heic,.heif" data-payment-receipt required />
+          <span class="payment-receipt-control">
+            <strong>انتخاب تصویر فیش</strong>
+            <em>JPG، PNG یا WebP · حداکثر ۱ مگابایت</em>
+          </span>
+          <input type="file" accept="image/*,.heic,.heif" data-payment-receipt required aria-label="انتخاب تصویر فیش واریزی" />
           <small data-payment-receipt-name>عکس دوربین یا گالری؛ حجم به‌صورت خودکار بهینه می‌شود</small>
         </label>
       </section>

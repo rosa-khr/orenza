@@ -6,6 +6,7 @@ import { getPublicSiteSettings, getSiteSettings } from "../site-settings.js";
 import { OrderService } from "./order-service.js";
 import { removePaymentReceipt, savePaymentReceipt } from "../payment-receipts.js";
 import { openProductImage } from "../product-images.js";
+import { openHomepageBanner } from "../homepage-banners.js";
 
 type SessionUser = { id: string } | null;
 
@@ -71,6 +72,16 @@ export const registerStoreRoutes = (
   app.get("/api/v1/site-settings", async (_request, reply) => {
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     return { item: await getPublicSiteSettings(pool) };
+  });
+
+  app.get("/api/v1/homepage-banners/:fileName", async (request, reply) => {
+    const { fileName } = z.object({
+      fileName: z.string().regex(/^homepage-banner-(?:desktop|mobile)-[0-9a-f-]+\.(?:jpg|png|webp)$/)
+    }).parse(request.params);
+    const banner = openHomepageBanner(fileName);
+    if (!banner) return reply.code(404).send({ error: "بنر پیدا نشد." });
+    reply.type(banner.mime).header("Cache-Control", "public, max-age=300");
+    return reply.send(banner.stream);
   });
 
   app.get("/api/v1/indexing-policy", async (_request, reply) => {

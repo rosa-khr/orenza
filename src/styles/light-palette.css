@@ -597,12 +597,19 @@ body,
 
 /* Compact, glanceable order review. */
 .order-summary.is-current {
+  margin: 0;
   padding: clamp(22px, 3vw, 34px);
   background:
     radial-gradient(circle at 8% 0%, rgba(181, 151, 99, .1), transparent 26%),
     #f1f5f2;
   border: 1px solid rgba(48, 78, 64, .14);
   color: #25372f;
+}
+
+/* Keep the review card visibly separated from the outer builder shell. */
+.atelier-form:has(> .order-summary.is-current) {
+  padding: 18px clamp(18px, 4.6vw, 84px) 24px;
+  background: #fff;
 }
 
 .order-summary .summary-title {
@@ -701,6 +708,7 @@ body,
 }
 
 @media (max-width: 699px) {
+  .atelier-form:has(> .order-summary.is-current) { padding: 12px 10px 16px; }
   .order-summary .summary-title { align-items: flex-start; flex-direction: column; gap: 5px; }
   .order-summary .result-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .order-summary .result-list div { min-height: 68px; padding: 9px 10px; }
@@ -740,3 +748,236 @@ body,
   object-fit: contain !important;
   object-position: center !important;
 }
+
+/* Shared storefront language for the cart and account area. */
+.account-page,
+.cart-panel {
+  background: #fff;
+  color: var(--text-dark);
+}
+
+.account-heading { border-bottom-color: #e5e9e6; }
+
+.account-menu {
+  background: #fff;
+  border: 1px solid rgba(48, 78, 64, .16);
+  border-radius: 12px;
+  color: var(--text-dark);
+}
+
+.account-menu nav a {
+  border-color: #e4e9e5;
+  color: #5f6b64;
+}
+
+.account-menu nav a[aria-current="page"] {
+  background: #eef6f1;
+  border-color: rgba(48, 78, 64, .38);
+  color: #304e40;
+}
+
+.account-menu nav a > .icon,
+.account-menu-order { color: #3d7059; }
+
+.account-content,
+.account-panel,
+.cart-content { background: #fff; }
+
+.account-panel {
+  border-color: #e1e8e3;
+  border-radius: 12px;
+  box-shadow: 0 16px 42px rgba(42, 58, 49, .05);
+}
+
+.account-form input,
+.account-form textarea,
+.cart-checkout input,
+.cart-checkout textarea,
+.discount-entry input,
+.choice-card,
+.payment-card-list label,
+.saved-address-card {
+  background: #fff;
+  border-color: #dfe7e2;
+  border-radius: 8px;
+}
+
+.account-form input:focus,
+.account-form textarea:focus,
+.cart-checkout input:focus,
+.cart-checkout textarea:focus {
+  border-color: #5f9278;
+  box-shadow: 0 0 0 3px rgba(95, 146, 120, .12);
+}
+
+.account-primary,
+.checkout-register-order,
+.cart-empty button {
+  background: #304e40;
+  border-color: #304e40;
+  border-radius: 8px;
+  color: #fffdf8;
+}
+
+.account-secondary,
+.discount-entry button {
+  border-color: rgba(48, 78, 64, .48);
+  border-radius: 8px;
+  color: #304e40;
+}
+
+.cart-header {
+  background: rgba(255, 255, 255, .97);
+  border-bottom-color: #e5e9e6;
+}
+
+.cart-panel,
+.cart-item,
+.cart-header,
+.cart-checkout { border-color: #e5e9e6; }
+
+.cart-item {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 22px rgba(42, 58, 49, .035);
+}
+
+.cart-checkout {
+  background: #fff;
+  border-top-color: #e5e9e6;
+}
+
+.checkout-account,
+.checkout-login,
+.payment-proof,
+.payment-card-info {
+  background: #fff;
+  border-color: #e1e8e3;
+  border-radius: 9px;
+}
+
+.choice-card:has(input:checked),
+.saved-address-card:has(input:checked) {
+  background: #f1f8f4;
+  border-color: rgba(48, 78, 64, .58);
+}
+
+.checkout-totals { border-color: #e5e9e6; }
+
+.checkout-totals div:last-child,
+.checkout-account a,
+.checkout-login a,
+.saved-address-heading a,
+.address-manual-toggle,
+.payment-card-info > strong { color: #304e40; }
+
+/* Keep the footer identity vertically aligned: logo first, tagline directly below. */
+.footer-brand {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+  justify-items: center;
+  text-align: center;
+}
+
+.footer-brand > .brand {
+  align-self: center;
+  justify-self: center;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.footer-brand .brand-wordmark {
+  display: block;
+  width: 128px;
+}
+
+.footer-brand .brand-mark {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+}
+
+.footer-brand p {
+  margin: 0;
+  font-family: Dana, Tahoma, sans-serif;
+  font-size: 12px;
+}
+
+.footer-bottom {
+  font-family: Dana, Tahoma, sans-serif;
+  letter-spacing: 0;
+}
+
+/* Right-align the Persian heading and actions in the order review card. */
+.order-summary .summary-title {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: right;
+}
+
+.order-summary .summary-title > div {
+  width: 100%;
+}
+
+.order-summary .result-actions {
+  width: 100%;
+  justify-content: flex-end;
+  direction: rtl;
+}
+
+/* Keep the roast intensity marker as a clean, continuous ring. */
+.roast-intensity {
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #e5e9e6;
+  background: conic-gradient(
+    color-mix(in srgb, var(--roast-color) 58%, #fff) calc(var(--roast-progress) * 1%),
+    #e4e8e5 0
+  );
+  box-shadow: none;
+  opacity: .9;
+}
+
+.roast-intensity::after {
+  z-index: 1;
+  inset: 4px;
+  background: #fff;
+}
+
+/* Added-to-cart prompt aligned with the light storefront theme. */
+.cart-added-choice {
+  border-color: #dce7e0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .98);
+  color: #263d32;
+  box-shadow: 0 18px 46px rgba(42, 58, 49, .14);
+}
+
+.cart-added-choice span {
+  color: #4d8064;
+  font-family: Dana, Tahoma, sans-serif;
+  letter-spacing: .08em;
+}
+
+.cart-added-choice strong { color: #263d32; }
+
+.cart-added-choice button {
+  border-color: #cbdcd1;
+  border-radius: 8px;
+  color: #304e40;
+}
+
+.cart-added-choice button:hover { background: #f1f8f4; }
+
+.cart-added-choice [data-cart-view] {
+  background: #304e40;
+  border-color: #304e40;
+  color: #fff;
+}
+
+.cart-added-choice [data-cart-view]:hover { background: #3b6350; }

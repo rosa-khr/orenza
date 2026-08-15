@@ -142,6 +142,10 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS invoice_signature_url varchar(500);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS website_url varchar(500) NOT NULL DEFAULT 'https://orenza.ir';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_banner_desktop_url varchar(500);
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_banner_mobile_url varchar(500);
 
 INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 

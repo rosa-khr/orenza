@@ -141,6 +141,8 @@ export const siteSettingsSchema = z.object({
   homepageSeoDescription: z.string().trim().min(30).max(500),
   homepageSeoKeywords: z.array(z.string().trim().min(2).max(100)).min(1).max(30),
   homepageOgImageUrl: z.string().trim().min(1).max(500),
+  homepageBannerDesktopUrl: z.string().trim().max(500).nullable().optional(),
+  homepageBannerMobileUrl: z.string().trim().max(500).nullable().optional(),
   searchIndexingEnabled: z.boolean(),
   invoiceNationalId: z.string().trim().min(10).max(20)
 });
@@ -186,7 +188,7 @@ export const createOrderSchema = z.object({
   shippingMethod: z.enum(["tipax", "post"]),
   paymentMethodId: z.string().uuid(),
   paymentCardId: z.string().uuid().nullable().optional(),
-  paymentRefId: z.string().trim().min(4).max(80).optional(),
+  paymentRefId: z.string().trim().min(4).max(80).regex(/^[0-9]+$/, "کد پیگیری باید فقط شامل ارقام ۰ تا ۹ باشد.").optional(),
   paymentReceiptUrl: z.string().trim().max(500).optional(),
   discountCode: z.string().trim().max(60).optional(),
   customerNote: z.string().trim().max(2000).nullable().optional(),

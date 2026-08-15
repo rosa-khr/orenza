@@ -11,6 +11,7 @@ import {
   saveInvoiceSignature
 } from "../invoice-signatures.js";
 import { saveProductImage } from "../product-images.js";
+import { removeHomepageBanner, saveHomepageBanner } from "../homepage-banners.js";
 
 type AdminUser = { id: string; role: "customer" | "admin"; admin_role_id: string | null };
 
@@ -285,6 +286,47 @@ export const registerAdminRoutes = (
   app.put("/api/v1/admin/site-settings", async (request, reply) => {
     if (!(await requirePermission(request, reply, "site-settings"))) return;
     return { item: await updateSiteSettings(pool, request.body) };
+  });
+
+  app.post("/api/v1/admin/site-settings/homepage-banner/:kind", {
+    bodyLimit: 6 * 1024 * 1024
+  }, async (request, reply) => {
+    if (!(await requirePermission(request, reply, "site-settings"))) return;
+    const { kind } = z.object({ kind: z.enum(["desktop", "mobile"]) }).parse(request.params);
+    const part = await request.file();
+    if (!part || part.fieldname !== "banner") {
+      return reply.code(422).send({ error: "تصویر بنر را انتخاب کنید." });
+    }
+    const saved = await saveHomepageBanner(await part.toBuffer(), kind);
+    const column = kind === "desktop" ? "homepage_banner_desktop_url" : "homepage_banner_mobile_url";
+    try {
+      const previous = await pool.query<Record<string, string | null>>(
+        `SELECT ${column} FROM site_settings WHERE id=1`
+      );
+      await pool.query(
+        `UPDATE site_settings SET ${column}=$1,updated_at=now() WHERE id=1`,
+        [saved.url]
+      );
+      const oldFileName = previous.rows[0]?.[column]?.split("/").pop();
+      if (oldFileName) await removeHomepageBanner(oldFileName);
+      return { url: saved.url };
+    } catch (error) {
+      await removeHomepageBanner(saved.fileName);
+      throw error;
+    }
+  });
+
+  app.delete("/api/v1/admin/site-settings/homepage-banner/:kind", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "site-settings"))) return;
+    const { kind } = z.object({ kind: z.enum(["desktop", "mobile"]) }).parse(request.params);
+    const column = kind === "desktop" ? "homepage_banner_desktop_url" : "homepage_banner_mobile_url";
+    const previous = await pool.query<Record<string, string | null>>(
+      `SELECT ${column} FROM site_settings WHERE id=1`
+    );
+    await pool.query(`UPDATE site_settings SET ${column}=NULL,updated_at=now() WHERE id=1`);
+    const oldFileName = previous.rows[0]?.[column]?.split("/").pop();
+    if (oldFileName) await removeHomepageBanner(oldFileName);
+    return { success: true };
   });
 
   app.get("/api/v1/admin/invoice-settings", async (request, reply) => {
