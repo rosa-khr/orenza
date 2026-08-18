@@ -24,6 +24,7 @@ type CategoryProduct = {
 type CategoryInfo = {
   title: string;
   slug: string;
+  description: string | null;
   imageUrl: string | null;
 };
 
@@ -39,6 +40,11 @@ if (root && list) {
         return response.json() as Promise<{ item: CategoryInfo }>;
       })
       .then(({ item }) => {
+        const content = document.querySelector<HTMLElement>("[data-category-content]");
+        if (content && item.description?.trim()) {
+          content.textContent = item.description.trim();
+          content.hidden = false;
+        }
         if (!item.imageUrl) return;
         const hero = document.querySelector<HTMLElement>(`[data-category-hero][data-category-slug="${item.slug}"]`);
         const banner = hero?.querySelector<HTMLImageElement>("[data-category-hero-banner]");

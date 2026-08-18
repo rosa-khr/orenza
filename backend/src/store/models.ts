@@ -96,6 +96,7 @@ export interface Tag {
   id: string;
   title: string;
   slug: string;
+  content: string | null;
 }
 
 export interface OrderItem {

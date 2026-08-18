@@ -275,7 +275,7 @@ export const adminResources: AdminResource[] = [
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
-      { key: "description", label: "توضیحات", type: "textarea" },
+      { key: "description", label: "محتوای دسته‌بندی", type: "textarea" },
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true },
@@ -400,7 +400,8 @@ export const adminResources: AdminResource[] = [
     description: "برچسب‌های مشترک محتوای سایت",
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
-      { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true }
+      { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
+      { key: "content", label: "محتوای تگ", type: "textarea" }
     ]
   }
 ];

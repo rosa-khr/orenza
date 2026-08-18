@@ -106,7 +106,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   },
   tags: {
     table: "tags",
-    columns: { title: "title", slug: "slug", ...audit },
+    columns: { title: "title", slug: "slug", content: "content", ...audit },
     search: ["title", "slug"],
     schema: tagSchema
   },

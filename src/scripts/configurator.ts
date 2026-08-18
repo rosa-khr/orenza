@@ -3,10 +3,10 @@ import { initAccountHeader } from "./account-header";
 import { initCart } from "./cart";
 import { initMotion } from "./motion";
 
+initAccountHeader();
 initCart();
 initAtelier();
 initMotion();
-initAccountHeader();
 
 document.addEventListener("pointerdown", (event) => {
   document.querySelectorAll<HTMLElement>(".nav-products.is-open").forEach((menu) => {

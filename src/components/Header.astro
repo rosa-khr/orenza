@@ -3,7 +3,7 @@ import Icon from "./Icon.astro";
 ---
 
 <header class="site-header">
-  <button class="mobile-nav-toggle" type="button" data-mobile-nav-open aria-label="باز کردن منوی سایت">
+  <button class="mobile-nav-toggle" type="button" data-mobile-nav-open aria-controls="mobile-site-navigation" aria-expanded="false" aria-label="باز کردن منوی سایت">
     <span></span><span></span><span></span>
   </button>
   <nav class="primary-nav" aria-label="ناوبری اصلی">
@@ -40,7 +40,7 @@ import Icon from "./Icon.astro";
       <span data-cart-count>۰</span>
     </button>
   </div>
-  <div class="mobile-nav-drawer" data-mobile-nav hidden aria-hidden="true">
+  <div class="mobile-nav-drawer" id="mobile-site-navigation" data-mobile-nav hidden aria-hidden="true">
     <button class="mobile-nav-backdrop" type="button" data-mobile-nav-close aria-label="بستن منو"></button>
     <aside class="mobile-nav-panel" aria-label="منوی موبایل">
       <header>

@@ -40,6 +40,7 @@ const isPowderCategory = category.slug === "cafe-drinks";
   </section>
 
   <section class="category-editorial">
+    <div class="category-admin-content" data-category-content hidden></div>
     {category.content.map((paragraph) => <p>{paragraph}</p>)}
   </section>
   <script>

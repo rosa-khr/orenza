@@ -1,4 +1,7 @@
 export const initAccountHeader = () => {
+  if (document.documentElement.dataset.accountHeaderReady === "true") return;
+  document.documentElement.dataset.accountHeaderReady = "true";
+
   const name = document.querySelector<HTMLElement>("[data-header-account-name]");
   const mobileName = document.querySelector<HTMLElement>("[data-mobile-account-name]");
   const mobileLogin = document.querySelector<HTMLAnchorElement>(".mobile-login-link");
@@ -7,21 +10,31 @@ export const initAccountHeader = () => {
   const closeMobileNavButtons = document.querySelectorAll<HTMLButtonElement>("[data-mobile-nav-close]");
   const productMenu = document.querySelector<HTMLElement>(".nav-products");
   const productToggle = document.querySelector<HTMLButtonElement>(".nav-products-toggle");
+  let lastFocusedElement: HTMLElement | null = null;
 
   const openDrawer = () => {
     if (!mobileNav) return;
+    lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     mobileNav.hidden = false;
     mobileNav.setAttribute("aria-hidden", "false");
+    openMobileNav?.setAttribute("aria-expanded", "true");
     document.body.classList.add("mobile-nav-is-open");
-    requestAnimationFrame(() => mobileNav.classList.add("is-open"));
+    requestAnimationFrame(() => {
+      mobileNav.classList.add("is-open");
+      mobileNav.querySelector<HTMLButtonElement>("[data-mobile-nav-close]")?.focus();
+    });
   };
 
   const closeDrawer = () => {
     if (!mobileNav) return;
     mobileNav.classList.remove("is-open");
     mobileNav.setAttribute("aria-hidden", "true");
+    openMobileNav?.setAttribute("aria-expanded", "false");
     document.body.classList.remove("mobile-nav-is-open");
-    window.setTimeout(() => { mobileNav.hidden = true; }, 220);
+    window.setTimeout(() => {
+      mobileNav.hidden = true;
+      lastFocusedElement?.focus();
+    }, 280);
   };
 
   openMobileNav?.addEventListener("click", openDrawer);

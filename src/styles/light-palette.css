@@ -98,6 +98,15 @@ body,
   color: #805728;
 }
 
+.mobile-nav-panel > header button:hover,
+.mobile-nav-panel > header button:focus-visible,
+.mobile-nav-panel footer a:hover,
+.mobile-nav-panel footer a:focus-visible {
+  background: rgba(154, 107, 50, 0.08);
+  border-color: rgba(154, 107, 50, 0.48);
+  outline: none;
+}
+
 .hero,
 .hero-copy {
   background: #fff;

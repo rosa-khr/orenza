@@ -107,6 +107,19 @@ export const registerStoreRoutes = (
     return { item: toPublicRecord(result.rows[0]) };
   });
 
+  app.get("/api/v1/tags/:slug", async (request, reply) => {
+    const { slug } = z.object({
+      slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    }).parse(request.params);
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT id,title,slug,content FROM tags WHERE slug=$1`,
+      [slug]
+    );
+    if (!result.rows[0]) return reply.code(404).send({ error: "تگ پیدا نشد." });
+    reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return { item: toPublicRecord(result.rows[0]) };
+  });
+
   app.get("/api/v1/site-settings/robots.txt", async (_request, reply) => {
     const settings = await getSiteSettings(pool);
     reply.type("text/plain; charset=utf-8").header("Cache-Control", "no-store");

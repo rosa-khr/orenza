@@ -273,6 +273,7 @@ CREATE TABLE IF NOT EXISTS tags (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(120) NOT NULL,
   slug varchar(160) NOT NULL UNIQUE,
+  content text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -345,6 +346,7 @@ ALTER TABLE order_items ADD COLUMN IF NOT EXISTS brew_method varchar(100);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_title varchar(220);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(500);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS content text;
 ALTER TABLE payment_methods DROP CONSTRAINT IF EXISTS payment_methods_type_check;
 ALTER TABLE payment_methods ADD CONSTRAINT payment_methods_type_check CHECK (type IN ('cardToCard','bankGateway','zarinpal'));
 ALTER TABLE payment_methods ALTER COLUMN card_number DROP NOT NULL;

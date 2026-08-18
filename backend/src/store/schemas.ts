@@ -14,7 +14,7 @@ const slug = z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$
 export const categorySchema = z.object({
   title: z.string().trim().min(2).max(160),
   slug,
-  description: z.string().trim().max(2000).nullable().optional(),
+  description: z.string().trim().max(100_000).nullable().optional(),
   imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().min(10).max(220),
   seoDescription: z.string().trim().min(30).max(500),
@@ -96,7 +96,8 @@ export const articleSchema = z.object({
 
 export const tagSchema = z.object({
   title: z.string().trim().min(2).max(120),
-  slug
+  slug,
+  content: z.string().trim().max(100_000).nullable().optional()
 });
 
 export const orderAdminSchema = z.object({
