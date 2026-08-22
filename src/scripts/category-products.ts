@@ -42,7 +42,7 @@ if (root && list) {
       .then(({ item }) => {
         const content = document.querySelector<HTMLElement>("[data-category-content]");
         if (content && item.description?.trim()) {
-          content.textContent = item.description.trim();
+          content.innerHTML = item.description.trim();
           content.hidden = false;
         }
         if (!item.imageUrl) return;

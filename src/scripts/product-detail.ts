@@ -95,16 +95,9 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       const contentSection = root.querySelector<HTMLElement>("[data-product-detail-content-section]");
       const contentRoot = root.querySelector<HTMLElement>("[data-product-detail-content]");
       setText("[data-product-detail-content-title]", `راهنمای خرید ${item.titleFa}`);
-      const paragraphs = String(item.productContent || "")
-        .split(/\n\s*\n/)
-        .map((paragraph) => paragraph.trim())
-        .filter(Boolean);
-      if (contentSection && contentRoot && paragraphs.length) {
-        paragraphs.forEach((text) => {
-          const paragraph = document.createElement("p");
-          paragraph.textContent = text;
-          contentRoot.append(paragraph);
-        });
+      const productContent = String(item.productContent || "").trim();
+      if (contentSection && contentRoot && productContent) {
+        contentRoot.innerHTML = productContent;
         contentSection.hidden = false;
       }
 

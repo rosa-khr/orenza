@@ -50,9 +50,40 @@ const orderReadonly = new Set([
           <small data-field-error={field.key}></small>
         </fieldset>
       ) : (
-        <label class:list={["admin-field", { wide: field.type === "textarea" }]} data-admin-field={field.key}>
+        <label class:list={["admin-field", { wide: field.type === "textarea" || field.type === "richtext" }]} data-admin-field={field.key}>
           <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
-          {field.type === "textarea" ? (
+          {field.type === "richtext" ? (
+            <div class="admin-rich-text" data-rich-text>
+              <div class="admin-rich-text-toolbar" role="toolbar" aria-label={`ابزارهای ویرایش ${field.label}`}>
+                <button type="button" data-rich-command="formatBlock" data-rich-value="p" disabled={isView}>پاراگراف</button>
+                <button type="button" data-rich-command="formatBlock" data-rich-value="h2" disabled={isView}>تیتر</button>
+                <button type="button" data-rich-command="bold" disabled={isView}><strong>ضخیم</strong></button>
+                <button type="button" data-rich-command="italic" disabled={isView}><em>مورب</em></button>
+                <button type="button" data-rich-command="insertUnorderedList" disabled={isView}>فهرست نقطه‌ای</button>
+                <button type="button" data-rich-command="insertOrderedList" disabled={isView}>فهرست شماره‌ای</button>
+                <button type="button" data-rich-command="createLink" disabled={isView}>افزودن لینک</button>
+                <button type="button" data-rich-command="unlink" disabled={isView}>حذف لینک</button>
+                <button type="button" data-rich-command="removeFormat" disabled={isView}>پاک‌کردن قالب</button>
+              </div>
+              <div
+                class="admin-rich-text-editor"
+                contenteditable={isView ? "false" : "true"}
+                role="textbox"
+                aria-multiline="true"
+                data-rich-text-editor={field.key}
+                data-placeholder="متن فارسی را اینجا بنویسید…"
+              ></div>
+              <textarea
+                class="admin-rich-text-input"
+                name={field.key}
+                required={field.required}
+                disabled={isView}
+                data-rich-text-input={field.key}
+                tabindex="-1"
+                aria-hidden="true"
+              ></textarea>
+            </div>
+          ) : field.type === "textarea" ? (
             <textarea name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} minlength={field.required ? 2 : undefined}></textarea>
           ) : field.type === "select" ? (
             <select name={field.key} required={field.required} disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))} data-dynamic-options={!field.options ? field.key : undefined}>

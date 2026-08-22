@@ -943,7 +943,125 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
     input.add(new Option(statusLabels[normalizedValue] || normalizedValue, normalizedValue));
   }
   input.value = normalizedValue;
+  const richEditor = form.querySelector<HTMLElement>(`[data-rich-text-editor="${key}"]`);
+  if (richEditor) richEditor.innerHTML = sanitizeEditorHtml(normalizedValue);
   input.dispatchEvent(new Event("change", { bubbles: true }));
+};
+
+const richTextTags = new Set(["P", "BR", "STRONG", "B", "EM", "I", "U", "H2", "H3", "UL", "OL", "LI", "A", "BLOCKQUOTE"]);
+
+const safeEditorHref = (value: string) => {
+  const href = value.trim();
+  if (/^https?:\/\//i.test(href) || /^(mailto:|tel:)/i.test(href)) return href;
+  if ((href.startsWith("/") && !href.startsWith("//")) || href.startsWith("#")) return href;
+  return "";
+};
+
+const sanitizeEditorHtml = (value: string) => {
+  if (!value.trim()) return "";
+  const template = document.createElement("template");
+  template.innerHTML = value;
+  [...template.content.querySelectorAll<HTMLElement>("*")].forEach((node) => {
+    if (["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "SVG", "MATH"].includes(node.tagName)) {
+      node.remove();
+      return;
+    }
+    if (node.tagName === "DIV") {
+      const paragraph = document.createElement("p");
+      paragraph.append(...node.childNodes);
+      node.replaceWith(paragraph);
+      return;
+    }
+    if (!richTextTags.has(node.tagName)) {
+      node.replaceWith(...node.childNodes);
+      return;
+    }
+    const href = node.tagName === "A" ? safeEditorHref(node.getAttribute("href") || "") : "";
+    [...node.attributes].forEach((attribute) => node.removeAttribute(attribute.name));
+    if (node.tagName === "A") {
+      if (!href) {
+        node.replaceWith(...node.childNodes);
+        return;
+      }
+      node.setAttribute("href", href);
+      if (/^https?:\/\//i.test(href)) {
+        node.setAttribute("target", "_blank");
+        node.setAttribute("rel", "noopener noreferrer");
+      }
+    }
+  });
+  return template.innerHTML.trim();
+};
+
+const runEditorCommand = (command: string, value?: string) => {
+  // The native editing command remains the most consistent cross-browser option for contenteditable toolbars.
+  const execute = (document as unknown as Record<string, unknown>)["execCommand"] as
+    (commandId: string, showUi: boolean, commandValue?: string) => boolean;
+  return execute.call(document, command, false, value);
+};
+
+const initRichTextEditors = (form: HTMLFormElement) => {
+  form.querySelectorAll<HTMLElement>("[data-rich-text]").forEach((root) => {
+    const editor = root.querySelector<HTMLElement>("[data-rich-text-editor]");
+    const input = root.querySelector<HTMLTextAreaElement>("[data-rich-text-input]");
+    if (!editor || !input) return;
+    let savedRange: Range | null = null;
+    const rememberSelection = () => {
+      const selection = window.getSelection();
+      if (selection?.rangeCount && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0).cloneRange();
+    };
+    const restoreSelection = () => {
+      editor.focus();
+      if (!savedRange) return;
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(savedRange);
+    };
+    const sync = () => {
+      const clean = sanitizeEditorHtml(editor.innerHTML);
+      input.value = clean;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    editor.addEventListener("input", sync);
+    editor.addEventListener("keyup", rememberSelection);
+    editor.addEventListener("mouseup", rememberSelection);
+    editor.addEventListener("blur", () => {
+      const clean = sanitizeEditorHtml(editor.innerHTML);
+      if (editor.innerHTML !== clean) editor.innerHTML = clean;
+      sync();
+    });
+    root.querySelectorAll<HTMLButtonElement>("[data-rich-command]").forEach((button) => {
+      button.addEventListener("mousedown", (event) => event.preventDefault());
+      button.addEventListener("click", () => {
+        restoreSelection();
+        const command = button.dataset.richCommand || "";
+        if (command === "createLink") {
+          if (window.getSelection()?.isCollapsed) {
+            toast("ابتدا کلمه یا عبارت موردنظر برای لینک را انتخاب کنید.", "error");
+            return;
+          }
+          const entered = window.prompt("نشانی لینک را وارد کنید؛ مانند https://example.com یا /products/");
+          if (!entered) return;
+          const candidate = /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(entered.trim())
+            ? entered.trim()
+            : `https://${entered.trim()}`;
+          const href = safeEditorHref(candidate);
+          if (!href) {
+            toast("نشانی لینک معتبر نیست.", "error");
+            return;
+          }
+          runEditorCommand("createLink", href);
+        } else if (command === "formatBlock") {
+          runEditorCommand(command, button.dataset.richValue || "p");
+        } else {
+          runEditorCommand(command);
+        }
+        rememberSelection();
+        sync();
+      });
+    });
+    sync();
+  });
 };
 
 const loadLookups = async (form: HTMLFormElement) => {
@@ -1132,6 +1250,7 @@ const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "c
 };
 
 const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: string) => {
+  initRichTextEditors(form);
   await loadLookups(form);
   enhanceDropdowns(form);
   enhancePersianDates(form);

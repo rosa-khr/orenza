@@ -7,6 +7,7 @@ import { OrderService } from "./order-service.js";
 import { removePaymentReceipt, savePaymentReceipt } from "../payment-receipts.js";
 import { openProductImage } from "../product-images.js";
 import { openHomepageBanner } from "../homepage-banners.js";
+import { sanitizeRichText } from "../rich-text.js";
 
 type SessionUser = { id: string } | null;
 
@@ -104,7 +105,9 @@ export const registerStoreRoutes = (
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "دسته‌بندی پیدا نشد." });
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-    return { item: toPublicRecord(result.rows[0]) };
+    const item = toPublicRecord(result.rows[0]);
+    item.description = sanitizeRichText(String(item.description || ""));
+    return { item };
   });
 
   app.get("/api/v1/tags/:slug", async (request, reply) => {
@@ -117,7 +120,9 @@ export const registerStoreRoutes = (
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "تگ پیدا نشد." });
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-    return { item: toPublicRecord(result.rows[0]) };
+    const item = toPublicRecord(result.rows[0]);
+    item.content = sanitizeRichText(String(item.content || ""));
+    return { item };
   });
 
   app.get("/api/v1/site-settings/robots.txt", async (_request, reply) => {
@@ -146,7 +151,13 @@ export const registerStoreRoutes = (
        ORDER BY p.sort_order ASC, p.created_at ASC`,
       values
     );
-    return { items: result.rows.map(toPublicRecord) };
+    return {
+      items: result.rows.map((row) => {
+        const item = toPublicRecord(row);
+        item.productContent = sanitizeRichText(String(item.productContent || ""));
+        return item;
+      })
+    };
   });
 
   app.get("/api/v1/products/:id", async (request, reply) => {
@@ -164,7 +175,9 @@ export const registerStoreRoutes = (
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "محصول پیدا نشد." });
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-    return { item: toPublicRecord(result.rows[0]) };
+    const item = toPublicRecord(result.rows[0]);
+    item.productContent = sanitizeRichText(String(item.productContent || ""));
+    return { item };
   });
 
   app.get("/api/v1/product-images/:fileName", async (request, reply) => {

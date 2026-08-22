@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizePhone } from "../security.js";
+import { sanitizeRichText } from "../rich-text.js";
 
 const optionalUrl = z.union([z.string().url(), z.literal(""), z.null()]).transform((value) => value || null);
 const productImageUrl = z.union([
@@ -10,11 +11,13 @@ const productImageUrl = z.union([
 ]).transform((value) => value || null);
 const money = z.number().int().min(0).max(10_000_000_000);
 const slug = z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const optionalRichText = z.union([z.string().max(100_000), z.literal(""), z.null()])
+  .transform((value) => sanitizeRichText(value));
 
 export const categorySchema = z.object({
   title: z.string().trim().min(2).max(160),
   slug,
-  description: z.string().trim().max(100_000).nullable().optional(),
+  description: optionalRichText.optional(),
   imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().min(10).max(220),
   seoDescription: z.string().trim().min(30).max(500),
@@ -26,7 +29,7 @@ export const productSchema = z.object({
   titleEn: z.string().trim().min(2).max(220),
   categoryId: z.string().uuid(),
   description: z.string().trim().min(10).max(5000),
-  productContent: z.string().trim().max(100_000).nullable().optional(),
+  productContent: optionalRichText.optional(),
   roastType: z.enum(["light", "medium", "mediumDark", "dark"]),
   coffeeType: z.enum(["bean", "ground"]),
   grindType: z.enum(["espresso", "mokaPot", "frenchPress", "turkish", "filter", "none"]).default("none"),
@@ -97,7 +100,7 @@ export const articleSchema = z.object({
 export const tagSchema = z.object({
   title: z.string().trim().min(2).max(120),
   slug,
-  content: z.string().trim().max(100_000).nullable().optional()
+  content: optionalRichText.optional()
 });
 
 export const orderAdminSchema = z.object({

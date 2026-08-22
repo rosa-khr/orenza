@@ -1,6 +1,7 @@
 export type AdminFieldType =
   | "text"
   | "textarea"
+  | "richtext"
   | "number"
   | "select"
   | "checkbox"
@@ -187,7 +188,7 @@ export const adminResources: AdminResource[] = [
       { key: "titleEn", label: "عنوان انگلیسی", type: "text", required: true, dir: "ltr" },
       { key: "categoryId", label: "دسته‌بندی", type: "select", required: true },
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
-      { key: "productContent", label: "محتوای کامل صفحه محصول", type: "textarea" },
+      { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
       {
         key: "roastType",
         label: "پروفایل رُست",
@@ -275,7 +276,7 @@ export const adminResources: AdminResource[] = [
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
-      { key: "description", label: "محتوای دسته‌بندی", type: "textarea" },
+      { key: "description", label: "محتوای دسته‌بندی", type: "richtext" },
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true },
@@ -401,7 +402,7 @@ export const adminResources: AdminResource[] = [
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
-      { key: "content", label: "محتوای تگ", type: "textarea" }
+      { key: "content", label: "محتوای تگ", type: "richtext" }
     ]
   }
 ];
