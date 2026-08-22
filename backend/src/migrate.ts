@@ -278,6 +278,24 @@ CREATE TABLE IF NOT EXISTS tags (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS product_tags (
+  product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  tag_id uuid NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (product_id, tag_id)
+);
+CREATE INDEX IF NOT EXISTS product_tags_tag_idx ON product_tags(tag_id);
+
+CREATE TABLE IF NOT EXISTS product_related_products (
+  product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  related_product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (product_id, related_product_id),
+  CHECK (product_id <> related_product_id)
+);
+CREATE INDEX IF NOT EXISTS product_related_products_related_idx
+  ON product_related_products(related_product_id);
+
 CREATE TABLE IF NOT EXISTS articles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(240) NOT NULL,

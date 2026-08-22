@@ -43,6 +43,10 @@ const isPowderCategory = category.slug === "cafe-drinks";
     <div class="category-admin-content" data-category-content hidden></div>
     {category.content.map((paragraph) => <p>{paragraph}</p>)}
   </section>
+  <section class="content-tags" data-category-tags hidden>
+    <header><span>RELATED TAGS</span><h2>برچسب‌های مرتبط این دسته‌بندی</h2></header>
+    <div data-category-tag-list></div>
+  </section>
   <script>
     import "../../scripts/category-products.ts";
   </script>

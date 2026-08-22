@@ -1,0 +1,33 @@
+---
+import { ArrowRight, Tag } from "@lucide/astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="برچسب محصولات اورنزا"
+  description="محتوا و محصولات مرتبط با برچسب‌های اورنزا"
+  canonicalPath="/tags/detail/"
+  keywords={["برچسب محصولات اورنزا", "قهوه اورنزا"]}
+>
+  <main class="tag-detail-page" data-tag-detail>
+    <a class="product-detail-back" href="/products/"><ArrowRight size={17} /> بازگشت به محصولات</a>
+    <header class="tag-detail-hero">
+      <Tag size={28} stroke-width={1.3} />
+      <span>ORENZA TAG</span>
+      <h1 data-tag-title>در حال دریافت برچسب…</h1>
+    </header>
+    <section class="tag-detail-content" data-tag-content hidden></section>
+    <section class="content-tags" data-related-tags hidden>
+      <header><span>RELATED TAGS</span><h2>برچسب‌های مرتبط</h2></header>
+      <div data-related-tag-list></div>
+    </section>
+    <section class="tag-products" data-tag-products hidden>
+      <header><span>TAGGED PRODUCTS</span><h2>محصولات این برچسب</h2></header>
+      <div data-tag-product-list></div>
+    </section>
+    <p class="product-detail-error" data-tag-error hidden></p>
+  </main>
+  <script>
+    import "../../scripts/tag-detail.ts";
+  </script>
+</BaseLayout>

@@ -13,6 +13,9 @@ export interface Product {
   titleEn: string;
   categoryId: string;
   description: string;
+  productContent: string | null;
+  tagIds: string[];
+  relatedProductIds: string[];
   roastType: RoastType;
   coffeeType: CoffeeType;
   grindType: GrindType;

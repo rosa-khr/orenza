@@ -50,7 +50,7 @@ const orderReadonly = new Set([
           <small data-field-error={field.key}></small>
         </fieldset>
       ) : (
-        <label class:list={["admin-field", { wide: field.type === "textarea" || field.type === "richtext" }]} data-admin-field={field.key}>
+        <label class:list={["admin-field", { wide: field.type === "textarea" || field.type === "richtext" || field.type === "multiselect" }]} data-admin-field={field.key}>
           <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
           {field.type === "richtext" ? (
             <div class="admin-rich-text" data-rich-text>
@@ -85,6 +85,11 @@ const orderReadonly = new Set([
             </div>
           ) : field.type === "textarea" ? (
             <textarea name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} minlength={field.required ? 2 : undefined}></textarea>
+          ) : field.type === "multiselect" ? (
+            <>
+              <select name={field.key} multiple size="7" disabled={isView} data-dynamic-options={field.key}></select>
+              <em class="admin-field-help">با کلیک روی هر گزینه آن را انتخاب یا لغو کنید؛ موارد انتخاب‌شده با رنگ طلایی مشخص می‌شوند.</em>
+            </>
           ) : field.type === "select" ? (
             <select name={field.key} required={field.required} disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))} data-dynamic-options={!field.options ? field.key : undefined}>
               <option value="">انتخاب کنید</option>

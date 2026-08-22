@@ -4,6 +4,7 @@ export type AdminFieldType =
   | "richtext"
   | "number"
   | "select"
+  | "multiselect"
   | "checkbox"
   | "date"
   | "image"
@@ -189,6 +190,8 @@ export const adminResources: AdminResource[] = [
       { key: "categoryId", label: "دسته‌بندی", type: "select", required: true },
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
       { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
+      { key: "tagIds", label: "برچسب‌های مرتبط", type: "multiselect" },
+      { key: "relatedProductIds", label: "محصولات مرتبط", type: "multiselect" },
       {
         key: "roastType",
         label: "پروفایل رُست",

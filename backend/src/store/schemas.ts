@@ -30,6 +30,8 @@ export const productSchema = z.object({
   categoryId: z.string().uuid(),
   description: z.string().trim().min(10).max(5000),
   productContent: optionalRichText.optional(),
+  tagIds: z.array(z.string().uuid()).max(30).default([]),
+  relatedProductIds: z.array(z.string().uuid()).max(20).default([]),
   roastType: z.enum(["light", "medium", "mediumDark", "dark"]),
   coffeeType: z.enum(["bean", "ground"]),
   grindType: z.enum(["espresso", "mokaPot", "frenchPress", "turkish", "filter", "none"]).default("none"),

@@ -4662,6 +4662,73 @@ body.mobile-nav-is-open {
 .product-detail-content h2, .product-detail-content h3 { margin: 18px 0 4px; color: var(--green); line-height: 1.7; }
 .product-detail-content ul, .product-detail-content ol { margin: 4px 0; padding-right: 24px; color: #5e574e; line-height: 2.15; }
 .product-detail-content a { color: #855d28; font-weight: 700; text-decoration: underline; text-decoration-color: rgba(133,93,40,.45); text-underline-offset: 4px; }
+.content-tags,
+.related-products,
+.tag-products,
+.tag-detail-content {
+  width: min(100%,980px);
+  margin: clamp(34px,6vw,64px) auto 0;
+  border-top: 1px solid #cdbc9f;
+  padding-top: clamp(25px,4vw,38px);
+}
+.content-tags > header,
+.related-products > header,
+.tag-products > header { margin-bottom: 20px; }
+.content-tags > header span,
+.related-products > header span,
+.tag-products > header span { color: #98713a; font: .62rem Georgia,serif; letter-spacing: .14em; }
+.content-tags > header h2,
+.related-products > header h2,
+.tag-products > header h2 { margin: 5px 0 0; color: var(--green); font-size: clamp(1.4rem,2.6vw,2rem); }
+.content-tags > div { display: flex; flex-wrap: wrap; gap: 9px; }
+.content-tags > div a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid #d8c9b1;
+  border-radius: 999px;
+  background: rgba(255,252,246,.72);
+  padding: 7px 14px;
+  color: #745427;
+  font-size: .72rem;
+  transition: border-color .2s ease,background-color .2s ease,transform .2s ease;
+}
+.content-tags > div a:hover { border-color: #9a7137; background: #fffdf8; transform: translateY(-2px); }
+.related-products > div,
+.tag-products > div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.related-products article,
+.tag-products article { overflow: hidden; border: 1px solid #ddcfba; border-radius: 9px; background: #fffaf2; }
+.related-products article > a,
+.tag-products article > a { display: grid; height: 210px; place-items: center; overflow: hidden; background: linear-gradient(145deg,#dfd0b9,#f1e5d4); }
+.related-products article img,
+.tag-products article img { width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
+.related-products article:hover img,
+.tag-products article:hover img { transform: scale(1.035); }
+.related-products article > a span,
+.tag-products article > a span { color: rgba(28,60,47,.42); font-size: .82rem; letter-spacing: .3em; }
+.related-products article > div,
+.tag-products article > div { padding: 17px; }
+.related-products small,
+.tag-products small { color: #98713a; font: .62rem Georgia,serif; letter-spacing: .08em; }
+.related-products h3,
+.tag-products h3 { margin: 6px 0 8px; color: var(--green); font-size: 1.05rem; }
+.related-products p,
+.tag-products p { display: -webkit-box; overflow: hidden; margin: 0; color: #71685c; font-size: .72rem; line-height: 1.9; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.tag-detail-page { min-height: 100vh; background: #f5ecdd; padding: clamp(105px,12vw,145px) 5vw clamp(70px,9vw,115px); }
+.tag-detail-hero { display: grid; width: min(100%,980px); min-height: 270px; place-content: center; justify-items: center; margin: auto; border: 1px solid #dccdb6; border-radius: 12px; background: #fffaf2; color: #98713a; text-align: center; }
+.tag-detail-hero span { margin-top: 11px; font: .64rem Georgia,serif; letter-spacing: .18em; }
+.tag-detail-hero h1 { margin: 8px 0 0; color: var(--green); font-size: clamp(2rem,5vw,3.8rem); }
+.tag-detail-content { color: #5e574e; font-size: .92rem; line-height: 2.25; }
+.tag-detail-content h2,.tag-detail-content h3 { color: var(--green); }
+.tag-detail-content a { color: #855d28; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.tag-detail-content ul,.tag-detail-content ol { padding-right: 24px; }
+@media (max-width: 760px) {
+  .related-products > div,.tag-products > div { grid-template-columns: 1fr; }
+  .related-products article,.tag-products article { display: grid; grid-template-columns: 105px minmax(0,1fr); }
+  .related-products article > a,.tag-products article > a { height: 100%; min-height: 140px; }
+  .content-tags > div { gap: 7px; }
+  .content-tags > div a { min-height: 35px; padding: 6px 11px; font-size: .68rem; }
+}
 .product-detail-internal-links {
   width: min(100%,980px);
   margin: clamp(34px,6vw,64px) auto 0;

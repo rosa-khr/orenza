@@ -337,6 +337,10 @@ a { color: inherit; text-decoration: none; }
 .admin-field input:focus, .admin-field select:focus, .admin-field textarea:focus { border-color: #a77d40; box-shadow: 0 0 0 3px rgba(167,125,64,.1); }
 .admin-field input:disabled, .admin-field select:disabled, .admin-field textarea:disabled { opacity: 1; background: #f3eee5; color: #544f47; }
 .admin-field small { min-height: 16px; color: var(--admin-red); font-size: 10px; }
+.admin-field select[multiple] { min-height: 190px; padding: 6px; direction: rtl; }
+.admin-field select[multiple] option { margin: 3px 0; border: 1px solid transparent; border-radius: 5px; padding: 9px 11px; color: #514a41; }
+.admin-field select[multiple] option:checked { border-color: #b78a47; background: linear-gradient(#f4e6ca,#f4e6ca); color: #694b20; font-weight: 700; }
+.admin-field-help { color: #81776a; font-size: 10px; font-style: normal; line-height: 1.7; }
 .admin-rich-text { overflow: hidden; border: 1px solid var(--admin-line); border-radius: 8px; background: #fffdfa; }
 .admin-rich-text:focus-within { border-color: #a77d40; box-shadow: 0 0 0 3px rgba(167,125,64,.1); }
 .admin-rich-text-toolbar { display: flex; flex-wrap: wrap; gap: 5px; border-bottom: 1px solid #e7ddcf; background: #f7f2e9; padding: 8px; direction: rtl; }

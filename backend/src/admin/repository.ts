@@ -112,6 +112,20 @@ export class AdminRepository {
       );
       item.items = orderItems.rows.map(toPublicRecord);
     }
+    if (resource === "products") {
+      const [tags, relatedProducts] = await Promise.all([
+        this.pool.query<{ tag_id: string }>(
+          "SELECT tag_id FROM product_tags WHERE product_id=$1 ORDER BY created_at",
+          [id]
+        ),
+        this.pool.query<{ related_product_id: string }>(
+          "SELECT related_product_id FROM product_related_products WHERE product_id=$1 ORDER BY created_at",
+          [id]
+        )
+      ]);
+      item.tagIds = tags.rows.map((row) => row.tag_id);
+      item.relatedProductIds = relatedProducts.rows.map((row) => row.related_product_id);
+    }
     return item;
   }
 
@@ -138,6 +152,13 @@ export class AdminRepository {
       await this.syncRolePermissions(
         String(result.rows[0]!.id),
         (data.permissions as string[]) || []
+      );
+    }
+    if (resource === "products") {
+      await this.syncProductRelations(
+        String(result.rows[0]!.id),
+        (data.tagIds as string[]) || [],
+        (data.relatedProductIds as string[]) || []
       );
     }
     return toPublicRecord(result.rows[0]!);
@@ -196,6 +217,13 @@ export class AdminRepository {
     if (resource === "roles") {
       await this.syncRolePermissions(id, (data.permissions as string[]) || []);
     }
+    if (resource === "products") {
+      await this.syncProductRelations(
+        id,
+        (data.tagIds as string[]) || [],
+        ((data.relatedProductIds as string[]) || []).filter((relatedId) => relatedId !== id)
+      );
+    }
     return toPublicRecord(result.rows[0]);
   }
 
@@ -237,6 +265,39 @@ export class AdminRepository {
     } finally {
       client.release();
     }
+  }
+
+  private async syncProductRelations(productId: string, tagIds: string[], relatedProductIds: string[]) {
+    const uniqueTagIds = [...new Set(tagIds)];
+    const uniqueRelatedIds = [...new Set(relatedProductIds)].filter((id) => id !== productId);
+    await withTransaction(this.pool, async (client) => {
+      if (uniqueTagIds.length) {
+        const tags = await client.query<{ id: string }>("SELECT id FROM tags WHERE id = ANY($1::uuid[])", [uniqueTagIds]);
+        if (tags.rowCount !== uniqueTagIds.length) {
+          throw Object.assign(new Error("یک یا چند برچسب انتخاب‌شده معتبر نیست."), { statusCode: 422 });
+        }
+      }
+      if (uniqueRelatedIds.length) {
+        const products = await client.query<{ id: string }>("SELECT id FROM products WHERE id = ANY($1::uuid[])", [uniqueRelatedIds]);
+        if (products.rowCount !== uniqueRelatedIds.length) {
+          throw Object.assign(new Error("یک یا چند محصول مرتبط معتبر نیست."), { statusCode: 422 });
+        }
+      }
+      await client.query("DELETE FROM product_tags WHERE product_id=$1", [productId]);
+      await client.query("DELETE FROM product_related_products WHERE product_id=$1", [productId]);
+      if (uniqueTagIds.length) {
+        await client.query(
+          "INSERT INTO product_tags(product_id,tag_id) SELECT $1,unnest($2::uuid[])",
+          [productId, uniqueTagIds]
+        );
+      }
+      if (uniqueRelatedIds.length) {
+        await client.query(
+          "INSERT INTO product_related_products(product_id,related_product_id) SELECT $1,unnest($2::uuid[])",
+          [productId, uniqueRelatedIds]
+        );
+      }
+    });
   }
 }
 

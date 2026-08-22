@@ -51,6 +51,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <div data-product-detail-content></div>
     </section>
 
+    <section class="content-tags" data-product-detail-tags hidden>
+      <header><span>RELATED TAGS</span><h2>برچسب‌های مرتبط</h2></header>
+      <div data-product-detail-tag-list></div>
+    </section>
+
+    <section class="related-products" data-related-products hidden>
+      <header><span>YOU MAY ALSO LIKE</span><h2>محصولات مرتبط</h2></header>
+      <div data-related-product-list></div>
+    </section>
+
     <nav class="product-detail-internal-links" aria-labelledby="product-links-title" hidden data-product-detail-links>
       <header>
         <Link2 size={21} stroke-width={1.4} aria-hidden="true" />

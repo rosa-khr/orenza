@@ -262,7 +262,7 @@ const enhanceDropdowns = (root: ParentNode = document) => {
       document.querySelectorAll(".admin-dropdown.open").forEach((dropdown) => dropdown.classList.remove("open"));
     });
   }
-  root.querySelectorAll<HTMLSelectElement>("select:not([data-dropdown-ready])").forEach((select) => {
+  root.querySelectorAll<HTMLSelectElement>("select:not([multiple]):not([data-dropdown-ready])").forEach((select) => {
     select.dataset.dropdownReady = "true";
     select.classList.add("admin-native-select");
     const dropdown = document.createElement("div");
@@ -931,6 +931,12 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   }
   const input = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
   if (!input) return;
+  if (input instanceof HTMLSelectElement && input.multiple) {
+    const selected = new Set(Array.isArray(value) ? value.map(String) : []);
+    [...input.options].forEach((option) => { option.selected = selected.has(option.value); });
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return;
+  }
   let normalizedValue = "";
   if ((input.type === "date" || input.dataset.persianReady) && value) {
     normalizedValue = String(value).slice(0, 10);
@@ -1066,13 +1072,32 @@ const initRichTextEditors = (form: HTMLFormElement) => {
 
 const loadLookups = async (form: HTMLFormElement) => {
   const category = form.querySelector<HTMLSelectElement>('[data-dynamic-options="categoryId"]');
-  if (!category) return;
-  try {
-    const payload = await api<{ items: { id: string; title: string }[] }>("/api/v1/admin/categories?pageSize=100");
-    payload.items.forEach((item) => category.add(new Option(item.title, item.id)));
-  } catch {
-    // The server-side validation still protects invalid category values.
-  }
+  const tags = form.querySelector<HTMLSelectElement>('[data-dynamic-options="tagIds"]');
+  const relatedProducts = form.querySelector<HTMLSelectElement>('[data-dynamic-options="relatedProductIds"]');
+  const currentId = new URLSearchParams(location.search).get("id");
+  await Promise.all([
+    category ? api<{ items: { id: string; title: string }[] }>("/api/v1/admin/categories?pageSize=100")
+      .then((payload) => payload.items.forEach((item) => category.add(new Option(item.title, item.id)))) : Promise.resolve(),
+    tags ? api<{ items: { id: string; title: string }[] }>("/api/v1/admin/tags?pageSize=100")
+      .then((payload) => payload.items.forEach((item) => tags.add(new Option(item.title, item.id)))) : Promise.resolve(),
+    relatedProducts ? api<{ items: { id: string; titleFa: string; titleEn: string }[] }>("/api/v1/admin/products?pageSize=100")
+      .then((payload) => payload.items.filter((item) => item.id !== currentId).forEach((item) => {
+        relatedProducts.add(new Option(`${item.titleFa} — ${item.titleEn}`, item.id));
+      })) : Promise.resolve()
+  ]).catch(() => undefined);
+};
+
+const initMultiSelects = (form: HTMLFormElement) => {
+  form.querySelectorAll<HTMLSelectElement>("select[multiple]").forEach((select) => {
+    select.addEventListener("mousedown", (event) => {
+      const option = (event.target as HTMLElement).closest("option") as HTMLOptionElement | null;
+      if (!option || select.disabled) return;
+      event.preventDefault();
+      option.selected = !option.selected;
+      select.focus();
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
 };
 
 type AdminPaymentCard = {
@@ -1252,6 +1277,7 @@ const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "c
 const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: string) => {
   initRichTextEditors(form);
   await loadLookups(form);
+  initMultiSelects(form);
   enhanceDropdowns(form);
   enhancePersianDates(form);
   const refreshCatalogImage = config.key === "products" || config.key === "categories"
@@ -1361,6 +1387,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       if (field.readonly) return;
       const raw = data.get(field.key);
       if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
+      else if (field.type === "multiselect") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : Number(raw);
       else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts"].includes(field.key)) body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);

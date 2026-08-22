@@ -26,6 +26,18 @@ type CategoryInfo = {
   slug: string;
   description: string | null;
   imageUrl: string | null;
+  tags: { id: string; title: string; slug: string }[];
+};
+
+const renderTags = (container: HTMLElement | null, tags: CategoryInfo["tags"]) => {
+  if (!container || !tags.length) return;
+  tags.forEach((tag) => {
+    const link = document.createElement("a");
+    link.href = `/tags/${encodeURIComponent(tag.slug)}/`;
+    link.textContent = `# ${tag.title}`;
+    container.append(link);
+  });
+  container.closest<HTMLElement>("[data-category-tags]")?.removeAttribute("hidden");
 };
 
 const root = document.querySelector<HTMLElement>("[data-category-products]");
@@ -45,6 +57,7 @@ if (root && list) {
           content.innerHTML = item.description.trim();
           content.hidden = false;
         }
+        renderTags(document.querySelector<HTMLElement>("[data-category-tag-list]"), item.tags || []);
         if (!item.imageUrl) return;
         const hero = document.querySelector<HTMLElement>(`[data-category-hero][data-category-slug="${item.slug}"]`);
         const banner = hero?.querySelector<HTMLImageElement>("[data-category-hero-banner]");

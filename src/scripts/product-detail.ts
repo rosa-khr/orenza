@@ -19,9 +19,18 @@ type ProductDetail = {
   pricePer250g: number | string;
   pricePer500g: number | string;
   pricePer1000g: number | string;
+  tags: { id: string; title: string; slug: string }[];
+  relatedProducts: RelatedProduct[];
 };
 
-type RelatedProduct = Pick<ProductDetail, "id" | "titleFa" | "titleEn" | "description" | "categorySlug">;
+type RelatedProduct = {
+  id: string;
+  titleFa: string;
+  titleEn: string;
+  description: string;
+  categorySlug: string;
+  imageUrl: string | null;
+};
 
 const root = document.querySelector<HTMLElement>("[data-product-detail]");
 const id = new URLSearchParams(location.search).get("id");
@@ -101,6 +110,50 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
         contentSection.hidden = false;
       }
 
+      const tagsSection = root.querySelector<HTMLElement>("[data-product-detail-tags]");
+      const tagsRoot = root.querySelector<HTMLElement>("[data-product-detail-tag-list]");
+      if (tagsSection && tagsRoot && item.tags?.length) {
+        item.tags.forEach((tag) => {
+          const link = document.createElement("a");
+          link.href = `/tags/${encodeURIComponent(tag.slug)}/`;
+          link.textContent = `# ${tag.title}`;
+          tagsRoot.append(link);
+        });
+        tagsSection.hidden = false;
+      }
+
+      const relatedSection = root.querySelector<HTMLElement>("[data-related-products]");
+      const relatedRoot = root.querySelector<HTMLElement>("[data-related-product-list]");
+      if (relatedSection && relatedRoot && item.relatedProducts?.length) {
+        item.relatedProducts.forEach((product) => {
+          const article = document.createElement("article");
+          const link = document.createElement("a");
+          link.href = productDetailUrl(product);
+          if (product.imageUrl) {
+            const image = document.createElement("img");
+            image.src = product.imageUrl;
+            image.alt = product.titleFa;
+            image.loading = "lazy";
+            link.append(image);
+          } else {
+            const placeholder = document.createElement("span");
+            placeholder.textContent = "ORENZA";
+            link.append(placeholder);
+          }
+          const copy = document.createElement("div");
+          const eyebrow = document.createElement("small");
+          eyebrow.textContent = product.titleEn;
+          const title = document.createElement("h3");
+          title.textContent = product.titleFa;
+          const description = document.createElement("p");
+          description.textContent = product.description;
+          copy.append(eyebrow, title, description);
+          article.append(link, copy);
+          relatedRoot.append(article);
+        });
+        relatedSection.hidden = false;
+      }
+
       const internalLinks = root.querySelector<HTMLElement>("[data-product-detail-links]");
       const internalLinkGrid = root.querySelector<HTMLElement>("[data-product-detail-link-grid]");
       if (internalLinks && internalLinkGrid) {
@@ -135,23 +188,6 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
         );
         internalLinks.hidden = false;
 
-        void fetch(`/api/v1/products?category=${encodeURIComponent(item.categorySlug)}`)
-          .then(async (response) => response.ok ? response.json() : { items: [] })
-          .then((payload: { items?: RelatedProduct[] }) => {
-            (payload.items || [])
-              .filter((product) => product.id !== item.id)
-              .slice(0, 3)
-              .forEach((product) => {
-                internalLinkGrid.append(
-                  createLink(
-                    productDetailUrl(product),
-                    product.titleFa,
-                    product.description
-                  )
-                );
-              });
-          })
-          .catch(() => undefined);
       }
 
       const purchase = root.querySelector<HTMLElement>("[data-product-detail-purchase]");

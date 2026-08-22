@@ -99,8 +99,13 @@ export const registerStoreRoutes = (
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT id,title,slug,description,image_url,seo_title,seo_description
-       FROM categories WHERE slug=$1 AND is_active=true`,
+      `SELECT c.id,c.title,c.slug,c.description,c.image_url,c.seo_title,c.seo_description,
+        COALESCE((
+          SELECT json_agg(DISTINCT jsonb_build_object('id',t.id,'title',t.title,'slug',t.slug))
+          FROM products p JOIN product_tags pt ON pt.product_id=p.id JOIN tags t ON t.id=pt.tag_id
+          WHERE p.category_id=c.id AND p.is_active=true
+        ), '[]'::json) AS tags
+       FROM categories c WHERE c.slug=$1 AND c.is_active=true`,
       [slug]
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "دسته‌بندی پیدا نشد." });
@@ -122,6 +127,30 @@ export const registerStoreRoutes = (
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     const item = toPublicRecord(result.rows[0]);
     item.content = sanitizeRichText(String(item.content || ""));
+    const [products, relatedTags] = await Promise.all([
+      pool.query<Record<string, unknown>>(
+        `SELECT p.id,p.title_fa,p.title_en,p.description,p.image_url,p.blend_type,
+                c.slug AS category_slug,c.title AS category_title
+         FROM product_tags pt
+         JOIN products p ON p.id=pt.product_id
+         JOIN categories c ON c.id=p.category_id
+         WHERE pt.tag_id=$1 AND p.is_active=true AND c.is_active=true
+         ORDER BY p.sort_order,p.created_at`,
+        [item.id]
+      ),
+      pool.query<Record<string, unknown>>(
+        `SELECT DISTINCT t.id,t.title,t.slug
+         FROM product_tags current_pt
+         JOIN product_tags sibling_pt ON sibling_pt.product_id=current_pt.product_id
+         JOIN tags t ON t.id=sibling_pt.tag_id
+         JOIN products p ON p.id=current_pt.product_id
+         WHERE current_pt.tag_id=$1 AND t.id<>$1 AND p.is_active=true
+         ORDER BY t.title`,
+        [item.id]
+      )
+    ]);
+    item.products = products.rows.map(toPublicRecord);
+    item.relatedTags = relatedTags.rows.map(toPublicRecord);
     return { item };
   });
 
@@ -140,6 +169,8 @@ export const registerStoreRoutes = (
     if (category) values.push(category);
     const result = await pool.query<Record<string, unknown>>(
       `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
+        COALESCE((SELECT json_agg(json_build_object('id',t.id,'title',t.title,'slug',t.slug) ORDER BY t.title)
+          FROM product_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.product_id=p.id), '[]'::json) AS tags,
         (p.sale_price_per_kg - p.purchase_price_per_kg) AS profit_per_kg,
         CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.10)::bigint ELSE 0 END AS price_per_100g,
         CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.25)::bigint ELSE 0 END AS price_per_250g,
@@ -164,6 +195,16 @@ export const registerStoreRoutes = (
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
       `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
+        COALESCE((SELECT json_agg(json_build_object('id',t.id,'title',t.title,'slug',t.slug) ORDER BY t.title)
+          FROM product_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.product_id=p.id), '[]'::json) AS tags,
+        COALESCE((SELECT json_agg(json_build_object(
+          'id',rp.id,'titleFa',rp.title_fa,'titleEn',rp.title_en,'description',rp.description,
+          'imageUrl',rp.image_url,'categorySlug',rc.slug
+        ) ORDER BY prp.created_at)
+          FROM product_related_products prp
+          JOIN products rp ON rp.id=prp.related_product_id AND rp.is_active=true
+          JOIN categories rc ON rc.id=rp.category_id AND rc.is_active=true
+          WHERE prp.product_id=p.id), '[]'::json) AS related_products,
         (p.sale_price_per_kg - p.purchase_price_per_kg) AS profit_per_kg,
         CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.25)::bigint ELSE 0 END AS price_per_250g,
         CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.50)::bigint ELSE 0 END AS price_per_500g,
