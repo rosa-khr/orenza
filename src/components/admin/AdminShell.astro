@@ -10,11 +10,14 @@ import {
   PackageCheck,
   ShieldCheck,
   Settings,
+  Terminal,
+  BadgeDollarSign,
   UserRound,
   ChevronDown,
   Users,
   Tags,
-  X
+  X,
+  Calculator
 } from "@lucide/astro";
 import { adminResources } from "../../admin/resources";
 import "../../styles/admin.css";
@@ -37,12 +40,14 @@ const icons = {
   "discount-codes": BadgePercent,
   articles: BookOpenText,
   tags: Tags,
-  "service-scripts": Settings
+  "service-scripts": Settings,
+  "price-imports": Settings
 };
 const navGroups = [
   { title: "فروشگاه", icon: Boxes, resources: ["products", "categories"] },
+  { title: "حسابداری", icon: Calculator, resources: ["accounting", "price-imports"] },
   { title: "سفارش و پرداخت", icon: CreditCard, resources: ["orders", "payment-methods", "discount-codes"] },
-  { title: "محتوا و سئو", icon: BookOpenText, resources: ["articles", "tags", "site-settings"] },
+  { title: "محتوا و سئو", icon: BookOpenText, resources: ["articles", "tags", "content-templates", "content-generator"] },
   { title: "کاربران و دسترسی", icon: ShieldCheck, resources: ["users", "roles"] }
 ];
 const resourceByKey = new Map(adminResources.filter((resource) => !resource.navHidden).map((resource) => [resource.key, resource]));
@@ -59,6 +64,9 @@ const resourceByKey = new Map(adminResources.filter((resource) => !resource.navH
     <title>{title} | مدیریت اورنزا</title>
   </head>
   <body class="admin-body">
+    <script>
+      import "../../scripts/logger.ts";
+    </script>
     <div class="admin-app" data-admin-app>
       <button class="admin-backdrop" type="button" data-admin-menu-close aria-label="بستن منو"></button>
       <aside class="admin-sidebar" data-admin-sidebar>
@@ -78,8 +86,20 @@ const resourceByKey = new Map(adminResources.filter((resource) => !resource.navH
                 <summary><GroupIcon size={18} stroke-width={1.45} /><span>{group.title}</span><ChevronDown size={14} stroke-width={1.45} /></summary>
                 <div>
                   {group.resources.map((key) => {
+                    if (key === "accounting") {
+                      return <a class:list={{ active: active === "accounting" }} href="/admin/accounting/" data-admin-permission="accounting"><Calculator size={17} stroke-width={1.45} /><span>حسابداری</span></a>;
+                    }
                     if (key === "site-settings") {
                       return <a class:list={{ active: active === "site-settings" }} href="/admin/site-settings/" data-admin-permission="site-settings"><Settings size={17} stroke-width={1.45} /><span>تنظیمات سایت</span></a>;
+                    }
+                    if (key === "content-generator") {
+                      return <a class:list={{ active: active === "content-generator" }} href="/admin/content-generator/use/" data-admin-permission="content-generator"><BookOpenText size={17} stroke-width={1.45} /><span>دستیار محتوا</span></a>;
+                    }
+                    if (key === "content-templates") {
+                      return <a class:list={{ active: active === "content-templates" }} href="/admin/content-templates/" data-admin-permission="content-generator"><BookOpenText size={17} stroke-width={1.45} /><span>قالب‌های محتوا</span></a>;
+                    }
+                    if (key === "price-imports") {
+                      return <a class:list={{ active: active === "price-imports" }} href="/admin/price-imports/" data-admin-permission="price-imports"><BadgeDollarSign size={17} stroke-width={1.45} /><span>به‌روزرسانی قیمت خرید</span></a>;
                     }
                     const resource = resourceByKey.get(key);
                     if (!resource) return null;
@@ -94,6 +114,8 @@ const resourceByKey = new Map(adminResources.filter((resource) => !resource.navH
               </details>
             );
           })}
+          <a class:list={{ active: active === "logs" }} href="/admin/logs/" data-admin-permission="logs"><Terminal size={17} stroke-width={1.45} /><span>گزارش لاگ‌ها</span></a>
+          <a class:list={{ active: active === "site-settings" }} href="/admin/site-settings/" data-admin-permission="site-settings"><Settings size={17} stroke-width={1.45} /><span>تنظیمات کلی سایت</span></a>
         </nav>
         <button class="admin-logout" type="button" data-admin-logout>
           <LogOut size={17} stroke-width={1.45} /> خروج از مدیریت

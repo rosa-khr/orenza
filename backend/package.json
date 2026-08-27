@@ -23,6 +23,7 @@
     "nodemailer": "^9.0.3",
     "pg": "^8.16.3",
     "puppeteer-core": "24.37.2",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {

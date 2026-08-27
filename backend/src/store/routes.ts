@@ -8,6 +8,7 @@ import { removePaymentReceipt, savePaymentReceipt } from "../payment-receipts.js
 import { openProductImage } from "../product-images.js";
 import { openHomepageBanner } from "../homepage-banners.js";
 import { sanitizeRichText } from "../rich-text.js";
+import { persistLog } from "../logger.js";
 
 type SessionUser = { id: string } | null;
 
@@ -402,6 +403,28 @@ export const registerStoreRoutes = (
        ON CONFLICT (visitor_id,path,visited_on) DO NOTHING`,
       [data.visitorId, data.path.split("?")[0]]
     );
+    return reply.code(204).send();
+  });
+
+  app.post("/api/v1/analytics/client-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (request, reply) => {
+    const data = z.object({
+      level: z.enum(["info", "warn", "error"]),
+      event: z.string().trim().min(1).max(80),
+      data: z.record(z.string(), z.unknown()).default({}),
+      path: z.string().trim().min(1).max(500),
+      clientId: z.string().uuid(),
+      userAgent: z.string().max(300).optional()
+    }).parse(request.body);
+    const log = {
+      event: "client_event",
+      clientEvent: data.event,
+      clientId: data.clientId,
+      path: data.path,
+      data: data.data,
+      userAgent: data.userAgent
+    };
+    request.log[data.level](log, "Client event");
+    persistLog({ level: data.level, event: data.event, message: "Client event", requestId: request.id, metadata: log });
     return reply.code(204).send();
   });
 };

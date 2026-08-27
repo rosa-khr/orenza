@@ -3,7 +3,7 @@ import { resourceConfigs, type ResourceConfig } from "./resource-config.js";
 
 const allAdminPermissions = [
   "dashboard", "users", "roles", "products", "categories", "orders",
-  "payment-methods", "discount-codes", "articles", "tags", "site-settings"
+  "payment-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
 ];
 
 const camel = (key: string) => key.replace(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase());

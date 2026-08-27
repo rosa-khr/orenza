@@ -49,7 +49,11 @@ const adminPermissions = [
   { label: "کدهای تخفیف", value: "discount-codes" },
   { label: "مقالات", value: "articles" },
   { label: "تگ‌ها", value: "tags" },
-  { label: "تنظیمات سایت", value: "site-settings" }
+  { label: "تنظیمات سایت", value: "site-settings" },
+  { label: "گزارش لاگ‌ها", value: "logs" },
+  { label: "محتوام", value: "content-generator" },
+  { label: "حسابداری", value: "accounting" },
+  { label: "به‌روزرسانی قیمت خرید", value: "price-imports" }
 ];
 
 export const iranianBanks = [
@@ -263,6 +267,7 @@ export const adminResources: AdminResource[] = [
         ]
       },
       { key: "purchasePricePerKg", label: "قیمت خرید واحد (تومان)", type: "number", required: true, min: 0, list: true },
+      { key: "markupPercent", label: "درصد افزایش قیمت", type: "number", min: 0 },
       { key: "salePricePerKg", label: "قیمت فروش واحد (تومان)", type: "number", required: true, min: 0, list: true },
       { key: "profitPerKg", label: "سود واحد (تومان)", type: "number", list: true, readonly: true },
       { key: "imageUrl", label: "تصویر محصول", type: "image", dir: "ltr" },
@@ -391,7 +396,7 @@ export const adminResources: AdminResource[] = [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
       { key: "summary", label: "خلاصه", type: "textarea", required: true },
-      { key: "content", label: "متن مقاله", type: "textarea", required: true },
+      { key: "content", label: "متن مقاله", type: "richtext", required: true },
       { key: "imageUrl", label: "تصویر شاخص", type: "image", dir: "ltr" },
       { key: "tags", label: "تگ‌ها (با ویرگول جدا شوند)", type: "text" },
       { key: "isPublished", label: "انتشار", type: "select", options: yesNo, list: true }

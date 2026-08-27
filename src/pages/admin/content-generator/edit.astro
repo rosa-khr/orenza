@@ -1,0 +1,48 @@
+---
+import {
+  ArrowRight, Bold, ChevronDown, Columns3, ImagePlus, Italic, Link2, List, ListOrdered, Quote, Redo2,
+  RemoveFormatting, Rows3, Save, Table2, TextAlignCenter, TextAlignEnd, TextAlignStart, Trash2, Underline, Undo2, Unlink2
+} from "@lucide/astro";
+import AdminShell from "../../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="ویرایش قالب محتوا" description="قالب انتخاب‌شده را ویرایش و برای تولید محتوا استفاده کنید." active="content-generator" actionLabel="ویرایش">
+  <a class="admin-secondary-action" href="/admin/content-templates/" slot="heading-action"><ArrowRight size={17} stroke-width={1.5} /> بازگشت به قالب‌های محتوا</a>
+  <form class="admin-card admin-form admin-content-brief-card admin-content-standalone-form" data-content-generator novalidate>
+    <input type="hidden" name="templateId" />
+    <div class="admin-form-grid">
+      <label class="admin-field"><span>نام قالب</span><input name="templateTitle" required maxlength="160" /></label>
+      <label class="admin-field"><span>نوع محتوا</span><select name="contentType" required><option value="مقاله وبلاگ">مقاله وبلاگ</option><option value="توضیحات محصول">توضیحات محصول</option><option value="صفحه دسته‌بندی">صفحه دسته‌بندی</option><option value="متن شبکه اجتماعی">متن شبکه اجتماعی</option><option value="محتوای سئو">محتوای سئو</option></select></label>
+      <label class="admin-field wide"><span>توضیح قالب</span><input name="templateDescription" maxlength="400" /></label>
+      <label class="admin-field wide"><span>کلمات کلیدی</span><input name="keywords" maxlength="500" /></label>
+      <label class="admin-field"><span>مخاطب هدف</span><input name="audience" maxlength="200" /></label>
+      <label class="admin-field"><span>لحن محتوا</span><input name="tone" maxlength="100" /></label>
+      <label class="admin-field"><span>زبان</span><select name="language"><option value="fa">فارسی</option><option value="en">English</option></select></label>
+      <label class="admin-field"><span>طول محتوا</span><select name="length"><option value="short">کوتاه</option><option value="medium">متوسط</option><option value="long">کامل</option></select></label>
+      <div class="admin-field wide">
+        <span>دستورهای تکمیلی</span>
+        <div class="admin-rich-text admin-rich-text-compact" data-rich-text>
+          <div class="admin-rich-text-toolbar" role="toolbar" aria-label="ابزارهای ویرایش دستورهای تکمیلی">
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="undo" title="واگرد" aria-label="واگرد"><Undo2 /></button><button type="button" data-rich-command="redo" title="از نو" aria-label="از نو"><Redo2 /></button></div>
+            <div class="admin-editor-tool-group admin-editor-format"><select data-rich-format aria-label="نوع متن" title="نوع متن"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Blockquote</option></select><ChevronDown aria-hidden="true" /></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="bold" title="ضخیم" aria-label="ضخیم"><Bold /></button><button type="button" data-rich-command="italic" title="مورب" aria-label="مورب"><Italic /></button><button type="button" data-rich-command="underline" title="زیرخط" aria-label="زیرخط"><Underline /></button></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="insertUnorderedList" title="فهرست نقطه‌ای" aria-label="فهرست نقطه‌ای"><List /></button><button type="button" data-rich-command="insertOrderedList" title="فهرست شماره‌ای" aria-label="فهرست شماره‌ای"><ListOrdered /></button><button type="button" data-rich-command="formatBlock" data-rich-value="blockquote" title="نقل‌قول" aria-label="نقل‌قول"><Quote /></button></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="justifyRight" title="راست‌چین" aria-label="راست‌چین"><TextAlignEnd /></button><button type="button" data-rich-command="justifyCenter" title="وسط‌چین" aria-label="وسط‌چین"><TextAlignCenter /></button><button type="button" data-rich-command="justifyLeft" title="چپ‌چین" aria-label="چپ‌چین"><TextAlignStart /></button></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="createLink" title="افزودن لینک" aria-label="افزودن لینک"><Link2 /></button><button type="button" data-rich-command="unlink" title="حذف لینک" aria-label="حذف لینک"><Unlink2 /></button><button type="button" data-rich-insert-image title="افزودن تصویر" aria-label="افزودن تصویر"><ImagePlus /></button></div>
+            <details class="admin-editor-table-menu"><summary title="ابزارهای جدول" aria-label="ابزارهای جدول"><Table2 /><ChevronDown aria-hidden="true" /></summary><div><button type="button" data-rich-insert-table><Table2 /> درج جدول</button><button type="button" data-rich-table-command="addRowAfter" disabled><Rows3 /> افزودن ردیف</button><button type="button" data-rich-table-command="addColumnAfter" disabled><Columns3 /> افزودن ستون</button><button type="button" data-rich-table-command="deleteRow" disabled><Rows3 /> حذف ردیف</button><button type="button" data-rich-table-command="deleteColumn" disabled><Columns3 /> حذف ستون</button><button class="is-danger" type="button" data-rich-table-command="deleteTable" disabled><Trash2 /> حذف جدول</button></div></details>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="removeFormat" title="پاک‌کردن قالب‌بندی" aria-label="پاک‌کردن قالب‌بندی"><RemoveFormatting /></button></div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" data-rich-image-input hidden />
+          </div>
+          <div class="admin-rich-text-editor" role="textbox" aria-multiline="true" data-rich-text-editor="extraInstructions" data-placeholder="ساختار هدینگ‌ها، لیست‌ها و جدول‌ها هنگام Paste حفظ می‌شود…"></div>
+          <textarea class="admin-rich-text-input" name="extraInstructions" data-rich-text-input="extraInstructions" maxlength="1200" tabindex="-1" aria-hidden="true"></textarea>
+        </div>
+      </div>
+    </div>
+    <small class="admin-form-status" data-content-status aria-live="polite"></small>
+    <footer class="admin-form-actions"><button class="admin-template-save" type="button" data-template-save><Save size={16} /> ذخیره قالب</button></footer>
+  </form>
+</AdminShell>
+
+<script>
+  import "../../../scripts/admin-content-generator.ts";
+</script>

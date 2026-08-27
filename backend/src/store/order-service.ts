@@ -8,6 +8,7 @@ type ProductPriceRow = {
   title_fa: string;
   is_active: boolean;
   sale_price_per_kg: string;
+  purchase_price_per_kg: string;
   sale_type: "weighted" | "packaged";
   package_weight_grams: number;
   stock_status: "inStock" | "outOfStock";
@@ -53,7 +54,7 @@ export class OrderService {
     const createdOrder = await withTransaction<NewOrder>(this.pool, async (client) => {
       const productIds = [...new Set(data.items.map((item) => item.productId))];
       const products = await client.query<ProductPriceRow>(
-        `SELECT id, title_fa, is_active, sale_price_per_kg, sale_type, package_weight_grams, stock_status
+        `SELECT id, title_fa, is_active, sale_price_per_kg, purchase_price_per_kg, sale_type, package_weight_grams, stock_status
          FROM products WHERE id = ANY($1::uuid[]) FOR SHARE`,
         [productIds]
       );
@@ -72,11 +73,16 @@ export class OrderService {
         const unitPrice = product.sale_type === "packaged"
           ? Number(product.sale_price_per_kg)
           : Math.round(Number(product.sale_price_per_kg) * item.weight / 1000);
+        const unitCost = product.sale_type === "packaged"
+          ? Number(product.purchase_price_per_kg)
+          : Math.round(Number(product.purchase_price_per_kg) * item.weight / 1000);
         return {
           ...item,
           productTitle: product.title_fa,
           unitPrice,
-          totalPrice: unitPrice * item.quantity
+          totalPrice: unitPrice * item.quantity,
+          unitCost,
+          totalCost: unitCost * item.quantity
         };
       });
       const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
@@ -127,12 +133,12 @@ export class OrderService {
       for (const item of items) {
         await client.query(
           `INSERT INTO order_items
-            (order_id,product_id,product_title,weight,quantity,grind_type,roast_type,blend_type,brew_method,unit_price,total_price)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+            (order_id,product_id,product_title,weight,quantity,grind_type,roast_type,blend_type,brew_method,unit_price,total_price,unit_cost,total_cost)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
           [
             order.rows[0]!.id, item.productId, item.productTitle, item.weight,
             item.quantity, item.grindType, item.roastType, item.blendType, item.brewMethod ?? null,
-            item.unitPrice, item.totalPrice
+            item.unitPrice, item.totalPrice, item.unitCost, item.totalCost
           ]
         );
       }

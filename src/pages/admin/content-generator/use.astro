@@ -1,0 +1,66 @@
+---
+import {
+  ArrowRight, Bold, ChevronDown, Columns3, ImagePlus, Italic, Link2, List, ListOrdered, Quote, Redo2,
+  RemoveFormatting, Rows3, Table2, TextAlignCenter, TextAlignEnd, TextAlignStart, Trash2, Underline, Undo2, Unlink2
+} from "@lucide/astro";
+import AdminShell from "../../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="دستیار محتوا" description="قالب و عنوان را مشخص کنید تا محتوا برایتان تولید شود." active="content-generator" actionLabel="دستیار محتوا">
+  <a class="admin-secondary-action" href="/admin/content-templates/" slot="heading-action"><ArrowRight size={17} stroke-width={1.5} /> مدیریت قالب‌ها</a>
+  <form class="admin-card admin-form admin-content-brief-card" data-content-generator novalidate>
+    <input type="hidden" name="templateId" /><input type="hidden" name="templateTitle" />
+    <div class="admin-form-grid">
+      <label class="admin-field wide"><span>انتخاب قالب</span><select name="templateSelect" data-template-select><option value="">در حال دریافت قالب‌ها…</option></select></label>
+      <label class="admin-field"><span>نوع محتوا</span><select name="contentType" required><option value="مقاله وبلاگ">مقاله وبلاگ</option><option value="توضیحات محصول">توضیحات محصول</option><option value="صفحه دسته‌بندی">صفحه دسته‌بندی</option><option value="متن شبکه اجتماعی">متن شبکه اجتماعی</option><option value="محتوای سئو">محتوای سئو</option></select></label>
+      <label class="admin-field wide"><span>عنوان محتوا</span><input name="topic" required minlength="3" maxlength="300" placeholder="مثلاً راهنمای انتخاب قهوه مناسب اسپرسوساز" /></label>
+      <details class="admin-form-advanced wide"><summary>تنظیمات تکمیلی (اختیاری)</summary><div class="admin-form-grid">
+        <div class="admin-field wide">
+          <span>کلمات کلیدی</span>
+          <input name="keywords" maxlength="5000" placeholder="با کاما جدا کنید یا فایل Excel/CSV را تحلیل کنید" />
+          <div class="admin-keyword-upload">
+            <div class="admin-keyword-dropzone" data-keyword-dropzone role="button" tabindex="0" aria-label="انتخاب یا رها کردن فایل کلمات کلیدی">
+              <input type="file" accept=".xlsx,.xls,.csv,image/jpeg,image/png,image/webp" data-keyword-file hidden />
+              <strong data-keyword-file-name>فایل Excel یا CSV را اینجا رها کنید</strong>
+              <small>یا برای انتخاب فایل کلیک کنید؛ بعد از تحلیل، کلمات داخل فیلد بالا قرار می‌گیرند.</small>
+            </div>
+            <div class="admin-keyword-file-picker">
+              <button type="button" data-keyword-analyze disabled>تحلیل فایل</button>
+              <button type="button" data-keyword-clear hidden>پاک‌کردن فایل</button>
+            </div>
+            <small data-keyword-status aria-live="polite"></small>
+          </div>
+        </div>
+        <label class="admin-field"><span>مخاطب هدف</span><input name="audience" value="مخاطب عمومی فروشگاه اورنزا" maxlength="200" /></label>
+        <label class="admin-field"><span>لحن محتوا</span><input name="tone" value="حرفه‌ای، گرم و متقاعدکننده" maxlength="100" /></label>
+        <label class="admin-field"><span>زبان</span><select name="language"><option value="fa">فارسی</option><option value="en">English</option></select></label>
+        <label class="admin-field"><span>طول محتوا</span><select name="length"><option value="short">کوتاه</option><option value="medium" selected>متوسط</option><option value="long">کامل</option></select></label>
+        <div class="admin-field wide">
+          <span>دستورهای تکمیلی</span>
+          <div class="admin-rich-text admin-rich-text-compact" data-rich-text>
+            <div class="admin-rich-text-toolbar" role="toolbar" aria-label="ابزارهای ویرایش دستورهای تکمیلی">
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="undo" title="واگرد" aria-label="واگرد"><Undo2 /></button><button type="button" data-rich-command="redo" title="از نو" aria-label="از نو"><Redo2 /></button></div>
+              <div class="admin-editor-tool-group admin-editor-format"><select data-rich-format aria-label="نوع متن" title="نوع متن"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Blockquote</option></select><ChevronDown aria-hidden="true" /></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="bold" title="ضخیم" aria-label="ضخیم"><Bold /></button><button type="button" data-rich-command="italic" title="مورب" aria-label="مورب"><Italic /></button><button type="button" data-rich-command="underline" title="زیرخط" aria-label="زیرخط"><Underline /></button></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="insertUnorderedList" title="فهرست نقطه‌ای" aria-label="فهرست نقطه‌ای"><List /></button><button type="button" data-rich-command="insertOrderedList" title="فهرست شماره‌ای" aria-label="فهرست شماره‌ای"><ListOrdered /></button><button type="button" data-rich-command="formatBlock" data-rich-value="blockquote" title="نقل‌قول" aria-label="نقل‌قول"><Quote /></button></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="justifyRight" title="راست‌چین" aria-label="راست‌چین"><TextAlignEnd /></button><button type="button" data-rich-command="justifyCenter" title="وسط‌چین" aria-label="وسط‌چین"><TextAlignCenter /></button><button type="button" data-rich-command="justifyLeft" title="چپ‌چین" aria-label="چپ‌چین"><TextAlignStart /></button></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="createLink" title="افزودن لینک" aria-label="افزودن لینک"><Link2 /></button><button type="button" data-rich-command="unlink" title="حذف لینک" aria-label="حذف لینک"><Unlink2 /></button><button type="button" data-rich-insert-image title="افزودن تصویر" aria-label="افزودن تصویر"><ImagePlus /></button></div>
+              <details class="admin-editor-table-menu"><summary title="ابزارهای جدول" aria-label="ابزارهای جدول"><Table2 /><ChevronDown aria-hidden="true" /></summary><div><button type="button" data-rich-insert-table><Table2 /> درج جدول</button><button type="button" data-rich-table-command="addRowAfter" disabled><Rows3 /> افزودن ردیف</button><button type="button" data-rich-table-command="addColumnAfter" disabled><Columns3 /> افزودن ستون</button><button type="button" data-rich-table-command="deleteRow" disabled><Rows3 /> حذف ردیف</button><button type="button" data-rich-table-command="deleteColumn" disabled><Columns3 /> حذف ستون</button><button class="is-danger" type="button" data-rich-table-command="deleteTable" disabled><Trash2 /> حذف جدول</button></div></details>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="removeFormat" title="پاک‌کردن قالب‌بندی" aria-label="پاک‌کردن قالب‌بندی"><RemoveFormatting /></button></div>
+              <input type="file" accept="image/jpeg,image/png,image/webp" data-rich-image-input hidden />
+            </div>
+            <div class="admin-rich-text-editor" role="textbox" aria-multiline="true" data-rich-text-editor="extraInstructions" data-placeholder="اختیاری؛ ساختار هدینگ‌ها، لیست‌ها و جدول‌ها هنگام Paste حفظ می‌شود…"></div>
+            <textarea class="admin-rich-text-input" name="extraInstructions" data-rich-text-input="extraInstructions" maxlength="1200" tabindex="-1" aria-hidden="true"></textarea>
+          </div>
+        </div>
+      </div></details>
+    </div>
+    <small class="admin-form-status" data-content-status aria-live="polite"></small>
+    <footer class="admin-form-actions"><button type="submit" data-content-submit>شروع تولید محتوا</button></footer>
+    <section class="admin-card admin-generated-content" data-content-result hidden><header><span>GENERATED CONTENT</span><h2>خروجی قابل ویرایش</h2></header><div class="admin-rich-text" data-rich-text><div class="admin-rich-text-editor" contenteditable="true" role="textbox" aria-multiline="true" data-rich-text-editor="generatedContent" data-placeholder="محتوای تولیدشده اینجا نمایش داده می‌شود…"></div><textarea class="admin-rich-text-input" name="generatedContent" data-rich-text-input="generatedContent" tabindex="-1" aria-hidden="true"></textarea></div></section>
+  </form>
+</AdminShell>
+
+<script>
+  import "../../../scripts/admin-content-generator.ts";
+</script>

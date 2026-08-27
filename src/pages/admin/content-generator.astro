@@ -1,0 +1,82 @@
+---
+import {
+  Bold, ChevronDown, Columns3, ImagePlus,
+  Italic, Link2, List, ListOrdered, Plus, Quote, Redo2, RemoveFormatting, Rows3,
+  Save, Table2, TextAlignCenter, TextAlignEnd, TextAlignStart, Trash2, Underline,
+  Undo2, Unlink2
+} from "@lucide/astro";
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="دستیار محتوا" description="قالب موردنظر را انتخاب کنید و برای تولید محتوا وارد دستیار شوید." active="content-generator" actionLabel="دستیار محتوا">
+  <div class="admin-content-generator" data-template-list>
+    <section class="admin-card admin-content-template-card">
+      <header>
+        <div><span>CONTENT ASSISTANT</span><h2>انتخاب قالب</h2><p>برای شروع تولید محتوا، از ستون عملیات قالب موردنظر را انتخاب کنید.</p></div>
+      </header>
+      <div class="admin-grid-wrap admin-content-template-grid-wrap ag-theme-material">
+        <div class="admin-data-grid" data-content-template-grid data-template-mode="assistant" aria-label="جدول قالب‌های محتوا"></div>
+      </div>
+      <p class="admin-content-template-hint" data-template-grid-status>در حال دریافت قالب‌ها…</p>
+    </section>
+
+    <form data-content-generator novalidate>
+      <section class="admin-card admin-form admin-content-brief-card">
+        <header class="admin-form-intro"><span>CONTENT BRIEF</span><h2 data-template-form-title>تولید سریع محتوا</h2><p>برای شروع فقط نوع محتوا و موضوع را وارد کن؛ بقیه گزینه‌ها اختیاری‌اند.</p></header>
+        <input type="hidden" name="templateId" />
+        <div class="admin-form-grid">
+          <label class="admin-field"><span>قالب انتخاب‌شده</span><input name="templateTitle" maxlength="160" placeholder="اختیاری؛ برای ذخیره قالب" /></label>
+          <label class="admin-field"><span>نوع محتوا</span><select name="contentType" required><option value="مقاله وبلاگ">مقاله وبلاگ</option><option value="توضیحات محصول">توضیحات محصول</option><option value="صفحه دسته‌بندی">صفحه دسته‌بندی</option><option value="متن شبکه اجتماعی">متن شبکه اجتماعی</option><option value="محتوای سئو">محتوای سئو</option></select></label>
+          <label class="admin-field wide"><span>موضوع اصلی</span><input name="topic" required minlength="3" maxlength="300" placeholder="مثلاً راهنمای انتخاب قهوه مناسب اسپرسوساز" /></label>
+          <details class="admin-form-advanced wide">
+            <summary>تنظیمات تکمیلی (اختیاری)</summary>
+            <div class="admin-form-grid">
+              <label class="admin-field wide"><span>توضیح قالب</span><input name="templateDescription" maxlength="400" placeholder="این قالب برای چه نوع خروجی استفاده می‌شود؟" /></label>
+              <label class="admin-field wide"><span>کلمات کلیدی</span><input name="keywords" maxlength="500" placeholder="با کاما جدا کنید" /></label>
+              <label class="admin-field"><span>مخاطب هدف</span><input name="audience" value="مخاطب عمومی فروشگاه اورنزا" maxlength="200" /></label>
+              <label class="admin-field"><span>لحن محتوا</span><input name="tone" value="حرفه‌ای، گرم و متقاعدکننده" maxlength="100" /></label>
+              <label class="admin-field"><span>زبان</span><select name="language"><option value="fa">فارسی</option><option value="en">English</option></select></label>
+              <label class="admin-field"><span>طول محتوا</span><select name="length"><option value="short">کوتاه</option><option value="medium" selected>متوسط</option><option value="long">کامل</option></select></label>
+              <label class="admin-field wide"><span>دستورهای تکمیلی</span><textarea name="extraInstructions" maxlength="1200" placeholder="مثلاً یک عنوان سئو و فراخوان اقدام اضافه کن."></textarea></label>
+            </div>
+          </details>
+        </div>
+        <footer class="admin-form-actions">
+          <small data-content-status aria-live="polite"></small>
+          <button class="admin-template-save" type="button" data-template-save><Save size={16} /> ذخیره قالب</button>
+          <button type="submit" data-content-submit>تولید محتوا</button>
+        </footer>
+      </section>
+
+      <section class="admin-card admin-generated-content" data-content-result hidden>
+        <header><span>GENERATED CONTENT</span><h2>خروجی قابل ویرایش</h2><p>محتوا را همین‌جا ویرایش کنید، تصویر یا جدول اضافه کنید و سپس کپی یا دانلود بگیرید.</p></header>
+        <div class="admin-rich-text" data-rich-text>
+          <div class="admin-rich-text-toolbar" role="toolbar" aria-label="ابزارهای ویرایش محتوای تولیدشده">
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="undo" title="واگرد"><Undo2 /></button><button type="button" data-rich-command="redo" title="از نو"><Redo2 /></button></div>
+            <div class="admin-editor-tool-group admin-editor-format"><select data-rich-format aria-label="نوع متن"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Blockquote</option></select><ChevronDown /></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="bold" title="ضخیم"><Bold /></button><button type="button" data-rich-command="italic" title="مورب"><Italic /></button><button type="button" data-rich-command="underline" title="زیرخط"><Underline /></button></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="insertUnorderedList" title="فهرست نقطه‌ای"><List /></button><button type="button" data-rich-command="insertOrderedList" title="فهرست شماره‌ای"><ListOrdered /></button><button type="button" data-rich-command="formatBlock" data-rich-value="blockquote" title="نقل‌قول"><Quote /></button></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="justifyRight" title="راست‌چین"><TextAlignEnd /></button><button type="button" data-rich-command="justifyCenter" title="وسط‌چین"><TextAlignCenter /></button><button type="button" data-rich-command="justifyLeft" title="چپ‌چین"><TextAlignStart /></button></div>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="createLink" title="افزودن لینک"><Link2 /></button><button type="button" data-rich-command="unlink" title="حذف لینک"><Unlink2 /></button><button type="button" data-rich-insert-image title="افزودن تصویر"><ImagePlus /></button></div>
+            <details class="admin-editor-table-menu"><summary title="ابزارهای جدول"><Table2 /><ChevronDown /></summary><div><button type="button" data-rich-insert-table><Table2 /> درج جدول</button><button type="button" data-rich-table-command="addRowAfter" disabled><Rows3 /> افزودن ردیف</button><button type="button" data-rich-table-command="addColumnAfter" disabled><Columns3 /> افزودن ستون</button><button type="button" data-rich-table-command="deleteRow" disabled><Rows3 /> حذف ردیف</button><button type="button" data-rich-table-command="deleteColumn" disabled><Columns3 /> حذف ستون</button><button class="is-danger" type="button" data-rich-table-command="deleteTable" disabled><Trash2 /> حذف جدول</button></div></details>
+            <div class="admin-editor-tool-group"><button type="button" data-rich-command="removeFormat" title="پاک‌کردن قالب"><RemoveFormatting /></button></div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" data-rich-image-input hidden />
+          </div>
+          <div class="admin-rich-text-editor" role="textbox" aria-multiline="true" data-rich-text-editor="generatedContent" data-placeholder="محتوای تولیدشده اینجا نمایش داده می‌شود…"></div>
+          <p class="admin-editor-help">می‌توانید تصویر لینک‌دار اضافه کنید یا جدول را از Excel، Google Sheets و Word مستقیماً Paste کنید.</p>
+          <textarea class="admin-rich-text-input" name="generatedContent" data-rich-text-input="generatedContent" tabindex="-1" aria-hidden="true"></textarea>
+        </div>
+        <footer><button type="button" data-content-copy>کپی HTML</button><button type="button" data-content-download>دانلود HTML</button></footer>
+      </section>
+    </form>
+  </div>
+</AdminShell>
+
+<script>
+  import "../../scripts/admin-content-generator.ts";
+</script>
+<script is:inline>
+  if (location.pathname === "/admin/content-generator/" || location.pathname === "/admin/content-generator") {
+    location.replace("/admin/content-generator/use/");
+  }
+</script>

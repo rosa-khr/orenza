@@ -122,6 +122,20 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
+    <section class="admin-card">
+      <header><span>AI CONTENT GENERATION</span><h2>تنظیمات تولید محتوا</h2><p>کلید سرویس برای تولید محتوا و تحلیل تصویر کلمات کلیدی؛ کلید به‌صورت رمزنگاری‌شده ذخیره می‌شود.</p></header>
+      <div class="admin-form-grid">
+        <label class="admin-field"><span>مدل OpenAI</span><select name="contentAiModel" required><option value="gpt-5.6-sol">GPT-5.6 Sol</option><option value="gpt-5.5">GPT-5.5 (با reasoning متوسط)</option><option value="gpt-5.4">GPT-5.4</option><option value="gpt-5.1">GPT-5.1</option><option value="gpt-5">GPT-5</option><option value="gpt-5-mini">GPT-5 mini</option><option value="gpt-5-nano">GPT-5 nano</option><option value="gpt-4.1">GPT-4.1</option><option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1-nano">GPT-4.1 nano</option><option value="o3">o3</option><option value="o4-mini">o4-mini</option></select></label>
+        <label class="admin-field"><span>کلید API</span><input name="contentAiApiKey" type="password" placeholder="برای حفظ کلید فعلی خالی بگذارید" dir="ltr" autocomplete="new-password" /></label>
+        <label class="admin-field wide"><span>دستور پایه تولید محتوا</span><textarea name="contentAiInstructions" required minlength="20" maxlength="3000"></textarea></label>
+        <label class="admin-field"><span>مخاطب پیش‌فرض</span><input name="contentAiDefaultAudience" required /></label>
+        <label class="admin-field"><span>لحن پیش‌فرض</span><input name="contentAiDefaultTone" required /></label>
+        <label class="admin-field"><span>طول پیش‌فرض</span><select name="contentAiDefaultLength"><option value="short">کوتاه</option><option value="medium">متوسط</option><option value="long">کامل</option></select></label>
+        <label class="admin-field"><span>زبان پیش‌فرض</span><select name="contentAiDefaultLanguage"><option value="fa">فارسی</option><option value="en">English</option></select></label>
+        <small class="admin-field wide admin-ai-key-state" data-ai-key-state>در حال بررسی وضعیت کلید…</small>
+      </div>
+    </section>
+
     <section class="admin-card admin-indexing-setting">
       <header><span>SEARCH ENGINE INDEXING</span><h2>دسترسی موتورهای جست‌وجو</h2><p>غیرفعال‌کردن این گزینه، robots.txt و هدر noindex را هم‌زمان فعال می‌کند.</p></header>
       <label>

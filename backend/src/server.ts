@@ -17,6 +17,7 @@ import {
 import { sendPasswordResetCode } from "./sms.js";
 import { registerAdminRoutes } from "./admin/routes.js";
 import { registerStoreRoutes } from "./store/routes.js";
+import { createRequestId, ensureLogsTable, loggerOptions, registerRequestLogging } from "./logger.js";
 
 type UserRow = {
   id: string;
@@ -44,7 +45,14 @@ type AddressRow = {
   is_default: boolean;
 };
 
-const app = Fastify({ logger: true, trustProxy: true, bodyLimit: 32_000 });
+const app = Fastify({
+  logger: loggerOptions,
+  genReqId: createRequestId,
+  requestIdHeader: "x-request-id",
+  trustProxy: true,
+  bodyLimit: 32_000
+});
+registerRequestLogging(app);
 const cookieName = "orenza_session";
 const sessionDays = 30;
 const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
@@ -141,7 +149,7 @@ const addressSchema = z.object({
   isDefault: z.boolean().default(false)
 });
 
-app.setErrorHandler((error, _request, reply) => {
+app.setErrorHandler((error, request, reply) => {
   if (error instanceof z.ZodError) {
     return reply.code(422).send({ error: "لطفاً اطلاعات واردشده را بررسی کنید.", fields: error.flatten() });
   }
@@ -157,7 +165,7 @@ app.setErrorHandler((error, _request, reply) => {
       error: error instanceof Error ? error.message : "درخواست قابل انجام نیست."
     });
   }
-  app.log.error(error);
+  request.log.error({ err: error, event: "unhandled_request_error" }, "Unhandled request error");
   return reply.code(500).send({ error: "در حال حاضر امکان انجام درخواست وجود ندارد. لطفاً دوباره تلاش کنید." });
 });
 
@@ -433,6 +441,7 @@ app.delete("/api/v1/me/addresses/:id", async (request, reply) => {
 
 registerStoreRoutes(app, pool, currentUser);
 registerAdminRoutes(app, pool, currentUser);
+await ensureLogsTable();
 
 const port = Number(process.env.PORT || 8787);
 await app.listen({ host: "0.0.0.0", port });

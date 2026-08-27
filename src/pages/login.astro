@@ -19,10 +19,14 @@ const googleClientId = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID || "";
     </div>
 
     <div class="auth-card" data-auth-card data-google-client-id={googleClientId}>
+      <a class="auth-card-brand" href="/" aria-label="بازگشت به فروشگاه اورنزا">
+        <span>O</span><strong>ORENZA</strong>
+      </a>
       <div class="auth-mode" role="tablist" aria-label="نوع ورود">
         <button type="button" role="tab" aria-selected="true" data-auth-mode="login">ورود به حساب</button>
         <button type="button" role="tab" aria-selected="false" data-auth-mode="register">ایجاد حساب</button>
       </div>
+      <p class="auth-card-note">ورود امن به حساب مشتریان اورنزا</p>
 
       <form data-auth-form novalidate>
         <label data-name-field hidden>

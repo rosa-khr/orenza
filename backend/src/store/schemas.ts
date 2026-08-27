@@ -93,7 +93,7 @@ export const articleSchema = z.object({
   title: z.string().trim().min(3).max(240),
   slug,
   summary: z.string().trim().min(20).max(1000),
-  content: z.string().trim().min(50).max(100_000),
+  content: z.string().trim().min(50).max(100_000).transform((value) => sanitizeRichText(value) || ""),
   imageUrl: optionalUrl.optional(),
   tags: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
   isPublished: z.boolean().default(false)
@@ -122,7 +122,7 @@ export const adminRoleSchema = z.object({
   slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   permissions: z.array(z.enum([
     "dashboard", "users", "roles", "products", "categories", "orders",
-    "payment-methods", "discount-codes", "articles", "tags", "site-settings"
+    "payment-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
   ])).min(1),
   isActive: z.boolean().default(true)
 });
@@ -150,7 +150,14 @@ export const siteSettingsSchema = z.object({
   homepageBannerDesktopUrl: z.string().trim().max(500).nullable().optional(),
   homepageBannerMobileUrl: z.string().trim().max(500).nullable().optional(),
   searchIndexingEnabled: z.boolean(),
-  invoiceNationalId: z.string().trim().min(10).max(20)
+  invoiceNationalId: z.string().trim().min(10).max(20),
+  contentAiApiKey: z.string().trim().max(500).optional(),
+  contentAiModel: z.string().trim().min(2).max(100).optional()
+  ,contentAiInstructions: z.string().trim().min(20).max(3000).optional(),
+  contentAiDefaultAudience: z.string().trim().min(2).max(200).optional(),
+  contentAiDefaultTone: z.string().trim().min(2).max(100).optional(),
+  contentAiDefaultLength: z.enum(["short", "medium", "long"]).optional(),
+  contentAiDefaultLanguage: z.enum(["fa", "en"]).optional()
 });
 
 export const serviceScriptSchema = z.object({

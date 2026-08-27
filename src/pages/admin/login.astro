@@ -13,7 +13,12 @@ import "../../styles/admin.css";
   </head>
   <body class="admin-login-body">
     <main class="admin-login">
-      <a class="admin-login-brand" href="/"><span>O</span><strong>ORENZA</strong></a>
+      <a class="admin-login-brand" href="/" aria-label="بازگشت به فروشگاه اورنزا"><span>O</span><strong>ORENZA</strong></a>
+      <div class="admin-login-atmosphere" aria-hidden="true">
+        <span>ORENZA MANAGEMENT</span>
+        <strong>کنترل ساده‌تر،<br />مدیریت دقیق‌تر.</strong>
+        <small>دسترسی امن به فضای مدیریت فروشگاه</small>
+      </div>
       <form data-admin-login novalidate>
         <span>MANAGEMENT ACCESS</span>
         <h1>ورود به مدیریت</h1>
@@ -24,6 +29,9 @@ import "../../styles/admin.css";
         <button type="submit">ورود به پنل</button>
       </form>
     </main>
+    <script>
+      import "../../scripts/logger.ts";
+    </script>
     <script>
       import "../../scripts/admin.ts";
     </script>

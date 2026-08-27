@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { Pool } from "pg";
 import { z } from "zod";
 import { hashPassword, hashSessionToken, verifyPassword } from "../security.js";
-import { getSiteSettings, updateSiteSettings } from "../site-settings.js";
+import { getContentAiSettings, getSiteSettings, updateSiteSettings } from "../site-settings.js";
 import { AdminRepository } from "./repository.js";
 import { openPaymentReceipt } from "../payment-receipts.js";
 import {
@@ -12,12 +12,17 @@ import {
 } from "../invoice-signatures.js";
 import { saveProductImage } from "../product-images.js";
 import { removeHomepageBanner, saveHomepageBanner } from "../homepage-banners.js";
+import { persistLog } from "../logger.js";
+import * as XLSX from "xlsx";
 
 type AdminUser = { id: string; role: "customer" | "admin"; admin_role_id: string | null };
 
+const normalizeOpenAiKey = (value: string | undefined) =>
+  value?.trim().replace(/^Bearer\s+/i, "").replace(/^['\"]|['\"]$/g, "") || "";
+
 const allPermissions = [
   "dashboard", "users", "roles", "products", "categories", "orders",
-  "payment-methods", "discount-codes", "articles", "tags", "site-settings"
+  "payment-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
 ] as const;
 
 export const registerAdminRoutes = (
@@ -96,12 +101,426 @@ export const registerAdminRoutes = (
     };
   });
 
+  app.get("/api/v1/admin/logs", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "logs"))) return;
+    const filters = z.object({
+      page: z.coerce.number().int().min(1).default(1),
+      pageSize: z.coerce.number().int().min(1).max(100).default(30),
+      level: z.enum(["info", "warn", "error"]).optional(),
+      search: z.string().trim().max(160).optional(),
+      event: z.string().trim().max(100).optional(),
+      message: z.string().trim().max(500).optional(),
+      method: z.string().trim().max(10).optional(),
+      route: z.string().trim().max(300).optional(),
+      requestId: z.string().trim().max(100).optional(),
+      statusCode: z.coerce.number().int().min(100).max(599).optional(),
+      minDuration: z.coerce.number().int().min(0).optional(),
+      maxDuration: z.coerce.number().int().min(0).optional(),
+      from: z.string().date().optional(),
+      to: z.string().date().optional()
+    }).parse(request.query);
+    const values: unknown[] = [];
+    const conditions: string[] = [];
+    if (filters.level) {
+      values.push(filters.level);
+      conditions.push(`level = $${values.length}`);
+    }
+    if (filters.search) {
+      values.push(`%${filters.search}%`);
+      conditions.push(`(event ILIKE $${values.length} OR message ILIKE $${values.length} OR route ILIKE $${values.length})`);
+    }
+    for (const [field, value] of [["event", filters.event], ["method", filters.method], ["route", filters.route]] as const) {
+      if (value) { values.push(`%${value}%`); conditions.push(`${field} ILIKE $${values.length}`); }
+    }
+    if (filters.message) { values.push(`%${filters.message}%`); conditions.push(`message ILIKE $${values.length}`); }
+    if (filters.requestId) { values.push(`%${filters.requestId}%`); conditions.push(`request_id ILIKE $${values.length}`); }
+    if (filters.statusCode) { values.push(filters.statusCode); conditions.push(`status_code = $${values.length}`); }
+    if (filters.minDuration != null) { values.push(filters.minDuration); conditions.push(`duration_ms >= $${values.length}`); }
+    if (filters.maxDuration != null) { values.push(filters.maxDuration); conditions.push(`duration_ms <= $${values.length}`); }
+    if (filters.from) { values.push(filters.from); conditions.push(`created_at >= $${values.length}::date`); }
+    if (filters.to) { values.push(filters.to); conditions.push(`created_at < ($${values.length}::date + interval '1 day')`); }
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const count = await pool.query<{ count: string }>(`SELECT count(*) FROM application_logs ${where}`, values);
+    const offset = (filters.page - 1) * filters.pageSize;
+    const rows = await pool.query(`SELECT id,level,event,message,request_id,method,route,status_code,duration_ms,metadata,created_at
+      FROM application_logs ${where} ORDER BY created_at DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+      [...values, filters.pageSize, offset]);
+    return { items: rows.rows, page: filters.page, pageSize: filters.pageSize, total: Number(count.rows[0]?.count || 0) };
+  });
+
+  app.get("/api/v1/admin/logs/:id", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "logs"))) return;
+    const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(request.params);
+    const result = await pool.query("SELECT * FROM application_logs WHERE id=$1", [id]);
+    if (!result.rows[0]) return reply.code(404).send({ error: "لاگ پیدا نشد." });
+    return { item: result.rows[0] };
+  });
+
   app.get("/api/v1/admin/assignable-roles", async (request, reply) => {
     if (!(await requirePermission(request, reply, "users"))) return;
     const roles = await pool.query<{ id: string; title: string; slug: string }>(
       "SELECT id,title,slug FROM admin_roles WHERE is_active=true ORDER BY is_system DESC,title"
     );
     return { roles: roles.rows };
+  });
+
+  const normalizeImportText = (value: unknown) => String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("fa-IR")
+    .replace(/[يى]/g, "ی")
+    .replace(/[ك]/g, "ک")
+    .replace(/\s+/g, " ");
+  const parseImportPrice = (value: unknown) => {
+    const normalized = String(value ?? "")
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٬,\/\s تومان]/g, "");
+    if (!/^\d+$/.test(normalized)) return null;
+    const price = Number(normalized);
+    return Number.isSafeInteger(price) && price >= 0 && price <= 10_000_000_000 ? price : null;
+  };
+  const parseIncreaseValue = (value: unknown) => {
+    const normalized = String(value ?? "")
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٬,\/\s تومان]/g, "")
+      .replace(/٫/g, ".");
+    if (!/^\d+(?:\.\d+)?$/.test(normalized)) return null;
+    const amount = Number(normalized);
+    return Number.isFinite(amount) && amount >= 0 && amount <= 10_000_000_000 ? amount : null;
+  };
+  const parseIncreaseType = (value: unknown) => {
+    const normalized = normalizeImportText(value).replace(/[‌]/g, " ");
+    if (["percent", "percentage", "درصد", "درصدی", "سود درصدی"].includes(normalized)) return "percent" as const;
+    if (["fixed", "amount", "مبلغ", "مبلغ ثابت", "ثابت"].includes(normalized)) return "fixed" as const;
+    return null;
+  };
+
+  app.get("/api/v1/admin/price-imports/sample", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "price-imports"))) return;
+    const products = await pool.query<{ id: string; title_fa: string; purchase_price_per_kg: number }>(
+      "SELECT id,title_fa,purchase_price_per_kg FROM products ORDER BY sort_order ASC, title_fa ASC"
+    );
+    const sheet = XLSX.utils.aoa_to_sheet([
+      ["product_id", "product", "purchase_price_per_kg_toman", "increase_type", "increase_value"],
+      ...products.rows.map((product) => [product.id, product.title_fa, Number(product.purchase_price_per_kg), "", ""])
+    ]);
+    sheet["!cols"] = [{ wch: 38 }, { wch: 28 }, { wch: 25 }, { wch: 18 }, { wch: 18 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, sheet, "قیمت خرید");
+    const file = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    return reply
+      .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      .header("Content-Disposition", 'attachment; filename="orenza-price-accounting-sample.xlsx"')
+      .send(file);
+  });
+
+  app.get("/api/v1/admin/price-imports", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "price-imports"))) return;
+    const result = await pool.query(`
+      SELECT j.id,j.file_name,j.status,j.total_rows,j.updated_rows,j.failed_rows,j.error_message,
+             j.started_at,j.completed_at,u.display_name
+      FROM price_import_jobs j
+      LEFT JOIN users u ON u.id=j.created_by
+      ORDER BY j.started_at DESC LIMIT 100`);
+    return { items: result.rows };
+  });
+
+  app.get("/api/v1/admin/price-imports/:id", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "price-imports"))) return;
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const [job, items] = await Promise.all([
+      pool.query(`SELECT id,file_name,status,total_rows,updated_rows,failed_rows,error_message,
+                         file_mime_type,file_size,created_by,started_at,completed_at
+                  FROM price_import_jobs WHERE id=$1`, [id]),
+      pool.query("SELECT * FROM price_import_items WHERE job_id=$1 ORDER BY row_number", [id])
+    ]);
+    if (!job.rows[0]) return reply.code(404).send({ error: "اجرای موردنظر پیدا نشد." });
+    return { item: job.rows[0], rows: items.rows };
+  });
+
+  app.get("/api/v1/admin/price-imports/:id/file", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "price-imports"))) return;
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const result = await pool.query<{ file_name: string; file_mime_type: string | null; file_content: Buffer | null }>(
+      "SELECT file_name,file_mime_type,file_content FROM price_import_jobs WHERE id=$1",
+      [id]
+    );
+    const storedFile = result.rows[0];
+    if (!storedFile?.file_content) return reply.code(404).send({ error: "فایل این اجرای قدیمی در سیستم ذخیره نشده است." });
+    const encodedName = encodeURIComponent(storedFile.file_name).replace(/'/g, "%27");
+    return reply
+      .type(storedFile.file_mime_type || "application/octet-stream")
+      .header("Content-Disposition", `attachment; filename*=UTF-8''${encodedName}`)
+      .send(storedFile.file_content);
+  });
+
+  app.post("/api/v1/admin/price-imports", async (request, reply) => {
+    const access = await requirePermission(request, reply, "price-imports");
+    if (!access) return;
+    const file = await request.file();
+    if (!file) return reply.code(422).send({ error: "فایل Excel یا CSV را انتخاب کنید." });
+    if (!/\.(xlsx|xls|csv)$/i.test(file.filename)) return reply.code(422).send({ error: "فرمت فایل باید Excel یا CSV باشد." });
+    const buffer = await file.toBuffer();
+    if (buffer.length > 5 * 1024 * 1024) return reply.code(413).send({ error: "حجم فایل نباید بیشتر از ۵ مگابایت باشد." });
+
+    let rows: unknown[][];
+    try {
+      const workbook = XLSX.read(buffer, { type: "buffer" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]!];
+      if (!firstSheet) throw new Error();
+      rows = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, raw: true, defval: "" });
+    } catch {
+      return reply.code(422).send({ error: "خواندن فایل Excel انجام نشد." });
+    }
+    const headers = (rows[0] || []).map(normalizeImportText);
+    const productIdIndex = headers.findIndex((header) => ["product_id", "شناسه محصول", "id"].includes(header));
+    const productIndex = headers.findIndex((header) => ["product", "محصول", "نام محصول", "عنوان محصول"].includes(header));
+    const priceIndex = headers.findIndex((header) => ["purchase_price_per_kg", "purchase_price_per_kg_toman", "purchase price per kg", "قیمت خرید", "قیمت خرید هر کیلو", "قیمت"].includes(header));
+    const increaseTypeIndex = headers.findIndex((header) => ["increase_type", "increase mode", "نوع افزایش", "نوع سود"].includes(header));
+    const increaseValueIndex = headers.findIndex((header) => ["increase_value", "increase amount", "markup_percent", "fixed_increase_toman", "درصد سود", "مبلغ افزایش", "مقدار افزایش"].includes(header));
+    if ((productIdIndex < 0 && productIndex < 0) || priceIndex < 0) {
+      return reply.code(422).send({ error: "سرستون‌های فایل باید product یا product_id و قیمت خرید را داشته باشند. فایل نمونه را دانلود کنید." });
+    }
+    const dataRows = rows.slice(1).filter((row) => row.some((cell) => String(cell ?? "").trim()));
+    if (!dataRows.length) return reply.code(422).send({ error: "فایل هیچ ردیف قیمتی ندارد." });
+    if (dataRows.length > 1000) return reply.code(422).send({ error: "هر فایل حداکثر می‌تواند ۱۰۰۰ محصول داشته باشد." });
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const job = await client.query<{ id: string }>(
+        `INSERT INTO price_import_jobs(file_name,status,total_rows,created_by,file_content,file_mime_type,file_size)
+         VALUES($1,'processing',$2,$3,$4,$5,$6) RETURNING id`,
+        [file.filename, dataRows.length, access.user.id, buffer, file.mimetype || "application/octet-stream", buffer.length]
+      );
+      const jobId = job.rows[0]!.id;
+      const updates: { rowNumber: number; identifier: string; productId: string; productTitle: string; previous: number; next: number; previousSale: number; sale: number; increaseType: "percent" | "fixed" | null; increaseValue: number | null }[] = [];
+      const failures: { rowNumber: number; identifier: string; error: string }[] = [];
+      for (let index = 0; index < dataRows.length; index += 1) {
+        const row = dataRows[index]!;
+        const identifier = String((productIdIndex >= 0 ? row[productIdIndex] : "") || (productIndex >= 0 ? row[productIndex] : "") || "").trim();
+        const price = parseImportPrice(row[priceIndex]);
+        const increaseType = increaseTypeIndex >= 0 ? parseIncreaseType(row[increaseTypeIndex]) : null;
+        const increaseValue = increaseValueIndex >= 0 ? parseIncreaseValue(row[increaseValueIndex]) : null;
+        if (!identifier) { failures.push({ rowNumber: index + 2, identifier: "", error: "محصول مشخص نشده است." }); continue; }
+        if (price == null) { failures.push({ rowNumber: index + 2, identifier, error: "قیمت خرید باید یک عدد صحیح معتبر باشد." }); continue; }
+        const product = await client.query<{ id: string; purchase_price_per_kg: number; sale_price_per_kg: number; title_fa: string }>(
+          `SELECT id,purchase_price_per_kg,sale_price_per_kg,title_fa FROM products
+           WHERE id::text=$1 OR lower(title_fa)=lower($1) OR lower(title_en)=lower($1) LIMIT 2`, [identifier]
+        );
+        if (product.rows.length !== 1) {
+          failures.push({ rowNumber: index + 2, identifier, error: product.rows.length ? "این نام محصول تکراری است." : "محصول پیدا نشد." });
+          continue;
+        }
+        const hasIncrease = increaseType !== null || increaseValue !== null;
+        const safeIncreaseType = increaseType || "fixed";
+        const safeIncreaseValue = increaseValue || 0;
+        if (hasIncrease && safeIncreaseType === "percent" && safeIncreaseValue > 1000) { failures.push({ rowNumber: index + 2, identifier, error: "مقدار درصد افزایش معتبر نیست." }); continue; }
+        const sale = hasIncrease
+          ? (safeIncreaseType === "percent" ? Math.round(price * (1 + safeIncreaseValue / 100)) : Math.round(price + safeIncreaseValue))
+          : Number(product.rows[0]!.sale_price_per_kg);
+        if (!Number.isSafeInteger(sale) || sale > 10_000_000_000) { failures.push({ rowNumber: index + 2, identifier, error: "قیمت فروش نهایی معتبر نیست." }); continue; }
+        updates.push({
+          rowNumber: index + 2,
+          identifier,
+          productId: product.rows[0]!.id,
+          productTitle: product.rows[0]!.title_fa,
+          previous: Number(product.rows[0]!.purchase_price_per_kg),
+          next: price,
+          previousSale: Number(product.rows[0]!.sale_price_per_kg),
+          sale,
+          increaseType: hasIncrease ? safeIncreaseType : null,
+          increaseValue: hasIncrease ? safeIncreaseValue : null
+        });
+      }
+      for (const item of failures) {
+        await client.query(`INSERT INTO price_import_items(job_id,row_number,product_identifier,status,error_message) VALUES($1,$2,$3,'failed',$4)`, [jobId, item.rowNumber, item.identifier, item.error]);
+      }
+      for (const item of updates) {
+        await client.query("UPDATE products SET purchase_price_per_kg=$1,sale_price_per_kg=$2,updated_at=now() WHERE id=$3", [item.next, item.sale, item.productId]);
+        await client.query(
+          `INSERT INTO price_import_items(
+             job_id,row_number,product_identifier,product_id,product_title,previous_purchase_price,new_purchase_price,
+             previous_sale_price,new_sale_price,increase_type,increase_value,status
+           ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'updated')`,
+          [jobId, item.rowNumber, item.identifier, item.productId, item.productTitle, item.previous, item.next, item.previousSale, item.sale, item.increaseType, item.increaseValue]
+        );
+      }
+      const jobStatus = updates.length ? "completed" : "failed";
+      const errorMessage = failures.length ? `${failures.length} ردیف رد شد؛ سایر ردیف‌های معتبر اجرا شدند.` : null;
+      await client.query(`UPDATE price_import_jobs SET status=$2,updated_rows=$3,failed_rows=$4,error_message=$5,completed_at=now() WHERE id=$1`, [jobId, jobStatus, updates.length, failures.length, errorMessage]);
+      await client.query("COMMIT");
+      if (!updates.length) return reply.code(422).send({ error: "هیچ ردیف معتبری برای به‌روزرسانی پیدا نشد.", jobId, failedRows: failures.length });
+      return { jobId, status: "completed", updatedRows: updates.length, failedRows: failures.length };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      request.log.error({ event: "price_import_failed", err: error }, "Price import failed");
+      return reply.code(500).send({ error: "اجرای به‌روزرسانی قیمت انجام نشد." });
+    } finally { client.release(); }
+  });
+
+  const contentTemplateSchema = z.object({
+    title: z.string().trim().min(2).max(160),
+    description: z.string().trim().max(400).default(""),
+    contentType: z.string().trim().min(2).max(80),
+    audience: z.string().trim().max(200).default(""),
+    tone: z.string().trim().max(100).default(""),
+    language: z.enum(["fa", "en"]).default("fa"),
+    length: z.enum(["short", "medium", "long"]).default("medium"),
+    extraInstructions: z.string().trim().max(5000).default("")
+  });
+  const contentTemplateSelect = `
+    SELECT id,title,description,content_type AS "contentType",audience,tone,language,
+           content_length AS length,extra_instructions AS "extraInstructions",
+           is_system AS "isSystem",updated_at AS "updatedAt"
+      FROM content_templates`;
+
+  app.get("/api/v1/admin/content-templates", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "content-generator"))) return;
+    const result = await pool.query(`${contentTemplateSelect} ORDER BY is_system DESC,updated_at DESC,title`);
+    return { items: result.rows };
+  });
+
+  app.get("/api/v1/admin/content-templates/:id", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "content-generator"))) return;
+    const id = z.string().uuid().parse((request.params as { id?: string }).id);
+    const result = await pool.query(`${contentTemplateSelect} WHERE id=$1`, [id]);
+    if (!result.rows[0]) return reply.code(404).send({ error: "قالب محتوا پیدا نشد." });
+    return { item: result.rows[0] };
+  });
+
+  app.post("/api/v1/admin/content-templates", async (request, reply) => {
+    const admin = await requirePermission(request, reply, "content-generator");
+    if (!admin) return;
+    const data = contentTemplateSchema.parse(request.body);
+    const result = await pool.query(
+      `INSERT INTO content_templates(title,description,content_type,audience,tone,language,content_length,extra_instructions,created_by)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+      [data.title, data.description, data.contentType, data.audience, data.tone, data.language, data.length, data.extraInstructions, admin.user.id]
+    );
+    const saved = await pool.query(`${contentTemplateSelect} WHERE id=$1`, [result.rows[0].id]);
+    return reply.code(201).send({ item: saved.rows[0] });
+  });
+
+  app.patch("/api/v1/admin/content-templates/:id", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "content-generator"))) return;
+    const id = z.string().uuid().parse((request.params as { id?: string }).id);
+    const data = contentTemplateSchema.parse(request.body);
+    const result = await pool.query(
+      `UPDATE content_templates
+          SET title=$2,description=$3,content_type=$4,audience=$5,tone=$6,language=$7,
+              content_length=$8,extra_instructions=$9,updated_at=now()
+        WHERE id=$1 RETURNING id`,
+      [id, data.title, data.description, data.contentType, data.audience, data.tone, data.language, data.length, data.extraInstructions]
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: "قالب محتوا پیدا نشد." });
+    const saved = await pool.query(`${contentTemplateSelect} WHERE id=$1`, [id]);
+    return { item: saved.rows[0] };
+  });
+
+  app.delete("/api/v1/admin/content-templates/:id", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "content-generator"))) return;
+    const id = z.string().uuid().parse((request.params as { id?: string }).id);
+    const result = await pool.query("DELETE FROM content_templates WHERE id=$1 AND is_system=false RETURNING id", [id]);
+    if (!result.rowCount) return reply.code(409).send({ error: "قالب‌های پیش‌فرض قابل حذف نیستند؛ می‌توانید آن‌ها را ویرایش کنید." });
+    return reply.code(204).send();
+  });
+
+  app.post("/api/v1/admin/content-generator", async (request, reply) => {
+    const admin = await requirePermission(request, reply, "content-generator");
+    if (!admin) return;
+    const data = z.object({
+      contentType: z.string().trim().min(2).max(80),
+      topic: z.string().trim().min(3).max(300),
+      keywords: z.string().trim().max(5000).default(""),
+      audience: z.string().trim().max(200).default(""),
+      tone: z.string().trim().max(100).default(""),
+      language: z.enum(["fa", "en"]).optional(),
+      length: z.enum(["short", "medium", "long"]).optional(),
+      extraInstructions: z.string().trim().max(5000).default("")
+    }).parse(request.body);
+    const ai = await getContentAiSettings(pool);
+    const apiKey = normalizeOpenAiKey(ai.apiKey || process.env.OPENAI_API_KEY);
+    if (!apiKey) return reply.code(503).send({ error: "کلید سرویس تولید محتوا در تنظیمات سایت ثبت نشده است." });
+    const length = data.length || ai.defaultLength;
+    const language = data.language || ai.defaultLanguage;
+    const lengthLabel = { short: "کوتاه، حدود ۱۵۰ کلمه", medium: "متوسط، حدود ۳۵۰ کلمه", long: "کامل، حدود ۷۰۰ کلمه" }[length];
+    const languageLabel = language === "fa" ? "فارسی روان و طبیعی" : "English";
+    const audience = data.audience || ai.defaultAudience;
+    const tone = data.tone || ai.defaultTone;
+    const instructions = `تو نویسنده و استراتژیست محتوای برند قهوه اورنزا هستی. خروجی باید ${languageLabel}، دقیق، کاربردی و آماده انتشار باشد.
+${ai.instructions}
+نوع محتوا: ${data.contentType}. طول: ${lengthLabel}.
+خروجی را فقط به‌صورت HTML تمیز و بدون Markdown یا code fence برگردان. فقط از تگ‌های p، h2، h3، strong، em، ul، ol، li، blockquote، a و table استفاده کن.`;
+    const prompt = `قالب تولید محتوا:
+موضوع اصلی: ${data.topic}
+کلمات کلیدی: ${data.keywords || "بدون کلمه کلیدی مشخص"}
+مخاطب هدف: ${audience}
+لحن: ${tone}
+دستورهای تکمیلی: ${data.extraInstructions || "ندارد"}
+
+بر اساس این قالب، محتوای نهایی را تولید کن.`;
+    let response: Response;
+    try {
+      response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: ai.model, instructions, input: prompt, store: false }),
+        signal: AbortSignal.timeout(90_000)
+      });
+    } catch (error) {
+      request.log.error({ event: "content_generation_request_failed", err: error }, "Content generation request failed");
+      return reply.code(502).send({ error: "ارتباط با سرویس هوش مصنوعی برقرار نشد؛ اتصال سرور و کلید API را بررسی کنید." });
+    }
+    const payload = await response.json() as { output_text?: string; output?: { content?: { text?: string }[] }[]; error?: { message?: string } };
+    if (!response.ok) {
+      request.log.error({ event: "content_generation_failed", statusCode: response.status, providerMessage: payload.error?.message }, "Content generation failed");
+      const providerMessage = payload.error?.message?.trim();
+      return reply.code(502).send({ error: providerMessage ? `تولید محتوا ناموفق بود: ${providerMessage}` : "تولید محتوا از سرویس هوش مصنوعی ناموفق بود." });
+    }
+    const content = payload.output_text || payload.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n").trim();
+    if (!content) return reply.code(502).send({ error: "سرویس هوش مصنوعی خروجی متنی برنگرداند." });
+    return { content, model: ai.model };
+  });
+
+  app.post("/api/v1/admin/content-keywords", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "content-generator"))) return;
+    const ai = await getContentAiSettings(pool);
+    const apiKey = normalizeOpenAiKey(ai.apiKey || process.env.OPENAI_API_KEY);
+    const file = await request.file();
+    if (!file) return reply.code(422).send({ error: "فایل Excel یا تصویر کلمات کلیدی را انتخاب کنید." });
+    const buffer = await file.toBuffer();
+    if (buffer.length > 5 * 1024 * 1024) return reply.code(413).send({ error: "حجم فایل نباید بیشتر از ۵ مگابایت باشد." });
+    const fileName = file.filename.toLowerCase();
+    const isExcel = /\.(xlsx|xls|csv)$/.test(fileName);
+    if (isExcel) {
+      try {
+        const workbook = XLSX.read(buffer, { type: "buffer" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]!];
+        if (!firstSheet) return reply.code(422).send({ error: "در فایل Excel شیتی برای خواندن پیدا نشد." });
+        const rows = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, raw: true, defval: "" });
+        const keywords = rows.slice(0, 500).map((row) => row.map(String).map((value) => value.trim()).filter(Boolean).join(" | ")).filter(Boolean).join("\n");
+        if (!keywords) return reply.code(422).send({ error: "در فایل Excel کلمه‌ای پیدا نشد." });
+        return { keywords, source: "excel" };
+      } catch {
+        return reply.code(422).send({ error: "خواندن فایل Excel انجام نشد." });
+      }
+    }
+    if (!/^image\/(jpeg|png|webp)$/.test(file.mimetype) || !apiKey) {
+      return reply.code(422).send({ error: apiKey ? "فرمت فایل باید Excel، CSV یا تصویر JPG/PNG/WebP باشد." : "برای تحلیل تصویر، کلید سرویس تولید محتوا باید تنظیم شده باشد." });
+    }
+    const imageUrl = `data:${file.mimetype};base64,${buffer.toString("base64")}`;
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: ai.model, store: false, input: [{ role: "user", content: [
+        { type: "input_text", text: "این تصویر خروجی ابزار تحقیق کلمات کلیدی است. همه کلمات قابل خواندن را استخراج کن و برای هرکدام اگر وزن، اندازه، رنگ یا عددی نشان داده شده، همان را کنار کلمه بنویس. فقط فهرست خط‌به‌خط کلمات را برگردان و هیچ توضیح دیگری نده." },
+        { type: "input_image", image_url: imageUrl, detail: "high" }
+      ] }] })
+    });
+    const payload = await response.json() as { output_text?: string; output?: { content?: { text?: string }[] }[] };
+    if (!response.ok) return reply.code(502).send({ error: "تحلیل تصویر کلمات کلیدی ناموفق بود." });
+    const keywords = payload.output_text || payload.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n").trim();
+    if (!keywords) return reply.code(422).send({ error: "کلمه‌ای از تصویر قابل استخراج نبود." });
+    return { keywords, source: "image" };
   });
 
   app.get("/api/v1/admin/profile", async (request, reply) => {
@@ -246,6 +665,8 @@ export const registerAdminRoutes = (
       ready_orders: string;
       completed_orders: string;
       canceled_orders: string;
+      total_sales: string;
+      total_profit: string;
     }>(`SELECT
       (SELECT count(*) FROM orders WHERE order_status = 'new') AS new_orders,
       (SELECT count(*) FROM orders WHERE order_status IN ('new','processing','ready')) AS pending_shipment,
@@ -256,7 +677,19 @@ export const registerAdminRoutes = (
       (SELECT count(*) FROM orders WHERE order_status = 'canceled') AS canceled_orders,
       (SELECT count(*) FROM users WHERE role = 'customer') AS customers,
       (SELECT count(*) FROM products WHERE is_active = true) AS active_products,
-      (SELECT count(DISTINCT visitor_id) FROM site_visits WHERE visited_on >= current_date - 29) AS visitors`);
+      (SELECT count(DISTINCT visitor_id) FROM site_visits WHERE visited_on >= current_date - 29) AS visitors,
+      (SELECT COALESCE(sum(final_amount),0) FROM orders WHERE payment_status='paid' AND order_status<>'canceled') AS total_sales,
+      (SELECT COALESCE(sum((o.total_amount-o.discount_amount)-COALESCE(costs.total_cost,0)),0)
+         FROM orders o
+         LEFT JOIN LATERAL (
+           SELECT sum(COALESCE(oi.total_cost,
+             CASE WHEN p.sale_type='packaged'
+               THEN p.purchase_price_per_kg*oi.quantity
+               ELSE round(p.purchase_price_per_kg*oi.weight/1000.0)*oi.quantity END
+           )) AS total_cost
+           FROM order_items oi JOIN products p ON p.id=oi.product_id WHERE oi.order_id=o.id
+         ) costs ON true
+         WHERE o.payment_status='paid' AND o.order_status<>'canceled') AS total_profit`);
     const row = result.rows[0]!;
     return {
       stats: {
@@ -265,7 +698,9 @@ export const registerAdminRoutes = (
         sentOrders: Number(row.sent_orders),
         customers: Number(row.customers),
         activeProducts: Number(row.active_products),
-        visitors: Number(row.visitors)
+        visitors: Number(row.visitors),
+        totalSales: Number(row.total_sales),
+        totalProfit: Number(row.total_profit)
       },
       orderStatuses: {
         new: Number(row.new_orders),
@@ -280,7 +715,8 @@ export const registerAdminRoutes = (
 
   app.get("/api/v1/admin/site-settings", async (request, reply) => {
     if (!(await requirePermission(request, reply, "site-settings"))) return;
-    return { item: await getSiteSettings(pool) };
+    const [item, ai] = await Promise.all([getSiteSettings(pool), getContentAiSettings(pool)]);
+    return { item: { ...item, contentAiModel: ai.model, contentAiApiKey: "", contentAiKeyConfigured: Boolean(ai.apiKey), contentAiInstructions: ai.instructions, contentAiDefaultAudience: ai.defaultAudience, contentAiDefaultTone: ai.defaultTone, contentAiDefaultLength: ai.defaultLength, contentAiDefaultLanguage: ai.defaultLanguage } };
   });
 
   app.put("/api/v1/admin/site-settings", async (request, reply) => {
@@ -405,6 +841,15 @@ export const registerAdminRoutes = (
     if (!part || part.fieldname !== "image") {
       return reply.code(422).send({ error: "تصویر محصول را انتخاب کنید." });
     }
+    return saveProductImage(await part.toBuffer());
+  });
+
+  app.post("/api/v1/admin/content-images", {
+    bodyLimit: 6 * 1024 * 1024
+  }, async (request, reply) => {
+    if (!(await requireAdmin(request, reply))) return;
+    const part = await request.file();
+    if (!part || part.fieldname !== "image") return reply.code(422).send({ error: "تصویر محتوا را انتخاب کنید." });
     return saveProductImage(await part.toBuffer());
   });
 

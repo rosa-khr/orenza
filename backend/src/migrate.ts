@@ -58,7 +58,7 @@ FROM admin_roles r
 JOIN (VALUES
   ('admin','dashboard'),('admin','users'),('admin','roles'),('admin','products'),
   ('admin','categories'),('admin','orders'),('admin','payment-methods'),
-  ('admin','discount-codes'),('admin','articles'),('admin','tags'),('admin','site-settings'),
+  ('admin','discount-codes'),('admin','articles'),('admin','tags'),('admin','site-settings'),('admin','logs'),('admin','content-generator'),('admin','accounting'),('admin','price-imports'),
   ('orders','dashboard'),('orders','orders'),
   ('seo','dashboard'),('seo','products'),('seo','categories'),('seo','articles'),('seo','tags'),
   ('seo','site-settings')
@@ -146,6 +146,20 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_desktop_url varchar(500);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_mobile_url varchar(500);
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS content_ai_api_key text;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS content_ai_model varchar(100) NOT NULL DEFAULT 'gpt-5';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS content_ai_instructions text NOT NULL DEFAULT 'از ادعای پزشکی یا اطلاعات ساختگی خودداری کن؛ از کلیشه و تکرار پرهیز کن؛ محتوای کم‌حجم و ناقص تولید نکن؛ ساختار مقاله را با یک H1، چند H2 مرتبط و در صورت نیاز H3 و پاراگراف‌های کامل ارائه کن؛ در ابتدای خروجی عنوان SEO و توضیحات متا را جداگانه بنویس؛ فقط متن نهایی را بده و درباره روند تولید توضیح نده.';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS content_ai_default_audience varchar(200) NOT NULL DEFAULT 'مخاطب عمومی فروشگاه اورنزا';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS content_ai_default_tone varchar(100) NOT NULL DEFAULT 'حرفه‌ای، گرم و متقاعدکننده';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS content_ai_default_length varchar(10) NOT NULL DEFAULT 'medium' CHECK (content_ai_default_length IN ('short','medium','long'));
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS content_ai_default_language varchar(5) NOT NULL DEFAULT 'fa' CHECK (content_ai_default_language IN ('fa','en'));
 
 INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
@@ -219,8 +233,79 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS sale_type varchar(20) NOT NULL DEF
 ALTER TABLE products ADD COLUMN IF NOT EXISTS package_weight_grams integer NOT NULL DEFAULT 250;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_status varchar(20) NOT NULL DEFAULT 'inStock';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS product_content text;
+
+CREATE TABLE IF NOT EXISTS price_import_jobs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  file_name varchar(255) NOT NULL,
+  status varchar(20) NOT NULL CHECK (status IN ('processing','completed','failed')),
+  total_rows integer NOT NULL DEFAULT 0,
+  updated_rows integer NOT NULL DEFAULT 0,
+  failed_rows integer NOT NULL DEFAULT 0,
+  error_message text,
+  file_content bytea,
+  file_mime_type varchar(120),
+  file_size integer,
+  created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  completed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS price_import_jobs_started_at_idx ON price_import_jobs(started_at DESC);
+
+CREATE TABLE IF NOT EXISTS price_import_items (
+  id bigserial PRIMARY KEY,
+  job_id uuid NOT NULL REFERENCES price_import_jobs(id) ON DELETE CASCADE,
+  row_number integer NOT NULL,
+  product_identifier varchar(220) NOT NULL,
+  product_title varchar(220),
+  product_id uuid REFERENCES products(id) ON DELETE SET NULL,
+  previous_purchase_price bigint,
+  new_purchase_price bigint,
+  previous_sale_price bigint,
+  new_sale_price bigint,
+  increase_type varchar(20),
+  increase_value numeric(14,2),
+  status varchar(20) NOT NULL CHECK (status IN ('updated','failed')),
+  error_message text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS price_import_items_job_idx ON price_import_items(job_id,row_number);
+ALTER TABLE price_import_jobs ADD COLUMN IF NOT EXISTS file_content bytea;
+ALTER TABLE price_import_jobs ADD COLUMN IF NOT EXISTS file_mime_type varchar(120);
+ALTER TABLE price_import_jobs ADD COLUMN IF NOT EXISTS file_size integer;
+ALTER TABLE price_import_items ADD COLUMN IF NOT EXISTS previous_sale_price bigint;
+ALTER TABLE price_import_items ADD COLUMN IF NOT EXISTS product_title varchar(220);
+ALTER TABLE price_import_items ADD COLUMN IF NOT EXISTS new_sale_price bigint;
+ALTER TABLE price_import_items ADD COLUMN IF NOT EXISTS increase_type varchar(20);
+ALTER TABLE price_import_items ADD COLUMN IF NOT EXISTS increase_value numeric(14,2);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS show_in_best_sellers boolean NOT NULL DEFAULT false;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS show_in_discounts boolean NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS content_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug varchar(100) UNIQUE,
+  title varchar(160) NOT NULL,
+  description varchar(400) NOT NULL DEFAULT '',
+  content_type varchar(80) NOT NULL,
+  audience varchar(200) NOT NULL DEFAULT '',
+  tone varchar(100) NOT NULL DEFAULT '',
+  language varchar(10) NOT NULL DEFAULT 'fa' CHECK (language IN ('fa','en')),
+  content_length varchar(20) NOT NULL DEFAULT 'medium' CHECK (content_length IN ('short','medium','long')),
+  extra_instructions text NOT NULL DEFAULT '',
+  is_system boolean NOT NULL DEFAULT false,
+  created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS content_templates_updated_at_idx ON content_templates(updated_at DESC);
+
+INSERT INTO content_templates (slug,title,description,content_type,audience,tone,language,content_length,extra_instructions,is_system)
+VALUES
+  ('blog-article','مقاله وبلاگ','مقاله آموزشی ساختاریافته و مناسب انتشار در وبلاگ','مقاله وبلاگ','مخاطبان علاقه‌مند به قهوه و نوشیدنی‌های تخصصی','حرفه‌ای، گرم و آموزشی','fa','long','عنوان جذاب، مقدمه کوتاه، تیترهای منظم، جمع‌بندی و فراخوان اقدام داشته باشد.',true),
+  ('product-description','توضیحات محصول','معرفی متقاعدکننده محصول برای صفحه فروشگاه','توضیحات محصول','خریداران فروشگاه اینترنتی اورنزا','شفاف، حسی و متقاعدکننده','fa','medium','مزیت‌ها، ویژگی طعمی، روش مصرف و دلیل خرید را بدون اغراق توضیح بده.',true),
+  ('category-page','صفحه دسته‌بندی','محتوای معرفی و سئوی صفحه دسته‌بندی محصولات','صفحه دسته‌بندی','کاربرانی که در حال مقایسه و انتخاب محصول هستند','راهنما، معتبر و ساده','fa','medium','مقدمه دسته‌بندی، راهنمای انتخاب، پاسخ به دغدغه‌های خرید و CTA اضافه کن.',true),
+  ('social-post','پست شبکه اجتماعی','متن کوتاه برای کپشن و شبکه‌های اجتماعی','متن شبکه اجتماعی','دنبال‌کنندگان شبکه‌های اجتماعی اورنزا','صمیمی، کوتاه و تعاملی','fa','short','یک شروع جذاب، متن کوتاه، CTA و حداکثر ۵ هشتگ مرتبط ارائه کن.',true),
+  ('seo-landing','محتوای سئو','لندینگ کامل بر اساس کلمه کلیدی هدف','محتوای سئو','کاربران ورودی از موتورهای جستجو','تخصصی، طبیعی و قابل اعتماد','fa','long','ساختار H2 و H3، پاسخ به نیت جستجو، FAQ کوتاه و استفاده طبیعی از کلمات کلیدی داشته باشد.',true)
+ON CONFLICT (slug) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS payment_methods (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -354,6 +439,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   brew_method varchar(100),
   unit_price bigint NOT NULL CHECK (unit_price >= 0),
   total_price bigint NOT NULL CHECK (total_price >= 0),
+  unit_cost bigint,
+  total_cost bigint,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS order_items_order_idx ON order_items(order_id);
@@ -361,6 +448,8 @@ CREATE INDEX IF NOT EXISTS order_items_order_idx ON order_items(order_id);
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS roast_type varchar(80);
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS blend_type varchar(120);
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS brew_method varchar(100);
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS unit_cost bigint;
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS total_cost bigint;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_title varchar(220);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(500);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
@@ -392,6 +481,22 @@ CREATE TABLE IF NOT EXISTS site_visits (
 );
 CREATE INDEX IF NOT EXISTS site_visits_date_idx ON site_visits(visited_on DESC);
 
+CREATE TABLE IF NOT EXISTS application_logs (
+  id bigserial PRIMARY KEY,
+  level varchar(10) NOT NULL CHECK (level IN ('info','warn','error')),
+  event varchar(100) NOT NULL,
+  message varchar(500) NOT NULL,
+  request_id varchar(100),
+  method varchar(10),
+  route varchar(300),
+  status_code smallint,
+  duration_ms integer,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS application_logs_created_at_idx ON application_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS application_logs_level_idx ON application_logs(level);
+
 INSERT INTO categories (title, slug, description, seo_title, seo_description)
 VALUES
   ('قهوه‌های ترکیبی', 'coffee-blends',
@@ -402,6 +507,27 @@ VALUES
    'پودرهای منتخب برای آماده‌کردن نوشیدنی‌های گرم و کافه‌ای در خانه یا محل کار.',
    'خرید چای ماسالا، ماچا، هات چاکلت و کاپوچینو',
    'خرید آنلاین پودر چای ماسالا، ماچا، هات چاکلت و کاپوچینو با امکان انتخاب وزن و ارسال سراسر ایران.')
+ON CONFLICT (slug) DO UPDATE SET
+  title=EXCLUDED.title,
+  description=EXCLUDED.description,
+  seo_title=EXCLUDED.seo_title,
+  seo_description=EXCLUDED.seo_description,
+  updated_at=now();
+
+INSERT INTO categories (title, slug, description, seo_title, seo_description, is_active)
+VALUES
+  ('همه محصولات اورنزا', 'products',
+   '<h2>خرید محصولات اورنزا</h2><p>مجموعه‌ای از قهوه‌های تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا برای انتخابی دقیق و خوش‌طعم.</p>',
+   'خرید محصولات اورنزا؛ قهوه و نوشیدنی‌های کافه‌ای',
+   'خرید قهوه تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا با انتخاب وزن، رُست و آسیاب مناسب.', true),
+  ('خرید عمده', 'wholesale',
+   '<h2>خرید عمده قهوه برای کافه و سازمان</h2><p>تأمین منظم قهوه تازه‌رست اورنزا برای کافه‌ها، رستوران‌ها و مجموعه‌های سازمانی با ترکیب و آسیاب متناسب با نیاز شما.</p>',
+   'خرید عمده قهوه برای کافه، رستوران و سازمان',
+   'خرید عمده قهوه تازه‌رست اورنزا برای کافه، رستوران و سازمان با تأمین منظم و انتخاب ترکیب مناسب.', true),
+  ('درباره اورنزا', 'about-orenza',
+   '<h2>درباره اورنزا</h2><p>داستان اورنزا، انتخاب دانه و رُست تازه برای ساختن تجربه‌ای دقیق‌تر از قهوه.</p>',
+   'درباره اورنزا؛ داستان رستری و قهوه تازه‌رست',
+   'با اورنزا و نگاه ما به انتخاب دانه، رُست تازه و آماده‌سازی قهوه آشنا شوید.', true)
 ON CONFLICT (slug) DO UPDATE SET
   title=EXCLUDED.title,
   description=EXCLUDED.description,

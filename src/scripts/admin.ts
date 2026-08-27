@@ -8,6 +8,17 @@ import {
 } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-material.css";
+import Tagify from "@yaireo/tagify";
+import "@yaireo/tagify/dist/tagify.css";
+import { productSlug } from "./product-url";
+import { Editor } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
+import TextAlign from "@tiptap/extension-text-align";
+import { TableKit } from "@tiptap/extension-table";
+import { NodeSelection } from "@tiptap/pm/state";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -120,33 +131,33 @@ const toast = (message: string, type: "success" | "error" = "success") => {
   }, 3200);
 };
 
-const askConfirm = (title: string, message: string, acceptLabel = "تأیید") =>
-  new Promise<boolean>((resolve) => {
-    const layer = document.querySelector<HTMLElement>("[data-admin-confirm]");
-    if (!layer) {
-      resolve(window.confirm(message));
-      return;
-    }
-    const titleElement = layer.querySelector<HTMLElement>("[data-confirm-title]");
-    const messageElement = layer.querySelector<HTMLElement>("[data-confirm-message]");
-    const accept = layer.querySelector<HTMLButtonElement>("[data-confirm-accept]")!;
-    const cancelButtons = layer.querySelectorAll<HTMLButtonElement>("[data-confirm-cancel], [data-confirm-dismiss]");
-    if (titleElement) titleElement.textContent = title;
-    if (messageElement) messageElement.textContent = message;
-    accept.textContent = acceptLabel;
-    layer.hidden = false;
-    requestAnimationFrame(() => layer.classList.add("show"));
-    const finish = (result: boolean) => {
-      layer.classList.remove("show");
-      window.setTimeout(() => { layer.hidden = true; }, 180);
-      accept.onclick = null;
-      cancelButtons.forEach((button) => { button.onclick = null; });
-      resolve(result);
-    };
-    accept.onclick = () => finish(true);
-    cancelButtons.forEach((button) => { button.onclick = () => finish(false); });
-    accept.focus();
+const adminSwal = Swal.mixin({
+  buttonsStyling: false,
+  reverseButtons: true,
+  confirmButtonText: "تأیید",
+  cancelButtonText: "انصراف",
+  customClass: {
+    popup: "admin-swal",
+    title: "admin-swal-title",
+    htmlContainer: "admin-swal-content",
+    input: "admin-swal-input",
+    actions: "admin-swal-actions",
+    confirmButton: "admin-swal-confirm",
+    cancelButton: "admin-swal-cancel"
+  },
+  didOpen: (popup) => popup.setAttribute("dir", "rtl")
+});
+
+const askConfirm = async (title: string, message: string, acceptLabel = "تأیید") => {
+  const result = await adminSwal.fire({
+    title,
+    text: message,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: acceptLabel
   });
+  return result.isConfirmed;
+};
 
 const openUserPasswordReset = (userId: string, userName: string) => {
   const layer = document.querySelector<HTMLElement>("[data-admin-password-reset]");
@@ -262,7 +273,7 @@ const enhanceDropdowns = (root: ParentNode = document) => {
       document.querySelectorAll(".admin-dropdown.open").forEach((dropdown) => dropdown.classList.remove("open"));
     });
   }
-  root.querySelectorAll<HTMLSelectElement>("select:not([multiple]):not([data-dropdown-ready])").forEach((select) => {
+  root.querySelectorAll<HTMLSelectElement>("select:not([multiple]):not([data-dropdown-ready]):not([data-rich-format])").forEach((select) => {
     select.dataset.dropdownReady = "true";
     select.classList.add("admin-native-select");
     const dropdown = document.createElement("div");
@@ -496,6 +507,7 @@ const initChrome = async () => {
     document.querySelectorAll<HTMLDetailsElement>(".admin-nav-group").forEach((group) => {
       if (!group.querySelector("a")) group.remove();
     });
+    enhanceDropdowns(document);
     const segments = location.pathname.split("/").filter(Boolean);
     const requiredPermission = segments.length <= 1
       ? "dashboard"
@@ -503,6 +515,8 @@ const initChrome = async () => {
         ? null
         : segments[1] === "service-scripts"
           ? "site-settings"
+          : segments[1] === "content-templates"
+            ? "content-generator"
           : segments[1];
     if (requiredPermission && !allowed.has(requiredPermission)) {
       const first = access.permissions[0];
@@ -579,7 +593,7 @@ const displayValue = (value: unknown, field: ResourceField) => {
   return String(value);
 };
 
-const persianGridLocale: Record<string, string> = {
+export const persianGridLocale: Record<string, string> = {
   page: "صفحه",
   more: "بیشتر",
   to: "تا",
@@ -630,7 +644,8 @@ const gridIcons = {
   truck: '<svg viewBox="0 0 24 24"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
   cancel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></svg>',
   key: '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8m-3 3 3 3m-6 0 3 3"/></svg>',
-  role: '<svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>'
+  role: '<svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
+  external: '<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></svg>'
 };
 
 const fetchAllAdminRows = async (resource: string) => {
@@ -756,12 +771,13 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     actions.className = "admin-row-actions";
     if (!row?.id) return actions;
     const id = String(row.id);
-    const link = (href: string, label: string, icon: string) => {
+    const link = (href: string, label: string, icon: string, newTab = false) => {
       const anchor = document.createElement("a");
       anchor.href = href;
       anchor.title = label;
       anchor.setAttribute("aria-label", label);
       anchor.innerHTML = icon;
+      if (newTab) { anchor.target = "_blank"; anchor.rel = "noopener noreferrer"; }
       return anchor;
     };
     const button = (label: string, icon: string, onClick: () => void, showLabel = false) => {
@@ -778,6 +794,19 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       link(`/admin/${config.key}/view/?id=${id}`, "مشاهده", gridIcons.eye),
       link(`/admin/${config.key}/edit/?id=${id}`, "ویرایش", gridIcons.pencil)
     );
+    const publicUrl = (() => {
+      if (config.key === "products" && row.titleEn) return `/products/${encodeURIComponent(productSlug(String(row.titleEn)))}/`;
+      if (config.key === "tags" && row.slug) return `/tags/${encodeURIComponent(String(row.slug))}/`;
+      if (config.key === "categories" && row.slug) {
+        const slug = String(row.slug);
+        if (slug === "products") return "/products/";
+        if (slug === "wholesale") return "/wholesale/";
+        if (slug === "about-orenza") return "/about/";
+        return `/products/${encodeURIComponent(slug)}/`;
+      }
+      return null;
+    })();
+    if (publicUrl) actions.append(link(publicUrl, "مشاهده در سایت", gridIcons.external, true));
     const isPendingOrder = config.key === "orders" && row.orderStatus === "new" && row.paymentStatus === "pending";
     const isPreparingOrder = config.key === "orders" && row.orderStatus === "processing";
     const isReadyOrder = config.key === "orders" && row.orderStatus === "ready";
@@ -858,9 +887,9 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       headerName: "عملیات",
       field: "id",
       pinned: "left",
-      width: config.key === "orders" ? 250 : config.key === "users" ? 205 : 132,
-      minWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : 132,
-      maxWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : 132,
+      width: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags"].includes(config.key) ? 165 : 132,
+      minWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags"].includes(config.key) ? 165 : 132,
+      maxWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags"].includes(config.key) ? 165 : 132,
       filter: false,
       sortable: false,
       cellRenderer: actionRenderer
@@ -921,6 +950,31 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
   });
 };
 
+const parseNumericInput = (value: unknown) => {
+  const normalized = String(value ?? "")
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٬,\s]/g, "");
+  return normalized === "" ? null : Number(normalized);
+};
+
+const formatMoneyInput = (input: HTMLInputElement) => {
+  const numericValue = parseNumericInput(input.value);
+  input.value = numericValue == null || !Number.isFinite(numericValue)
+    ? ""
+    : new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(numericValue);
+};
+
+const initMoneyInputs = (form: HTMLFormElement) => {
+  form.querySelectorAll<HTMLInputElement>("input[data-money-input]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const cursorAtEnd = input.selectionStart === input.value.length;
+      formatMoneyInput(input);
+      if (cursorAtEnd) input.setSelectionRange(input.value.length, input.value.length);
+    });
+    input.addEventListener("blur", () => formatMoneyInput(input));
+  });
+};
+
 const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   if (key === "permissions") {
     const selected = new Set(Array.isArray(value) ? value.map(String) : []);
@@ -934,6 +988,13 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   if (input instanceof HTMLSelectElement && input.multiple) {
     const selected = new Set(Array.isArray(value) ? value.map(String) : []);
     [...input.options].forEach((option) => { option.selected = selected.has(option.value); });
+    const tagInput = form.querySelector<HTMLInputElement>(`input[data-tagify-field="${input.name}"]`) as (HTMLInputElement & { _tagify?: Tagify }) | null;
+    if (tagInput?._tagify) {
+      tagInput._tagify.removeAllTags();
+      tagInput._tagify.addTags([...input.options]
+        .filter((option) => selected.has(option.value))
+        .map((option) => ({ value: option.textContent || option.value, id: option.value })));
+    }
     input.dispatchEvent(new Event("change", { bubbles: true }));
     return;
   }
@@ -949,17 +1010,28 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
     input.add(new Option(statusLabels[normalizedValue] || normalizedValue, normalizedValue));
   }
   input.value = normalizedValue;
-  const richEditor = form.querySelector<HTMLElement>(`[data-rich-text-editor="${key}"]`);
-  if (richEditor) richEditor.innerHTML = sanitizeEditorHtml(normalizedValue);
+  if (input instanceof HTMLInputElement && input.dataset.moneyInput) formatMoneyInput(input);
+  const richEditor = form.querySelector<HTMLElement>(`[data-rich-text-editor="${key}"]`) as (HTMLElement & { _tiptap?: Editor }) | null;
+  if (richEditor?._tiptap) richEditor._tiptap.commands.setContent(sanitizeEditorHtml(normalizedValue), { emitUpdate: true });
+  else if (richEditor) richEditor.innerHTML = sanitizeEditorHtml(normalizedValue);
   input.dispatchEvent(new Event("change", { bubbles: true }));
 };
 
-const richTextTags = new Set(["P", "BR", "STRONG", "B", "EM", "I", "U", "H2", "H3", "UL", "OL", "LI", "A", "BLOCKQUOTE"]);
+const richTextTags = new Set([
+  "P", "BR", "STRONG", "B", "EM", "I", "U", "H2", "H3", "UL", "OL", "LI", "A", "BLOCKQUOTE",
+  "FIGURE", "FIGCAPTION", "IMG", "TABLE", "THEAD", "TBODY", "TR", "TH", "TD"
+]);
 
 const safeEditorHref = (value: string) => {
   const href = value.trim();
   if (/^https?:\/\//i.test(href) || /^(mailto:|tel:)/i.test(href)) return href;
   if ((href.startsWith("/") && !href.startsWith("//")) || href.startsWith("#")) return href;
+  return "";
+};
+const safeEditorImageSrc = (value: string) => {
+  const src = value.trim();
+  if (/^https:\/\//i.test(src)) return src;
+  if (/^\/api\/v1\/product-images\/[0-9a-f-]+\.(?:jpg|png|webp)$/i.test(src)) return src;
   return "";
 };
 
@@ -983,6 +1055,13 @@ const sanitizeEditorHtml = (value: string) => {
       return;
     }
     const href = node.tagName === "A" ? safeEditorHref(node.getAttribute("href") || "") : "";
+    const imageSrc = node.tagName === "IMG" ? safeEditorImageSrc(node.getAttribute("src") || "") : "";
+    const imageAlt = node.tagName === "IMG" ? (node.getAttribute("alt") || "").slice(0, 240) : "";
+    const imageWidth = node.tagName === "IMG" && /^\d{2,4}$/.test(node.getAttribute("width") || "") ? node.getAttribute("width") || "" : "";
+    const imageHeight = node.tagName === "IMG" && /^\d{2,4}$/.test(node.getAttribute("height") || "") ? node.getAttribute("height") || "" : "";
+    const textAlign = ["P", "H2", "H3", "BLOCKQUOTE", "TH", "TD"].includes(node.tagName) && ["right", "center", "left"].includes(node.style.textAlign)
+      ? node.style.textAlign
+      : "";
     [...node.attributes].forEach((attribute) => node.removeAttribute(attribute.name));
     if (node.tagName === "A") {
       if (!href) {
@@ -995,78 +1074,272 @@ const sanitizeEditorHtml = (value: string) => {
         node.setAttribute("rel", "noopener noreferrer");
       }
     }
+    if (node.tagName === "IMG") {
+      if (!imageSrc) { node.remove(); return; }
+      node.setAttribute("src", imageSrc);
+      node.setAttribute("alt", imageAlt);
+      node.setAttribute("loading", "lazy");
+      if (imageWidth) node.setAttribute("width", imageWidth);
+      if (imageHeight) node.setAttribute("height", imageHeight);
+    }
+    if (textAlign) node.style.textAlign = textAlign;
   });
   return template.innerHTML.trim();
 };
 
-const runEditorCommand = (command: string, value?: string) => {
-  // The native editing command remains the most consistent cross-browser option for contenteditable toolbars.
-  const execute = (document as unknown as Record<string, unknown>)["execCommand"] as
-    (commandId: string, showUi: boolean, commandValue?: string) => boolean;
-  return execute.call(document, command, false, value);
+const tabularTextToHtml = (value: string) => {
+  const lines = value.replace(/\r/g, "").split("\n");
+  while (lines.at(-1) === "") lines.pop();
+  if (!lines.length || !lines.some((line) => line.includes("\t"))) return "";
+  const table = document.createElement("table");
+  const body = document.createElement("tbody");
+  lines.slice(0, 200).forEach((line) => {
+    const row = document.createElement("tr");
+    line.split("\t").slice(0, 50).forEach((value) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    });
+    body.append(row);
+  });
+  table.append(body);
+  return table.outerHTML;
 };
 
-const initRichTextEditors = (form: HTMLFormElement) => {
+export const initRichTextEditors = (form: HTMLFormElement) => {
   form.querySelectorAll<HTMLElement>("[data-rich-text]").forEach((root) => {
-    const editor = root.querySelector<HTMLElement>("[data-rich-text-editor]");
+    const editorElement = root.querySelector<HTMLElement>("[data-rich-text-editor]") as (HTMLElement & { _tiptap?: Editor }) | null;
     const input = root.querySelector<HTMLTextAreaElement>("[data-rich-text-input]");
-    if (!editor || !input) return;
-    let savedRange: Range | null = null;
-    const rememberSelection = () => {
-      const selection = window.getSelection();
-      if (selection?.rangeCount && editor.contains(selection.anchorNode)) savedRange = selection.getRangeAt(0).cloneRange();
-    };
-    const restoreSelection = () => {
-      editor.focus();
-      if (!savedRange) return;
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(savedRange);
-    };
-    const sync = () => {
-      const clean = sanitizeEditorHtml(editor.innerHTML);
+    if (!editorElement || !input) return;
+    const editable = editorElement.getAttribute("contenteditable") !== "false";
+    editorElement.removeAttribute("contenteditable");
+    const sync = (instance: Editor) => {
+      const clean = sanitizeEditorHtml(instance.getHTML());
       input.value = clean;
       input.dispatchEvent(new Event("change", { bubbles: true }));
     };
-    editor.addEventListener("input", sync);
-    editor.addEventListener("keyup", rememberSelection);
-    editor.addEventListener("mouseup", rememberSelection);
-    editor.addEventListener("blur", () => {
-      const clean = sanitizeEditorHtml(editor.innerHTML);
-      if (editor.innerHTML !== clean) editor.innerHTML = clean;
-      sync();
-    });
-    root.querySelectorAll<HTMLButtonElement>("[data-rich-command]").forEach((button) => {
-      button.addEventListener("mousedown", (event) => event.preventDefault());
-      button.addEventListener("click", () => {
-        restoreSelection();
-        const command = button.dataset.richCommand || "";
-        if (command === "createLink") {
-          if (window.getSelection()?.isCollapsed) {
-            toast("ابتدا کلمه یا عبارت موردنظر برای لینک را انتخاب کنید.", "error");
-            return;
+    const tiptap = new Editor({
+      element: editorElement,
+      editable,
+      extensions: [
+        StarterKit.configure({ heading: { levels: [2, 3] }, link: { openOnClick: false, autolink: true, linkOnPaste: true } }),
+        Image.configure({ inline: true, allowBase64: false, resize: false }),
+        TextAlign.configure({ types: ["heading", "paragraph", "blockquote"], alignments: ["right", "center", "left"] }),
+        TableKit.configure({ table: { resizable: true, lastColumnResizable: true } })
+      ],
+      content: sanitizeEditorHtml(input.value || editorElement.innerHTML),
+      editorProps: {
+        attributes: { class: "tiptap ProseMirror", dir: "rtl" },
+        handleClickOn: (view, _pos, node, nodePos, event) => {
+          if (node.type.name !== "image") return false;
+          event.preventDefault();
+          event.stopPropagation();
+          view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos)));
+          view.focus();
+          return true;
+        },
+        handlePaste: (_view, event) => {
+          const clipboard = event.clipboardData;
+          if (!clipboard) return false;
+          const clipboardHtml = clipboard.getData("text/html");
+          if (/<table\b/i.test(clipboardHtml)) {
+            const template = document.createElement("template");
+            template.innerHTML = clipboardHtml;
+            const tables = [...template.content.querySelectorAll("table")].map((table) => table.outerHTML).join("<p></p>");
+            const cleanTables = sanitizeEditorHtml(tables);
+            if (cleanTables) {
+              tiptap.commands.insertContent(cleanTables);
+              toast("جدول از حافظه موقت درج شد.");
+              return true;
+            }
           }
-          const entered = window.prompt("نشانی لینک را وارد کنید؛ مانند https://example.com یا /products/");
-          if (!entered) return;
+          const tableHtml = tabularTextToHtml(clipboard.getData("text/plain"));
+          if (!tableHtml) return false;
+          tiptap.commands.insertContent(tableHtml);
+          toast("اطلاعات کپی‌شده به جدول تبدیل شد.");
+          return true;
+        }
+      },
+      onUpdate: ({ editor }) => sync(editor),
+      onCreate: ({ editor }) => sync(editor),
+      onSelectionUpdate: ({ editor }) => updateToolbar(editor)
+    });
+    editorElement._tiptap = tiptap;
+
+    function updateToolbar(instance: Editor) {
+      root.querySelectorAll<HTMLButtonElement>("[data-rich-command]").forEach((button) => {
+        const command = button.dataset.richCommand; const value = button.dataset.richValue;
+        const active = command === "bold" ? instance.isActive("bold")
+          : command === "italic" ? instance.isActive("italic")
+            : command === "underline" ? instance.isActive("underline")
+              : command === "formatBlock" && value ? instance.isActive(value)
+                : command === "createLink" ? instance.isActive("link")
+                  : command === "insertUnorderedList" ? instance.isActive("bulletList")
+                    : command === "insertOrderedList" ? instance.isActive("orderedList")
+                  : command?.startsWith("justify") ? instance.isActive({ textAlign: command.replace("justify", "").toLowerCase() })
+                    : false;
+        button.classList.toggle("is-active", active);
+      });
+      const format = root.querySelector<HTMLSelectElement>("[data-rich-format]");
+      if (format) {
+        format.value = instance.isActive("heading", { level: 2 }) ? "h2"
+          : instance.isActive("heading", { level: 3 }) ? "h3"
+            : instance.isActive("blockquote") ? "blockquote" : "p";
+      }
+      root.querySelectorAll<HTMLButtonElement>("[data-rich-table-command]").forEach((button) => {
+        button.disabled = !editable || !instance.isActive("table");
+      });
+    }
+
+    root.querySelectorAll<HTMLButtonElement>("[data-rich-command]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const command = button.dataset.richCommand || "";
+        const chain = tiptap.chain().focus();
+        if (command === "createLink") {
+          const result = await adminSwal.fire({
+            title: "افزودن لینک",
+            text: "نشانی صفحه داخلی یا لینک کامل را وارد کنید.",
+            input: "text",
+            inputValue: tiptap.getAttributes("link").href || "",
+            inputPlaceholder: "https://example.com یا /products/",
+            showCancelButton: true,
+            confirmButtonText: "ثبت لینک",
+            inputValidator: (value) => {
+              const entered = value.trim();
+              if (!entered) return "نشانی لینک را وارد کنید.";
+              const candidate = /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(entered) ? entered : `https://${entered}`;
+              return safeEditorHref(candidate) ? undefined : "نشانی لینک معتبر نیست.";
+            }
+          });
+          if (!result.isConfirmed || !result.value) return;
+          const entered = String(result.value);
           const candidate = /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(entered.trim())
             ? entered.trim()
             : `https://${entered.trim()}`;
           const href = safeEditorHref(candidate);
-          if (!href) {
-            toast("نشانی لینک معتبر نیست.", "error");
-            return;
-          }
-          runEditorCommand("createLink", href);
-        } else if (command === "formatBlock") {
-          runEditorCommand(command, button.dataset.richValue || "p");
-        } else {
-          runEditorCommand(command);
-        }
-        rememberSelection();
-        sync();
+          if (!href) { toast("نشانی لینک معتبر نیست.", "error"); return; }
+          chain.extendMarkRange("link").setLink({ href }).run();
+        } else if (command === "unlink") chain.unsetLink().run();
+        else if (command === "formatBlock" && button.dataset.richValue === "p") chain.setParagraph().run();
+        else if (command === "formatBlock" && button.dataset.richValue === "h2") chain.toggleHeading({ level: 2 }).run();
+        else if (command === "formatBlock" && button.dataset.richValue === "h3") chain.toggleHeading({ level: 3 }).run();
+        else if (command === "formatBlock" && button.dataset.richValue === "blockquote") chain.toggleBlockquote().run();
+        else if (command === "bold") chain.toggleBold().run();
+        else if (command === "italic") chain.toggleItalic().run();
+        else if (command === "underline") chain.toggleUnderline().run();
+        else if (command === "insertUnorderedList") chain.toggleBulletList().run();
+        else if (command === "insertOrderedList") chain.toggleOrderedList().run();
+        else if (command === "justifyRight") chain.setTextAlign("right").run();
+        else if (command === "justifyCenter") chain.setTextAlign("center").run();
+        else if (command === "justifyLeft") chain.setTextAlign("left").run();
+        else if (command === "undo") chain.undo().run();
+        else if (command === "redo") chain.redo().run();
+        else if (command === "removeFormat") chain.unsetAllMarks().clearNodes().run();
+        updateToolbar(tiptap);
       });
     });
-    sync();
+    root.querySelector<HTMLSelectElement>("[data-rich-format]")?.addEventListener("change", (event) => {
+      const value = (event.currentTarget as HTMLSelectElement).value;
+      const chain = tiptap.chain().focus();
+      if (value === "h2") chain.setHeading({ level: 2 }).run();
+      else if (value === "h3") chain.setHeading({ level: 3 }).run();
+      else if (value === "blockquote") chain.setBlockquote().run();
+      else chain.setParagraph().run();
+      updateToolbar(tiptap);
+    });
+    const imageButton = root.querySelector<HTMLButtonElement>("[data-rich-insert-image]");
+    const imageInput = root.querySelector<HTMLInputElement>("[data-rich-image-input]");
+    imageButton?.addEventListener("click", () => imageInput?.click());
+    imageInput?.addEventListener("change", async () => {
+      const file = imageInput.files?.[0]; if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast("حجم تصویر نباید بیشتر از ۵ مگابایت باشد.", "error"); imageInput.value = ""; return; }
+      imageButton!.disabled = true;
+      try {
+        const body = new FormData(); body.append("image", file);
+        const response = await fetch("/api/v1/admin/content-images", { method: "POST", credentials: "include", body });
+        const payload = await response.json() as { url?: string; error?: string };
+        if (!response.ok || !payload.url) throw new Error(payload.error || "بارگذاری تصویر انجام نشد.");
+        const suggestedAlt = file.name.replace(/\.[^.]+$/, "");
+        const imageDialog = await adminSwal.fire<{ alt: string; href: string }>({
+          title: "درج تصویر در محتوا",
+          html: `<p class="admin-swal-help">توضیح تصویر را وارد کنید و در صورت نیاز، لینک مقصد را هم مشخص کنید.</p>
+          <div class="admin-swal-fields is-stacked">
+            <label><span>متن جایگزین تصویر (Alt)</span><input class="swal2-input" data-image-alt type="text" placeholder="مثلاً بسته‌بندی قهوه روبوستا"></label>
+            <label><span>لینک تصویر <small>اختیاری</small></span><input class="swal2-input" data-image-link type="text" placeholder="https://example.com یا /products/"></label>
+          </div>`,
+          showCancelButton: true,
+          confirmButtonText: "درج تصویر",
+          focusConfirm: false,
+          didOpen: (popup) => {
+            popup.setAttribute("dir", "rtl");
+            const altInput = popup.querySelector<HTMLInputElement>("[data-image-alt]");
+            if (altInput) { altInput.value = suggestedAlt; altInput.focus(); altInput.select(); }
+          },
+          preConfirm: () => {
+            const popup = Swal.getPopup();
+            const alt = popup?.querySelector<HTMLInputElement>("[data-image-alt]")?.value.trim() || "";
+            const enteredLink = popup?.querySelector<HTMLInputElement>("[data-image-link]")?.value.trim() || "";
+            if (!enteredLink) return { alt, href: "" };
+            const candidate = /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(enteredLink) ? enteredLink : `https://${enteredLink}`;
+            const href = safeEditorHref(candidate);
+            if (!href) {
+              Swal.showValidationMessage("لینک تصویر معتبر نیست.");
+              return false;
+            }
+            return { alt, href };
+          }
+        });
+        if (!imageDialog.isConfirmed || !imageDialog.value) return;
+        const alt = imageDialog.value.alt.replace(/[<>&\"]/g, "").slice(0, 240);
+        const imageContent = {
+          type: "image",
+          attrs: { src: payload.url, alt },
+          marks: imageDialog.value.href ? [{ type: "link", attrs: { href: imageDialog.value.href } }] : []
+        };
+        tiptap.chain().focus().insertContent(imageContent).run();
+      } catch (error) { toast(error instanceof Error ? error.message : "بارگذاری تصویر انجام نشد.", "error"); }
+      finally { imageButton!.disabled = false; imageInput.value = ""; }
+    });
+    root.querySelector<HTMLButtonElement>("[data-rich-insert-table]")?.addEventListener("click", async () => {
+      const result = await adminSwal.fire<{ rows: number; columns: number }>({
+        title: "درج جدول",
+        html: `<p class="admin-swal-help">اندازه اولیه جدول را مشخص کنید؛ بعداً می‌توانید ردیف و ستون اضافه یا حذف کنید.</p>
+        <div class="admin-swal-fields">
+          <label><span>تعداد ردیف‌ها</span><input class="swal2-input" data-table-rows type="number" min="1" max="20" value="3"></label>
+          <label><span>تعداد ستون‌ها</span><input class="swal2-input" data-table-columns type="number" min="1" max="10" value="3"></label>
+        </div>`,
+        showCancelButton: true,
+        confirmButtonText: "ساخت جدول",
+        focusConfirm: false,
+        preConfirm: () => {
+          const popup = Swal.getPopup();
+          const rows = Number(popup?.querySelector<HTMLInputElement>("[data-table-rows]")?.value);
+          const columns = Number(popup?.querySelector<HTMLInputElement>("[data-table-columns]")?.value);
+          if (!Number.isInteger(rows) || rows < 1 || rows > 20 || !Number.isInteger(columns) || columns < 1 || columns > 10) {
+            Swal.showValidationMessage("ردیف باید بین ۱ تا ۲۰ و ستون بین ۱ تا ۱۰ باشد.");
+            return false;
+          }
+          return { rows, columns };
+        }
+      });
+      if (!result.isConfirmed || !result.value) return;
+      const { rows, columns } = result.value;
+      tiptap.chain().focus().insertTable({ rows, cols: columns, withHeaderRow: true }).run();
+      root.querySelector<HTMLDetailsElement>(".admin-editor-table-menu")?.removeAttribute("open");
+    });
+    root.querySelectorAll<HTMLButtonElement>("[data-rich-table-command]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const chain = tiptap.chain().focus();
+        const command = button.dataset.richTableCommand;
+        if (command === "addRowAfter") chain.addRowAfter().run();
+        else if (command === "addColumnAfter") chain.addColumnAfter().run();
+        else if (command === "deleteRow") chain.deleteRow().run();
+        else if (command === "deleteColumn") chain.deleteColumn().run();
+        else if (command === "deleteTable") chain.deleteTable().run();
+        button.closest("details")?.removeAttribute("open");
+      });
+    });
+    updateToolbar(tiptap);
   });
 };
 
@@ -1089,6 +1362,23 @@ const loadLookups = async (form: HTMLFormElement) => {
 
 const initMultiSelects = (form: HTMLFormElement) => {
   form.querySelectorAll<HTMLSelectElement>("select[multiple]").forEach((select) => {
+    const tagInput = form.querySelector<HTMLInputElement>(`input[data-tagify-field="${select.name}"]`);
+    if (tagInput) {
+      const whitelist = [...select.options].map((option) => ({ value: option.textContent || option.value, id: option.value }));
+      const tagify = new Tagify(tagInput, {
+        whitelist,
+        enforceWhitelist: true,
+        skipInvalid: true,
+        editTags: false,
+        dropdown: { enabled: 0, closeOnSelect: false, maxItems: 12 }
+      });
+      tagify.on("change", () => {
+        const selected = new Set(tagify.value.map((item) => String((item as { id?: string }).id || item.value)));
+        [...select.options].forEach((option) => { option.selected = selected.has(option.value); });
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      (tagInput as HTMLInputElement & { _tagify?: Tagify })._tagify = tagify;
+    }
     select.addEventListener("mousedown", (event) => {
       const option = (event.target as HTMLElement).closest("option") as HTMLOptionElement | null;
       if (!option || select.disabled) return;
@@ -1276,6 +1566,7 @@ const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "c
 
 const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: string) => {
   initRichTextEditors(form);
+  initMoneyInputs(form);
   await loadLookups(form);
   initMultiSelects(form);
   enhanceDropdowns(form);
@@ -1283,26 +1574,39 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   const refreshCatalogImage = config.key === "products" || config.key === "categories"
     ? initCatalogImageUpload(form, config.key)
     : undefined;
-  const updateProductProfit = () => {
+  const updateProductProfit = (source: "purchase" | "sale" | "markup" | "refresh" = "refresh") => {
     if (config.key !== "products") return;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
     const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLSelectElement | null;
     const purchase = form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null;
+    const markup = form.elements.namedItem("markupPercent") as HTMLInputElement | null;
     const sale = form.elements.namedItem("salePricePerKg") as HTMLInputElement | null;
     const profit = form.elements.namedItem("profitPerKg") as HTMLInputElement | null;
-    const purchaseValue = Number(purchase?.value || 0);
-    const saleValue = Number(sale?.value || 0);
+    const purchaseValue = parseNumericInput(purchase?.value) || 0;
+    const saleValue = parseNumericInput(sale?.value) || 0;
+    let markupValue = parseNumericInput(markup?.value) || 0;
+    if (source === "purchase" || source === "markup") {
+      const nextSale = Math.round(purchaseValue * (1 + markupValue / 100));
+      if (sale) sale.value = nextSale ? String(nextSale) : "";
+    } else if (source === "sale" && purchaseValue > 0) {
+      markupValue = ((saleValue - purchaseValue) / purchaseValue) * 100;
+      if (markup) markup.value = Number.isFinite(markupValue) ? markupValue.toFixed(2) : "";
+    } else if (source === "refresh" && markup && purchaseValue > 0 && saleValue > 0) {
+      markupValue = ((saleValue - purchaseValue) / purchaseValue) * 100;
+      markup.value = Number.isFinite(markupValue) ? markupValue.toFixed(2) : "";
+    }
+    const currentSaleValue = parseNumericInput(sale?.value) || 0;
     const isPackaged = saleType?.value === "packaged";
     const packageField = form.querySelector<HTMLElement>('[data-admin-field="packageWeightGrams"]');
     if (packageField) packageField.hidden = !isPackaged;
-    if (profit) profit.value = String(saleValue - purchaseValue);
+    if (profit) profit.value = String(currentSaleValue - purchaseValue);
     const breakdown = form.querySelector<HTMLElement>("[data-price-breakdown] > div");
     if (breakdown) {
       const weights = isPackaged ? [Number(packageWeight?.value || 250)] : [250, 500, 1000];
       breakdown.innerHTML = weights.map((grams) => {
         const ratio = grams / 1000;
         const purchaseAmount = isPackaged ? purchaseValue : Math.round(purchaseValue * ratio);
-        const saleAmount = isPackaged ? saleValue : Math.round(saleValue * ratio);
+        const saleAmount = isPackaged ? currentSaleValue : Math.round(currentSaleValue * ratio);
         return `<article>
           <strong>${isPackaged ? "بسته " : ""}${faNumber.format(grams)} گرم</strong>
           <span>خرید <b>${money.format(purchaseAmount)}</b></span>
@@ -1330,10 +1634,11 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
         stockStatus.dispatchEvent(new Event("change", { bubbles: true }));
       }
     }
-    saleType?.addEventListener("change", updateProductProfit);
-    packageWeight?.addEventListener("change", updateProductProfit);
-    (form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null)?.addEventListener("input", updateProductProfit);
-    (form.elements.namedItem("salePricePerKg") as HTMLInputElement | null)?.addEventListener("input", updateProductProfit);
+    saleType?.addEventListener("change", () => updateProductProfit("refresh"));
+    packageWeight?.addEventListener("change", () => updateProductProfit("refresh"));
+    (form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("purchase"));
+    (form.elements.namedItem("markupPercent") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("markup"));
+    (form.elements.namedItem("salePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("sale"));
     updateProductProfit();
   }
   const id = new URLSearchParams(location.search).get("id");
@@ -1388,7 +1693,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       const raw = data.get(field.key);
       if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "multiselect") body[field.key] = data.getAll(field.key).map(String);
-      else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : Number(raw);
+      else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : parseNumericInput(raw);
       else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts"].includes(field.key)) body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;
@@ -1445,7 +1750,7 @@ const initPaymentReview = (
 
   const decide = async (decision: "approve" | "reject") => {
     const label = decision === "approve" ? "تأیید" : "رد";
-    if (!window.confirm(`آیا از ${label} پرداخت با کد پیگیری ${reference} مطمئن هستید؟`)) return;
+    if (!await askConfirm(`${label} پرداخت`, `آیا از ${label} پرداخت با کد پیگیری ${reference} مطمئن هستید؟`, label)) return;
     const approve = root.querySelector<HTMLButtonElement>("[data-payment-approve]");
     const reject = root.querySelector<HTMLButtonElement>("[data-payment-reject]");
     if (approve) approve.disabled = true;
@@ -1556,7 +1861,7 @@ const initDashboard = async () => {
     }>("/api/v1/admin/dashboard");
     Object.entries(stats).forEach(([key, value]) => {
       const element = document.querySelector<HTMLElement>(`[data-stat="${key}"]`);
-      if (element) element.textContent = faNumber.format(value);
+      if (element) element.textContent = element.hasAttribute("data-money-stat") ? money.format(value) : faNumber.format(value);
     });
     const statusKeys = ["new", "processing", "ready", "sent", "completed", "canceled"];
     const colors: Record<string, string> = {
@@ -1709,6 +2014,14 @@ type SiteSettingsPayload = {
   searchIndexingEnabled: boolean;
   invoiceNationalId: string;
   invoiceSignatureUrl: string | null;
+  contentAiModel: string;
+  contentAiApiKey: string;
+  contentAiKeyConfigured: boolean;
+  contentAiInstructions: string;
+  contentAiDefaultAudience: string;
+  contentAiDefaultTone: string;
+  contentAiDefaultLength: "short" | "medium" | "long";
+  contentAiDefaultLanguage: "fa" | "en";
 };
 
 const initSiteSettings = async () => {
@@ -1759,6 +2072,8 @@ const initSiteSettings = async () => {
     showSignature(item.invoiceSignatureUrl);
     showBanner("desktop", item.homepageBannerDesktopUrl);
     showBanner("mobile", item.homepageBannerMobileUrl);
+    const aiKeyState = form.querySelector<HTMLElement>("[data-ai-key-state]");
+    if (aiKeyState) aiKeyState.textContent = item.contentAiKeyConfigured ? "کلید فعلی ثبت شده است؛ برای تغییر، کلید جدید وارد کنید." : "هنوز کلیدی ثبت نشده است.";
     if (state) state.textContent = "تنظیمات آماده و قابل ویرایش است.";
   } catch (error) {
     if (state) state.textContent = "دریافت تنظیمات انجام نشد.";
@@ -1820,7 +2135,7 @@ const initSiteSettings = async () => {
       }
     });
     bannerRemove?.addEventListener("click", async () => {
-      if (!window.confirm(`بنر ${kind === "desktop" ? "دسکتاپ" : "موبایل"} حذف شود؟`)) return;
+      if (!await askConfirm("حذف بنر", `بنر ${kind === "desktop" ? "دسکتاپ" : "موبایل"} حذف شود؟`, "حذف بنر")) return;
       bannerRemove.disabled = true;
       try {
         await api(`/api/v1/admin/site-settings/homepage-banner/${kind}`, { method: "DELETE" });
@@ -1834,7 +2149,7 @@ const initSiteSettings = async () => {
     });
   });
   signatureRemove?.addEventListener("click", async () => {
-    if (!window.confirm("تصویر امضای فروشنده از فاکتورها حذف شود؟")) return;
+    if (!await askConfirm("حذف امضا", "تصویر امضای فروشنده از فاکتورها حذف شود؟", "حذف امضا")) return;
     signatureRemove.disabled = true;
     try {
       await api("/api/v1/admin/site-settings/invoice-signature", { method: "DELETE" });
@@ -1884,7 +2199,14 @@ const initSiteSettings = async () => {
           homepageBannerDesktopUrl: bannerUrls.desktop,
           homepageBannerMobileUrl: bannerUrls.mobile,
           searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked,
-          invoiceNationalId: input("invoiceNationalId").value
+          invoiceNationalId: input("invoiceNationalId").value,
+          contentAiApiKey: input("contentAiApiKey").value,
+          contentAiModel: input("contentAiModel").value,
+          contentAiInstructions: input("contentAiInstructions").value,
+          contentAiDefaultAudience: input("contentAiDefaultAudience").value,
+          contentAiDefaultTone: input("contentAiDefaultTone").value,
+          contentAiDefaultLength: input("contentAiDefaultLength").value,
+          contentAiDefaultLanguage: input("contentAiDefaultLanguage").value
         })
       });
       if (state) state.textContent = "آخرین تغییرات ذخیره شد.";

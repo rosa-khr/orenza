@@ -1,0 +1,23 @@
+---
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="گزارش لاگ‌ها" description="پیگیری درخواست‌ها، خطاها و رویدادهای سامانه" active="logs" actionLabel="گزارش لاگ‌ها">
+  <section class="admin-card">
+    <div class="admin-grid-heading">
+      <div><strong>گزارش لاگ‌ها</strong><span>فیلتر و مرتب‌سازی از عنوان هر ستون در دسترس است.</span></div>
+      <span data-log-total>در حال دریافت اطلاعات…</span>
+    </div>
+    <div class="admin-grid-wrap admin-log-grid-wrap ag-theme-material"><div class="admin-data-grid" data-log-grid aria-label="جدول گزارش لاگ‌ها"></div></div>
+  </section>
+  <dialog class="admin-log-dialog" data-log-dialog>
+    <form method="dialog"><button type="submit" aria-label="بستن">×</button></form>
+    <span>FULL SERVER LOG</span><h2>جزئیات کامل لاگ</h2>
+    <pre data-log-detail>در حال دریافت...</pre>
+    <button type="button" data-log-download>دانلود لاگ</button>
+  </dialog>
+</AdminShell>
+
+<script>
+  import "../../scripts/admin-logs.ts";
+</script>

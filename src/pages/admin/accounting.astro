@@ -1,0 +1,37 @@
+---
+import { Calculator, TrendingUp, WalletCards } from "@lucide/astro";
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="حسابداری" description="محاسبه سریع قیمت فروش و سود محصولات بر اساس قیمت خرید" active="accounting" actionLabel="حسابداری">
+  <section class="admin-accounting-layout">
+    <article class="admin-card admin-accounting-calculator">
+      <header>
+        <div class="admin-accounting-icon"><Calculator size={21} stroke-width={1.45} /></div>
+        <div><span>PRICE CALCULATOR</span><h2>محاسبه قیمت و سود</h2><p>قیمت خرید و درصد افزایش را وارد کن؛ قیمت فروش و سود خودکار محاسبه می‌شود.</p></div>
+      </header>
+      <form data-accounting-form novalidate>
+        <label><span>قیمت خرید (تومان)</span><input name="purchase" type="text" inputmode="numeric" placeholder="مثلاً ۴۵۰٬۰۰۰" /></label>
+        <label><span>درصد افزایش</span><div class="admin-input-suffix"><input name="markup" type="number" min="0" step="0.01" placeholder="مثلاً ۳۰" /><b>٪</b></div></label>
+        <div class="admin-accounting-result" aria-live="polite">
+          <div><small>قیمت فروش</small><strong data-accounting-sale>—</strong><span>تومان</span></div>
+          <div><small>سود شما</small><strong data-accounting-profit>—</strong><span>تومان</span></div>
+        </div>
+        <small class="admin-accounting-status">فرمول: قیمت فروش = قیمت خرید × (۱ + درصد افزایش)</small>
+      </form>
+    </article>
+    <aside class="admin-accounting-side">
+      <article class="admin-card"><WalletCards size={20} stroke-width={1.45} /><strong>قیمت خرید</strong><p>قیمت تمام‌شده هر کیلو یا بسته را ثبت و مدیریت کن.</p></article>
+      <article class="admin-card"><TrendingUp size={20} stroke-width={1.45} /><strong>سود شفاف</strong><p>قبل از ذخیره محصول، مبلغ سود هر وزن را ببین.</p></article>
+    </aside>
+  </section>
+  <section class="admin-card admin-accounting-guide">
+    <span>ACCOUNTING WORKFLOW</span><h2>مدیریت قیمت محصولات</h2>
+    <p>برای ثبت دائمی قیمت خرید و فروش، از فهرست محصولات وارد ویرایش هر محصول شو. درصد افزایش همان‌جا قیمت فروش و سود را برایت محاسبه می‌کند.</p>
+    <a class="admin-primary-action" href="/admin/products/list/">مشاهده محصولات</a>
+  </section>
+</AdminShell>
+
+<script>
+  import "../../scripts/admin-accounting.ts";
+</script>

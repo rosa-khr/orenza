@@ -1,0 +1,23 @@
+---
+import { Plus } from "@lucide/astro";
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="قالب‌های محتوا" description="قالب‌های تولید محتوا را ایجاد و ویرایش کنید." active="content-templates" actionLabel="قالب‌های محتوا">
+  <div class="admin-content-generator" data-template-list>
+    <section class="admin-card admin-content-template-card">
+      <header>
+        <div><span>CONTENT TEMPLATES</span><h2>مدیریت قالب‌ها</h2><p>در این بخش فقط قالب‌ها را مدیریت کنید؛ تولید محتوا از منوی دستیار محتوا انجام می‌شود.</p></div>
+        <a class="admin-primary-action" href="/admin/content-generator/edit/"><Plus size={16} /> قالب جدید</a>
+      </header>
+      <div class="admin-grid-wrap admin-content-template-grid-wrap ag-theme-material">
+        <div class="admin-data-grid" data-content-template-grid data-template-mode="management" aria-label="جدول قالب‌های محتوا"></div>
+      </div>
+      <p class="admin-content-template-hint" data-template-grid-status>در حال دریافت قالب‌ها…</p>
+    </section>
+  </div>
+</AdminShell>
+
+<script>
+  import "../../scripts/admin-content-generator.ts";
+</script>

@@ -91,6 +91,11 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       setText("[data-product-detail-blend]", item.blendType);
       setText("[data-product-detail-roast]", roastLabels[item.roastType] || "—");
       setText("[data-product-detail-stock]", item.stockStatus === "inStock" ? "موجود و قابل سفارش" : "ناموجود");
+      const isPowderedDrink = item.categorySlug === "cafe-drinks";
+      const roastSpec = root.querySelector<HTMLElement>("[data-product-detail-roast-spec]");
+      const preparation = root.querySelector<HTMLElement>("[data-product-detail-preparation]");
+      if (roastSpec) roastSpec.hidden = isPowderedDrink;
+      if (preparation && isPowderedDrink) preparation.lastChild!.textContent = " آماده‌سازی سریع و بسته‌بندی‌شده";
 
       const image = root.querySelector<HTMLImageElement>("[data-product-detail-image]");
       const imagePlaceholder = root.querySelector<HTMLElement>("[data-product-detail-image-placeholder]");

@@ -24,7 +24,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <p data-product-detail-description>لطفاً چند لحظه صبر کنید.</p>
         <div class="product-detail-specs">
           <div><span>ترکیب</span><strong data-product-detail-blend>—</strong></div>
-          <div><span>پروفایل رُست</span><strong data-product-detail-roast>—</strong></div>
+          <div data-product-detail-roast-spec><span>پروفایل رُست</span><strong data-product-detail-roast>—</strong></div>
           <div><span>وضعیت</span><strong data-product-detail-stock>—</strong></div>
         </div>
         <div class="product-detail-purchase" data-product-detail-purchase hidden>
@@ -37,7 +37,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           <button class="product-detail-action" type="button" data-product-detail-action>
             <ShoppingBag size={18} stroke-width={1.5} /><span>انتخاب و سفارش</span>
           </button>
-          <small><Check size={14} /> تازه‌رست و آماده‌سازی پس از ثبت سفارش</small>
+          <small data-product-detail-preparation><Check size={14} /> تازه‌رست و آماده‌سازی پس از ثبت سفارش</small>
         </div>
         <p class="product-detail-error" data-product-detail-error hidden></p>
       </div>

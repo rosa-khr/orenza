@@ -1,0 +1,57 @@
+---
+import AdminShell from "../../components/admin/AdminShell.astro";
+---
+
+<AdminShell title="به‌روزرسانی قیمت‌ها" description="ثبت قیمت خرید و محاسبه خودکار قیمت فروش و سود محصولات با فایل Excel" active="price-imports" actionLabel="قیمت‌ها">
+  <section class="admin-card admin-price-import-card">
+    <header><span>ACCOUNTING PRICE JOB</span><h2>بارگذاری فایل قیمت‌ها</h2><p>قیمت خرید و نوع افزایش را وارد کن؛ قیمت فروش و سود هر محصول خودکار ثبت می‌شود.</p></header>
+    <div class="admin-price-import-help">
+      <strong>راهنمای تکمیل فایل</strong>
+      <ol>
+        <li>شناسه و نام محصول از قبل در فایل قرار دارد؛ این دو ستون را تغییر نده.</li>
+        <li>قیمت خرید را به تومان در ستون <code>purchase_price_per_kg_toman</code> وارد یا اصلاح کن.</li>
+        <li>در ستون <code>increase_type</code> یکی از این دو مقدار را بنویس: <code>percent</code> برای درصد یا <code>fixed</code> برای مبلغ ثابت.</li>
+        <li>مقدار افزایش را در ستون <code>increase_value</code> وارد کن. اگر این دو ستون خالی باشند، فقط قیمت خرید به‌روزرسانی می‌شود و قیمت فروش قبلی حفظ می‌شود.</li>
+      </ol>
+      <a class="admin-secondary-action" href="/api/v1/admin/price-imports/sample" download>دانلود فایل نمونه Excel</a>
+    </div>
+    <form class="admin-price-import-form" data-price-import-form novalidate>
+      <input id="price-import-file" type="file" accept=".xlsx,.xls,.csv" data-price-import-file hidden />
+      <label class="admin-file-picker" for="price-import-file" data-price-dropzone>
+        <span>انتخاب فایل Excel یا CSV <em>یا فایل را اینجا رها کنید</em></span>
+        <small data-price-import-file-name>فایلی انتخاب نشده</small>
+      </label>
+      <button type="button" class="admin-quiet-action" data-price-import-clear hidden>حذف فایل</button>
+      <button type="submit" data-price-import-submit disabled>محاسبه و به‌روزرسانی قیمت‌ها</button>
+      <small class="admin-price-import-status" data-price-import-status aria-live="polite"></small>
+    </form>
+  </section>
+
+  <section class="admin-card admin-price-history-card">
+    <div class="admin-grid-heading">
+      <div><strong>تاریخچه اجراها</strong><span>فیلتر و مرتب‌سازی از عنوان هر ستون در دسترس است.</span></div>
+      <span data-price-history-total>در حال دریافت اطلاعات…</span>
+    </div>
+    <div class="admin-grid-wrap admin-price-grid-wrap ag-theme-material"><div class="admin-data-grid" data-price-history-grid aria-label="جدول تاریخچه به‌روزرسانی قیمت‌ها"></div></div>
+  </section>
+
+  <dialog class="admin-price-detail-dialog" data-price-detail-dialog>
+    <button type="button" class="admin-dialog-close" data-price-detail-close aria-label="بستن">×</button>
+    <header>
+      <span>PRICE IMPORT DETAILS</span>
+      <h2>جزئیات اجرای قیمت‌ها</h2>
+      <p data-price-detail-summary>در حال دریافت اطلاعات…</p>
+    </header>
+    <div class="admin-table-wrap">
+      <table>
+        <thead><tr><th>ردیف</th><th>محصول</th><th>خرید قبلی</th><th>خرید جدید</th><th>فروش قبلی</th><th>فروش جدید</th><th>نوع افزایش</th><th>مقدار</th><th>نتیجه</th></tr></thead>
+        <tbody data-price-detail-rows></tbody>
+      </table>
+    </div>
+    <footer><a class="admin-primary-action" data-price-detail-download download>دانلود فایل بارگذاری‌شده</a></footer>
+  </dialog>
+</AdminShell>
+
+<script>
+  import "../../scripts/admin-price-imports.ts";
+</script>
