@@ -40,11 +40,14 @@ body,
 .site-header .brand-mark,
 .site-header .cart-trigger,
 .mobile-nav-toggle {
-  border-color: rgba(154, 107, 50, 0.28);
-  color: #d3a43c;
+  border-color: rgba(45, 86, 68, 0.18);
+  color: #2d5644;
 }
 
-.site-header .brand-mark { border-color: rgba(211, 164, 60, .78); }
+.site-header .brand-mark {
+  border-color: rgba(211, 164, 60, .78);
+  color: #d3a43c;
+}
 
 .site-header .brand-mark,
 .mobile-nav-panel .brand-mark {
@@ -54,8 +57,8 @@ body,
 .site-header .header-actions > a:hover,
 .site-header .header-actions > button:hover,
 .cart-trigger:hover {
-  background: rgba(154, 107, 50, 0.07);
-  color: #805728;
+  background: rgba(45, 86, 68, 0.08);
+  color: #254b3b;
 }
 
 .cart-trigger [data-cart-count] {
@@ -71,6 +74,30 @@ body,
   box-shadow: 0 24px 55px rgba(42, 35, 28, 0.14);
 }
 
+.mobile-nav-panel > footer {
+  background: transparent;
+  color: var(--text-dark);
+}
+
+.mobile-nav-panel nav a,
+.mobile-nav-group > button {
+  border-color: rgba(45, 86, 68, 0.12);
+  background: rgba(248, 250, 247, 0.86);
+}
+
+.mobile-nav-panel nav a:hover,
+.mobile-nav-panel nav a:focus-visible,
+.mobile-nav-group > button:hover,
+.mobile-nav-group > button:focus-visible,
+.mobile-nav-group > button[aria-expanded="true"],
+.mobile-profile-toggle:hover,
+.mobile-profile-toggle:focus-visible,
+.mobile-profile-toggle[aria-expanded="true"] {
+  background: rgba(45, 86, 68, 0.07);
+  border-color: rgba(45, 86, 68, 0.24);
+  outline: none;
+}
+
 .site-header .primary-nav .nav-products-panel a,
 .site-header .primary-nav .nav-products-panel a:last-child,
 .mobile-nav-panel > header {
@@ -80,30 +107,42 @@ body,
 .nav-products-panel span,
 .mobile-nav-panel > header strong,
 .mobile-nav-panel nav span,
-.mobile-nav-panel footer strong {
+.mobile-nav-panel footer strong,
+.mobile-profile-copy strong {
   color: var(--text-dark);
 }
 
 .nav-products-panel small,
 .mobile-nav-panel > header small,
-.mobile-nav-panel nav small {
+.mobile-nav-panel nav small,
+.mobile-profile-copy small {
   color: var(--text-muted);
 }
 
 .mobile-nav-panel > header button,
 .mobile-nav-panel nav,
 .mobile-nav-panel footer a,
-.mobile-nav-panel .mobile-login-link {
-  border-color: rgba(154, 107, 50, 0.22);
-  color: #805728;
+.mobile-nav-panel .mobile-login-link,
+.mobile-profile-card,
+.mobile-profile-icon {
+  border-color: rgba(45, 86, 68, 0.18);
+  color: #2d5644;
+}
+
+.mobile-profile-card {
+  background: rgba(248, 250, 247, 0.92);
+}
+
+.mobile-profile-icon {
+  background: rgba(45, 86, 68, 0.08);
 }
 
 .mobile-nav-panel > header button:hover,
 .mobile-nav-panel > header button:focus-visible,
 .mobile-nav-panel footer a:hover,
 .mobile-nav-panel footer a:focus-visible {
-  background: rgba(154, 107, 50, 0.08);
-  border-color: rgba(154, 107, 50, 0.48);
+  background: rgba(45, 86, 68, 0.08);
+  border-color: rgba(45, 86, 68, 0.35);
   outline: none;
 }
 
@@ -236,12 +275,23 @@ body,
 .order-success-home,
 .product-detail-action,
 .category-add-cart,
-.account-primary,
-.contact-buttons a:first-child,
-.contact-buttons a:hover {
+.account-primary {
   background: var(--surface-black);
   border-color: var(--surface-black);
   color: #fff;
+}
+
+.contact-buttons a {
+  border-color: rgba(45, 86, 68, .18);
+  background: #fff;
+  color: #294f3f;
+}
+
+.contact-buttons a:first-child,
+.contact-buttons a:hover {
+  background: #265442;
+  border-color: #265442;
+  color: #fffdf8;
 }
 
 .cart-checkout { background: #f6f3ee; }
@@ -767,14 +817,20 @@ body,
 
 .account-heading { border-bottom-color: #e5e9e6; }
 
+.account-heading h1 {
+  color: #1f2420;
+}
+
 .account-menu {
   background: #fff;
   border: 1px solid rgba(48, 78, 64, .16);
-  border-radius: 12px;
+  border-radius: 14px;
   color: var(--text-dark);
+  box-shadow: 0 14px 36px rgba(42, 58, 49, .045);
 }
 
 .account-menu nav a {
+  border-radius: 10px;
   border-color: #e4e9e5;
   color: #5f6b64;
 }
@@ -783,6 +839,7 @@ body,
   background: #eef6f1;
   border-color: rgba(48, 78, 64, .38);
   color: #304e40;
+  box-shadow: inset 4px 0 0 #5f9278;
 }
 
 .account-menu nav a > .icon,
@@ -794,8 +851,8 @@ body,
 
 .account-panel {
   border-color: #e1e8e3;
-  border-radius: 12px;
-  box-shadow: 0 16px 42px rgba(42, 58, 49, .05);
+  border-radius: 16px;
+  box-shadow: 0 18px 48px rgba(42, 58, 49, .06);
 }
 
 .account-form input,
@@ -822,22 +879,47 @@ body,
 .account-primary,
 .checkout-register-order,
 .cart-empty button {
-  background: #304e40;
-  border-color: #304e40;
-  border-radius: 8px;
+  background: #265442;
+  border-color: #265442;
+  border-radius: 10px;
   color: #fffdf8;
+}
+
+.account-primary:hover:not(:disabled),
+.checkout-register-order:hover:not(:disabled),
+.cart-empty button:hover:not(:disabled) {
+  background: #1f4938;
+  border-color: #1f4938;
 }
 
 .account-secondary,
 .discount-entry button {
   border-color: rgba(48, 78, 64, .48);
-  border-radius: 8px;
+  border-radius: 10px;
   color: #304e40;
+}
+
+.account-menu-order {
+  border-radius: 10px;
+  border-color: rgba(48, 78, 64, .22);
+  background: #f1f8f4;
+  color: #304e40;
+}
+
+.account-menu-order:hover {
+  border-color: rgba(48, 78, 64, .42);
+  background: #e7f2ec;
 }
 
 .cart-header {
   background: rgba(255, 255, 255, .97);
   border-bottom-color: #e5e9e6;
+}
+
+.cart-header > button {
+  border-color: rgba(45, 86, 68, .16);
+  background: rgba(255, 255, 255, .82);
+  color: #2d5644;
 }
 
 .cart-panel,

@@ -111,7 +111,7 @@ export const initCart = () => {
   let alertTimer: number | null = null;
   let discountAmount = 0;
   let submittedOrder: SubmittedOrder | null = null;
-  const maxReceiptUploadSize = 1 * 1024 * 1024;
+  const maxReceiptUploadSize = 20 * 1024 * 1024;
 
   const readCart = (): CartItem[] => {
     try {
@@ -128,6 +128,14 @@ export const initCart = () => {
   const taxableAmount = () => Math.max(0, subtotal() - discountAmount);
   const taxAmount = () => submittedOrder ? Number(submittedOrder.taxAmount || 0) : Math.round(taxableAmount() * 0.10);
   const finalAmount = () => submittedOrder ? Number(submittedOrder.finalAmount || 0) : taxableAmount() + taxAmount();
+  const formatUploadSize = (bytes: number) => {
+    if (bytes >= 1024 * 1024) {
+      const megabytes = bytes / (1024 * 1024);
+      return `${numberFormatter.format(Number(megabytes.toFixed(1)))} مگابایت`;
+    }
+    const kilobytes = Math.max(1, Math.round(bytes / 1024));
+    return `${numberFormatter.format(kilobytes)} کیلوبایت`;
+  };
 
   const addressInputs = [customerName, customerPhone, customerProvince, customerCity, customerAddress, customerPostal].filter(
     (input): input is HTMLInputElement | HTMLTextAreaElement => Boolean(input)
@@ -497,7 +505,7 @@ export const initCart = () => {
     }
     if (!response.ok) {
       const fallback = response.status === 413
-        ? "حجم تصویر فیش زیاد است؛ یک تصویر کوچک‌تر انتخاب کن."
+        ? "حجم تصویر فیش از سقف مجاز بیشتر است؛ فایل باید حداکثر ۲۰ مگابایت باشد."
         : "ثبت سفارش انجام نشد؛ اتصال اینترنت را بررسی و دوباره تلاش کن.";
       throw new Error(payload.error || fallback);
     }
@@ -731,7 +739,7 @@ export const initCart = () => {
   const prepareReceipt = async (file: File) => {
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
     if (file.size > maxReceiptUploadSize) {
-      throw new Error("حجم تصویر فیش نباید بیشتر از ۱ مگابایت باشد.");
+      throw new Error("حجم تصویر فیش نباید بیشتر از ۲۰ مگابایت باشد.");
     }
     if (allowedTypes.has(file.type)) return file;
     if (!file.type.startsWith("image/") && !/\.(?:heic|heif)$/i.test(file.name)) {
@@ -755,7 +763,7 @@ export const initCart = () => {
     canvas.width = 1;
     canvas.height = 1;
     if (!blob || blob.size > maxReceiptUploadSize) {
-      throw new Error("حجم تصویر فیش باید کمتر از ۱ مگابایت باشد؛ لطفاً از فیش اسکرین‌شات بگیر و دوباره انتخاب کن.");
+      throw new Error("حجم تصویر فیش باید کمتر از ۲۰ مگابایت باشد؛ لطفاً فایل کوچک‌تری انتخاب کن.");
     }
     const baseName = file.name.replace(/\.[^.]+$/, "") || "payment-receipt";
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
@@ -767,9 +775,24 @@ export const initCart = () => {
     selectedReceipt = null;
     paymentReceipt.closest("label")?.classList.remove("is-invalid");
     paymentReceipt.setAttribute("aria-invalid", "false");
+    paymentReceipt.setCustomValidity("");
     if (!file) {
       if (paymentReceiptName) paymentReceiptName.textContent = "عکس دوربین یا گالری؛ حجم به‌صورت خودکار بهینه می‌شود";
     } else {
+      if (file.size > maxReceiptUploadSize) {
+        const message = "حجم تصویر فیش نباید بیشتر از ۲۰ مگابایت باشد.";
+        paymentReceipt.value = "";
+        paymentReceipt.closest("label")?.classList.add("is-invalid");
+        paymentReceipt.setAttribute("aria-invalid", "true");
+        paymentReceipt.setCustomValidity(message);
+        if (paymentReceiptName) paymentReceiptName.textContent = message;
+        showCheckoutAlert(message, paymentReceipt);
+        submittedOrder = null;
+        updateSubmittedState();
+        updateOrderLinks();
+        return;
+      }
+      paymentReceipt.setCustomValidity("");
       if (paymentReceiptName) paymentReceiptName.textContent = "در حال آماده‌سازی تصویر…";
       try {
         const prepared = await prepareReceipt(file);
@@ -778,8 +801,7 @@ export const initCart = () => {
         paymentReceipt.closest("label")?.classList.remove("is-invalid");
         paymentReceipt.setAttribute("aria-invalid", "false");
         if (paymentReceiptName) {
-          const size = Math.max(1, Math.round(prepared.size / 1024));
-          paymentReceiptName.textContent = `${prepared.name} · ${numberFormatter.format(size)} کیلوبایت · آماده ارسال`;
+          paymentReceiptName.textContent = `${prepared.name} · ${formatUploadSize(prepared.size)} · آماده ارسال`;
         }
       } catch (error) {
         if (selectionId !== receiptSelectionId) return;

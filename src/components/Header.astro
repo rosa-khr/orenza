@@ -49,21 +49,37 @@ import Icon from "./Icon.astro";
         <button type="button" data-mobile-nav-close aria-label="بستن منو"><Icon name="close" size={19} /></button>
       </header>
       <nav>
-        <a href="/products/"><span>محصولات</span><small>همه انتخاب‌های فعال اورنزا</small></a>
-        <a href="/products/coffee-blends/"><span>قهوه‌های ترکیبی</span><small>عربیکا و روبوستا</small></a>
-        <a href="/products/cafe-drinks/"><span>پودرهای نوشیدنی کافه‌ای</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
-        <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
+        <section class="mobile-nav-group">
+          <button type="button" data-mobile-accordion aria-expanded="false">
+            <span>محصولات</span>
+            <small>دسته‌بندی‌ها و خرید عمده</small>
+          </button>
+          <div class="mobile-nav-submenu" hidden>
+            <a href="/products/"><span>همه محصولات</span><small>همه انتخاب‌های فعال اورنزا</small></a>
+            <a href="/products/coffee-blends/"><span>قهوه‌های ترکیبی</span><small>عربیکا و روبوستا</small></a>
+            <a href="/products/cafe-drinks/"><span>پودرهای نوشیدنی کافه‌ای</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+            <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
+          </div>
+        </section>
         <a href="/order/"><span>سفارش اختصاصی</span><small>انتخاب ترکیب، رُست و آسیاب</small></a>
         <a href="/about/"><span>درباره اورنزا</span><small>داستان رُست و انتخاب دانه</small></a>
         <a href="/contact/"><span>ارتباط با ما</span><small>مشاوره و پیگیری سفارش</small></a>
       </nav>
       <footer>
-        <strong data-mobile-account-name>حساب کاربری</strong>
-        <div>
-          <a href="/account/profile/">حساب کاربری</a>
-          <a href="/account/addresses/">نشانی‌ها</a>
-          <a href="/account/security/">تغییر رمز عبور</a>
-        </div>
+        <section class="mobile-profile-card">
+          <button class="mobile-profile-toggle" type="button" data-mobile-accordion aria-expanded="false">
+            <span class="mobile-profile-copy">
+              <strong data-mobile-account-name>حساب کاربری</strong>
+              <small>پروفایل، نشانی‌ها و امنیت</small>
+            </span>
+            <span class="mobile-profile-icon"><Icon name="user" size={18} /></span>
+          </button>
+          <div class="mobile-nav-submenu mobile-profile-links" hidden>
+            <a href="/account/profile/">مشخصات فردی</a>
+            <a href="/account/addresses/">نشانی‌ها</a>
+            <a href="/account/security/">امنیت حساب</a>
+          </div>
+        </section>
         <a class="mobile-login-link" href="/login/">ورود یا ساخت حساب</a>
       </footer>
     </aside>

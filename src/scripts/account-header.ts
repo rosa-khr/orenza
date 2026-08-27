@@ -8,9 +8,19 @@ export const initAccountHeader = () => {
   const mobileNav = document.querySelector<HTMLElement>("[data-mobile-nav]");
   const openMobileNav = document.querySelector<HTMLButtonElement>("[data-mobile-nav-open]");
   const closeMobileNavButtons = document.querySelectorAll<HTMLButtonElement>("[data-mobile-nav-close]");
+  const mobileAccordionButtons = document.querySelectorAll<HTMLButtonElement>("[data-mobile-accordion]");
   const productMenu = document.querySelector<HTMLElement>(".nav-products");
   const productToggle = document.querySelector<HTMLButtonElement>(".nav-products-toggle");
   let lastFocusedElement: HTMLElement | null = null;
+
+  const closeMobileAccordions = (except?: HTMLButtonElement) => {
+    mobileAccordionButtons.forEach((button) => {
+      if (button === except) return;
+      button.setAttribute("aria-expanded", "false");
+      const panel = button.nextElementSibling;
+      if (panel instanceof HTMLElement) panel.hidden = true;
+    });
+  };
 
   const openDrawer = () => {
     if (!mobileNav) return;
@@ -30,6 +40,7 @@ export const initAccountHeader = () => {
     mobileNav.classList.remove("is-open");
     mobileNav.setAttribute("aria-hidden", "true");
     openMobileNav?.setAttribute("aria-expanded", "false");
+    closeMobileAccordions();
     document.body.classList.remove("mobile-nav-is-open");
     window.setTimeout(() => {
       mobileNav.hidden = true;
@@ -40,6 +51,16 @@ export const initAccountHeader = () => {
   openMobileNav?.addEventListener("click", openDrawer);
   closeMobileNavButtons.forEach((button) => button.addEventListener("click", closeDrawer));
   mobileNav?.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((link) => link.addEventListener("click", closeDrawer));
+  mobileAccordionButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const panel = button.nextElementSibling;
+      if (!(panel instanceof HTMLElement)) return;
+      const willOpen = button.getAttribute("aria-expanded") !== "true";
+      closeMobileAccordions(button);
+      button.setAttribute("aria-expanded", String(willOpen));
+      panel.hidden = !willOpen;
+    });
+  });
 
   productToggle?.addEventListener("click", () => {
     const isOpen = productMenu?.classList.toggle("is-open") ?? false;

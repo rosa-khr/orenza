@@ -69,7 +69,7 @@ await app.register(cors, {
 });
 await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
 await app.register(multipart, {
-  limits: { files: 1, fileSize: 5 * 1024 * 1024, fields: 2, parts: 3 }
+  limits: { files: 1, fileSize: 20 * 1024 * 1024, fields: 2, parts: 3 }
 });
 
 const publicUser = (user: UserRow) => ({

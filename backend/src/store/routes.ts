@@ -277,7 +277,7 @@ export const registerStoreRoutes = (
   });
 
   app.post("/api/v1/orders/card-transfer", {
-    bodyLimit: 6 * 1024 * 1024,
+    bodyLimit: 25 * 1024 * 1024,
     config: { rateLimit: { max: 8, timeWindow: "15 minutes" } }
   }, async (request, reply) => {
     const part = await request.file();

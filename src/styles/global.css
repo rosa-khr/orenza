@@ -27,12 +27,15 @@ body {
   margin: 0;
   background: var(--cream);
   color: var(--ink);
-  font-family: Tahoma, "Segoe UI", sans-serif;
+  font-family: Dana, Tahoma, "Segoe UI", sans-serif;
   line-height: 1.7;
 }
 
 button,
-a {
+a,
+input,
+textarea,
+select {
   font: inherit;
 }
 
@@ -148,7 +151,7 @@ button {
 .eyebrow {
   margin: 0 0 22px;
   color: var(--gold);
-  font-family: Arial, sans-serif;
+  font-family: Dana, Tahoma, "Segoe UI", sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.25em;

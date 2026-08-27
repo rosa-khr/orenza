@@ -3,7 +3,7 @@ import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const receiptDirectory = process.env.PAYMENT_RECEIPT_DIR || path.resolve(process.cwd(), "data/payment-receipts");
-const maxReceiptSize = 1 * 1024 * 1024;
+const maxReceiptSize = 20 * 1024 * 1024;
 
 const formats = [
   { mime: "image/jpeg", extension: "jpg", matches: (buffer: Buffer) => buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff },
@@ -13,7 +13,7 @@ const formats = [
 
 export const savePaymentReceipt = async (buffer: Buffer) => {
   if (buffer.length > maxReceiptSize) {
-    throw Object.assign(new Error("حجم تصویر فیش نباید بیشتر از ۱ مگابایت باشد."), { statusCode: 422 });
+    throw Object.assign(new Error("حجم تصویر فیش نباید بیشتر از ۲۰ مگابایت باشد."), { statusCode: 422 });
   }
   const format = formats.find((item) => item.matches(buffer));
   if (!format) {
