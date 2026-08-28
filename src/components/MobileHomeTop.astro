@@ -1,0 +1,33 @@
+---
+import Icon from "./Icon.astro";
+import CoffeeBeanIcon from "./CoffeeBeanIcon.astro";
+---
+
+<section class="mobile-home-top" aria-label="دسترسی سریع فروشگاه">
+  <nav class="mobile-quick-links" aria-label="دسته‌های اصلی">
+    <a href="/products/"><span><Icon name="grid" size={24} /></span><b>محصولات</b></a>
+    <a class="is-featured" href="/order/"><span><Icon name="cart" size={25} /></span><b>سفارش</b></a>
+    <a href="/products/coffee-blends/"><span><CoffeeBeanIcon size={27} /></span><b>قهوه‌ها</b></a>
+    <a href="/products/cafe-drinks/"><span><Icon name="coffee" size={25} /></span><b>نوشیدنی</b></a>
+    <a href="/wholesale/"><span><Icon name="store" size={25} /></span><b>خرید عمده</b></a>
+  </nav>
+
+  <div class="mobile-store-tools">
+    <a class="mobile-notification" href="/contact/" aria-label="ارتباط با پشتیبانی"><Icon name="bell" size={22} /></a>
+    <form class="mobile-search" action="/products/" method="get" role="search" data-mobile-product-search>
+      <Icon name="search" size={22} />
+      <input name="q" type="search" placeholder="جست‌وجوی نام محصول" aria-label="جست‌وجوی محصولات" autocomplete="off" aria-controls="mobile-product-search-results" aria-expanded="false" data-mobile-product-search-input />
+      <div class="mobile-search-results" id="mobile-product-search-results" data-mobile-product-search-results hidden aria-live="polite"></div>
+    </form>
+  </div>
+
+  <a class="mobile-delivery-link" href="/account/addresses/">
+    <Icon name="address" size={20} />
+    <span>انتخاب آدرس و روش دریافت</span>
+    <b>⌄</b>
+  </a>
+</section>
+
+<script>
+  import "../scripts/mobile-product-search.ts";
+</script>

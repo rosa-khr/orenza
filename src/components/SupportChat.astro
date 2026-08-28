@@ -1,0 +1,34 @@
+---
+import Icon from "./Icon.astro";
+---
+
+<aside class="support-chat" data-support-chat>
+  <div class="support-chat-panel" data-support-chat-panel hidden>
+    <div class="support-chat-panel-heading">
+      <span class="support-chat-status"></span>
+      <div>
+        <strong>پشتیبانی آنلاین</strong>
+        <small>برای انتخاب قهوه با ما گفتگو کن</small>
+      </div>
+      <button type="button" class="support-chat-close" data-support-chat-close aria-label="بستن پشتیبانی">
+        <Icon name="close" size={18} />
+      </button>
+    </div>
+    <div class="support-chat-options">
+      <a href="https://wa.me/989103060396" target="_blank" rel="noreferrer" data-site-whatsapp-link>
+        <Icon name="whatsapp" size={19} />
+        <span>گفت‌وگو در واتساپ</span>
+        <Icon name="arrow" size={15} />
+      </a>
+      <a href="https://ble.ir/khoobrooz" target="_blank" rel="noreferrer" data-site-bale-link>
+        <Icon name="bale" size={19} />
+        <span>گفت‌وگو در بله</span>
+        <Icon name="arrow" size={15} />
+      </a>
+    </div>
+  </div>
+  <button type="button" class="support-chat-toggle" data-support-chat-toggle aria-expanded="false" aria-controls="support-chat-panel">
+    <span class="support-chat-toggle-mark"><Icon name="whatsapp" size={19} /></span>
+    <span class="support-chat-toggle-copy"><b>پشتیبانی اورنزا</b><small>گفت‌وگوی آنلاین</small></span>
+  </button>
+</aside>

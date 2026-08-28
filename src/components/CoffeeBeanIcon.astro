@@ -1,0 +1,30 @@
+---
+interface Props {
+  size?: number;
+}
+
+const { size = 24 } = Astro.props;
+---
+
+<svg
+  class="icon icon-coffee-bean"
+  width={size}
+  height={size}
+  viewBox="0 0 32 32"
+  fill="none"
+  aria-hidden="true"
+>
+  <path
+    d="M26.25 4.95C21.55.9 13.1 2.55 7.55 8.05 2.05 13.5.55 21.95 4.75 26.4c4.2 4.45 12.7 3.1 18.25-2.35 5.55-5.5 7.95-15.05 3.25-19.1Z"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M23.95 4.15c-.75 4.55-3.2 7.25-7.35 9.7-4.55 2.7-7.05 6.15-7.45 12.9"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+  />
+</svg>

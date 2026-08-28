@@ -117,7 +117,34 @@ const roastImages: Record<number, string> = {
           <span>BREW METHOD</span>
           <div><h3>روش دم‌آوری</h3><p>دستگاهت را انتخاب کن تا درجه آسیاب مشخص شود.</p></div>
         </header>
-        <div class="device-options">
+        <div class="device-picker" data-device-picker>
+          <label class="device-picker-search">
+            <Icon name="search" size={20} />
+            <input type="search" placeholder="جست‌وجوی دستگاه یا روش دم‌آوری" autocomplete="off" aria-label="جست‌وجوی دستگاه یا روش دم‌آوری" aria-controls="device-picker-results" data-device-picker-input />
+            <span data-device-picker-count>{devices.length} گزینه</span>
+          </label>
+          <div class="device-picker-results" id="device-picker-results" role="listbox" data-device-picker-results>
+            {devices.map((device) => (
+              <button
+                type="button"
+                role="option"
+                data-device-picker-option
+                data-device-value={device.title}
+                data-device-search={`${device.title} ${device.en} ${device.grindFa} ${device.grindEn}`}
+              >
+                <span><strong>{device.title}</strong><small>{device.en}</small></span>
+                <em>{device.grindFa}<small>{device.grindEn}</small></em>
+              </button>
+            ))}
+            <p data-device-picker-empty hidden>دستگاهی با این مشخصات پیدا نشد.</p>
+          </div>
+          <div class="device-picker-selection" data-device-picker-selection hidden>
+            <span>انتخاب شما</span>
+            <strong data-device-picker-selected>—</strong>
+            <small data-device-picker-grind>—</small>
+          </div>
+        </div>
+        <div class="device-options" hidden aria-hidden="true">
           {devices.map((device) => (
             <button type="button" data-choice="device" data-value={device.title} data-en={device.en} data-grind-fa={device.grindFa} data-grind-en={device.grindEn} data-grind-level={device.grind}>
               <span class="device-mark">{device.mark}</span>
@@ -181,3 +208,7 @@ const roastImages: Record<number, string> = {
     </div>
   </div>
 </section>
+
+<script>
+  import "../scripts/device-picker.ts";
+</script>

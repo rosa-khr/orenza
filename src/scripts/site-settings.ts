@@ -101,8 +101,6 @@ const applySettings = (settings: PublicSiteSettings) => {
   setHref("[data-site-instagram-link]", settings.instagramUrl);
   const desktopBanner = document.querySelector<HTMLImageElement>("[data-site-homepage-banner-desktop]");
   if (desktopBanner && settings.homepageBannerDesktopUrl) desktopBanner.src = settings.homepageBannerDesktopUrl;
-  const mobileBanner = document.querySelector<HTMLElement>("[data-site-homepage-banner-mobile]");
-  if (mobileBanner && settings.homepageBannerMobileUrl) mobileBanner.setAttribute("srcset", settings.homepageBannerMobileUrl);
 
   document.querySelectorAll<HTMLElement>("[data-site-address]").forEach((element) => {
     element.textContent = settings.address || "";

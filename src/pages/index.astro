@@ -5,6 +5,8 @@ import Hero from "../components/Hero.astro";
 import Manifesto from "../components/Manifesto.astro";
 import ProductRails from "../components/ProductRails.astro";
 import Ritual from "../components/Ritual.astro";
+import MobileHomeTop from "../components/MobileHomeTop.astro";
+import MobileBottomNav from "../components/MobileBottomNav.astro";
 ---
 
 <BaseLayout
@@ -13,10 +15,12 @@ import Ritual from "../components/Ritual.astro";
   canonicalPath="/"
   keywords={["خرید قهوه تازه رست", "قهوه اسپرسو", "قهوه عربیکا", "قهوه روبوستا", "آسیاب قهوه", "قهوه اورنزا"]}
 >
+  <MobileHomeTop />
   <Hero />
   <Manifesto />
   <ProductRails kind="best" />
   <CoffeeAtelier />
   <ProductRails kind="discount" />
   <Ritual />
+  <MobileBottomNav />
 </BaseLayout>

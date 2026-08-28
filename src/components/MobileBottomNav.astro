@@ -1,0 +1,12 @@
+---
+import Icon from "./Icon.astro";
+import CoffeeBeanIcon from "./CoffeeBeanIcon.astro";
+---
+
+<nav class="mobile-bottom-nav" aria-label="منوی سریع موبایل">
+  <a class="is-current" href="/"><Icon name="home" size={23} /><span>خانه</span></a>
+  <a href="/products/"><Icon name="grid" size={23} /><span>دسته‌بندی</span></a>
+  <button type="button" data-cart-open><Icon name="cart" size={24} /><span>سبد خرید</span><b data-cart-count>۰</b></button>
+  <a href="/order/"><CoffeeBeanIcon size={24} /><span>سفارش</span></a>
+  <a href="/account/profile/"><Icon name="user" size={23} /><span>حساب من</span></a>
+</nav>

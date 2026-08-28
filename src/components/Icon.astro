@@ -3,11 +3,14 @@ import {
   ArrowLeft,
   Bean,
   Camera,
+  Coffee,
   Contact,
   LayoutDashboard,
   LockKeyhole,
   LogOut,
   Gauge,
+  Grid2X2,
+  Home,
   Mail,
   MapPin,
   MessageCircle,
@@ -15,6 +18,9 @@ import {
   Phone,
   Send,
   ShoppingBag,
+  Store,
+  Search,
+  Bell,
   UserRound,
   X
 } from "@lucide/astro";
@@ -36,7 +42,13 @@ type IconName =
   | "logout"
   | "bean"
   | "grind"
-  | "close";
+  | "close"
+  | "home"
+  | "grid"
+  | "search"
+  | "bell"
+  | "coffee"
+  | "store";
 
 interface Props {
   name: IconName;
@@ -61,7 +73,13 @@ const icons = {
   logout: LogOut,
   bean: Bean,
   grind: Gauge,
-  close: X
+  close: X,
+  home: Home,
+  grid: Grid2X2,
+  search: Search,
+  bell: Bell,
+  coffee: Coffee,
+  store: Store
 } satisfies Record<IconName, typeof ArrowLeft>;
 const LucideIcon = icons[name];
 ---

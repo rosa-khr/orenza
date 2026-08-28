@@ -7,6 +7,7 @@ import "../styles/light-palette.css";
 import CartDrawer from "../components/CartDrawer.astro";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import SupportChat from "../components/SupportChat.astro";
 
 interface Props {
   title: string;
@@ -110,6 +111,7 @@ const schema = {
     <main id="top"><slot /></main>
     <Footer />
     <CartDrawer />
+    <SupportChat />
     <script>
       import "../scripts/logger.ts";
     </script>
@@ -118,6 +120,9 @@ const schema = {
     </script>
     <script>
       import "../scripts/site-settings.ts";
+    </script>
+    <script>
+      import "../scripts/support-chat.ts";
     </script>
     <script>
       const key = "orenza-visitor-id";
