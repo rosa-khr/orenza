@@ -5599,6 +5599,7 @@ body.mobile-nav-is-open {
 }
 
 .hero-media { position: absolute; z-index: -2; inset: var(--header-height) 0 0; }
+.hero-media picture { display: block; width: 100%; height: 100%; }
 
 .hero-media::after {
   position: absolute;
@@ -5642,15 +5643,25 @@ body.mobile-nav-is-open {
 .hero .text-link { border-bottom-color: rgba(245, 239, 227, .32); color: rgba(245, 239, 227, .72); }
 
 @media (max-width: 699px) {
-  .hero { min-height: 760px; align-items: flex-end; }
-  .hero-media img { object-position: 24% center; }
+  .hero {
+    min-height: 0;
+    height: clamp(520px, calc(100svh - var(--header-height)), 620px);
+    align-items: flex-end;
+  }
+  .hero-media img { object-position: 28% center; }
   .hero-media::after {
     background:
-      linear-gradient(0deg, #080808 3%, rgba(8, 8, 8, .94) 28%, rgba(8, 8, 8, .3) 66%, rgba(8, 8, 8, .12) 100%),
+      linear-gradient(0deg, #080808 0%, rgba(8, 8, 8, .88) 34%, rgba(8, 8, 8, .28) 70%, rgba(8, 8, 8, .1) 100%),
       linear-gradient(90deg, transparent, rgba(8, 8, 8, .2));
   }
-  .hero .hero-copy { width: 100%; margin: 0; padding: 330px 22px 50px; }
-  .hero h1 { font-size: clamp(46px, 14vw, 62px); }
+  .hero .hero-copy {
+    width: 100%;
+    margin: 0;
+    padding: 170px 22px 28px;
+  }
+  .hero .eyebrow { margin-bottom: 8px; font-size: 11px; }
+  .hero h1 { margin-bottom: 12px; font-size: clamp(38px, 11vw, 50px); line-height: 1.18; }
+  .hero .hero-lead { margin-bottom: 18px; font-size: 15px; line-height: 1.95; }
   .hero-actions { display: grid; }
   .hero-actions .button { width: 100%; }
 }

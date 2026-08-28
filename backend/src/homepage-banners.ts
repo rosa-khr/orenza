@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 const homepageImageDirectory =
   process.env.PUBLIC_IMAGES_DIR || path.resolve(process.cwd(), "../public/images");
@@ -25,14 +26,33 @@ const formats = [
 
 export type HomepageBannerKind = "desktop" | "mobile";
 
+const bannerSizes: Record<HomepageBannerKind, { width: number; height: number }> = {
+  desktop: { width: 1920, height: 1080 },
+  mobile: { width: 900, height: 1200 }
+};
+
 export const saveHomepageBanner = async (buffer: Buffer, kind: HomepageBannerKind) => {
   const format = formats.find((item) => item.matches(buffer));
   if (!format) {
     throw Object.assign(new Error("بنر باید تصویر JPG، PNG یا WebP معتبر باشد."), { statusCode: 422 });
   }
+  const size = bannerSizes[kind];
+  const optimized = await sharp(buffer)
+    .rotate()
+    .resize(size.width, size.height, {
+      fit: "cover",
+      position: "centre",
+      withoutEnlargement: false
+    })
+    .webp({ quality: 86, effort: 5 })
+    .toBuffer()
+    .catch(() => {
+      throw Object.assign(new Error("پردازش تصویر بنر ناموفق بود."), { statusCode: 422 });
+    });
+
   await mkdir(homepageImageDirectory, { recursive: true });
-  const fileName = `homepage-banner-${kind}-${crypto.randomUUID()}.${format.extension}`;
-  await writeFile(path.join(homepageImageDirectory, fileName), buffer, { flag: "wx", mode: 0o644 });
+  const fileName = `homepage-banner-${kind}-${crypto.randomUUID()}.webp`;
+  await writeFile(path.join(homepageImageDirectory, fileName), optimized, { flag: "wx", mode: 0o644 });
   return { fileName, url: `/api/v1/homepage-banners/${fileName}` };
 };
 
