@@ -5608,7 +5608,7 @@ body.mobile-nav-is-open {
   content: "";
 }
 
-.hero-media img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.hero-media img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 
 .hero .hero-copy {
   position: relative;
@@ -5648,7 +5648,7 @@ body.mobile-nav-is-open {
     height: clamp(520px, calc(100svh - var(--header-height)), 620px);
     align-items: flex-end;
   }
-  .hero-media img { object-position: 28% center; }
+  .hero-media img { object-position: center; }
   .hero-media::after {
     background:
       linear-gradient(0deg, #080808 0%, rgba(8, 8, 8, .88) 34%, rgba(8, 8, 8, .28) 70%, rgba(8, 8, 8, .1) 100%),

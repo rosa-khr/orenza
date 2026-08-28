@@ -40,8 +40,9 @@ export const saveHomepageBanner = async (buffer: Buffer, kind: HomepageBannerKin
   const optimized = await sharp(buffer)
     .rotate()
     .resize(size.width, size.height, {
-      fit: "cover",
+      fit: "contain",
       position: "centre",
+      background: { r: 9, g: 9, b: 9, alpha: 1 },
       withoutEnlargement: false
     })
     .webp({ quality: 86, effort: 5 })

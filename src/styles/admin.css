@@ -890,7 +890,7 @@ a { color: inherit; text-decoration: none; }
 .admin-homepage-banners { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .admin-banner-setting { display: grid; grid-template-columns: minmax(150px,.9fr) minmax(0,1fr); gap: 14px; align-items: center; border: 1px solid #ddd1be; border-radius: 8px; background: #faf6ef; padding: 12px; }
 .admin-banner-preview { display: grid; min-height: 145px; place-items: center; overflow: hidden; border: 1px dashed #cab999; border-radius: 7px; background: #fff; padding: 7px; color: #8a8072; text-align: center; font-size: 10px; }
-.admin-banner-preview img { width: 100%; height: 130px; object-fit: cover; border-radius: 4px; }
+.admin-banner-preview img { width: 100%; height: 130px; object-fit: contain; border-radius: 4px; background: #090909; }
 .admin-banner-setting > div:last-child { display: grid; gap: 6px; align-content: center; }
 .admin-banner-setting strong { color: #42372a; font-size: 12px; }
 .admin-banner-setting small { color: var(--admin-muted); font-size: 9px; line-height: 1.7; }
