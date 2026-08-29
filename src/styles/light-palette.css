@@ -2035,3 +2035,332 @@ body:has(.mobile-home-top) .support-chat-toggle {
   .checkout-register-order { min-height: 43px; border-radius: 11px; font-size: 10px; }
   .cart-checkout > small[data-copy-status] { font-size: 8px; line-height: 1.6; }
 }
+
+/* Dense two-column product catalogue on mobile. */
+@media (max-width: 699px) {
+  .category-products {
+    padding: 24px 8px 30px;
+  }
+
+  .category-products > header {
+    margin-bottom: 14px;
+  }
+
+  .category-products > header span {
+    font-size: 7px;
+  }
+
+  .category-products > header h2 {
+    margin-top: 4px;
+    font-size: 22px;
+    line-height: 1.35;
+  }
+
+  .category-products [data-category-product-list] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .category-products article,
+  .category-products .category-purchasable {
+    min-height: 0;
+    align-content: start;
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 5px 16px rgba(35, 51, 43, .06);
+  }
+
+  .category-products article .category-product-media,
+  .category-products article > .category-product-media {
+    height: 112px;
+    margin: -8px -8px 7px;
+    border-radius: 12px 12px 0 0;
+    padding: 7px;
+  }
+
+  .category-products article .category-product-media img,
+  .category-products article > .category-product-media img {
+    max-width: 82% !important;
+    max-height: 96% !important;
+  }
+
+  .category-products article > span,
+  .category-products article > p {
+    display: none;
+  }
+
+  .category-products article h3 {
+    display: -webkit-box;
+    min-height: 32px;
+    margin: 2px 0 5px;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .category-products article > div {
+    gap: 4px;
+    margin-top: 0;
+    padding-top: 6px;
+  }
+
+  .category-products article > div > small {
+    display: none;
+  }
+
+  .category-products article strong {
+    min-height: 27px;
+    font-size: 9px;
+    line-height: 1.5;
+  }
+
+  .category-buy-controls {
+    gap: 4px;
+    margin-top: 1px;
+  }
+
+  .category-weight-options {
+    gap: 3px;
+  }
+
+  .category-weight-options button {
+    min-height: 27px;
+    border-radius: 7px;
+    padding: 3px 1px;
+    font-size: 8px;
+  }
+
+  .category-package-label {
+    min-height: 27px;
+    border-radius: 7px;
+    font-size: 8px;
+  }
+
+  .category-add-cart {
+    min-height: 32px;
+    border-radius: 8px;
+    padding: 5px 4px;
+    font-size: 9px;
+    line-height: 1.35;
+  }
+
+  .category-products article .category-product-detail-link {
+    display: none;
+  }
+
+  .category-stock-label {
+    font-size: 8px;
+  }
+}
+
+/* Compact product detail page on mobile. */
+@media (max-width: 699px) {
+  .product-detail-page {
+    padding: 76px 8px 42px;
+  }
+
+  .product-detail-back {
+    gap: 5px;
+    margin-bottom: 10px;
+    font-size: 10px;
+  }
+
+  .product-detail-stage {
+    border-radius: 14px;
+  }
+
+  .product-detail-media {
+    width: 100%;
+    height: 230px;
+    min-height: 230px;
+    border-bottom-color: rgba(42, 35, 28, .1);
+    background: #f8f8f5;
+    padding: 10px;
+  }
+
+  .product-detail-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 16px rgba(42, 35, 28, .11));
+  }
+
+  .product-detail-copy {
+    padding: 14px 12px 16px;
+  }
+
+  .product-detail-copy > .eyebrow {
+    font-size: 8px;
+  }
+
+  .product-detail-copy h1 {
+    margin: 5px 0 7px;
+    font-size: 23px;
+    line-height: 1.3;
+  }
+
+  .product-detail-copy > p {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.8;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .product-detail-specs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 11px;
+  }
+
+  .product-detail-specs > div {
+    min-width: 0;
+    gap: 3px;
+    border-radius: 8px;
+    padding: 7px 5px;
+  }
+
+  .product-detail-specs span {
+    font-size: 8px;
+  }
+
+  .product-detail-specs strong {
+    overflow: hidden;
+    font-size: 9px;
+    line-height: 1.45;
+    text-overflow: ellipsis;
+  }
+
+  .product-detail-purchase {
+    gap: 7px;
+    margin-top: 13px;
+    padding-top: 11px;
+  }
+
+  .product-detail-price {
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .product-detail-price span {
+    font-size: 9px;
+  }
+
+  .product-detail-price strong {
+    font-size: 13px;
+  }
+
+  .product-detail-weights {
+    gap: 4px;
+  }
+
+  .product-detail-weights button {
+    min-height: 31px;
+    border-radius: 8px;
+    padding: 4px 2px;
+    font-size: 9px;
+  }
+
+  .product-detail-action {
+    min-height: 38px;
+    gap: 6px;
+    border-radius: 9px;
+    font-size: 10px;
+  }
+
+  .product-detail-purchase > small {
+    gap: 4px;
+    font-size: 8px;
+  }
+
+  .product-detail-content,
+  .content-tags,
+  .related-products,
+  .product-detail-internal-links {
+    margin-top: 24px;
+    padding-top: 16px;
+  }
+
+  .product-detail-content > header,
+  .product-detail-internal-links > header {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .product-detail-content > header h2,
+  .content-tags > header h2,
+  .related-products > header h2,
+  .product-detail-internal-links > header h2 {
+    font-size: 17px;
+  }
+
+  .product-detail-content > div {
+    gap: 9px;
+  }
+
+  .product-detail-content p,
+  .product-detail-content li {
+    font-size: 10px;
+    line-height: 1.9;
+  }
+
+  .product-detail-content h2,
+  .product-detail-content h3 {
+    margin: 11px 0 2px;
+    font-size: 15px;
+  }
+
+  .related-products > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .related-products article {
+    display: block;
+    border-radius: 10px;
+  }
+
+  .related-products article > a {
+    height: 110px;
+    min-height: 110px;
+  }
+
+  .related-products article > div {
+    padding: 8px;
+  }
+
+  .related-products h3 {
+    margin: 3px 0;
+    font-size: 10px;
+  }
+
+  .related-products p {
+    display: none;
+  }
+
+  .product-detail-link-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .product-detail-link-grid > a {
+    min-height: 70px;
+    gap: 3px;
+    border-radius: 9px;
+    padding: 9px;
+  }
+
+  .product-detail-link-grid strong {
+    font-size: 10px;
+  }
+
+  .product-detail-link-grid small {
+    font-size: 8px;
+    line-height: 1.55;
+  }
+}
