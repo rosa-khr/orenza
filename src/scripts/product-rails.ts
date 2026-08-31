@@ -84,11 +84,83 @@ const card = (product: RailProduct, offer: boolean) => {
   return article;
 };
 
+const enableRailDrag = (viewport: HTMLElement) => {
+  if (viewport.dataset.dragReady) return;
+  viewport.dataset.dragReady = "true";
+  let isDown = false;
+  let didMove = false;
+  let startX = 0;
+  let scrollStart = 0;
+  let resumeTimer = 0;
+  viewport.addEventListener("pointerdown", (event) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    window.clearTimeout(resumeTimer);
+    isDown = true;
+    didMove = false;
+    viewport.dataset.userDragging = "true";
+    startX = event.clientX;
+    scrollStart = viewport.scrollLeft;
+    viewport.classList.add("is-dragging");
+    viewport.setPointerCapture(event.pointerId);
+  });
+  viewport.addEventListener("pointermove", (event) => {
+    if (!isDown) return;
+    const delta = event.clientX - startX;
+    if (Math.abs(delta) > 4) didMove = true;
+    viewport.scrollLeft = scrollStart - delta;
+  });
+  const endDrag = (event: PointerEvent) => {
+    if (!isDown) return;
+    isDown = false;
+    resumeTimer = window.setTimeout(() => {
+      viewport.dataset.userDragging = "false";
+    }, 1200);
+    viewport.classList.remove("is-dragging");
+    if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+  };
+  viewport.addEventListener("pointerup", endDrag);
+  viewport.addEventListener("pointercancel", endDrag);
+  viewport.addEventListener("click", (event) => {
+    if (!didMove) return;
+    event.preventDefault();
+    event.stopPropagation();
+    didMove = false;
+  }, true);
+};
+
+const enableRailMotion = (viewport: HTMLElement, track: HTMLElement, kind: "best" | "discount") => {
+  if (viewport.dataset.motionReady) return;
+  viewport.dataset.motionReady = "true";
+  const speed = kind === "discount" ? 0.026 : 0.024;
+  let frame = 0;
+  let previous = performance.now();
+  const tick = (time: number) => {
+    const delta = Math.min(40, time - previous);
+    previous = time;
+    const halfWidth = track.scrollWidth / 2;
+    const canMove = halfWidth > viewport.clientWidth;
+    if (
+      canMove &&
+      viewport.dataset.userDragging !== "true"
+    ) {
+      viewport.scrollLeft += speed * delta;
+      if (speed > 0 && viewport.scrollLeft >= halfWidth) viewport.scrollLeft -= halfWidth;
+    }
+    frame = requestAnimationFrame(tick);
+  };
+  frame = requestAnimationFrame(tick);
+  window.addEventListener("beforeunload", () => cancelAnimationFrame(frame), { once: true });
+};
+
 const renderRail = (kind: "best" | "discount", products: RailProduct[]) => {
+  const enabledKey = kind === "best" ? "homepageBestSellersEnabled" : "homepageDiscountsEnabled";
+  if (document.documentElement.dataset[enabledKey] === "false") return;
   const root = document.querySelector<HTMLElement>(`[data-product-rail="${kind}"]`);
   const track = root?.querySelector<HTMLElement>("[data-product-rail-track]");
-  if (!root || !track || !products.length) return;
-  const loopProducts = Array.from({ length: Math.max(products.length, 5) }, (_, index) => products[index % products.length]);
+  const viewport = root?.querySelector<HTMLElement>(".product-rail-viewport");
+  if (!root || !track || !viewport || !products.length) return;
+  const minCards = Math.max(10, Math.ceil((viewport.clientWidth || window.innerWidth) / 160) + 4);
+  const loopProducts = Array.from({ length: Math.max(products.length, minCards) }, (_, index) => products[index % products.length]);
   const makeGroup = () => {
     const group = document.createElement("div");
     group.className = "product-rail-group";
@@ -96,6 +168,8 @@ const renderRail = (kind: "best" | "discount", products: RailProduct[]) => {
     return group;
   };
   track.replaceChildren(makeGroup(), makeGroup());
+  enableRailDrag(viewport);
+  enableRailMotion(viewport, track, kind);
   root.hidden = false;
 };
 

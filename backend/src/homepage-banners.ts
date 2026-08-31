@@ -24,11 +24,12 @@ const formats = [
   }
 ];
 
-export type HomepageBannerKind = "desktop" | "mobile";
+export type HomepageBannerKind = "desktop" | "mobile" | "row";
 
 const bannerSizes: Record<HomepageBannerKind, { width: number; height: number }> = {
   desktop: { width: 1920, height: 1080 },
-  mobile: { width: 900, height: 1200 }
+  mobile: { width: 900, height: 1200 },
+  row: { width: 1200, height: 520 }
 };
 
 export const saveHomepageBanner = async (buffer: Buffer, kind: HomepageBannerKind) => {
@@ -63,7 +64,7 @@ export const removeHomepageBanner = async (fileName: string) => {
 
 export const openHomepageBanner = (fileName: string) => {
   const safeName = path.basename(fileName);
-  if (safeName !== fileName || !/^homepage-banner-(?:desktop|mobile)-[0-9a-f-]+\.(?:jpg|png|webp)$/.test(safeName)) return null;
+  if (safeName !== fileName || !/^homepage-banner-(?:desktop|mobile|row)-[0-9a-f-]+\.(?:jpg|png|webp)$/.test(safeName)) return null;
   const extension = path.extname(safeName).slice(1);
   return {
     stream: createReadStream(path.join(homepageImageDirectory, safeName)),

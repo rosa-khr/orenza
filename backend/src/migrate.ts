@@ -147,6 +147,15 @@ ALTER TABLE site_settings
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_mobile_url varchar(500);
 ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_banner_rows jsonb NOT NULL DEFAULT '[
+    {"id":"aboveDiscount","title":"بالای شگفت‌انگیزها","columns":3,"isActive":false,"items":[]},
+    {"id":"aboveBest","title":"بالای پرطرفدارها","columns":3,"isActive":false,"items":[]}
+  ]'::jsonb;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_best_sellers_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS content_ai_api_key text;
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS content_ai_model varchar(100) NOT NULL DEFAULT 'gpt-5';

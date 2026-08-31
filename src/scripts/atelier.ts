@@ -40,6 +40,7 @@ export const initAtelier = () => {
   const deviceResults = [...builder.querySelectorAll<HTMLElement>("[data-device-result]")];
   const grindResults = [...builder.querySelectorAll<HTMLElement>("[data-grind-result]")];
   const addCartButton = builder.querySelector<HTMLButtonElement>("[data-add-cart]")!;
+  const nextButtons = [...builder.querySelectorAll<HTMLButtonElement>("[data-step-next]")];
   const progressItems = [...document.querySelectorAll<HTMLElement>("[data-progress-step]")];
   const quantityOutput = builder.querySelector<HTMLOutputElement>("[data-quantity]");
   const quantityResult = builder.querySelector<HTMLElement>('[data-result="quantity"]');
@@ -177,6 +178,26 @@ export const initAtelier = () => {
     });
   };
 
+  const nextSection = () => {
+    if (currentSectionName === "blend" && state.blend) return "roast";
+    if (currentSectionName === "roast" && state.roast) return "grind";
+    if (currentSectionName === "grind" && state.grind) return state.grind === "آسیاب‌شده" ? "device" : "weight";
+    if (currentSectionName === "device" && state.device) return "weight";
+    if (currentSectionName === "weight" && state.weight) return "summary";
+    return "";
+  };
+
+  const updateStepControls = () => {
+    const target = nextSection();
+    const targetSection = target ? sections.get(target) : null;
+    const canMoveNext = Boolean(targetSection?.classList.contains("is-ready") && !targetSection.hidden);
+    nextButtons.forEach((button) => {
+      const owner = button.closest<HTMLElement>("[data-config-section]")?.dataset.configSection;
+      button.disabled = owner !== currentSectionName || !canMoveNext;
+      button.setAttribute("aria-disabled", String(button.disabled));
+    });
+  };
+
   const moveToSection = (name: string, delay = 120) => {
     const section = sections.get(name);
     if (!section) return;
@@ -190,6 +211,7 @@ export const initAtelier = () => {
         });
         currentSectionName = name;
         updateProgress();
+        updateStepControls();
         const heading = section.querySelector<HTMLElement>("h3");
         if (heading) {
           heading.tabIndex = -1;
@@ -197,6 +219,15 @@ export const initAtelier = () => {
         }
       });
     }, delay);
+  };
+
+  const previousSection = () => {
+    if (currentSectionName === "roast") return "blend";
+    if (currentSectionName === "grind") return "roast";
+    if (currentSectionName === "device") return "grind";
+    if (currentSectionName === "weight") return state.grind === "آسیاب‌شده" && state.device ? "device" : "grind";
+    if (currentSectionName === "summary") return "weight";
+    return "";
   };
 
   const clearFollowing = (key: SelectionKey) => {
@@ -331,6 +362,7 @@ export const initAtelier = () => {
     }
     updateResults();
     updateProgress();
+    updateStepControls();
   };
 
   builder.addEventListener("click", (event) => {
@@ -344,6 +376,24 @@ export const initAtelier = () => {
       const target = item.dataset.progressStep || "";
       const section = sections.get(target);
       if (!section?.classList.contains("is-ready") || section.hidden) return;
+      moveToSection(target, 0);
+    });
+  });
+
+  builder.querySelectorAll<HTMLButtonElement>("[data-step-back]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = previousSection();
+      const section = sections.get(target);
+      if (!target || !section || section.hidden) return;
+      moveToSection(target, 0);
+    });
+  });
+
+  builder.querySelectorAll<HTMLButtonElement>("[data-step-next]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = nextSection();
+      const section = target ? sections.get(target) : null;
+      if (!target || !section?.classList.contains("is-ready") || section.hidden) return;
       moveToSection(target, 0);
     });
   });
@@ -364,6 +414,7 @@ export const initAtelier = () => {
     addCartButton.textContent = "افزودن به سبد سفارش";
     updateResults();
     updateProgress();
+    updateStepControls();
     moveToSection("blend", 80);
   });
 

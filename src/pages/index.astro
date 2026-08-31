@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import CoffeeAtelier from "../components/CoffeeAtelier.astro";
 import Hero from "../components/Hero.astro";
+import HomeBannerRow from "../components/HomeBannerRow.astro";
 import Manifesto from "../components/Manifesto.astro";
 import ProductRails from "../components/ProductRails.astro";
 import Ritual from "../components/Ritual.astro";
@@ -18,9 +18,18 @@ import MobileBottomNav from "../components/MobileBottomNav.astro";
   <MobileHomeTop />
   <Hero />
   <Manifesto />
-  <ProductRails kind="best" />
-  <CoffeeAtelier />
+  <HomeBannerRow slotId="aboveDiscount" />
   <ProductRails kind="discount" />
+  <section class="home-order-cta" aria-labelledby="home-order-title">
+    <div>
+      <span>ORENZA COFFEE ATELIER</span>
+      <h2 id="home-order-title">سفارش اختصاصی قهوه</h2>
+      <p>ترکیب، رُست، وزن و آسیاب را در صفحه اختصاصی انتخاب کن؛ همه چیز همان‌جا مرحله‌به‌مرحله تنظیم می‌شود.</p>
+    </div>
+    <a class="button button-primary" href="/order/">شروع سفارش اختصاصی</a>
+  </section>
+  <HomeBannerRow slotId="aboveBest" />
+  <ProductRails kind="best" />
   <Ritual />
   <MobileBottomNav />
 </BaseLayout>

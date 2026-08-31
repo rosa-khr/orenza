@@ -22,13 +22,9 @@ export const devices = [
   { id: "semi-industrial-espresso", title: "اسپرسوساز نیمه‌صنعتی", en: "SEMI-PRO ESPRESSO", grindFa: "ریز", grindEn: "FINE", grind: 2, mark: "SE" },
   { id: "industrial-espresso", title: "اسپرسوساز صنعتی", en: "COMMERCIAL ESPRESSO", grindFa: "ریز", grindEn: "FINE", grind: 2, mark: "IE" },
   { id: "moka", title: "موکاپات", en: "MOKA POT", grindFa: "متوسط رو به ریز", grindEn: "MEDIUM FINE", grind: 3, mark: "MK" },
-  { id: "aeropress", title: "ائروپرس", en: "AEROPRESS", grindFa: "متوسط رو به ریز", grindEn: "MEDIUM FINE", grind: 3, mark: "AP" },
   { id: "v60", title: "وی‌۶۰", en: "V60", grindFa: "متوسط", grindEn: "MEDIUM", grind: 4, mark: "V60" },
-  { id: "filter", title: "قهوه‌ساز فیلتری", en: "DRIP COFFEE", grindFa: "متوسط", grindEn: "MEDIUM", grind: 4, mark: "DR" },
-  { id: "siphon", title: "سایفون", en: "SIPHON", grindFa: "متوسط", grindEn: "MEDIUM", grind: 4, mark: "SY" },
-  { id: "chemex", title: "کمکس", en: "CHEMEX", grindFa: "متوسط رو به درشت", grindEn: "MEDIUM COARSE", grind: 5, mark: "CH" },
   { id: "french", title: "فرنچ‌پرس", en: "FRENCH PRESS", grindFa: "درشت", grindEn: "COARSE", grind: 6, mark: "FP" },
-  { id: "cold", title: "کلدبرو", en: "COLD BREW", grindFa: "بسیار درشت", grindEn: "EXTRA COARSE", grind: 7, mark: "CB" }
+  { id: "other", title: "سایر", en: "OTHER / CUSTOM", grindFa: "با هماهنگی", grindEn: "CUSTOM", grind: 4, mark: "OT" }
 ] as const;
 
 export const weights = [

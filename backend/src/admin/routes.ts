@@ -728,12 +728,13 @@ ${ai.instructions}
     bodyLimit: 6 * 1024 * 1024
   }, async (request, reply) => {
     if (!(await requirePermission(request, reply, "site-settings"))) return;
-    const { kind } = z.object({ kind: z.enum(["desktop", "mobile"]) }).parse(request.params);
+    const { kind } = z.object({ kind: z.enum(["desktop", "mobile", "row"]) }).parse(request.params);
     const part = await request.file();
     if (!part || part.fieldname !== "banner") {
       return reply.code(422).send({ error: "تصویر بنر را انتخاب کنید." });
     }
     const saved = await saveHomepageBanner(await part.toBuffer(), kind);
+    if (kind === "row") return { url: saved.url };
     const column = kind === "desktop" ? "homepage_banner_desktop_url" : "homepage_banner_mobile_url";
     try {
       const previous = await pool.query<Record<string, string | null>>(

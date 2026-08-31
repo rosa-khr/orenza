@@ -78,7 +78,7 @@ export const registerStoreRoutes = (
 
   app.get("/api/v1/homepage-banners/:fileName", async (request, reply) => {
     const { fileName } = z.object({
-      fileName: z.string().regex(/^homepage-banner-(?:desktop|mobile)-[0-9a-f-]+\.(?:jpg|png|webp)$/)
+      fileName: z.string().regex(/^homepage-banner-(?:desktop|mobile|row)-[0-9a-f-]+\.(?:jpg|png|webp)$/)
     }).parse(request.params);
     const banner = openHomepageBanner(fileName);
     if (!banner) return reply.code(404).send({ error: "بنر پیدا نشد." });

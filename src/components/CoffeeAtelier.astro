@@ -35,6 +35,12 @@ const roastImages: Record<number, string> = {
   <div class="coffee-atelier" data-builder>
     <div class="atelier-form">
       <section class="config-section is-ready is-current" data-config-section="blend">
+        <div class="step-flow-actions">
+          <button class="step-next-button" type="button" data-step-next disabled>
+            <span>بعدی</span>
+            <Icon name="arrow" size={15} />
+          </button>
+        </div>
         <header class="config-heading">
           <span>BLEND PROFILE</span>
           <div><h3>انتخاب قهوه</h3><p>ترکیبی را انتخاب کن که به فنجان دلخواهت نزدیک‌تر است.</p></div>
@@ -68,6 +74,16 @@ const roastImages: Record<number, string> = {
       </section>
 
       <section class="config-section is-locked" data-config-section="roast" aria-disabled="true">
+        <div class="step-flow-actions">
+          <button class="step-back-button" type="button" data-step-back>
+            <Icon name="arrow" size={15} />
+            <span>بازگشت</span>
+          </button>
+          <button class="step-next-button" type="button" data-step-next disabled>
+            <span>بعدی</span>
+            <Icon name="arrow" size={15} />
+          </button>
+        </div>
         <header class="config-heading">
           <span>ROAST PROFILE</span>
           <div><h3>پروفایل رُست</h3><p>رُستی را انتخاب کن که به طعم تو نزدیک‌تر است.</p></div>
@@ -85,17 +101,30 @@ const roastImages: Record<number, string> = {
                   loading="lazy"
                   decoding="async"
                 />
-                <span class="roast-intensity" aria-hidden="true">
-                  <i></i>
+              </span>
+              <span class="roast-copy"><small>{roast.en}</small><strong>{roast.title}</strong><em>{roast.note}</em></span>
+              <span class="coffee-metrics roast-metrics roast-level-meter">
+                <span class="metric">
+                  <span><i>درجه رُست</i><small>ROAST LEVEL</small></span>
+                  <b><i style={`--metric: ${roast.level * 25}%`}></i></b>
                 </span>
               </span>
-              <span><small>{roast.en}</small><strong>{roast.title}</strong><em>{roast.note}</em></span>
             </button>
           ))}
         </div>
       </section>
 
       <section class="config-section is-locked" data-config-section="grind" aria-disabled="true">
+        <div class="step-flow-actions">
+          <button class="step-back-button" type="button" data-step-back>
+            <Icon name="arrow" size={15} />
+            <span>بازگشت</span>
+          </button>
+          <button class="step-next-button" type="button" data-step-next disabled>
+            <span>بعدی</span>
+            <Icon name="arrow" size={15} />
+          </button>
+        </div>
         <header class="config-heading">
           <span>COFFEE FORM</span>
           <div><h3>دان یا آسیاب‌شده</h3><p>دان کامل برای آسیاب تازه؛ آسیاب‌شده برای دم‌آوری بی‌دردسر.</p></div>
@@ -113,35 +142,47 @@ const roastImages: Record<number, string> = {
       </section>
 
       <section class="config-section device-section is-locked" data-config-section="device" aria-disabled="true" hidden>
+        <div class="step-flow-actions">
+          <button class="step-back-button" type="button" data-step-back>
+            <Icon name="arrow" size={15} />
+            <span>بازگشت</span>
+          </button>
+          <button class="step-next-button" type="button" data-step-next disabled>
+            <span>بعدی</span>
+            <Icon name="arrow" size={15} />
+          </button>
+        </div>
         <header class="config-heading">
           <span>BREW METHOD</span>
           <div><h3>روش دم‌آوری</h3><p>دستگاهت را انتخاب کن تا درجه آسیاب مشخص شود.</p></div>
         </header>
         <div class="device-picker" data-device-picker>
-          <label class="device-picker-search">
-            <Icon name="search" size={20} />
-            <input type="search" placeholder="جست‌وجوی دستگاه یا روش دم‌آوری" autocomplete="off" aria-label="جست‌وجوی دستگاه یا روش دم‌آوری" aria-controls="device-picker-results" data-device-picker-input />
-            <span data-device-picker-count>{devices.length} گزینه</span>
-          </label>
           <div class="device-picker-results" id="device-picker-results" role="listbox" data-device-picker-results>
             {devices.map((device) => (
               <button
                 type="button"
                 role="option"
                 data-device-picker-option
+                data-device-other={device.id === "other" ? "true" : undefined}
                 data-device-value={device.title}
-                data-device-search={`${device.title} ${device.en} ${device.grindFa} ${device.grindEn}`}
               >
                 <span><strong>{device.title}</strong><small>{device.en}</small></span>
                 <em>{device.grindFa}<small>{device.grindEn}</small></em>
               </button>
             ))}
-            <p data-device-picker-empty hidden>دستگاهی با این مشخصات پیدا نشد.</p>
+          </div>
+          <div class="device-picker-custom" data-device-picker-custom hidden>
+            <label>
+              <span>نام دستگاه یا روش دم‌آوری</span>
+              <input type="text" placeholder="مثلاً کمکس، کلدبرو یا دستگاه دیگر" autocomplete="off" data-device-picker-custom-input />
+            </label>
+            <button type="button" data-device-picker-custom-submit>تایید</button>
           </div>
           <div class="device-picker-selection" data-device-picker-selection hidden>
             <span>انتخاب شما</span>
             <strong data-device-picker-selected>—</strong>
             <small data-device-picker-grind>—</small>
+            <button type="button" data-device-picker-edit hidden>ویرایش</button>
           </div>
         </div>
         <div class="device-options" hidden aria-hidden="true">
@@ -161,6 +202,16 @@ const roastImages: Record<number, string> = {
       </section>
 
       <section class="config-section is-locked" data-config-section="weight" aria-disabled="true">
+        <div class="step-flow-actions">
+          <button class="step-back-button" type="button" data-step-back>
+            <Icon name="arrow" size={15} />
+            <span>بازگشت</span>
+          </button>
+          <button class="step-next-button" type="button" data-step-next disabled>
+            <span>بعدی</span>
+            <Icon name="arrow" size={15} />
+          </button>
+        </div>
         <header class="config-heading">
           <span>PACK SIZE</span>
           <div><h3>وزن سفارش</h3><p>به‌اندازه مصرفت انتخاب کن تا قهوه تازه بماند.</p></div>
@@ -183,6 +234,12 @@ const roastImages: Record<number, string> = {
       </section>
 
       <section class="order-summary is-locked" data-config-section="summary" aria-disabled="true">
+        <div class="step-flow-actions">
+          <button class="step-back-button" type="button" data-step-back>
+            <Icon name="arrow" size={15} />
+            <span>بازگشت</span>
+          </button>
+        </div>
         <div class="summary-title">
           <span>ORDER REVIEW</span>
           <div>

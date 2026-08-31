@@ -25,8 +25,27 @@ type PublicSiteSettings = {
   homepageOgImageUrl: string;
   homepageBannerDesktopUrl: string | null;
   homepageBannerMobileUrl: string | null;
+  homepageBannerRows?: HomepageBannerRow[];
+  homepageBestSellersEnabled?: boolean;
+  homepageDiscountsEnabled?: boolean;
   searchIndexingEnabled: boolean;
   scripts: PublicServiceScript[];
+};
+
+type HomepageBannerRow = {
+  id: "aboveDiscount" | "aboveBest";
+  columns: number;
+  isActive: boolean;
+  items: {
+    imageUrl: string;
+    alt?: string;
+    href?: string;
+    seoTitle?: string;
+    seoDescription?: string;
+    geoSummary?: string;
+    ieoIntent?: string;
+    isActive: boolean;
+  }[];
 };
 
 const setText = (selector: string, value: string) => {
@@ -85,6 +104,50 @@ const applyServiceScripts = (scripts: PublicServiceScript[]) => {
   });
 };
 
+const applyHomepageBannerRows = (rows: HomepageBannerRow[] = []) => {
+  document.querySelectorAll<HTMLElement>("[data-home-banner-row]").forEach((root) => {
+    const row = rows.find((item) => item.id === root.dataset.homeBannerRow);
+    const activeItems = row?.items?.filter((item) => item.isActive && item.imageUrl) || [];
+    root.replaceChildren();
+    root.hidden = !row?.isActive || activeItems.length === 0;
+    if (root.hidden) return;
+    root.dataset.bannerCount = String(activeItems.length);
+    root.style.setProperty("--home-banner-columns", String(Math.min(4, Math.max(1, Number(row?.columns) || 3))));
+    activeItems.forEach((item) => {
+      const image = document.createElement("img");
+      image.src = item.imageUrl;
+      image.alt = item.alt || "";
+      if (item.seoTitle) image.title = item.seoTitle;
+      image.loading = "lazy";
+      image.decoding = "async";
+      const wrapper = item.href ? document.createElement("a") : document.createElement("div");
+      wrapper.className = "home-banner-card";
+      wrapper.dataset.seoTitle = item.seoTitle || item.alt || "";
+      wrapper.dataset.seoDescription = item.seoDescription || "";
+      wrapper.dataset.geoSummary = item.geoSummary || "";
+      wrapper.dataset.ieoIntent = item.ieoIntent || "";
+      wrapper.setAttribute("aria-label", item.seoTitle || item.alt || "بنر اورنزا");
+      if (wrapper instanceof HTMLAnchorElement) {
+        wrapper.href = item.href || "#";
+        wrapper.title = item.seoTitle || item.alt || "";
+      }
+      wrapper.append(image);
+      root.append(wrapper);
+    });
+  });
+};
+
+const applyHomepageProductRails = (settings: PublicSiteSettings) => {
+  const bestEnabled = settings.homepageBestSellersEnabled !== false;
+  const discountEnabled = settings.homepageDiscountsEnabled !== false;
+  document.documentElement.dataset.homepageBestSellersEnabled = String(bestEnabled);
+  document.documentElement.dataset.homepageDiscountsEnabled = String(discountEnabled);
+  const bestRail = document.querySelector<HTMLElement>('[data-product-rail="best"]');
+  const discountRail = document.querySelector<HTMLElement>('[data-product-rail="discount"]');
+  if (!bestEnabled && bestRail) bestRail.hidden = true;
+  if (!discountEnabled && discountRail) discountRail.hidden = true;
+};
+
 const applySettings = (settings: PublicSiteSettings) => {
   setText("[data-site-brand-name]", settings.brandName);
   setText("[data-site-brand-name-en]", settings.brandNameEn);
@@ -128,10 +191,12 @@ const applySettings = (settings: PublicSiteSettings) => {
     setMeta("twitter:image", settings.homepageOgImageUrl);
   }
   if (!settings.searchIndexingEnabled) setMeta("robots", "noindex, nofollow, noarchive");
+  applyHomepageBannerRows(settings.homepageBannerRows);
+  applyHomepageProductRails(settings);
   applyServiceScripts(settings.scripts || []);
 };
 
-void fetch("/api/v1/site-settings", { headers: { Accept: "application/json" } })
+void fetch("/api/v1/site-settings", { cache: "no-store", headers: { Accept: "application/json" } })
   .then((response) => response.ok ? response.json() : Promise.reject(new Error("site settings unavailable")))
   .then((payload: { item: PublicSiteSettings }) => applySettings(payload.item))
   .catch(() => undefined);

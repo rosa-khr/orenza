@@ -1,5 +1,5 @@
 ---
-import { Save, ScrollText, Trash2, Upload } from "@lucide/astro";
+import { GripVertical, ImagePlus, Plus, Save, ScrollText, Trash2, Upload } from "@lucide/astro";
 import AdminShell from "../../components/admin/AdminShell.astro";
 ---
 
@@ -14,7 +14,14 @@ import AdminShell from "../../components/admin/AdminShell.astro";
   </a>
 
   <form class="admin-site-settings" data-admin-site-settings novalidate>
-    <section class="admin-card">
+    <nav class="admin-settings-menu" data-settings-menu aria-label="منوی تنظیمات سایت">
+      <button type="button" data-settings-group-target="general">تنظیمات کلی</button>
+      <button type="button" data-settings-group-target="homepage">هوم‌پیج</button>
+      <button type="button" data-settings-group-target="banners">بنرها</button>
+      <button type="button" data-settings-group-target="invoice">فاکتور</button>
+    </nav>
+
+    <section class="admin-card" data-settings-group="general">
       <header><span>GENERAL SETTINGS</span><h2>اطلاعات عمومی</h2><p>اطلاعاتی که در هویت برند و راه‌های ارتباطی نمایش داده می‌شود.</p></header>
       <div class="admin-form-grid">
         <label class="admin-field"><span>نام فارسی برند</span><input name="brandName" required minlength="2" /></label>
@@ -30,7 +37,7 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
-    <section class="admin-card">
+    <section class="admin-card" data-settings-group="general">
       <header><span>BRANDING & FOOTER</span><h2>هویت بصری و فوتر</h2><p>لوگو، favicon و متن‌های ثابت پایین صفحات.</p></header>
       <div class="admin-form-grid">
         <label class="admin-field"><span>آدرس لوگو</span><input name="logoUrl" type="url" dir="ltr" placeholder="https://... یا خالی" /></label>
@@ -41,7 +48,7 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
-    <section class="admin-card">
+    <section class="admin-card" data-settings-group="invoice">
       <header><span>OFFICIAL INVOICE</span><h2>اطلاعات فاکتور رسمی</h2><p>شناسه ملی و امضای فروشنده در تمام نسخه‌های چاپی فاکتور نمایش داده می‌شود.</p></header>
       <div class="admin-form-grid">
         <label class="admin-field">
@@ -71,7 +78,7 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
-    <section class="admin-card">
+    <section class="admin-card" data-settings-group="banners">
       <header><span>HOMEPAGE BANNERS</span><h2>بنر صفحه اصلی</h2><p>برای نمایش بهتر در هر دستگاه، بنر دسکتاپ و موبایل را جداگانه بارگذاری کنید.</p></header>
       <div class="admin-banner-guidance">
         <strong>راهنمای آماده‌سازی بنر</strong>
@@ -112,7 +119,85 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
-    <section class="admin-card">
+    <section class="admin-card" data-settings-group="banners">
+      <header><span>HOMEPAGE BANNER ROWS</span><h2>ردیف‌های بنر صفحه اصلی</h2><p>دو ردیف بنر قابل مدیریت برای نمایش قبل از بخش‌های شگفت‌انگیزها و پرطرفدارها.</p></header>
+      <div class="admin-banner-guidance">
+        <strong>چینش بنرها</strong>
+        <span>در دسکتاپ هر ردیف می‌تواند ۱، ۲، ۳ یا ۴ ستون داشته باشد؛ در موبایل همیشه دو بنر در هر ردیف نمایش داده می‌شود.</span>
+        <small>اگر فقط یک بنر فعال باشد، همان بنر کل عرض ردیف را می‌گیرد. برای تغییر ترتیب، کارت بنر را بکشید و جابه‌جا کنید.</small>
+        <div class="admin-banner-size-guide">
+          <b>ابعاد پیشنهادی آپلود</b>
+          <span>۱ بنر در ردیف: <strong dir="ltr">1920 × 520 px</strong></span>
+          <span>۲ ستون: <strong dir="ltr">940 × 520 px</strong></span>
+          <span>۳ ستون: <strong dir="ltr">620 × 520 px</strong></span>
+          <span>۴ ستون: <strong dir="ltr">460 × 520 px</strong></span>
+          <span>موبایل: <strong dir="ltr">720 × 520 px</strong> یا بزرگ‌تر</span>
+        </div>
+      </div>
+      <div class="admin-home-banner-rows">
+        <article class="admin-home-banner-row" data-home-banner-row-editor="aboveDiscount">
+          <header>
+            <div><strong>بالای شگفت‌انگیزها</strong><small>این ردیف قبل از بخش محصولات شگفت‌انگیز نمایش داده می‌شود.</small></div>
+            <label class="admin-switch"><input type="checkbox" data-home-banner-row-active /><span></span> نمایش ردیف</label>
+          </header>
+          <div class="admin-banner-row-controls">
+            <label class="admin-field"><span>تعداد ستون دسکتاپ</span><select data-home-banner-row-columns><option value="1">۱ ستون</option><option value="2">۲ ستون</option><option value="3">۳ ستون</option><option value="4">۴ ستون</option></select></label>
+            <button type="button" data-home-banner-add-item><Plus size={15} stroke-width={1.6} /> افزودن بنر</button>
+          </div>
+          <div class="admin-home-banner-items" data-home-banner-items></div>
+        </article>
+        <article class="admin-home-banner-row" data-home-banner-row-editor="aboveBest">
+          <header>
+            <div><strong>بالای پرطرفدارها</strong><small>این ردیف قبل از بخش پرفروش‌ترین‌ها/پرطرفدارها نمایش داده می‌شود.</small></div>
+            <label class="admin-switch"><input type="checkbox" data-home-banner-row-active /><span></span> نمایش ردیف</label>
+          </header>
+          <div class="admin-banner-row-controls">
+            <label class="admin-field"><span>تعداد ستون دسکتاپ</span><select data-home-banner-row-columns><option value="1">۱ ستون</option><option value="2">۲ ستون</option><option value="3">۳ ستون</option><option value="4">۴ ستون</option></select></label>
+            <button type="button" data-home-banner-add-item><Plus size={15} stroke-width={1.6} /> افزودن بنر</button>
+          </div>
+          <div class="admin-home-banner-items" data-home-banner-items></div>
+        </article>
+      </div>
+      <template data-home-banner-item-template>
+        <article class="admin-home-banner-item" draggable="true" data-home-banner-item>
+          <button type="button" class="admin-banner-drag" data-home-banner-drag aria-label="جابجایی بنر"><GripVertical size={16} stroke-width={1.6} /></button>
+          <div class="admin-banner-preview">
+            <img data-home-banner-item-preview hidden alt="پیش‌نمایش بنر" />
+            <span data-home-banner-item-placeholder>تصویر بنر انتخاب نشده است.</span>
+          </div>
+          <div class="admin-home-banner-item-fields">
+            <div class="admin-home-banner-item-top">
+              <label class="admin-switch"><input type="checkbox" data-home-banner-item-active /><span></span> نمایش بنر</label>
+              <button type="button" class="admin-remove-banner" data-home-banner-remove-item><Trash2 size={15} stroke-width={1.5} /> حذف</button>
+            </div>
+            <label class="admin-field"><span>متن جایگزین</span><input data-home-banner-item-alt /></label>
+            <label class="admin-field"><span>لینک بنر</span><input data-home-banner-item-href dir="ltr" placeholder="/products/ یا https://..." /></label>
+            <label class="admin-field"><span>عنوان SEO بنر</span><input data-home-banner-item-seo-title maxlength="160" /></label>
+            <label class="admin-field"><span>هدف IEO</span><input data-home-banner-item-ieo-intent maxlength="160" placeholder="مثلاً خرید قهوه اسپرسو تازه" /></label>
+            <label class="admin-field"><span>توضیح SEO بنر</span><textarea data-home-banner-item-seo-description maxlength="320"></textarea></label>
+            <label class="admin-field"><span>خلاصه GEO</span><textarea data-home-banner-item-geo-summary maxlength="500" placeholder="متن قابل فهم برای پاسخ‌های جست‌وجوی مولد"></textarea></label>
+            <label class="admin-upload-button">
+              <ImagePlus size={16} stroke-width={1.5} /> بارگذاری تصویر
+              <input type="file" accept="image/jpeg,image/png,image/webp" data-home-banner-item-input />
+            </label>
+          </div>
+        </article>
+      </template>
+    </section>
+
+    <section class="admin-card admin-indexing-setting" data-settings-group="homepage">
+      <header><span>HOMEPAGE PRODUCT RAILS</span><h2>نمایش نوارهای محصول صفحه اصلی</h2><p>نمایش یا عدم نمایش نوارهای پرطرفدارها و شگفت‌انگیزها در صفحه اول.</p></header>
+      <label>
+        <input type="checkbox" name="homepageBestSellersEnabled" />
+        <span><strong>نوار پرطرفدارها نمایش داده شود</strong><small>اگر خاموش باشد، کل بخش پرطرفدارها در صفحه اصلی مخفی می‌شود.</small></span>
+      </label>
+      <label>
+        <input type="checkbox" name="homepageDiscountsEnabled" />
+        <span><strong>نوار شگفت‌انگیزها نمایش داده شود</strong><small>اگر خاموش باشد، کل بخش تخفیف‌دارها در صفحه اصلی مخفی می‌شود.</small></span>
+      </label>
+    </section>
+
+    <section class="admin-card" data-settings-group="homepage">
       <header><span>HOMEPAGE SEO</span><h2>سئوی صفحه اصلی</h2><p>عنوان و توضیحات اصلی نتایج جست‌وجو و اشتراک‌گذاری اجتماعی.</p></header>
       <div class="admin-form-grid">
         <label class="admin-field wide"><span>عنوان SEO</span><input name="homepageSeoTitle" required minlength="10" maxlength="220" /></label>
@@ -122,7 +207,7 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
-    <section class="admin-card">
+    <section class="admin-card" data-settings-group="general">
       <header><span>AI CONTENT GENERATION</span><h2>تنظیمات تولید محتوا</h2><p>کلید سرویس برای تولید محتوا و تحلیل تصویر کلمات کلیدی؛ کلید به‌صورت رمزنگاری‌شده ذخیره می‌شود.</p></header>
       <div class="admin-form-grid">
         <label class="admin-field"><span>مدل OpenAI</span><select name="contentAiModel" required><option value="gpt-5.6-sol">GPT-5.6 Sol</option><option value="gpt-5.5">GPT-5.5 (با reasoning متوسط)</option><option value="gpt-5.4">GPT-5.4</option><option value="gpt-5.1">GPT-5.1</option><option value="gpt-5">GPT-5</option><option value="gpt-5-mini">GPT-5 mini</option><option value="gpt-5-nano">GPT-5 nano</option><option value="gpt-4.1">GPT-4.1</option><option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1-nano">GPT-4.1 nano</option><option value="o3">o3</option><option value="o4-mini">o4-mini</option></select></label>
@@ -136,7 +221,7 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
-    <section class="admin-card admin-indexing-setting">
+    <section class="admin-card admin-indexing-setting" data-settings-group="general">
       <header><span>SEARCH ENGINE INDEXING</span><h2>دسترسی موتورهای جست‌وجو</h2><p>غیرفعال‌کردن این گزینه، robots.txt و هدر noindex را هم‌زمان فعال می‌کند.</p></header>
       <label>
         <input type="checkbox" name="searchIndexingEnabled" />

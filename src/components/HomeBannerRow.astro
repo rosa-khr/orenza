@@ -1,0 +1,9 @@
+---
+interface Props {
+  slotId: "aboveDiscount" | "aboveBest";
+}
+
+const { slotId } = Astro.props;
+---
+
+<section class="home-banner-row" data-home-banner-row={slotId} hidden></section>

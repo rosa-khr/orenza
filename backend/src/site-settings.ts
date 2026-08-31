@@ -9,6 +9,8 @@ export const siteSettingsSelect = `
   footer_copyright,logo_url,favicon_url,homepage_seo_title,
   homepage_seo_description,homepage_seo_keywords,homepage_og_image_url,
   homepage_banner_desktop_url,homepage_banner_mobile_url,
+  homepage_banner_rows,
+  homepage_best_sellers_enabled,homepage_discounts_enabled,
   search_indexing_enabled,invoice_national_id,invoice_signature_url,updated_at`;
 
 const aiSettingsSecret = () => createHash("sha256")
@@ -68,11 +70,13 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       footer_description=$12,footer_copyright=$13,logo_url=$14,favicon_url=$15,
       homepage_seo_title=$16,homepage_seo_description=$17,homepage_seo_keywords=$18,
       homepage_og_image_url=$19,homepage_banner_desktop_url=$20,homepage_banner_mobile_url=$21,
-      search_indexing_enabled=$22,invoice_national_id=$23,
-      content_ai_api_key=CASE WHEN $24 <> '' THEN $24 ELSE content_ai_api_key END,
-      content_ai_model=$25,
-      content_ai_instructions=$26,content_ai_default_audience=$27,content_ai_default_tone=$28,
-      content_ai_default_length=$29,content_ai_default_language=$30,
+      homepage_banner_rows=$22,
+      homepage_best_sellers_enabled=$23,homepage_discounts_enabled=$24,
+      search_indexing_enabled=$25,invoice_national_id=$26,
+      content_ai_api_key=CASE WHEN $27 <> '' THEN $27 ELSE content_ai_api_key END,
+      content_ai_model=$28,
+      content_ai_instructions=$29,content_ai_default_audience=$30,content_ai_default_tone=$31,
+      content_ai_default_length=$32,content_ai_default_language=$33,
       updated_at=now()
      WHERE id=1 RETURNING ${siteSettingsSelect}`,
     [
@@ -81,6 +85,8 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       data.footerDescription, data.footerCopyright, data.logoUrl, data.faviconUrl,
       data.homepageSeoTitle, data.homepageSeoDescription, data.homepageSeoKeywords,
       data.homepageOgImageUrl, data.homepageBannerDesktopUrl || null, data.homepageBannerMobileUrl || null,
+      JSON.stringify(data.homepageBannerRows),
+      data.homepageBestSellersEnabled, data.homepageDiscountsEnabled,
       data.searchIndexingEnabled, data.invoiceNationalId,
       data.contentAiApiKey ? encryptSetting(data.contentAiApiKey) : "",
       data.contentAiModel || "gpt-5", data.contentAiInstructions || "از ادعای پزشکی یا اطلاعات ساختگی خودداری کن؛ محتوای کم‌حجم و ناقص تولید نکن؛ ساختار مقاله را با H1 و H2 و در صورت نیاز H3 ارائه کن؛ عنوان SEO و توضیحات متا را جداگانه بنویس.",

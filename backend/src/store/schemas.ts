@@ -13,6 +13,31 @@ const money = z.number().int().min(0).max(10_000_000_000);
 const slug = z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const optionalRichText = z.union([z.string().max(100_000), z.literal(""), z.null()])
   .transform((value) => sanitizeRichText(value));
+const homepageBannerRowSchema = z.object({
+  id: z.enum(["aboveDiscount", "aboveBest"]),
+  title: z.string().trim().min(2).max(80),
+  columns: z.number().int().min(1).max(4),
+  isActive: z.boolean().default(false),
+  items: z.array(z.object({
+    id: z.string().trim().min(6).max(80),
+    imageUrl: z.string().trim().min(1).max(500),
+    alt: z.string().trim().max(160).default(""),
+    href: z.union([z.string().url(), z.string().regex(/^\/[^\s]*$/), z.literal("")]).default(""),
+    seoTitle: z.string().trim().max(160).default(""),
+    seoDescription: z.string().trim().max(320).default(""),
+    geoSummary: z.string().trim().max(500).default(""),
+    ieoIntent: z.string().trim().max(160).default(""),
+    isActive: z.boolean().default(true)
+  })).max(12).default([])
+}).superRefine((data, context) => {
+  if (data.items.length > data.columns) {
+    context.addIssue({
+      code: "custom",
+      message: "تعداد بنرهای هر ردیف نمی‌تواند بیشتر از تعداد ستون انتخابی باشد.",
+      path: ["items"]
+    });
+  }
+});
 
 export const categorySchema = z.object({
   title: z.string().trim().min(2).max(160),
@@ -149,6 +174,9 @@ export const siteSettingsSchema = z.object({
   homepageOgImageUrl: z.string().trim().min(1).max(500),
   homepageBannerDesktopUrl: z.string().trim().max(500).nullable().optional(),
   homepageBannerMobileUrl: z.string().trim().max(500).nullable().optional(),
+  homepageBannerRows: z.array(homepageBannerRowSchema).length(2),
+  homepageBestSellersEnabled: z.boolean().default(true),
+  homepageDiscountsEnabled: z.boolean().default(true),
   searchIndexingEnabled: z.boolean(),
   invoiceNationalId: z.string().trim().min(10).max(20),
   contentAiApiKey: z.string().trim().max(500).optional(),

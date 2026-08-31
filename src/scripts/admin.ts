@@ -2011,6 +2011,9 @@ type SiteSettingsPayload = {
   homepageOgImageUrl: string;
   homepageBannerDesktopUrl: string | null;
   homepageBannerMobileUrl: string | null;
+  homepageBannerRows: HomepageBannerRow[];
+  homepageBestSellersEnabled: boolean;
+  homepageDiscountsEnabled: boolean;
   searchIndexingEnabled: boolean;
   invoiceNationalId: string;
   invoiceSignatureUrl: string | null;
@@ -2024,17 +2027,73 @@ type SiteSettingsPayload = {
   contentAiDefaultLanguage: "fa" | "en";
 };
 
+type HomepageBannerRowId = "aboveDiscount" | "aboveBest";
+type HomepageBannerItem = {
+  id: string;
+  imageUrl: string;
+  alt: string;
+  href: string;
+  seoTitle: string;
+  seoDescription: string;
+  geoSummary: string;
+  ieoIntent: string;
+  isActive: boolean;
+};
+type HomepageBannerRow = {
+  id: HomepageBannerRowId;
+  title: string;
+  columns: number;
+  isActive: boolean;
+  items: HomepageBannerItem[];
+};
+
+const defaultHomepageBannerRows = (): HomepageBannerRow[] => [
+  { id: "aboveDiscount", title: "بالای شگفت‌انگیزها", columns: 3, isActive: false, items: [] },
+  { id: "aboveBest", title: "بالای پرطرفدارها", columns: 3, isActive: false, items: [] }
+];
+
+const maxHomepageBannerItems = (columns: number) =>
+  Math.min(4, Math.max(1, Number(columns) || 3));
+
 const initSiteSettings = async () => {
   const form = document.querySelector<HTMLFormElement>("[data-admin-site-settings]");
   if (!form) return;
   const state = form.querySelector<HTMLElement>("[data-site-settings-state]");
   const input = (name: string) =>
     form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
+  const settingsButtons = Array.from(form.querySelectorAll<HTMLButtonElement>("[data-settings-group-target]"));
+  const settingsSections = Array.from(form.querySelectorAll<HTMLElement>("[data-settings-group]"));
+  const settingsGroups = new Set(settingsButtons.map((button) => button.dataset.settingsGroupTarget || ""));
+  const showSettingsGroup = (group: string, updateHash = false) => {
+    const nextGroup = settingsGroups.has(group) ? group : "general";
+    settingsButtons.forEach((button) => {
+      const isActive = button.dataset.settingsGroupTarget === nextGroup;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
+    });
+    settingsSections.forEach((section) => {
+      section.hidden = section.dataset.settingsGroup !== nextGroup;
+    });
+    if (updateHash) {
+      history.replaceState(null, "", `#settings-${nextGroup}`);
+    }
+  };
   const signatureInput = form.querySelector<HTMLInputElement>("[data-invoice-signature-input]");
   const signaturePreview = form.querySelector<HTMLImageElement>("[data-invoice-signature-preview]");
   const signaturePlaceholder = form.querySelector<HTMLElement>("[data-invoice-signature-placeholder]");
   const signatureRemove = form.querySelector<HTMLButtonElement>("[data-invoice-signature-remove]");
   const bannerUrls: Record<"desktop" | "mobile", string | null> = { desktop: null, mobile: null };
+  const bannerRows = new Map<HomepageBannerRowId, HomepageBannerRow>(
+    defaultHomepageBannerRows().map((row) => [row.id, row])
+  );
+  let isRenderingBannerRows = false;
+  settingsButtons.forEach((button) => {
+    button.addEventListener("click", () => showSettingsGroup(button.dataset.settingsGroupTarget || "general", true));
+  });
+  window.addEventListener("hashchange", () => {
+    showSettingsGroup(window.location.hash.replace("#settings-", ""));
+  });
+  showSettingsGroup(window.location.hash.replace("#settings-", ""));
   const showSignature = (url: string | null) => {
     if (signaturePreview) {
       signaturePreview.hidden = !url;
@@ -2058,6 +2117,166 @@ const initSiteSettings = async () => {
     if (placeholder) placeholder.hidden = Boolean(url);
     if (remove) remove.hidden = !url;
   };
+  const itemTemplate = form.querySelector<HTMLTemplateElement>("[data-home-banner-item-template]");
+  const renderBannerRows = () => {
+    isRenderingBannerRows = true;
+    form.querySelectorAll<HTMLElement>("[data-home-banner-row-editor]").forEach((editor) => {
+      const rowId = editor.dataset.homeBannerRowEditor as HomepageBannerRowId;
+      const row = bannerRows.get(rowId);
+      if (!row || !itemTemplate) return;
+      const active = editor.querySelector<HTMLInputElement>("[data-home-banner-row-active]");
+      const columns = editor.querySelector<HTMLSelectElement>("[data-home-banner-row-columns]");
+      const addButton = editor.querySelector<HTMLButtonElement>("[data-home-banner-add-item]");
+      const itemsRoot = editor.querySelector<HTMLElement>("[data-home-banner-items]");
+      if (active) active.checked = row.isActive;
+      if (columns) {
+        columns.value = String(row.columns);
+        columns.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      if (addButton) {
+        const maxItems = maxHomepageBannerItems(row.columns);
+        addButton.disabled = row.items.length >= maxItems;
+        addButton.title = addButton.disabled ? `سقف این ردیف ${maxItems} بنر است.` : "";
+      }
+      if (!itemsRoot) return;
+      itemsRoot.replaceChildren();
+      row.items.forEach((item) => {
+        const fragment = itemTemplate.content.cloneNode(true) as DocumentFragment;
+        const element = fragment.querySelector<HTMLElement>("[data-home-banner-item]");
+        if (!element) return;
+        element.dataset.bannerId = item.id;
+        const preview = element.querySelector<HTMLImageElement>("[data-home-banner-item-preview]");
+        const placeholder = element.querySelector<HTMLElement>("[data-home-banner-item-placeholder]");
+        const itemActive = element.querySelector<HTMLInputElement>("[data-home-banner-item-active]");
+        const alt = element.querySelector<HTMLInputElement>("[data-home-banner-item-alt]");
+        const href = element.querySelector<HTMLInputElement>("[data-home-banner-item-href]");
+        const seoTitle = element.querySelector<HTMLInputElement>("[data-home-banner-item-seo-title]");
+        const seoDescription = element.querySelector<HTMLTextAreaElement>("[data-home-banner-item-seo-description]");
+        const geoSummary = element.querySelector<HTMLTextAreaElement>("[data-home-banner-item-geo-summary]");
+        const ieoIntent = element.querySelector<HTMLInputElement>("[data-home-banner-item-ieo-intent]");
+        const fileInput = element.querySelector<HTMLInputElement>("[data-home-banner-item-input]");
+        const removeItem = element.querySelector<HTMLButtonElement>("[data-home-banner-remove-item]");
+        if (preview) {
+          preview.hidden = !item.imageUrl;
+          if (item.imageUrl) preview.src = `${item.imageUrl}?v=${Date.now()}`;
+          else preview.removeAttribute("src");
+        }
+        if (placeholder) placeholder.hidden = Boolean(item.imageUrl);
+        if (itemActive) itemActive.checked = item.isActive;
+        if (alt) alt.value = item.alt || "";
+        if (href) href.value = item.href || "";
+        if (seoTitle) seoTitle.value = item.seoTitle || "";
+        if (seoDescription) seoDescription.value = item.seoDescription || "";
+        if (geoSummary) geoSummary.value = item.geoSummary || "";
+        if (ieoIntent) ieoIntent.value = item.ieoIntent || "";
+        itemActive?.addEventListener("change", () => { item.isActive = itemActive.checked; });
+        alt?.addEventListener("input", () => { item.alt = alt.value; });
+        href?.addEventListener("input", () => { item.href = href.value; });
+        seoTitle?.addEventListener("input", () => { item.seoTitle = seoTitle.value; });
+        seoDescription?.addEventListener("input", () => { item.seoDescription = seoDescription.value; });
+        geoSummary?.addEventListener("input", () => { item.geoSummary = geoSummary.value; });
+        ieoIntent?.addEventListener("input", () => { item.ieoIntent = ieoIntent.value; });
+        fileInput?.addEventListener("change", async () => {
+          const file = fileInput.files?.[0];
+          if (!file) return;
+          if (file.size > 5 * 1024 * 1024) {
+            fileInput.value = "";
+            toast("حجم بنر نباید بیشتر از ۵ مگابایت باشد.", "error");
+            return;
+          }
+          const body = new FormData();
+          body.append("banner", file);
+          fileInput.disabled = true;
+          if (state) state.textContent = "در حال بارگذاری تصویر بنر ردیفی…";
+          try {
+            const result = await api<{ url: string }>("/api/v1/admin/site-settings/homepage-banner/row", { method: "POST", body });
+            item.imageUrl = result.url;
+            renderBannerRows();
+            toast("تصویر بنر بارگذاری شد.");
+            if (state) state.textContent = "برای ثبت چینش جدید، تنظیمات را ذخیره کنید.";
+          } catch (error) {
+            toast(error instanceof Error ? error.message : "بارگذاری بنر انجام نشد.", "error");
+          } finally {
+            fileInput.disabled = false;
+            fileInput.value = "";
+          }
+        });
+        removeItem?.addEventListener("click", async () => {
+          if (!await askConfirm("حذف بنر", "این بنر از ردیف حذف شود؟", "حذف")) return;
+          row.items = row.items.filter((candidate) => candidate.id !== item.id);
+          renderBannerRows();
+        });
+        element.addEventListener("dragstart", (event) => {
+          event.dataTransfer?.setData("text/plain", item.id);
+          element.classList.add("is-dragging");
+        });
+        element.addEventListener("dragend", () => element.classList.remove("is-dragging"));
+        element.addEventListener("dragover", (event) => event.preventDefault());
+        element.addEventListener("drop", (event) => {
+          event.preventDefault();
+          const draggedId = event.dataTransfer?.getData("text/plain");
+          if (!draggedId || draggedId === item.id) return;
+          const from = row.items.findIndex((candidate) => candidate.id === draggedId);
+          const to = row.items.findIndex((candidate) => candidate.id === item.id);
+          if (from < 0 || to < 0) return;
+          const [moved] = row.items.splice(from, 1);
+          row.items.splice(to, 0, moved);
+          renderBannerRows();
+        });
+        itemsRoot.append(element);
+      });
+    });
+    isRenderingBannerRows = false;
+  };
+  const collectBannerRows = () => [...bannerRows.values()].map((row) => ({
+    ...row,
+    columns: maxHomepageBannerItems(row.columns),
+    items: row.items
+      .filter((item) => item.imageUrl)
+      .slice(0, maxHomepageBannerItems(row.columns))
+  }));
+  form.querySelectorAll<HTMLElement>("[data-home-banner-row-editor]").forEach((editor) => {
+    const rowId = editor.dataset.homeBannerRowEditor as HomepageBannerRowId;
+    editor.querySelector<HTMLInputElement>("[data-home-banner-row-active]")?.addEventListener("change", (event) => {
+      const row = bannerRows.get(rowId);
+      if (row) row.isActive = (event.currentTarget as HTMLInputElement).checked;
+    });
+    editor.querySelector<HTMLSelectElement>("[data-home-banner-row-columns]")?.addEventListener("change", (event) => {
+      const row = bannerRows.get(rowId);
+      const select = event.currentTarget as HTMLSelectElement;
+      if (isRenderingBannerRows) return;
+      if (!row) return;
+      const nextColumns = Number(select.value);
+      if (row.items.length > nextColumns) {
+        row.items = row.items.slice(0, nextColumns);
+        toast(`تعداد بنرهای این ردیف به ${nextColumns} عدد محدود شد.`);
+      }
+      row.columns = nextColumns;
+      if (state) state.textContent = "برای اعمال تغییر تعداد بنرها در سایت، ذخیره تنظیمات را بزنید.";
+      renderBannerRows();
+    });
+    editor.querySelector<HTMLButtonElement>("[data-home-banner-add-item]")?.addEventListener("click", () => {
+      const row = bannerRows.get(rowId);
+      if (!row) return;
+      const maxItems = maxHomepageBannerItems(row.columns);
+      if (row.items.length >= maxItems) {
+        toast(`برای این ردیف حداکثر ${maxItems} بنر می‌توانید ثبت کنید.`, "error");
+        return;
+      }
+      row.items.push({
+        id: crypto.randomUUID(),
+        imageUrl: "",
+        alt: "",
+        href: "",
+        seoTitle: "",
+        seoDescription: "",
+        geoSummary: "",
+        ieoIntent: "",
+        isActive: true
+      });
+      renderBannerRows();
+    });
+  });
   try {
     const { item } = await api<{ item: SiteSettingsPayload }>("/api/v1/admin/site-settings");
     Object.entries(item).forEach(([key, value]) => {
@@ -2072,6 +2291,22 @@ const initSiteSettings = async () => {
     showSignature(item.invoiceSignatureUrl);
     showBanner("desktop", item.homepageBannerDesktopUrl);
     showBanner("mobile", item.homepageBannerMobileUrl);
+    const incomingRows = Array.isArray(item.homepageBannerRows) ? item.homepageBannerRows : [];
+    defaultHomepageBannerRows().forEach((fallback) => {
+      const incoming = incomingRows.find((row) => row.id === fallback.id);
+      bannerRows.set(fallback.id, {
+        ...fallback,
+        ...incoming,
+        id: fallback.id,
+        title: fallback.title,
+        columns: maxHomepageBannerItems(Number(incoming?.columns ?? fallback.columns)),
+        isActive: Boolean(incoming?.isActive),
+        items: Array.isArray(incoming?.items)
+          ? incoming.items.slice(0, maxHomepageBannerItems(Number(incoming?.columns ?? fallback.columns)))
+          : []
+      });
+    });
+    renderBannerRows();
     const aiKeyState = form.querySelector<HTMLElement>("[data-ai-key-state]");
     if (aiKeyState) aiKeyState.textContent = item.contentAiKeyConfigured ? "کلید فعلی ثبت شده است؛ برای تغییر، کلید جدید وارد کنید." : "هنوز کلیدی ثبت نشده است.";
     if (state) state.textContent = "تنظیمات آماده و قابل ویرایش است.";
@@ -2198,6 +2433,9 @@ const initSiteSettings = async () => {
           homepageOgImageUrl: input("homepageOgImageUrl").value,
           homepageBannerDesktopUrl: bannerUrls.desktop,
           homepageBannerMobileUrl: bannerUrls.mobile,
+          homepageBannerRows: collectBannerRows(),
+          homepageBestSellersEnabled: (input("homepageBestSellersEnabled") as HTMLInputElement).checked,
+          homepageDiscountsEnabled: (input("homepageDiscountsEnabled") as HTMLInputElement).checked,
           searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked,
           invoiceNationalId: input("invoiceNationalId").value,
           contentAiApiKey: input("contentAiApiKey").value,
