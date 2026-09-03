@@ -8,19 +8,38 @@ const roastImages: Record<number, string> = {
   3: "/images/roast-profiles/medium-dark.webp",
   4: "/images/roast-profiles/dark.webp"
 };
+
+const robustaShare = (blend: typeof blends[number]) => {
+  if (blend.en === "HOUSE BALANCE") return 50;
+  const percent = Number(blend.en.match(/\d+/)?.[0] || 0);
+  return blend.en.includes("ROBUSTA") ? percent : 100 - percent;
+};
+
+const blendLevels = [...blends].sort((first, second) =>
+  first.caffeine - second.caffeine ||
+  robustaShare(first) - robustaShare(second) ||
+  first.body - second.body
+);
+
+const initialBlend = blendLevels[0];
+const initialRoast = roasts[0];
+const grindLevels = devices
+  .filter((device) => device.id !== "other")
+  .sort((first, second) => first.grind - second.grind);
+const initialGrindLevel = grindLevels[0];
 ---
 
 <section class="builder-section atelier-section" id="coffee-builder" aria-labelledby="atelier-title">
   <header class="builder-header atelier-header">
     <p class="eyebrow">ORENZA COFFEE ATELIER</p>
     <h2 id="atelier-title">سفارش اختصاصی قهوه</h2>
-    <p>قهوه، رُست و فرم مناسب دستگاهت را انتخاب کن؛ قیمت همان لحظه محاسبه می‌شود.</p>
+    <p>قهوه‌ات را بر اساس ذائقه، روش دم‌آوری و مقدار مصرفت بساز؛ ما آن را تازه آماده می‌کنیم و پیش از ارسال جزئیات سفارش را با تو هماهنگ می‌کنیم.</p>
     <div class="atelier-meta" aria-label="اطلاعات فرایند سفارش">
-      <span>چند قدم تا فنجان تو</span>
+      <span>انتخاب مرحله‌به‌مرحله</span>
       <i aria-hidden="true"></i>
-      <span>پرداخت پس از مرور سفارش</span>
+      <span>مرور دقیق پیش از پرداخت</span>
       <i aria-hidden="true"></i>
-      <span>هماهنگی نهایی در پیام‌رسان</span>
+      <span>آماده‌سازی تازه برای سفارش شما</span>
     </div>
   </header>
 
@@ -43,9 +62,74 @@ const roastImages: Record<number, string> = {
         </div>
         <header class="config-heading">
           <span>BLEND PROFILE</span>
-          <div><h3>انتخاب قهوه</h3><p>ترکیبی را انتخاب کن که به فنجان دلخواهت نزدیک‌تر است.</p></div>
+          <div><h3>میزان کافئین</h3><p>اسلایدر را از راست به چپ ببر تا کافئین و قدرت فنجان بیشتر شود.</p></div>
         </header>
-        <div class="blend-options">
+        <div class="blend-slider-panel" data-blend-slider>
+          <div class="blend-slider-guide">
+            <span>راهنما</span>
+            <strong>با حرکت از راست به چپ، روبوستا و کافئین بیشتر می‌شود.</strong>
+          </div>
+          <div class="blend-slider-shell">
+            <div class="blend-slider-readout" aria-live="polite">
+              <small data-blend-en>{initialBlend.en}</small>
+              <strong data-blend-title>{initialBlend.title}</strong>
+              <em data-blend-note>{initialBlend.note}</em>
+              <b data-blend-taste>{initialBlend.taste}</b>
+            </div>
+            <label class="blend-range-label" for="blend-caffeine-range">درجه کافئین</label>
+            <input
+              id="blend-caffeine-range"
+              class="blend-caffeine-range"
+              type="range"
+              min="0"
+              max={blendLevels.length - 1}
+              step="1"
+              value="0"
+              data-blend-range
+              aria-describedby="blend-slider-help"
+            />
+            <div class="blend-slider-scale" aria-hidden="true">
+              <span>ملایم‌تر</span>
+              <span>پرکافئین‌تر</span>
+            </div>
+            <p id="blend-slider-help">هر توقف اسلایدر اطلاعات همان ترکیب را نشان می‌دهد.</p>
+          </div>
+          <div class="blend-slider-metrics">
+            {[
+              ["کافئین", "CAFFEINE", "caffeine", initialBlend.caffeine],
+              ["بادی", "BODY", "body", initialBlend.body],
+              ["اسیدیته", "ACIDITY", "acidity", initialBlend.acidity],
+              ["کِرما", "CREMA", "crema", initialBlend.crema]
+            ].map(([label, en, key, value]) => (
+              <span class="blend-slider-metric">
+                <span><i>{label}</i><small>{en}</small></span>
+                <b><i data-blend-metric={key} style={`--metric: ${Number(value) * 20}%`}></i></b>
+              </span>
+            ))}
+          </div>
+          <div class="blend-slider-steps" aria-label="سطح‌های کافئین">
+            {blendLevels.map((blend, index) => (
+              <button
+                class={index === 0 ? "is-active" : ""}
+                type="button"
+                data-blend-slider-step
+                data-index={index}
+                data-target-value={blend.title}
+                data-target-en={blend.en}
+                data-note={blend.note}
+                data-taste={blend.taste}
+                data-caffeine={blend.caffeine}
+                data-body={blend.body}
+                data-acidity={blend.acidity}
+                data-crema={blend.crema}
+              >
+                <span>{index + 1}</span>
+                <b>{blend.title}</b>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div class="blend-options is-slider-source">
           {blends.map((blend) => (
             <button class="blend-option" type="button" data-choice="blend" data-value={blend.title} data-en={blend.en} data-fallback-product>
               <span class="option-radio"></span>
@@ -86,9 +170,60 @@ const roastImages: Record<number, string> = {
         </div>
         <header class="config-heading">
           <span>ROAST PROFILE</span>
-          <div><h3>پروفایل رُست</h3><p>رُستی را انتخاب کن که به طعم تو نزدیک‌تر است.</p></div>
+          <div><h3>درجه رُست</h3><p>اسلایدر را از راست به چپ ببر تا رُست تیره‌تر و بادی بیشتر شود.</p></div>
         </header>
-        <div class="roast-options">
+        <div class="blend-slider-panel profile-slider-panel" data-roast-slider>
+          <div class="blend-slider-guide">
+            <span>راهنما</span>
+            <strong>با حرکت از راست به چپ، درجه رُست از روشن به تیره می‌رسد.</strong>
+          </div>
+          <div class="blend-slider-shell">
+            <div class="blend-slider-readout profile-slider-readout" aria-live="polite">
+              <span class="profile-slider-visual">
+                <img data-roast-image src={roastImages[initialRoast.level]} alt={`دانه قهوه با رُست ${initialRoast.title}`} width="180" height="180" loading="lazy" />
+              </span>
+              <small data-roast-en>{initialRoast.en}</small>
+              <strong data-roast-title>{initialRoast.title}</strong>
+              <em data-roast-note>{initialRoast.note}</em>
+            </div>
+            <label class="blend-range-label" for="roast-level-range">درجه رُست</label>
+            <input
+              id="roast-level-range"
+              class="blend-caffeine-range"
+              type="range"
+              min="0"
+              max={roasts.length - 1}
+              step="1"
+              value="0"
+              data-roast-range
+              aria-describedby="roast-slider-help"
+            />
+            <div class="blend-slider-scale" aria-hidden="true">
+              <span>روشن‌تر</span>
+              <span>تیره‌تر</span>
+            </div>
+            <p id="roast-slider-help">هر توقف اسلایدر اطلاعات همان رُست را نشان می‌دهد.</p>
+          </div>
+          <div class="blend-slider-steps" aria-label="درجه‌های رُست">
+            {roasts.map((roast, index) => (
+              <button
+                class={index === 0 ? "is-active" : ""}
+                type="button"
+                data-roast-slider-step
+                data-index={index}
+                data-target-value={roast.title}
+                data-target-en={roast.en}
+                data-note={roast.note}
+                data-level={roast.level}
+                data-image={roastImages[roast.level]}
+              >
+                <span>{index + 1}</span>
+                <b>{roast.title}</b>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div class="roast-options is-slider-source">
           {roasts.map((roast) => (
             <button class={`roast-option roast-option-level-${roast.level}`} type="button" data-choice="roast" data-value={roast.title} data-en={roast.en} data-roast-level={roast.level}>
               <span class="roast-card-visual">
@@ -154,9 +289,66 @@ const roastImages: Record<number, string> = {
         </div>
         <header class="config-heading">
           <span>BREW METHOD</span>
-          <div><h3>روش دم‌آوری</h3><p>دستگاهت را انتخاب کن تا درجه آسیاب مشخص شود.</p></div>
+          <div><h3>درجه آسیاب</h3><p>اسلایدر را از راست به چپ ببر تا آسیاب از ریز به درشت برسد.</p></div>
         </header>
-        <div class="device-picker" data-device-picker>
+        <div class="blend-slider-panel profile-slider-panel" data-grind-slider>
+          <div class="blend-slider-guide">
+            <span>راهنما</span>
+            <strong>با حرکت از راست به چپ، درجه آسیاب درشت‌تر می‌شود و روش مناسبش نمایش داده می‌شود.</strong>
+          </div>
+          <div class="blend-slider-shell">
+            <div class="blend-slider-readout profile-slider-readout grind-slider-readout" aria-live="polite">
+              <small data-grind-method-en>{initialGrindLevel.en}</small>
+              <strong data-grind-method-title>{initialGrindLevel.title}</strong>
+              <em data-grind-method-fa>{initialGrindLevel.grindFa}</em>
+              <b data-grind-method-en-size>{initialGrindLevel.grindEn}</b>
+            </div>
+            <label class="blend-range-label" for="grind-level-range">درجه آسیاب</label>
+            <input
+              id="grind-level-range"
+              class="blend-caffeine-range"
+              type="range"
+              min="0"
+              max={grindLevels.length - 1}
+              step="1"
+              value="0"
+              data-grind-range
+              aria-describedby="grind-slider-help"
+            />
+            <div class="blend-slider-scale" aria-hidden="true">
+              <span>ریزتر</span>
+              <span>درشت‌تر</span>
+            </div>
+            <p id="grind-slider-help">هر توقف اسلایدر روش دم‌آوری و اندازه آسیاب مناسب را نشان می‌دهد.</p>
+            <label class="grind-size-custom">
+              <span>روش دم‌آوری</span>
+              <input type="text" placeholder="اگر در اسلایدر نیست، اینجا بنویس" data-grind-method-custom-input />
+            </label>
+            <label class="grind-size-custom">
+              <span>سایز آسیاب</span>
+              <input type="text" placeholder="اختیاری؛ مثلاً ۹ یا کمی درشت‌تر" data-grind-size-custom-input />
+            </label>
+          </div>
+          <div class="blend-slider-steps" aria-label="درجه‌های آسیاب">
+            {grindLevels.map((device, index) => (
+              <button
+                class={index === 0 ? "is-active" : ""}
+                type="button"
+                data-grind-slider-step
+                data-index={index}
+                data-target-value={device.title}
+                data-target-en={device.en}
+                data-grind-fa={device.grindFa}
+                data-grind-en={device.grindEn}
+                data-grind-level={device.grind}
+              >
+                <span>{index + 1}</span>
+                <b>{device.grindFa}</b>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div class="device-picker is-slider-source" data-device-picker>
           <div class="device-picker-results" id="device-picker-results" role="listbox" data-device-picker-results>
             {devices.map((device) => (
               <button
@@ -193,11 +385,6 @@ const roastImages: Record<number, string> = {
               <em>{device.grindFa}<small>{device.grindEn}</small></em>
             </button>
           ))}
-        </div>
-        <div class="mobile-grind-feedback" data-mobile-grind-feedback hidden aria-live="polite">
-          <Icon name="grind" size={20} />
-          <span><small>GRIND SIZE</small><strong data-mobile-grind-fa>—</strong><em data-mobile-grind-en>—</em></span>
-          <i aria-hidden="true"></i>
         </div>
       </section>
 
