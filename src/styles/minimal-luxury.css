@@ -3289,6 +3289,7 @@ body.mobile-nav-is-open {
 .payment-proof label small { color: var(--text-muted); font-size: .68rem; line-height: 1.7; }
 .payment-proof input[type="text"],
 .payment-proof input[type="file"] { width: 100%; min-height: 42px; border: 1px solid rgba(74, 58, 37, .18); border-radius: 6px; background: #fffaf1; padding: 8px 11px; color: var(--text-dark); font-size: .78rem; }
+.payment-proof input[data-payment-ref] { min-height: 38px; border-radius: 9px; padding: 7px 10px; font-size: .76rem; }
 .payment-proof .payment-receipt-picker { gap: 7px; }
 .payment-proof .payment-receipt-picker > span:first-child { color: var(--text-dark); font-size: .75rem; font-weight: 700; }
 .payment-receipt-control { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 12px; border: 1px dashed rgba(146, 101, 45, .55); border-radius: 9px; background: linear-gradient(135deg, rgba(255,252,245,.96), rgba(247,239,225,.72)); padding: 10px 13px; color: var(--text-dark); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
