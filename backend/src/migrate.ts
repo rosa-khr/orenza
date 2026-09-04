@@ -131,6 +131,22 @@ CREATE TABLE IF NOT EXISTS site_settings (
   homepage_seo_description varchar(500) NOT NULL DEFAULT 'قهوه تازه رست اورنزا را با ترکیب عربیکا و روبوستا، درجه رست و آسیاب مناسب دستگاهتان سفارش دهید؛ آماده‌سازی تازه و ارسال سراسر ایران.',
   homepage_seo_keywords text[] NOT NULL DEFAULT ARRAY['خرید قهوه تازه رست','قهوه اسپرسو','قهوه عربیکا','قهوه روبوستا','آسیاب قهوه','قهوه اورنزا'],
   homepage_og_image_url varchar(500) NOT NULL DEFAULT '/images/orenza-leopard-label.png',
+  homepage_hero_eyebrow varchar(180) NOT NULL DEFAULT 'ORENZA · دانه، دقت، فنجان',
+  homepage_hero_title varchar(180) NOT NULL DEFAULT 'کیفیت،',
+  homepage_hero_title_accent varchar(180) NOT NULL DEFAULT 'اتفاقی نیست.',
+  homepage_hero_description varchar(500) NOT NULL DEFAULT 'ترکیب، رُست و آسیاب را با سلیقه و دستگاه تو هماهنگ می‌کنیم؛ برای فنجانی که هر روز با اطمینان تکرار شود.',
+  homepage_hero_primary_label varchar(120) NOT NULL DEFAULT 'انتخاب قهوه',
+  homepage_hero_primary_href varchar(500) NOT NULL DEFAULT '/order/',
+  homepage_hero_secondary_label varchar(120) NOT NULL DEFAULT 'داستان اورنزا',
+  homepage_hero_secondary_href varchar(500) NOT NULL DEFAULT '/about/',
+  homepage_hero_benefits text[] NOT NULL DEFAULT ARRAY['ارسال رایگان سفارش‌های منتخب','۱۰٪ تخفیف خرید اول','مشاوره انتخاب قهوه','آسیاب مناسب دستگاه شما','قهوه تازه‌رُست'],
+  homepage_hero_benefit_items jsonb NOT NULL DEFAULT '[
+    {"text":"ارسال رایگان سفارش‌های منتخب","icon":"send"},
+    {"text":"۱۰٪ تخفیف خرید اول","icon":"cart"},
+    {"text":"مشاوره انتخاب قهوه","icon":"coffee"},
+    {"text":"آسیاب مناسب دستگاه شما","icon":"grind"},
+    {"text":"قهوه تازه‌رُست","icon":"bean"}
+  ]'::jsonb,
   search_indexing_enabled boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -146,6 +162,32 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_desktop_url varchar(500);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_mobile_url varchar(500);
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_eyebrow varchar(180) NOT NULL DEFAULT 'ORENZA · دانه، دقت، فنجان';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_title varchar(180) NOT NULL DEFAULT 'کیفیت،';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_title_accent varchar(180) NOT NULL DEFAULT 'اتفاقی نیست.';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_description varchar(500) NOT NULL DEFAULT 'ترکیب، رُست و آسیاب را با سلیقه و دستگاه تو هماهنگ می‌کنیم؛ برای فنجانی که هر روز با اطمینان تکرار شود.';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_primary_label varchar(120) NOT NULL DEFAULT 'انتخاب قهوه';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_primary_href varchar(500) NOT NULL DEFAULT '/order/';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_secondary_label varchar(120) NOT NULL DEFAULT 'داستان اورنزا';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_secondary_href varchar(500) NOT NULL DEFAULT '/about/';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_benefits text[] NOT NULL DEFAULT ARRAY['ارسال رایگان سفارش‌های منتخب','۱۰٪ تخفیف خرید اول','مشاوره انتخاب قهوه','آسیاب مناسب دستگاه شما','قهوه تازه‌رُست'];
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_hero_benefit_items jsonb NOT NULL DEFAULT '[
+    {"text":"ارسال رایگان سفارش‌های منتخب","icon":"send"},
+    {"text":"۱۰٪ تخفیف خرید اول","icon":"cart"},
+    {"text":"مشاوره انتخاب قهوه","icon":"coffee"},
+    {"text":"آسیاب مناسب دستگاه شما","icon":"grind"},
+    {"text":"قهوه تازه‌رُست","icon":"bean"}
+  ]'::jsonb;
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_rows jsonb NOT NULL DEFAULT '[
     {"id":"aboveDiscount","title":"بالای شگفت‌انگیزها","columns":3,"isActive":false,"items":[]},

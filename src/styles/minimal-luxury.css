@@ -5585,7 +5585,7 @@ body.mobile-nav-is-open {
   .site-header .account-trigger span { display: none; }
 }
 
-/* Full-width quality-process hero */
+/* Coffee table homepage hero */
 .hero {
   position: relative;
   isolation: isolate;
@@ -5604,7 +5604,9 @@ body.mobile-nav-is-open {
 .hero-media::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 0 38%, rgba(7, 7, 7, .34) 53%, rgba(7, 7, 7, .82) 100%);
+  background:
+    linear-gradient(90deg, rgba(7, 7, 7, .88) 0%, rgba(7, 7, 7, .72) 29%, rgba(7, 7, 7, .28) 56%, rgba(7, 7, 7, .06) 100%),
+    linear-gradient(180deg, rgba(7, 7, 7, .12) 0%, rgba(7, 7, 7, .08) 72%, rgba(7, 7, 7, .46) 100%);
   content: "";
 }
 
@@ -5620,9 +5622,9 @@ body.mobile-nav-is-open {
   height: auto;
   align-items: flex-start;
   justify-content: center;
-  margin-right: 0;
-  margin-left: auto;
-  padding: 72px clamp(36px, 7vw, 120px) 72px 38px;
+  margin-right: auto;
+  margin-left: 0;
+  padding: 72px 38px 132px clamp(36px, 7vw, 82px);
   background: transparent;
 }
 
@@ -5631,16 +5633,60 @@ body.mobile-nav-is-open {
 
 .hero h1 {
   color: #f7f0e4;
-  font-size: clamp(54px, 5.4vw, 88px);
-  line-height: 1.26;
+  font-size: clamp(52px, 5vw, 76px);
+  line-height: 1.18;
   text-shadow: 0 3px 30px rgba(0, 0, 0, .28);
 }
 
 .hero h1 em { color: #c99950; }
-.hero .hero-lead { max-width: 560px; color: rgba(245, 239, 227, .7); }
+.hero .hero-lead { max-width: 540px; color: rgba(245, 239, 227, .76); font-size: 17px; }
+.hero-actions .button { border-radius: 999px; }
 .hero .button-primary { background: #b8853d; border-color: #b8853d; color: #0b0b0a; }
 .hero .button-primary:hover { background: #d0a765; border-color: #d0a765; }
-.hero .text-link { border-bottom-color: rgba(245, 239, 227, .32); color: rgba(245, 239, 227, .72); }
+.hero .text-link {
+  min-height: 51px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 25px;
+  border: 1px solid rgba(216, 184, 117, .7);
+  border-radius: 999px;
+  color: rgba(245, 239, 227, .82);
+}
+
+.hero-benefits {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  align-items: center;
+  justify-content: space-around;
+  gap: 18px;
+  min-height: 72px;
+  padding: 12px clamp(20px, 5vw, 86px);
+  background: rgba(28, 28, 26, .92);
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  color: rgba(245, 239, 227, .62);
+  direction: rtl;
+  font-size: 12px;
+}
+
+.hero-benefit-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.hero-benefits .icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: rgba(245, 239, 227, .52);
+}
 
 @media (max-width: 699px) {
   .hero {
@@ -5671,6 +5717,8 @@ body.mobile-nav-is-open {
   .hero .hero-lead { margin-bottom: 14px; font-size: 14px; line-height: 1.75; }
   .hero-actions { display: grid; gap: 12px; margin-top: 20px; }
   .hero-actions .button { width: 100%; }
+  .hero .text-link { justify-content: center; width: 100%; }
+  .hero-benefits { display: none; }
 }
 
 /* Floating mobile-style support launcher */

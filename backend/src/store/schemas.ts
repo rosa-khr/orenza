@@ -39,6 +39,11 @@ const homepageBannerRowSchema = z.object({
   }
 });
 
+const homepageHeroBenefitItemSchema = z.object({
+  text: z.string().trim().min(2).max(120),
+  icon: z.enum(["send", "cart", "coffee", "grind", "bean", "store", "home", "grid", "bell", "user", "search", "phone"])
+});
+
 export const categorySchema = z.object({
   title: z.string().trim().min(2).max(160),
   slug,
@@ -172,6 +177,16 @@ export const siteSettingsSchema = z.object({
   homepageSeoDescription: z.string().trim().min(30).max(500),
   homepageSeoKeywords: z.array(z.string().trim().min(2).max(100)).min(1).max(30),
   homepageOgImageUrl: z.string().trim().min(1).max(500),
+  homepageHeroEyebrow: z.string().trim().min(2).max(180),
+  homepageHeroTitle: z.string().trim().min(2).max(180),
+  homepageHeroTitleAccent: z.string().trim().min(2).max(180),
+  homepageHeroDescription: z.string().trim().min(10).max(500),
+  homepageHeroPrimaryLabel: z.string().trim().min(2).max(120),
+  homepageHeroPrimaryHref: z.string().trim().min(1).max(500),
+  homepageHeroSecondaryLabel: z.string().trim().min(2).max(120),
+  homepageHeroSecondaryHref: z.string().trim().min(1).max(500),
+  homepageHeroBenefits: z.array(z.string().trim().min(2).max(120)).min(1).max(5),
+  homepageHeroBenefitItems: z.array(homepageHeroBenefitItemSchema).min(1).max(5),
   homepageBannerDesktopUrl: z.string().trim().max(500).nullable().optional(),
   homepageBannerMobileUrl: z.string().trim().max(500).nullable().optional(),
   homepageBannerRows: z.array(homepageBannerRowSchema).length(2),

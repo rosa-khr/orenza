@@ -247,6 +247,7 @@ body:has(.mobile-home-top) .support-chat-toggle {
   body:has(.mobile-home-top) .hero-actions { width: auto; margin-top: 12px; }
   body:has(.mobile-home-top) .hero-actions .button { width: auto; min-height: 34px; padding: 7px 15px; border-radius: 18px; font-size: 10px; }
   body:has(.mobile-home-top) .hero-actions .text-link { display: none; }
+  body:has(.mobile-home-top) .hero-benefits { display: none; }
 
   body:has(.mobile-home-top) .home-banner-row { background: transparent; }
   body:has(.mobile-home-top) .home-banner-row[data-home-banner-row="aboveDiscount"] { order: 3; }

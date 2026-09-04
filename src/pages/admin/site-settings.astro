@@ -117,6 +117,40 @@ import AdminShell from "../../components/admin/AdminShell.astro";
           </div>
         </div>
       </div>
+      <div class="admin-form-grid admin-hero-text-settings">
+        <label class="admin-field"><span>متن کوچک بالای تیتر</span><input name="homepageHeroEyebrow" required minlength="2" maxlength="180" /></label>
+        <label class="admin-field"><span>خط اول تیتر</span><input name="homepageHeroTitle" required minlength="2" maxlength="180" /></label>
+        <label class="admin-field"><span>خط طلایی تیتر</span><input name="homepageHeroTitleAccent" required minlength="2" maxlength="180" /></label>
+        <label class="admin-field wide"><span>توضیح روی بنر</span><textarea name="homepageHeroDescription" required minlength="10" maxlength="500"></textarea></label>
+        <label class="admin-field"><span>متن دکمه اصلی</span><input name="homepageHeroPrimaryLabel" required minlength="2" maxlength="120" /></label>
+        <label class="admin-field"><span>لینک دکمه اصلی</span><input name="homepageHeroPrimaryHref" required maxlength="500" dir="ltr" /></label>
+        <label class="admin-field"><span>متن دکمه دوم</span><input name="homepageHeroSecondaryLabel" required minlength="2" maxlength="120" /></label>
+        <label class="admin-field"><span>لینک دکمه دوم</span><input name="homepageHeroSecondaryHref" required maxlength="500" dir="ltr" /></label>
+        <div class="admin-field wide admin-hero-benefit-editor" data-hero-benefit-editor>
+          <span>آیتم‌های نوار پایین بنر</span>
+          <div class="admin-hero-benefit-items">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div class="admin-hero-benefit-item" data-hero-benefit-item>
+                <select data-hero-benefit-icon aria-label={`آیکون آیتم ${index + 1}`}>
+                  <option value="send">ارسال</option>
+                  <option value="cart">سبد خرید</option>
+                  <option value="coffee">فنجان</option>
+                  <option value="grind">آسیاب</option>
+                  <option value="bean">دانه قهوه</option>
+                  <option value="store">فروشگاه</option>
+                  <option value="home">خانه</option>
+                  <option value="grid">دسته‌بندی</option>
+                  <option value="bell">اعلان</option>
+                  <option value="user">کاربر</option>
+                  <option value="search">جست‌وجو</option>
+                  <option value="phone">تماس</option>
+                </select>
+                <input data-hero-benefit-text minlength="2" maxlength="120" placeholder={`متن آیتم ${index + 1}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="admin-card" data-settings-group="banners">

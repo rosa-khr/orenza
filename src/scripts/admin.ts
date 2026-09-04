@@ -2009,6 +2009,16 @@ type SiteSettingsPayload = {
   homepageSeoDescription: string;
   homepageSeoKeywords: string[];
   homepageOgImageUrl: string;
+  homepageHeroEyebrow: string;
+  homepageHeroTitle: string;
+  homepageHeroTitleAccent: string;
+  homepageHeroDescription: string;
+  homepageHeroPrimaryLabel: string;
+  homepageHeroPrimaryHref: string;
+  homepageHeroSecondaryLabel: string;
+  homepageHeroSecondaryHref: string;
+  homepageHeroBenefits: string[];
+  homepageHeroBenefitItems?: HomepageHeroBenefitItem[];
   homepageBannerDesktopUrl: string | null;
   homepageBannerMobileUrl: string | null;
   homepageBannerRows: HomepageBannerRow[];
@@ -2047,6 +2057,25 @@ type HomepageBannerRow = {
   items: HomepageBannerItem[];
 };
 
+type HomepageHeroBenefitIcon =
+  | "send"
+  | "cart"
+  | "coffee"
+  | "grind"
+  | "bean"
+  | "store"
+  | "home"
+  | "grid"
+  | "bell"
+  | "user"
+  | "search"
+  | "phone";
+
+type HomepageHeroBenefitItem = {
+  text: string;
+  icon: HomepageHeroBenefitIcon;
+};
+
 const defaultHomepageBannerRows = (): HomepageBannerRow[] => [
   { id: "aboveDiscount", title: "بالای شگفت‌انگیزها", columns: 3, isActive: false, items: [] },
   { id: "aboveBest", title: "بالای پرطرفدارها", columns: 3, isActive: false, items: [] }
@@ -2083,6 +2112,7 @@ const initSiteSettings = async () => {
   const signaturePlaceholder = form.querySelector<HTMLElement>("[data-invoice-signature-placeholder]");
   const signatureRemove = form.querySelector<HTMLButtonElement>("[data-invoice-signature-remove]");
   const bannerUrls: Record<"desktop" | "mobile", string | null> = { desktop: null, mobile: null };
+  const defaultBenefitIcons: HomepageHeroBenefitIcon[] = ["send", "cart", "coffee", "grind", "bean"];
   const bannerRows = new Map<HomepageBannerRowId, HomepageBannerRow>(
     defaultHomepageBannerRows().map((row) => [row.id, row])
   );
@@ -2117,6 +2147,27 @@ const initSiteSettings = async () => {
     if (placeholder) placeholder.hidden = Boolean(url);
     if (remove) remove.hidden = !url;
   };
+  const benefitRows = Array.from(form.querySelectorAll<HTMLElement>("[data-hero-benefit-item]"));
+  const renderBenefitRows = (items: HomepageHeroBenefitItem[] = [], fallbackTexts: string[] = []) => {
+    benefitRows.forEach((row, index) => {
+      const icon = row.querySelector<HTMLSelectElement>("[data-hero-benefit-icon]");
+      const text = row.querySelector<HTMLInputElement>("[data-hero-benefit-text]");
+      const item = items[index];
+      if (icon) icon.value = item?.icon || defaultBenefitIcons[index] || "coffee";
+      if (text) text.value = item?.text || fallbackTexts[index] || "";
+    });
+  };
+  const collectBenefitRows = () => benefitRows
+    .map((row, index) => {
+      const icon = row.querySelector<HTMLSelectElement>("[data-hero-benefit-icon]");
+      const text = row.querySelector<HTMLInputElement>("[data-hero-benefit-text]");
+      return {
+        text: text?.value.trim() || "",
+        icon: (icon?.value || defaultBenefitIcons[index] || "coffee") as HomepageHeroBenefitIcon
+      };
+    })
+    .filter((item) => item.text)
+    .slice(0, 5);
   const itemTemplate = form.querySelector<HTMLTemplateElement>("[data-home-banner-item-template]");
   const renderBannerRows = () => {
     isRenderingBannerRows = true;
@@ -2284,6 +2335,8 @@ const initSiteSettings = async () => {
       if (!field) return;
       if (field instanceof HTMLInputElement && field.type === "checkbox") {
         field.checked = Boolean(value);
+      } else if (key === "homepageHeroBenefits" && Array.isArray(value)) {
+        field.value = value.join("\n");
       } else {
         field.value = Array.isArray(value) ? value.join("، ") : value === null ? "" : String(value);
       }
@@ -2291,6 +2344,7 @@ const initSiteSettings = async () => {
     showSignature(item.invoiceSignatureUrl);
     showBanner("desktop", item.homepageBannerDesktopUrl);
     showBanner("mobile", item.homepageBannerMobileUrl);
+    renderBenefitRows(item.homepageHeroBenefitItems, item.homepageHeroBenefits);
     const incomingRows = Array.isArray(item.homepageBannerRows) ? item.homepageBannerRows : [];
     defaultHomepageBannerRows().forEach((fallback) => {
       const incoming = incomingRows.find((row) => row.id === fallback.id);
@@ -2431,6 +2485,16 @@ const initSiteSettings = async () => {
             .map((keyword) => keyword.trim())
             .filter(Boolean),
           homepageOgImageUrl: input("homepageOgImageUrl").value,
+          homepageHeroEyebrow: input("homepageHeroEyebrow").value,
+          homepageHeroTitle: input("homepageHeroTitle").value,
+          homepageHeroTitleAccent: input("homepageHeroTitleAccent").value,
+          homepageHeroDescription: input("homepageHeroDescription").value,
+          homepageHeroPrimaryLabel: input("homepageHeroPrimaryLabel").value,
+          homepageHeroPrimaryHref: input("homepageHeroPrimaryHref").value,
+          homepageHeroSecondaryLabel: input("homepageHeroSecondaryLabel").value,
+          homepageHeroSecondaryHref: input("homepageHeroSecondaryHref").value,
+          homepageHeroBenefits: collectBenefitRows().map((item) => item.text),
+          homepageHeroBenefitItems: collectBenefitRows(),
           homepageBannerDesktopUrl: bannerUrls.desktop,
           homepageBannerMobileUrl: bannerUrls.mobile,
           homepageBannerRows: collectBannerRows(),
