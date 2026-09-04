@@ -3,6 +3,7 @@ import { normalizePhone } from "../security.js";
 import { sanitizeRichText } from "../rich-text.js";
 
 const optionalUrl = z.union([z.string().url(), z.literal(""), z.null()]).transform((value) => value || null);
+const hexColor = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/);
 const productImageUrl = z.union([
   z.string().url(),
   z.string().regex(/^\/api\/v1\/product-images\/[0-9a-f-]+\.(?:jpg|png|webp)$/),
@@ -23,8 +24,8 @@ const homepageBannerRowSchema = z.object({
     imageUrl: z.string().trim().min(1).max(500),
     alt: z.string().trim().max(160).default(""),
     href: z.union([z.string().url(), z.string().regex(/^\/[^\s]*$/), z.literal("")]).default(""),
-    seoTitle: z.string().trim().max(160).default(""),
-    seoDescription: z.string().trim().max(320).default(""),
+    seoTitle: z.string().trim().max(60).default(""),
+    seoDescription: z.string().trim().max(150).default(""),
     geoSummary: z.string().trim().max(500).default(""),
     ieoIntent: z.string().trim().max(160).default(""),
     isActive: z.boolean().default(true)
@@ -49,8 +50,8 @@ export const categorySchema = z.object({
   slug,
   description: optionalRichText.optional(),
   imageUrl: productImageUrl.optional(),
-  seoTitle: z.string().trim().min(10).max(220),
-  seoDescription: z.string().trim().min(30).max(500),
+  seoTitle: z.string().trim().min(10).max(60),
+  seoDescription: z.string().trim().min(30).max(150),
   isActive: z.boolean().default(true)
 });
 
@@ -59,6 +60,8 @@ export const productSchema = z.object({
   titleEn: z.string().trim().min(2).max(220),
   categoryId: z.string().uuid(),
   description: z.string().trim().min(10).max(5000),
+  seoTitle: z.string().trim().max(60).nullable().optional(),
+  seoDescription: z.string().trim().max(150).nullable().optional(),
   productContent: optionalRichText.optional(),
   tagIds: z.array(z.string().uuid()).max(30).default([]),
   relatedProductIds: z.array(z.string().uuid()).max(20).default([]),
@@ -101,6 +104,25 @@ export const paymentCardSchema = z.object({
   isActive: z.boolean().default(true)
 });
 
+export const shippingMethodSchema = z.object({
+  title: z.string().trim().min(2).max(120),
+  code: z.enum(["tipax", "post"]),
+  description: z.string().trim().max(300).default(""),
+  pricingType: z.enum(["collect", "weightVolume", "fixed"]).default("fixed"),
+  basePrice: z.coerce.number().int().min(0).max(100_000_000).default(0),
+  pricePerKg: z.coerce.number().int().min(0).max(100_000_000).default(0),
+  pricePerVolume: z.coerce.number().int().min(0).max(100_000_000).default(0),
+  sortOrder: z.coerce.number().int().min(1).max(999).default(1),
+  isActive: z.boolean().default(true)
+}).superRefine((data, context) => {
+  if (data.code === "tipax" && data.pricingType !== "collect") {
+    context.addIssue({ code: "custom", path: ["pricingType"], message: "برای تیپاکس فعلاً حالت پس‌کرایه انتخاب شود." });
+  }
+  if (data.code === "post" && data.pricingType === "collect") {
+    context.addIssue({ code: "custom", path: ["pricingType"], message: "برای پست، مدل هزینه بر اساس وزن/حجم یا ثابت تنظیم شود." });
+  }
+});
+
 export const discountCodeSchema = z.object({
   code: z.string().trim().min(3).max(60).transform((value) => value.toUpperCase()),
   type: z.enum(["percent", "fixed"]),
@@ -132,6 +154,8 @@ export const articleSchema = z.object({
 export const tagSchema = z.object({
   title: z.string().trim().min(2).max(120),
   slug,
+  seoTitle: z.string().trim().max(60).nullable().optional(),
+  seoDescription: z.string().trim().max(150).nullable().optional(),
   content: optionalRichText.optional()
 });
 
@@ -173,8 +197,8 @@ export const siteSettingsSchema = z.object({
   footerCopyright: z.string().trim().min(5).max(300),
   logoUrl: optionalUrl,
   faviconUrl: z.string().trim().min(1).max(500),
-  homepageSeoTitle: z.string().trim().min(10).max(220),
-  homepageSeoDescription: z.string().trim().min(30).max(500),
+  homepageSeoTitle: z.string().trim().min(10).max(60),
+  homepageSeoDescription: z.string().trim().min(30).max(150),
   homepageSeoKeywords: z.array(z.string().trim().min(2).max(100)).min(1).max(30),
   homepageOgImageUrl: z.string().trim().min(1).max(500),
   homepageHeroEyebrow: z.string().trim().min(2).max(180),
@@ -192,6 +216,24 @@ export const siteSettingsSchema = z.object({
   homepageBannerRows: z.array(homepageBannerRowSchema).length(2),
   homepageBestSellersEnabled: z.boolean().default(true),
   homepageDiscountsEnabled: z.boolean().default(true),
+  homepageBestSellersTitle: z.string().trim().min(2).max(120),
+  homepageBestSellersColor: hexColor,
+  homepageBestSellersTextColor: hexColor.default("#ffffff"),
+  homepageBestSellersBadgeLabel: z.string().trim().min(1).max(40).default("پرفروش"),
+  homepageBestSellersBadgeColor: hexColor.default("#293b32"),
+  homepageBestSellersIconColor: hexColor.default("#293b32"),
+  homepageDiscountsTitle: z.string().trim().min(2).max(120),
+  homepageDiscountsColor: hexColor,
+  homepageDiscountsCountdownEnabled: z.boolean().default(false),
+  homepageDiscountsExpiresAt: z.string().trim().datetime().nullable().optional(),
+  homepageDiscountsTextColor: hexColor.default("#ffffff"),
+  homepageDiscountsBadgeLabel: z.string().trim().min(1).max(40).default("پیشنهاد ویژه"),
+  homepageDiscountsBadgeColor: hexColor.default("#b72d3a"),
+  homepageDiscountsIconColor: hexColor.default("#b72d3a"),
+  themeSurfaceColor: hexColor.default("#faf9f6"),
+  themeFooterColor: hexColor.default("#211d19"),
+  themeSupportColor: hexColor.default("#173f33"),
+  themeHeaderIconColor: hexColor.default("#2d5644"),
   searchIndexingEnabled: z.boolean(),
   invoiceNationalId: z.string().trim().min(10).max(20),
   contentAiApiKey: z.string().trim().max(500).optional(),

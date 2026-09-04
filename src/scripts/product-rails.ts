@@ -28,7 +28,7 @@ const cartIcon = `
     <path d="M3 3h2l2.4 10.2a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 1.9-1.4L21 7H6.2M10 19.5h.01M18 19.5h.01" />
   </svg>`;
 
-const card = (product: RailProduct, offer: boolean) => {
+const card = (product: RailProduct, badgeLabel: string) => {
   const article = document.createElement("article");
   article.className = "rail-product-card";
   const weight = product.saleType === "packaged" ? product.packageWeightGrams : 250;
@@ -41,7 +41,7 @@ const card = (product: RailProduct, offer: boolean) => {
       ${product.imageUrl
         ? `<img src="${product.imageUrl}" alt="${product.titleFa}" loading="lazy">`
         : `<img src="/images/orenza-bag-mockup-v3.webp" alt="بسته‌بندی ${product.titleFa}" loading="lazy">`}
-      ${offer ? '<i>پیشنهاد ویژه</i>' : '<i>پرفروش</i>'}
+      <i>${badgeLabel}</i>
     </a>
     <div class="rail-product-copy">
       <small>${product.titleEn}</small>
@@ -160,11 +160,12 @@ const renderRail = (kind: "best" | "discount", products: RailProduct[]) => {
   const viewport = root?.querySelector<HTMLElement>(".product-rail-viewport");
   if (!root || !track || !viewport || !products.length) return;
   const minCards = Math.max(10, Math.ceil((viewport.clientWidth || window.innerWidth) / 160) + 4);
+  const badgeLabel = root.dataset.productBadgeLabel || (kind === "discount" ? "پیشنهاد ویژه" : "پرفروش");
   const loopProducts = Array.from({ length: Math.max(products.length, minCards) }, (_, index) => products[index % products.length]);
   const makeGroup = () => {
     const group = document.createElement("div");
     group.className = "product-rail-group";
-    loopProducts.forEach((product) => group.append(card(product, kind === "discount")));
+    loopProducts.forEach((product) => group.append(card(product, badgeLabel)));
     return group;
   };
   track.replaceChildren(makeGroup(), makeGroup());

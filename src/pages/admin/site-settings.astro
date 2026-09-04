@@ -42,6 +42,10 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       <div class="admin-form-grid">
         <label class="admin-field"><span>آدرس لوگو</span><input name="logoUrl" type="url" dir="ltr" placeholder="https://... یا خالی" /></label>
         <label class="admin-field"><span>آدرس favicon</span><input name="faviconUrl" required dir="ltr" /></label>
+        <label class="admin-field"><span>رنگ کرمی سایت</span><input name="themeSurfaceColor" type="color" required /></label>
+        <label class="admin-field"><span>رنگ فوتر</span><input name="themeFooterColor" type="color" required /></label>
+        <label class="admin-field"><span>رنگ آیکن پشتیبانی</span><input name="themeSupportColor" type="color" required /></label>
+        <label class="admin-field"><span>رنگ آیکن‌های هدر</span><input name="themeHeaderIconColor" type="color" required /></label>
         <label class="admin-field wide"><span>عنوان ارتباط با ما در فوتر</span><input name="footerHeading" required /></label>
         <label class="admin-field wide"><span>متن راهنمای فوتر</span><textarea name="footerDescription" required></textarea></label>
         <label class="admin-field wide"><span>متن کپی‌رایت</span><input name="footerCopyright" required /></label>
@@ -206,9 +210,9 @@ import AdminShell from "../../components/admin/AdminShell.astro";
             </div>
             <label class="admin-field"><span>متن جایگزین</span><input data-home-banner-item-alt /></label>
             <label class="admin-field"><span>لینک بنر</span><input data-home-banner-item-href dir="ltr" placeholder="/products/ یا https://..." /></label>
-            <label class="admin-field"><span>عنوان SEO بنر</span><input data-home-banner-item-seo-title maxlength="160" /></label>
+            <label class="admin-field"><span>عنوان SEO بنر</span><input data-home-banner-item-seo-title maxlength="60" data-seo-counter-limit="60" /><em class="admin-seo-counter"></em></label>
             <label class="admin-field"><span>هدف IEO</span><input data-home-banner-item-ieo-intent maxlength="160" placeholder="مثلاً خرید قهوه اسپرسو تازه" /></label>
-            <label class="admin-field"><span>توضیح SEO بنر</span><textarea data-home-banner-item-seo-description maxlength="320"></textarea></label>
+            <label class="admin-field"><span>توضیح SEO بنر</span><textarea data-home-banner-item-seo-description maxlength="150" data-seo-counter-limit="150"></textarea><em class="admin-seo-counter"></em></label>
             <label class="admin-field"><span>خلاصه GEO</span><textarea data-home-banner-item-geo-summary maxlength="500" placeholder="متن قابل فهم برای پاسخ‌های جست‌وجوی مولد"></textarea></label>
             <label class="admin-upload-button">
               <ImagePlus size={16} stroke-width={1.5} /> بارگذاری تصویر
@@ -220,22 +224,52 @@ import AdminShell from "../../components/admin/AdminShell.astro";
     </section>
 
     <section class="admin-card admin-indexing-setting" data-settings-group="homepage">
-      <header><span>HOMEPAGE PRODUCT RAILS</span><h2>نمایش نوارهای محصول صفحه اصلی</h2><p>نمایش یا عدم نمایش نوارهای پرطرفدارها و شگفت‌انگیزها در صفحه اول.</p></header>
-      <label>
-        <input type="checkbox" name="homepageBestSellersEnabled" />
-        <span><strong>نوار پرطرفدارها نمایش داده شود</strong><small>اگر خاموش باشد، کل بخش پرطرفدارها در صفحه اصلی مخفی می‌شود.</small></span>
-      </label>
-      <label>
-        <input type="checkbox" name="homepageDiscountsEnabled" />
-        <span><strong>نوار شگفت‌انگیزها نمایش داده شود</strong><small>اگر خاموش باشد، کل بخش تخفیف‌دارها در صفحه اصلی مخفی می‌شود.</small></span>
-      </label>
+      <header><span>HOMEPAGE PRODUCT RAILS</span><h2>نوارهای محصول صفحه اصلی</h2><p>نمایش، عنوان و رنگ نوارهای پرطرفدارها و شگفت‌انگیزها را تنظیم کنید.</p></header>
+      <div class="admin-product-rail-settings">
+        <article>
+          <label class="admin-product-rail-toggle">
+            <input type="checkbox" name="homepageBestSellersEnabled" />
+            <span class="admin-toggle-track" aria-hidden="true"></span>
+            <span><strong>نوار پرطرفدارها نمایش داده شود</strong><small>اگر خاموش باشد، کل بخش پرطرفدارها در صفحه اصلی مخفی می‌شود.</small></span>
+          </label>
+          <div class="admin-form-grid">
+            <label class="admin-field"><span>عنوان نوار پرطرفدارها</span><input name="homepageBestSellersTitle" required minlength="2" maxlength="120" /></label>
+            <label class="admin-field"><span>رنگ نوار پرطرفدارها</span><input name="homepageBestSellersColor" type="color" required /></label>
+            <label class="admin-field"><span>رنگ متن نوار پرطرفدارها</span><input name="homepageBestSellersTextColor" type="color" required /></label>
+            <label class="admin-field"><span>متن لیبل محصول پرطرفدارها</span><input name="homepageBestSellersBadgeLabel" required minlength="1" maxlength="40" /></label>
+            <label class="admin-field"><span>رنگ لیبل محصول پرطرفدارها</span><input name="homepageBestSellersBadgeColor" type="color" required /></label>
+            <label class="admin-field"><span>رنگ آیکن سبد پرطرفدارها</span><input name="homepageBestSellersIconColor" type="color" required /></label>
+          </div>
+        </article>
+        <article>
+          <label class="admin-product-rail-toggle">
+            <input type="checkbox" name="homepageDiscountsEnabled" />
+            <span class="admin-toggle-track" aria-hidden="true"></span>
+            <span><strong>نوار شگفت‌انگیزها نمایش داده شود</strong><small>اگر خاموش باشد، کل بخش تخفیف‌دارها در صفحه اصلی مخفی می‌شود.</small></span>
+          </label>
+          <div class="admin-form-grid">
+            <label class="admin-field"><span>عنوان نوار شگفت‌انگیزها</span><input name="homepageDiscountsTitle" required minlength="2" maxlength="120" /></label>
+            <label class="admin-field"><span>رنگ نوار شگفت‌انگیزها</span><input name="homepageDiscountsColor" type="color" required /></label>
+            <label class="admin-field"><span>رنگ متن نوار شگفت‌انگیزها</span><input name="homepageDiscountsTextColor" type="color" required /></label>
+            <label class="admin-field"><span>متن لیبل محصول شگفت‌انگیزها</span><input name="homepageDiscountsBadgeLabel" required minlength="1" maxlength="40" /></label>
+            <label class="admin-field"><span>رنگ لیبل محصول شگفت‌انگیزها</span><input name="homepageDiscountsBadgeColor" type="color" required /></label>
+            <label class="admin-field"><span>رنگ آیکن سبد شگفت‌انگیزها</span><input name="homepageDiscountsIconColor" type="color" required /></label>
+            <label class="admin-product-rail-toggle">
+              <input type="checkbox" name="homepageDiscountsCountdownEnabled" />
+              <span class="admin-toggle-track" aria-hidden="true"></span>
+              <span><strong>تایمر معکوس نمایش داده شود</strong><small>فقط برای نوار شگفت‌انگیزها نمایش داده می‌شود.</small></span>
+            </label>
+            <label class="admin-field"><span>مهلت پایان شگفت‌انگیزها</span><input name="homepageDiscountsExpiresAt" type="datetime-local" /></label>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="admin-card" data-settings-group="homepage">
       <header><span>HOMEPAGE SEO</span><h2>سئوی صفحه اصلی</h2><p>عنوان و توضیحات اصلی نتایج جست‌وجو و اشتراک‌گذاری اجتماعی.</p></header>
       <div class="admin-form-grid">
-        <label class="admin-field wide"><span>عنوان SEO</span><input name="homepageSeoTitle" required minlength="10" maxlength="220" /></label>
-        <label class="admin-field wide"><span>توضیحات Meta</span><textarea name="homepageSeoDescription" required minlength="30" maxlength="500"></textarea></label>
+        <label class="admin-field wide"><span>عنوان SEO</span><input name="homepageSeoTitle" required minlength="10" maxlength="60" data-seo-counter-limit="60" /><em class="admin-seo-counter"></em></label>
+        <label class="admin-field wide"><span>توضیحات Meta</span><textarea name="homepageSeoDescription" required minlength="30" maxlength="150" data-seo-counter-limit="150"></textarea><em class="admin-seo-counter"></em></label>
         <label class="admin-field wide"><span>کلمات کلیدی، جداشده با ویرگول</span><textarea name="homepageSeoKeywords" required></textarea></label>
         <label class="admin-field wide"><span>تصویر Open Graph</span><input name="homepageOgImageUrl" required dir="ltr" /></label>
       </div>

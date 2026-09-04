@@ -57,7 +57,7 @@ SELECT r.id,p.permission_key
 FROM admin_roles r
 JOIN (VALUES
   ('admin','dashboard'),('admin','users'),('admin','roles'),('admin','products'),
-  ('admin','categories'),('admin','orders'),('admin','payment-methods'),
+  ('admin','categories'),('admin','orders'),('admin','payment-methods'),('admin','shipping-methods'),
   ('admin','discount-codes'),('admin','articles'),('admin','tags'),('admin','site-settings'),('admin','logs'),('admin','content-generator'),('admin','accounting'),('admin','price-imports'),
   ('orders','dashboard'),('orders','orders'),
   ('seo','dashboard'),('seo','products'),('seo','categories'),('seo','articles'),('seo','tags'),
@@ -127,8 +127,8 @@ CREATE TABLE IF NOT EXISTS site_settings (
   footer_copyright varchar(300) NOT NULL DEFAULT '© ۲۰۲۶ قهوه اورنزا؛ تمامی حقوق محفوظ است.',
   logo_url varchar(500),
   favicon_url varchar(500) NOT NULL DEFAULT '/favicon.svg',
-  homepage_seo_title varchar(220) NOT NULL DEFAULT 'خرید قهوه تازه رست با آسیاب دلخواه',
-  homepage_seo_description varchar(500) NOT NULL DEFAULT 'قهوه تازه رست اورنزا را با ترکیب عربیکا و روبوستا، درجه رست و آسیاب مناسب دستگاهتان سفارش دهید؛ آماده‌سازی تازه و ارسال سراسر ایران.',
+  homepage_seo_title varchar(60) NOT NULL DEFAULT 'خرید قهوه تازه رست با آسیاب دلخواه',
+  homepage_seo_description varchar(150) NOT NULL DEFAULT 'قهوه تازه رست اورنزا را با ترکیب عربیکا و روبوستا، درجه رست و آسیاب مناسب دستگاهتان سفارش دهید؛ آماده‌سازی تازه و ارسال سراسر ایران.',
   homepage_seo_keywords text[] NOT NULL DEFAULT ARRAY['خرید قهوه تازه رست','قهوه اسپرسو','قهوه عربیکا','قهوه روبوستا','آسیاب قهوه','قهوه اورنزا'],
   homepage_og_image_url varchar(500) NOT NULL DEFAULT '/images/orenza-leopard-label.png',
   homepage_hero_eyebrow varchar(180) NOT NULL DEFAULT 'ORENZA · دانه، دقت، فنجان',
@@ -147,6 +147,24 @@ CREATE TABLE IF NOT EXISTS site_settings (
     {"text":"آسیاب مناسب دستگاه شما","icon":"grind"},
     {"text":"قهوه تازه‌رُست","icon":"bean"}
   ]'::jsonb,
+  homepage_best_sellers_title varchar(120) NOT NULL DEFAULT 'پرفروش‌ترین‌ها',
+  homepage_best_sellers_color varchar(20) NOT NULL DEFAULT '#173f30',
+  homepage_best_sellers_text_color varchar(20) NOT NULL DEFAULT '#ffffff',
+  homepage_best_sellers_badge_label varchar(40) NOT NULL DEFAULT 'پرفروش',
+  homepage_best_sellers_badge_color varchar(20) NOT NULL DEFAULT '#293b32',
+  homepage_best_sellers_icon_color varchar(20) NOT NULL DEFAULT '#293b32',
+  homepage_discounts_title varchar(120) NOT NULL DEFAULT 'شگفت‌انگیزها',
+  homepage_discounts_color varchar(20) NOT NULL DEFAULT '#e53154',
+  homepage_discounts_countdown_enabled boolean NOT NULL DEFAULT false,
+  homepage_discounts_expires_at timestamptz,
+  homepage_discounts_text_color varchar(20) NOT NULL DEFAULT '#ffffff',
+  homepage_discounts_badge_label varchar(40) NOT NULL DEFAULT 'پیشنهاد ویژه',
+  homepage_discounts_badge_color varchar(20) NOT NULL DEFAULT '#b72d3a',
+  homepage_discounts_icon_color varchar(20) NOT NULL DEFAULT '#b72d3a',
+  theme_surface_color varchar(20) NOT NULL DEFAULT '#faf9f6',
+  theme_footer_color varchar(20) NOT NULL DEFAULT '#211d19',
+  theme_support_color varchar(20) NOT NULL DEFAULT '#173f33',
+  theme_header_icon_color varchar(20) NOT NULL DEFAULT '#2d5644',
   search_indexing_enabled boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -162,6 +180,10 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_desktop_url varchar(500);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_mobile_url varchar(500);
+UPDATE site_settings SET homepage_seo_title = left(homepage_seo_title, 60) WHERE length(homepage_seo_title) > 60;
+UPDATE site_settings SET homepage_seo_description = left(homepage_seo_description, 150) WHERE length(homepage_seo_description) > 150;
+ALTER TABLE site_settings ALTER COLUMN homepage_seo_title TYPE varchar(60);
+ALTER TABLE site_settings ALTER COLUMN homepage_seo_description TYPE varchar(150);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_hero_eyebrow varchar(180) NOT NULL DEFAULT 'ORENZA · دانه، دقت، فنجان';
 ALTER TABLE site_settings
@@ -197,6 +219,42 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_best_sellers_enabled boolean NOT NULL DEFAULT true;
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_discounts_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_best_sellers_title varchar(120) NOT NULL DEFAULT 'پرفروش‌ترین‌ها';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_best_sellers_color varchar(20) NOT NULL DEFAULT '#173f30';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_best_sellers_text_color varchar(20) NOT NULL DEFAULT '#ffffff';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_best_sellers_badge_label varchar(40) NOT NULL DEFAULT 'پرفروش';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_best_sellers_badge_color varchar(20) NOT NULL DEFAULT '#293b32';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_best_sellers_icon_color varchar(20) NOT NULL DEFAULT '#293b32';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_title varchar(120) NOT NULL DEFAULT 'شگفت‌انگیزها';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_color varchar(20) NOT NULL DEFAULT '#e53154';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_countdown_enabled boolean NOT NULL DEFAULT false;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_expires_at timestamptz;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_text_color varchar(20) NOT NULL DEFAULT '#ffffff';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_badge_label varchar(40) NOT NULL DEFAULT 'پیشنهاد ویژه';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_badge_color varchar(20) NOT NULL DEFAULT '#b72d3a';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS homepage_discounts_icon_color varchar(20) NOT NULL DEFAULT '#b72d3a';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS theme_surface_color varchar(20) NOT NULL DEFAULT '#faf9f6';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS theme_footer_color varchar(20) NOT NULL DEFAULT '#211d19';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS theme_support_color varchar(20) NOT NULL DEFAULT '#173f33';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS theme_header_icon_color varchar(20) NOT NULL DEFAULT '#2d5644';
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS content_ai_api_key text;
 ALTER TABLE site_settings
@@ -240,8 +298,8 @@ CREATE TABLE IF NOT EXISTS categories (
   slug varchar(180) NOT NULL UNIQUE,
   description text,
   image_url text,
-  seo_title varchar(220),
-  seo_description varchar(500),
+  seo_title varchar(60),
+  seo_description varchar(150),
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -253,6 +311,8 @@ CREATE TABLE IF NOT EXISTS products (
   title_en varchar(220) NOT NULL,
   category_id uuid NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   description text NOT NULL,
+  seo_title varchar(60),
+  seo_description varchar(150),
   product_content text,
   roast_type varchar(30) NOT NULL CHECK (roast_type IN ('light','medium','mediumDark','dark')),
   coffee_type varchar(20) NOT NULL CHECK (coffee_type IN ('bean','ground')),
@@ -277,6 +337,12 @@ CREATE TABLE IF NOT EXISTS products (
 );
 CREATE INDEX IF NOT EXISTS products_category_idx ON products(category_id);
 CREATE INDEX IF NOT EXISTS products_active_idx ON products(is_active);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title varchar(60);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description varchar(150);
+UPDATE products SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
+UPDATE products SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
+ALTER TABLE products ALTER COLUMN seo_title TYPE varchar(60);
+ALTER TABLE products ALTER COLUMN seo_description TYPE varchar(150);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_price_per_kg bigint NOT NULL DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sale_price_per_kg bigint NOT NULL DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order smallint NOT NULL DEFAULT 100;
@@ -409,6 +475,8 @@ CREATE TABLE IF NOT EXISTS tags (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(120) NOT NULL,
   slug varchar(160) NOT NULL UNIQUE,
+  seo_title varchar(60),
+  seo_description varchar(150),
   content text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -445,6 +513,31 @@ CREATE TABLE IF NOT EXISTS articles (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS articles_published_idx ON articles(is_published, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS shipping_methods (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title varchar(120) NOT NULL,
+  code varchar(30) NOT NULL CHECK (code IN ('tipax','post')),
+  description varchar(300) NOT NULL DEFAULT '',
+  pricing_type varchar(30) NOT NULL DEFAULT 'fixed' CHECK (pricing_type IN ('collect','weightVolume','fixed')),
+  base_price bigint NOT NULL DEFAULT 0 CHECK (base_price >= 0),
+  price_per_kg bigint NOT NULL DEFAULT 0 CHECK (price_per_kg >= 0),
+  price_per_volume bigint NOT NULL DEFAULT 0 CHECK (price_per_volume >= 0),
+  sort_order integer NOT NULL DEFAULT 1 CHECK (sort_order >= 1),
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CHECK ((code = 'tipax' AND pricing_type = 'collect') OR (code = 'post' AND pricing_type <> 'collect'))
+);
+CREATE INDEX IF NOT EXISTS shipping_methods_active_idx ON shipping_methods(is_active, sort_order);
+ALTER TABLE shipping_methods DROP CONSTRAINT IF EXISTS shipping_methods_code_key;
+
+INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,price_per_kg,price_per_volume,sort_order,is_active)
+SELECT 'تیپاکس','tipax','پس‌کرایه؛ هزینه هنگام تحویل توسط تیپاکس دریافت می‌شود.','collect',0,0,0,1,true
+WHERE NOT EXISTS (SELECT 1 FROM shipping_methods WHERE code='tipax');
+INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,price_per_kg,price_per_volume,sort_order,is_active)
+SELECT 'پست','post','هزینه ارسال بر اساس وزن و حجم مرسوله تنظیم می‌شود.','weightVolume',0,0,0,2,true
+WHERE NOT EXISTS (SELECT 1 FROM shipping_methods WHERE code='post');
 
 CREATE TABLE IF NOT EXISTS orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -501,10 +594,20 @@ ALTER TABLE order_items ADD COLUMN IF NOT EXISTS blend_type varchar(120);
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS brew_method varchar(100);
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS unit_cost bigint;
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS total_cost bigint;
-ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_title varchar(220);
-ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(500);
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_title varchar(60);
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(150);
+UPDATE categories SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
+UPDATE categories SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
+ALTER TABLE categories ALTER COLUMN seo_title TYPE varchar(60);
+ALTER TABLE categories ALTER COLUMN seo_description TYPE varchar(150);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS content text;
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_title varchar(60);
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_description varchar(150);
+UPDATE tags SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
+UPDATE tags SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
+ALTER TABLE tags ALTER COLUMN seo_title TYPE varchar(60);
+ALTER TABLE tags ALTER COLUMN seo_description TYPE varchar(150);
 ALTER TABLE payment_methods DROP CONSTRAINT IF EXISTS payment_methods_type_check;
 ALTER TABLE payment_methods ADD CONSTRAINT payment_methods_type_check CHECK (type IN ('cardToCard','bankGateway','zarinpal'));
 ALTER TABLE payment_methods ALTER COLUMN card_number DROP NOT NULL;

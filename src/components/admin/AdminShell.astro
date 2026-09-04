@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   PackageCheck,
+  Truck,
   ShieldCheck,
   Settings,
   Terminal,
@@ -37,6 +38,7 @@ const icons = {
   categories: Tags,
   orders: PackageCheck,
   "payment-methods": CreditCard,
+  "shipping-methods": Truck,
   "discount-codes": BadgePercent,
   articles: BookOpenText,
   tags: Tags,
@@ -46,7 +48,7 @@ const icons = {
 const navGroups = [
   { title: "فروشگاه", icon: Boxes, resources: ["products", "categories"] },
   { title: "حسابداری", icon: Calculator, resources: ["accounting", "price-imports"] },
-  { title: "سفارش و پرداخت", icon: CreditCard, resources: ["orders", "payment-methods", "discount-codes"] },
+  { title: "سفارش و پرداخت", icon: CreditCard, resources: ["orders", "payment-methods", "shipping-methods", "discount-codes"] },
   { title: "محتوا و سئو", icon: BookOpenText, resources: ["articles", "tags", "content-templates", "content-generator"] },
   { title: "کاربران و دسترسی", icon: ShieldCheck, resources: ["users", "roles"] }
 ];

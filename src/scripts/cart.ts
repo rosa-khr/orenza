@@ -34,6 +34,15 @@ type PaymentCard = {
   bankName: string;
 };
 
+type ShippingMethod = {
+  id: string;
+  title: string;
+  code: "tipax" | "post";
+  description: string;
+  pricingType: "collect" | "weightVolume" | "fixed";
+  basePrice: number;
+};
+
 type SubmittedOrder = {
   id: string;
   orderNumber: string;
@@ -66,6 +75,7 @@ export const initCart = () => {
   const shippingInputs = [
     ...document.querySelectorAll<HTMLInputElement>('input[name="shipping-method"]')
   ];
+  const shippingMethodList = document.querySelector<HTMLElement>("[data-shipping-method-list]");
   const paymentInputs = [
     ...document.querySelectorAll<HTMLInputElement>('input[name="payment-method"]')
   ];
@@ -190,6 +200,61 @@ export const initCart = () => {
     if (cartFinal) cartFinal.textContent = `${numberFormatter.format(finalAmount())} تومان`;
   };
 
+  const copyText = async (value: string) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+    return false;
+  };
+
+  const refreshShippingInputs = () => {
+    shippingInputs.splice(0, shippingInputs.length, ...document.querySelectorAll<HTMLInputElement>('input[name="shipping-method"]'));
+    shippingInputs.forEach((input) => input.addEventListener("change", updateOrderLinks));
+  };
+
+  const loadShippingMethods = async () => {
+    if (!shippingMethodList) return;
+    try {
+      const response = await fetch("/api/v1/shipping-methods/active");
+      const payload = await response.json() as { items?: ShippingMethod[] };
+      if (!response.ok || !payload.items?.length) {
+        refreshShippingInputs();
+        return;
+      }
+      shippingMethodList.replaceChildren();
+      payload.items.forEach((method, index) => {
+        const label = document.createElement("label");
+        const radio = document.createElement("input");
+        const copy = document.createElement("span");
+        const title = document.createElement("strong");
+        const detail = document.createElement("small");
+        label.className = "choice-card";
+        const costLabel = method.pricingType === "collect"
+          ? "پس‌کرایه"
+          : method.pricingType === "weightVolume"
+            ? "محاسبه بر اساس وزن و حجم"
+            : method.basePrice > 0
+              ? `${numberFormatter.format(method.basePrice)} تومان`
+              : "هزینه ثابت";
+        radio.type = "radio";
+        radio.name = "shipping-method";
+        radio.value = method.code;
+        radio.checked = index === 0;
+        radio.required = true;
+        title.textContent = method.title;
+        detail.textContent = method.description || costLabel;
+        copy.append(title, detail);
+        label.append(radio, copy);
+        shippingMethodList.append(label);
+      });
+      refreshShippingInputs();
+      updateOrderLinks();
+    } catch {
+      refreshShippingInputs();
+    }
+  };
+
   const loadPaymentMethod = async () => {
     try {
       const response = await fetch("/api/v1/payment-methods/active");
@@ -217,6 +282,7 @@ export const initCart = () => {
           const copy = document.createElement("span");
           const number = document.createElement("strong");
           const detail = document.createElement("small");
+          const copyButton = document.createElement("button");
           radio.type = "radio";
           radio.name = "payment-card";
           radio.value = card.id;
@@ -224,8 +290,28 @@ export const initCart = () => {
           number.dir = "ltr";
           number.textContent = card.cardNumber.replace(/(\d{4})(?=\d)/g, "$1 ");
           detail.textContent = `${card.bankName} · ${card.accountOwner}`;
+          copyButton.type = "button";
+          copyButton.className = "payment-card-copy";
+          copyButton.title = "کپی شماره کارت";
+          copyButton.setAttribute("aria-label", "کپی شماره کارت");
+          copyButton.innerHTML = `
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          `;
+          copyButton.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            try {
+              const copied = await copyText(card.cardNumber);
+              if (copyStatus) copyStatus.textContent = copied ? "شماره کارت کپی شد." : "کپی خودکار در این مرورگر فعال نیست؛ شماره کارت را دستی کپی کن.";
+            } catch {
+              if (copyStatus) copyStatus.textContent = "کپی شماره کارت انجام نشد؛ شماره را دستی کپی کن.";
+            }
+          });
           copy.append(number, detail);
-          label.append(radio, copy);
+          label.append(radio, copy, copyButton);
           radio.addEventListener("change", () => {
             selectedPaymentCard = card;
             submittedOrder = null;
@@ -472,7 +558,7 @@ export const initCart = () => {
         customerCity: customerCity?.value.trim(),
         customerAddress: customerAddress?.value.trim(),
         customerPostalCode: customerPostal?.value.trim(),
-        shippingMethod: shipping === "تیپاکس" ? "tipax" : "post",
+        shippingMethod: shipping === "tipax" ? "tipax" : "post",
         paymentMethodId: paymentMethod.id,
         paymentCardId: selectedPaymentCard?.id,
         paymentRefId: normalizeDigits(paymentRef?.value.trim() || ""),
@@ -930,8 +1016,10 @@ export const initCart = () => {
     showAddedChoice(item);
   });
 
+  refreshShippingInputs();
   render();
   void loadCheckoutAccount();
+  void loadShippingMethods();
   void loadPaymentMethod();
   enablePersianValidation(cartLayer || document);
   if (new URLSearchParams(location.search).get("cart") === "open") {

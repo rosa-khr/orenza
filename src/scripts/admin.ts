@@ -26,6 +26,7 @@ type ResourceField = {
   key: string;
   label: string;
   type: string;
+  maxLength?: number;
   options?: { label: string; value: string }[];
   readonly?: boolean;
 };
@@ -58,6 +59,10 @@ const statusLabels: Record<string, string> = {
   cardToCard: "کارت‌به‌کارت",
   bankGateway: "درگاه بانکی",
   zarinpal: "زرین‌پال",
+  tipax: "تیپاکس",
+  post: "پست",
+  collect: "پس‌کرایه",
+  weightVolume: "وزن و حجم",
   weighted: "فروش وزنی",
   packaged: "فروش بسته‌ای",
   inStock: "موجود",
@@ -129,6 +134,29 @@ const toast = (message: string, type: "success" | "error" = "success") => {
     item.classList.remove("show");
     window.setTimeout(() => item.remove(), 220);
   }, 3200);
+};
+
+const initSeoCounters = (root: ParentNode = document) => {
+  root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-seo-counter-limit]").forEach((control) => {
+    const limit = Number(control.dataset.seoCounterLimit || control.maxLength);
+    if (!Number.isFinite(limit) || limit <= 0) return;
+    const field = control.closest<HTMLElement>(".admin-field");
+    const counter = field?.querySelector<HTMLElement>(".admin-seo-counter");
+    if (!counter || counter.dataset.seoCounterReady === "true") return;
+    counter.dataset.seoCounterReady = "true";
+    const render = () => {
+      const count = control.value.length;
+      const over = Math.max(0, count - limit);
+      counter.textContent = over
+        ? `${faNumber.format(over)} کاراکتر اضافه`
+        : `${faNumber.format(count)} از ${faNumber.format(limit)} کاراکتر`;
+      counter.classList.toggle("is-warning", count >= Math.floor(limit * 0.9) && count <= limit);
+      counter.classList.toggle("is-over", count > limit);
+    };
+    control.addEventListener("input", render);
+    control.addEventListener("change", render);
+    render();
+  });
 };
 
 const adminSwal = Swal.mixin({
@@ -1571,6 +1599,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   initMultiSelects(form);
   enhanceDropdowns(form);
   enhancePersianDates(form);
+  initSeoCounters(form);
   const refreshCatalogImage = config.key === "products" || config.key === "categories"
     ? initCatalogImageUpload(form, config.key)
     : undefined;
@@ -1659,6 +1688,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     try {
       const { item } = await api<{ item: Record<string, unknown> }>(`/api/v1/admin/${config.key}/${id}`);
       config.fields.forEach((field) => setFormValue(form, field.key, item[field.key]));
+      initSeoCounters(form);
       refreshCatalogImage?.();
       updateProductProfit();
       if (config.key === "orders") {
@@ -2024,6 +2054,24 @@ type SiteSettingsPayload = {
   homepageBannerRows: HomepageBannerRow[];
   homepageBestSellersEnabled: boolean;
   homepageDiscountsEnabled: boolean;
+  homepageBestSellersTitle: string;
+  homepageBestSellersColor: string;
+  homepageBestSellersTextColor: string;
+  homepageBestSellersBadgeLabel: string;
+  homepageBestSellersBadgeColor: string;
+  homepageBestSellersIconColor: string;
+  homepageDiscountsTitle: string;
+  homepageDiscountsColor: string;
+  homepageDiscountsCountdownEnabled: boolean;
+  homepageDiscountsExpiresAt: string | null;
+  homepageDiscountsTextColor: string;
+  homepageDiscountsBadgeLabel: string;
+  homepageDiscountsBadgeColor: string;
+  homepageDiscountsIconColor: string;
+  themeSurfaceColor: string;
+  themeFooterColor: string;
+  themeSupportColor: string;
+  themeHeaderIconColor: string;
   searchIndexingEnabled: boolean;
   invoiceNationalId: string;
   invoiceSignatureUrl: string | null;
@@ -2083,6 +2131,20 @@ const defaultHomepageBannerRows = (): HomepageBannerRow[] => [
 
 const maxHomepageBannerItems = (columns: number) =>
   Math.min(4, Math.max(1, Number(columns) || 3));
+
+const toDatetimeLocalValue = (value: string | null | undefined) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return offsetDate.toISOString().slice(0, 16);
+};
+
+const fromDatetimeLocalValue = (value: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
 
 const initSiteSettings = async () => {
   const form = document.querySelector<HTMLFormElement>("[data-admin-site-settings]");
@@ -2227,6 +2289,7 @@ const initSiteSettings = async () => {
         seoDescription?.addEventListener("input", () => { item.seoDescription = seoDescription.value; });
         geoSummary?.addEventListener("input", () => { item.geoSummary = geoSummary.value; });
         ieoIntent?.addEventListener("input", () => { item.ieoIntent = ieoIntent.value; });
+        initSeoCounters(element);
         fileInput?.addEventListener("change", async () => {
           const file = fileInput.files?.[0];
           if (!file) return;
@@ -2335,12 +2398,31 @@ const initSiteSettings = async () => {
       if (!field) return;
       if (field instanceof HTMLInputElement && field.type === "checkbox") {
         field.checked = Boolean(value);
+      } else if (key === "homepageDiscountsExpiresAt" && field instanceof HTMLInputElement) {
+        field.value = toDatetimeLocalValue(typeof value === "string" ? value : null);
       } else if (key === "homepageHeroBenefits" && Array.isArray(value)) {
         field.value = value.join("\n");
       } else {
         field.value = Array.isArray(value) ? value.join("، ") : value === null ? "" : String(value);
       }
     });
+    if (!input("homepageBestSellersTitle").value) input("homepageBestSellersTitle").value = "پرفروش‌ترین‌ها";
+    if (!input("homepageBestSellersColor").value) input("homepageBestSellersColor").value = "#173f30";
+    if (!input("homepageBestSellersTextColor").value) input("homepageBestSellersTextColor").value = "#ffffff";
+    if (!input("homepageBestSellersBadgeLabel").value) input("homepageBestSellersBadgeLabel").value = "پرفروش";
+    if (!input("homepageBestSellersBadgeColor").value) input("homepageBestSellersBadgeColor").value = "#293b32";
+    if (!input("homepageBestSellersIconColor").value) input("homepageBestSellersIconColor").value = "#293b32";
+    if (!input("homepageDiscountsTitle").value) input("homepageDiscountsTitle").value = "شگفت‌انگیزها";
+    if (!input("homepageDiscountsColor").value) input("homepageDiscountsColor").value = "#e53154";
+    if (!input("homepageDiscountsTextColor").value) input("homepageDiscountsTextColor").value = "#ffffff";
+    if (!input("homepageDiscountsBadgeLabel").value) input("homepageDiscountsBadgeLabel").value = "پیشنهاد ویژه";
+    if (!input("homepageDiscountsBadgeColor").value) input("homepageDiscountsBadgeColor").value = "#b72d3a";
+    if (!input("homepageDiscountsIconColor").value) input("homepageDiscountsIconColor").value = "#b72d3a";
+    if (!input("themeSurfaceColor").value) input("themeSurfaceColor").value = "#faf9f6";
+    if (!input("themeFooterColor").value) input("themeFooterColor").value = "#211d19";
+    if (!input("themeSupportColor").value) input("themeSupportColor").value = "#173f33";
+    if (!input("themeHeaderIconColor").value) input("themeHeaderIconColor").value = "#2d5644";
+    initSeoCounters(form);
     showSignature(item.invoiceSignatureUrl);
     showBanner("desktop", item.homepageBannerDesktopUrl);
     showBanner("mobile", item.homepageBannerMobileUrl);
@@ -2500,6 +2582,24 @@ const initSiteSettings = async () => {
           homepageBannerRows: collectBannerRows(),
           homepageBestSellersEnabled: (input("homepageBestSellersEnabled") as HTMLInputElement).checked,
           homepageDiscountsEnabled: (input("homepageDiscountsEnabled") as HTMLInputElement).checked,
+          homepageBestSellersTitle: input("homepageBestSellersTitle").value,
+          homepageBestSellersColor: input("homepageBestSellersColor").value,
+          homepageBestSellersTextColor: input("homepageBestSellersTextColor").value,
+          homepageBestSellersBadgeLabel: input("homepageBestSellersBadgeLabel").value,
+          homepageBestSellersBadgeColor: input("homepageBestSellersBadgeColor").value,
+          homepageBestSellersIconColor: input("homepageBestSellersIconColor").value,
+          homepageDiscountsTitle: input("homepageDiscountsTitle").value,
+          homepageDiscountsColor: input("homepageDiscountsColor").value,
+          homepageDiscountsCountdownEnabled: (input("homepageDiscountsCountdownEnabled") as HTMLInputElement).checked,
+          homepageDiscountsExpiresAt: fromDatetimeLocalValue(input("homepageDiscountsExpiresAt").value),
+          homepageDiscountsTextColor: input("homepageDiscountsTextColor").value,
+          homepageDiscountsBadgeLabel: input("homepageDiscountsBadgeLabel").value,
+          homepageDiscountsBadgeColor: input("homepageDiscountsBadgeColor").value,
+          homepageDiscountsIconColor: input("homepageDiscountsIconColor").value,
+          themeSurfaceColor: input("themeSurfaceColor").value,
+          themeFooterColor: input("themeFooterColor").value,
+          themeSupportColor: input("themeSupportColor").value,
+          themeHeaderIconColor: input("themeHeaderIconColor").value,
           searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked,
           invoiceNationalId: input("invoiceNationalId").value,
           contentAiApiKey: input("contentAiApiKey").value,

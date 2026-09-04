@@ -23,6 +23,8 @@ const orderReadonly = new Set([
   "discountAmount", "finalAmount", "customerNote"
 ]);
 const moneyFieldKeys = new Set(["purchasePricePerKg", "salePricePerKg"]);
+const seoLimitFor = (key: string, fallback?: number) =>
+  key === "seoTitle" ? 60 : key === "seoDescription" ? 150 : fallback;
 ---
 
 <AdminShell
@@ -130,7 +132,14 @@ const moneyFieldKeys = new Set(["purchasePricePerKg", "salePricePerKg"]);
               ></textarea>
             </div>
           ) : field.type === "textarea" ? (
-            <textarea name={field.key} required={field.required} disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))} minlength={field.required ? 2 : undefined}></textarea>
+            <textarea
+              name={field.key}
+              required={field.required}
+              disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))}
+              minlength={field.required ? 2 : undefined}
+              maxlength={seoLimitFor(field.key, field.maxLength)}
+              data-seo-counter-limit={seoLimitFor(field.key)}
+            ></textarea>
           ) : field.type === "multiselect" ? (
             <>
               <input type="text" data-tagify-field={field.key} disabled={isView} placeholder="برای جستجو و انتخاب کلیک کنید…" />
@@ -149,11 +158,14 @@ const moneyFieldKeys = new Set(["purchasePricePerKg", "salePricePerKg"]);
               required={field.required}
               disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))}
               min={field.min}
+              maxlength={seoLimitFor(field.key, field.maxLength)}
               inputmode={moneyFieldKeys.has(field.key) ? "numeric" : undefined}
               data-money-input={moneyFieldKeys.has(field.key) ? "true" : undefined}
+              data-seo-counter-limit={seoLimitFor(field.key)}
               dir={moneyFieldKeys.has(field.key) ? "ltr" : field.dir}
             />
           )}
+          {seoLimitFor(field.key) && <em class="admin-seo-counter" data-seo-counter={field.key}></em>}
           <small data-field-error={field.key}></small>
         </label>
       ))}

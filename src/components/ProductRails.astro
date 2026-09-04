@@ -11,7 +11,7 @@ const showDiscount = kind === "discount" || kind === "all";
 <section class="home-product-rails" aria-label="محصولات منتخب اورنزا">
   {showBest && <section class="product-rail product-rail-best" data-product-rail="best" hidden>
     <header>
-      <div><strong class="product-rail-mark">★</strong><span>ORENZA BEST SELLERS</span><h2>پرفروش‌ترین‌ها</h2></div>
+      <div><strong class="product-rail-mark">★</strong><span>ORENZA BEST SELLERS</span><h2 data-product-rail-title>پرفروش‌ترین‌ها</h2></div>
       <a href="/products/">همه <b>←</b></a>
     </header>
     <div class="product-rail-viewport"><div class="product-rail-track" data-product-rail-track></div></div>
@@ -19,7 +19,8 @@ const showDiscount = kind === "discount" || kind === "all";
 
   {showDiscount && <section class="product-rail product-rail-discount" data-product-rail="discount" hidden>
     <header>
-      <div><strong class="product-rail-mark">٪</strong><span>SELECTED OFFERS</span><h2>شگفت‌انگیزها</h2></div>
+      <div><strong class="product-rail-mark">٪</strong><span>SELECTED OFFERS</span><h2 data-product-rail-title>شگفت‌انگیزها</h2></div>
+      <div class="product-rail-countdown" data-product-rail-countdown hidden aria-label="زمان باقی‌مانده"><b>۰۰</b><i>:</i><b>۰۰</b><i>:</i><b>۰۰</b></div>
       <a href="/products/">همه <b>←</b></a>
     </header>
     <div class="product-rail-viewport"><div class="product-rail-track" data-product-rail-track></div></div>

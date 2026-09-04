@@ -9,6 +9,7 @@ import {
   paymentMethodSchema,
   productSchema,
   serviceScriptSchema,
+  shippingMethodSchema,
   tagSchema
 } from "../store/schemas.js";
 
@@ -46,6 +47,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "products",
     columns: {
       titleFa: "title_fa", titleEn: "title_en", categoryId: "category_id", description: "description",
+      seoTitle: "seo_title", seoDescription: "seo_description",
       productContent: "product_content",
       roastType: "roast_type", coffeeType: "coffee_type", grindType: "grind_type", blendType: "blend_type",
       sortOrder: "sort_order",
@@ -85,6 +87,16 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     search: ["card_number", "sheba_number", "account_number", "account_owner"],
     schema: paymentCardSchema
   },
+  "shipping-methods": {
+    table: "shipping_methods",
+    columns: {
+      title: "title", code: "code", description: "description", pricingType: "pricing_type",
+      basePrice: "base_price", pricePerKg: "price_per_kg", pricePerVolume: "price_per_volume",
+      sortOrder: "sort_order", isActive: "is_active", ...audit
+    },
+    search: ["title", "code", "description"],
+    schema: shippingMethodSchema
+  },
   "discount-codes": {
     table: "discount_codes",
     columns: {
@@ -106,7 +118,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   },
   tags: {
     table: "tags",
-    columns: { title: "title", slug: "slug", content: "content", ...audit },
+    columns: { title: "title", slug: "slug", seoTitle: "seo_title", seoDescription: "seo_description", content: "content", ...audit },
     search: ["title", "slug"],
     schema: tagSchema
   },

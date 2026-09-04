@@ -16,6 +16,7 @@ export type AdminField = {
   type: AdminFieldType;
   required?: boolean;
   min?: number;
+  maxLength?: number;
   options?: { label: string; value: string }[];
   list?: boolean;
   readonly?: boolean;
@@ -46,6 +47,7 @@ const adminPermissions = [
   { label: "دسته‌بندی‌ها", value: "categories" },
   { label: "سفارش‌ها", value: "orders" },
   { label: "روش‌های پرداخت", value: "payment-methods" },
+  { label: "روش‌های ارسال", value: "shipping-methods" },
   { label: "کدهای تخفیف", value: "discount-codes" },
   { label: "مقالات", value: "articles" },
   { label: "تگ‌ها", value: "tags" },
@@ -193,6 +195,8 @@ export const adminResources: AdminResource[] = [
       { key: "titleEn", label: "عنوان انگلیسی", type: "text", required: true, dir: "ltr" },
       { key: "categoryId", label: "دسته‌بندی", type: "select", required: true },
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
+      { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
+      { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
       { key: "tagIds", label: "برچسب‌های مرتبط", type: "multiselect" },
       { key: "relatedProductIds", label: "محصولات مرتبط", type: "multiselect" },
@@ -286,8 +290,8 @@ export const adminResources: AdminResource[] = [
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
       { key: "description", label: "محتوای دسته‌بندی", type: "richtext" },
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
-      { key: "seoTitle", label: "عنوان سئو", type: "text", required: true },
-      { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true },
+      { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },
+      { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
   },
@@ -361,6 +365,44 @@ export const adminResources: AdminResource[] = [
     ]
   },
   {
+    key: "shipping-methods",
+    title: "روش‌های ارسال",
+    singular: "روش ارسال",
+    description: "مدیریت پست، تیپاکس و مدل محاسبه هزینه ارسال",
+    fields: [
+      { key: "title", label: "عنوان روش ارسال", type: "text", required: true, list: true },
+      {
+        key: "code",
+        label: "نوع ارسال",
+        type: "select",
+        required: true,
+        list: true,
+        options: [
+          { label: "تیپاکس", value: "tipax" },
+          { label: "پست", value: "post" }
+        ]
+      },
+      { key: "description", label: "توضیح نمایش در سبد خرید", type: "textarea", list: true },
+      {
+        key: "pricingType",
+        label: "مدل هزینه",
+        type: "select",
+        required: true,
+        list: true,
+        options: [
+          { label: "پس‌کرایه", value: "collect" },
+          { label: "بر اساس وزن و حجم", value: "weightVolume" },
+          { label: "مبلغ ثابت", value: "fixed" }
+        ]
+      },
+      { key: "basePrice", label: "هزینه پایه پست (تومان)", type: "number", min: 0, list: true },
+      { key: "pricePerKg", label: "هزینه هر کیلوگرم (تومان)", type: "number", min: 0 },
+      { key: "pricePerVolume", label: "هزینه حجم مرسوله (تومان)", type: "number", min: 0 },
+      { key: "sortOrder", label: "ترتیب نمایش", type: "number", min: 1, list: true },
+      { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
+    ]
+  },
+  {
     key: "discount-codes",
     title: "کدهای تخفیف",
     singular: "کد تخفیف",
@@ -410,6 +452,8 @@ export const adminResources: AdminResource[] = [
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
+      { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
+      { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "content", label: "محتوای تگ", type: "richtext" }
     ]
   }

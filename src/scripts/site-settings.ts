@@ -38,6 +38,24 @@ type PublicSiteSettings = {
   homepageBannerRows?: HomepageBannerRow[];
   homepageBestSellersEnabled?: boolean;
   homepageDiscountsEnabled?: boolean;
+  homepageBestSellersTitle?: string;
+  homepageBestSellersColor?: string;
+  homepageBestSellersTextColor?: string;
+  homepageBestSellersBadgeLabel?: string;
+  homepageBestSellersBadgeColor?: string;
+  homepageBestSellersIconColor?: string;
+  homepageDiscountsTitle?: string;
+  homepageDiscountsColor?: string;
+  homepageDiscountsCountdownEnabled?: boolean;
+  homepageDiscountsExpiresAt?: string | null;
+  homepageDiscountsTextColor?: string;
+  homepageDiscountsBadgeLabel?: string;
+  homepageDiscountsBadgeColor?: string;
+  homepageDiscountsIconColor?: string;
+  themeSurfaceColor?: string;
+  themeFooterColor?: string;
+  themeSupportColor?: string;
+  themeHeaderIconColor?: string;
   searchIndexingEnabled: boolean;
   scripts: PublicServiceScript[];
 };
@@ -156,6 +174,19 @@ const applyServiceScripts = (scripts: PublicServiceScript[]) => {
   });
 };
 
+const setThemeColor = (name: string, value: string | undefined, fallback: string) => {
+  document.documentElement.style.setProperty(name, /^#[0-9a-fA-F]{6}$/.test(value || "") ? value! : fallback);
+};
+
+const applyThemeColors = (settings: PublicSiteSettings) => {
+  setThemeColor("--surface-cream", settings.themeSurfaceColor, "#faf9f6");
+  setThemeColor("--cream", settings.themeSurfaceColor, "#f0ede4");
+  setThemeColor("--site-surface-color", settings.themeSurfaceColor, "#faf9f6");
+  setThemeColor("--site-footer-color", settings.themeFooterColor, "#211d19");
+  setThemeColor("--site-support-color", settings.themeSupportColor, "#173f33");
+  setThemeColor("--site-header-icon-color", settings.themeHeaderIconColor, "#2d5644");
+};
+
 const applyHomepageBannerRows = (rows: HomepageBannerRow[] = []) => {
   document.querySelectorAll<HTMLElement>("[data-home-banner-row]").forEach((root) => {
     const row = rows.find((item) => item.id === root.dataset.homeBannerRow);
@@ -189,6 +220,33 @@ const applyHomepageBannerRows = (rows: HomepageBannerRow[] = []) => {
   });
 };
 
+const countdownNumber = new Intl.NumberFormat("fa-IR", { minimumIntegerDigits: 2, maximumFractionDigits: 0 });
+let discountCountdownTimer = 0;
+
+const setupDiscountCountdown = (countdown: HTMLElement | null, enabled: boolean, expiresAt?: string | null) => {
+  window.clearInterval(discountCountdownTimer);
+  if (!countdown) return;
+  const end = expiresAt ? new Date(expiresAt) : null;
+  const parts = countdown.querySelectorAll<HTMLElement>("b");
+  if (!enabled || !end || Number.isNaN(end.getTime()) || parts.length < 3) {
+    countdown.hidden = true;
+    return;
+  }
+  const render = () => {
+    const seconds = Math.max(0, Math.floor((end.getTime() - Date.now()) / 1000));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    parts[0].textContent = countdownNumber.format(hours);
+    parts[1].textContent = countdownNumber.format(minutes);
+    parts[2].textContent = countdownNumber.format(remainingSeconds);
+    countdown.hidden = false;
+    if (seconds === 0) window.clearInterval(discountCountdownTimer);
+  };
+  render();
+  discountCountdownTimer = window.setInterval(render, 1000);
+};
+
 const applyHomepageProductRails = (settings: PublicSiteSettings) => {
   const bestEnabled = settings.homepageBestSellersEnabled !== false;
   const discountEnabled = settings.homepageDiscountsEnabled !== false;
@@ -196,6 +254,31 @@ const applyHomepageProductRails = (settings: PublicSiteSettings) => {
   document.documentElement.dataset.homepageDiscountsEnabled = String(discountEnabled);
   const bestRail = document.querySelector<HTMLElement>('[data-product-rail="best"]');
   const discountRail = document.querySelector<HTMLElement>('[data-product-rail="discount"]');
+  if (bestRail) {
+    bestRail.querySelector<HTMLElement>("[data-product-rail-title]")!.textContent = settings.homepageBestSellersTitle || "پرفروش‌ترین‌ها";
+    bestRail.style.setProperty("--product-rail-color", settings.homepageBestSellersColor || "#173f30");
+    bestRail.style.setProperty("--product-rail-text-color", settings.homepageBestSellersTextColor || "#ffffff");
+    bestRail.style.setProperty("--product-card-badge-color", settings.homepageBestSellersBadgeColor || "#293b32");
+    bestRail.style.setProperty("--product-cart-icon-color", settings.homepageBestSellersIconColor || "#293b32");
+    bestRail.dataset.productBadgeLabel = settings.homepageBestSellersBadgeLabel || "پرفروش";
+    bestRail.querySelectorAll<HTMLElement>(".rail-product-media i").forEach((badge) => {
+      badge.textContent = bestRail.dataset.productBadgeLabel || "پرفروش";
+    });
+  }
+  if (discountRail) {
+    const title = discountRail.querySelector<HTMLElement>("[data-product-rail-title]");
+    const countdown = discountRail.querySelector<HTMLElement>("[data-product-rail-countdown]");
+    if (title) title.textContent = settings.homepageDiscountsTitle || "شگفت‌انگیزها";
+    discountRail.style.setProperty("--product-rail-color", settings.homepageDiscountsColor || "#e53154");
+    discountRail.style.setProperty("--product-rail-text-color", settings.homepageDiscountsTextColor || "#ffffff");
+    discountRail.style.setProperty("--product-card-badge-color", settings.homepageDiscountsBadgeColor || "#b72d3a");
+    discountRail.style.setProperty("--product-cart-icon-color", settings.homepageDiscountsIconColor || "#b72d3a");
+    discountRail.dataset.productBadgeLabel = settings.homepageDiscountsBadgeLabel || "پیشنهاد ویژه";
+    discountRail.querySelectorAll<HTMLElement>(".rail-product-media i").forEach((badge) => {
+      badge.textContent = discountRail.dataset.productBadgeLabel || "پیشنهاد ویژه";
+    });
+    setupDiscountCountdown(countdown, settings.homepageDiscountsCountdownEnabled === true, settings.homepageDiscountsExpiresAt);
+  }
   if (!bestEnabled && bestRail) bestRail.hidden = true;
   if (!discountEnabled && discountRail) discountRail.hidden = true;
 };
@@ -229,6 +312,7 @@ const applyHomepageHero = (settings: PublicSiteSettings) => {
 };
 
 const applySettings = (settings: PublicSiteSettings) => {
+  applyThemeColors(settings);
   setText("[data-site-brand-name]", settings.brandName);
   setText("[data-site-brand-name-en]", settings.brandNameEn);
   setText("[data-site-brand-tagline]", settings.brandTagline);

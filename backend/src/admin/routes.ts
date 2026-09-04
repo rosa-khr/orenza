@@ -22,7 +22,7 @@ const normalizeOpenAiKey = (value: string | undefined) =>
 
 const allPermissions = [
   "dashboard", "users", "roles", "products", "categories", "orders",
-  "payment-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
+  "payment-methods", "shipping-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
 ] as const;
 
 export const registerAdminRoutes = (

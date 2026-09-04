@@ -68,14 +68,14 @@ import Icon from "./Icon.astro";
 
       <fieldset class="checkout-choice" data-shipping-choice>
         <legend>شیوه ارسال<span>SHIPPING METHOD</span></legend>
-        <div class="checkout-choice-grid">
+        <div class="checkout-choice-grid" data-shipping-method-list>
           <label class="choice-card">
-            <input type="radio" name="shipping-method" value="تیپاکس" required />
-            <span><strong>تیپاکس</strong><small>ارسال سریع‌تر؛ هزینه بر اساس مقصد</small></span>
+            <input type="radio" name="shipping-method" value="tipax" required />
+            <span><strong>تیپاکس</strong><small>پس‌کرایه؛ هزینه هنگام تحویل دریافت می‌شود.</small></span>
           </label>
           <label class="choice-card">
-            <input type="radio" name="shipping-method" value="پست" required />
-            <span><strong>پست</strong><small>ارسال سراسری؛ هزینه بر اساس مقصد</small></span>
+            <input type="radio" name="shipping-method" value="post" required />
+            <span><strong>پست</strong><small>ارسال سراسری؛ هزینه بر اساس وزن و حجم.</small></span>
           </label>
         </div>
       </fieldset>

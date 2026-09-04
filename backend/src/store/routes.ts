@@ -262,6 +262,16 @@ export const registerStoreRoutes = (
     return { item: fallbackItem, methods };
   });
 
+  app.get("/api/v1/shipping-methods/active", async () => {
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT id,title,code,description,pricing_type,base_price,price_per_kg,price_per_volume
+       FROM shipping_methods
+       WHERE is_active = true
+       ORDER BY sort_order ASC, created_at ASC`
+    );
+    return { items: result.rows.map(toPublicRecord) };
+  });
+
   app.post("/api/v1/discounts/validate", async (request) => {
     const data = z.object({
       code: z.string().trim().min(3).max(60),
