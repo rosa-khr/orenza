@@ -1118,12 +1118,18 @@ const sanitizeEditorHtml = (value: string) => {
 const tabularTextToHtml = (value: string) => {
   const lines = value.replace(/\r/g, "").split("\n");
   while (lines.at(-1) === "") lines.pop();
-  if (!lines.length || !lines.some((line) => line.includes("\t"))) return "";
+  const rows = lines
+    .map((line) => line.split("\t"))
+    .filter((cells) => cells.length > 1);
+  const looksTabular = rows.length >= 2
+    ? rows.every((cells) => cells.length > 1 && cells.some((cell) => cell.trim()))
+    : rows.length === 1 && rows[0].length >= 3 && rows[0].filter((cell) => cell.trim()).length >= 2;
+  if (!looksTabular) return "";
   const table = document.createElement("table");
   const body = document.createElement("tbody");
-  lines.slice(0, 200).forEach((line) => {
+  rows.slice(0, 200).forEach((cells) => {
     const row = document.createElement("tr");
-    line.split("\t").slice(0, 50).forEach((value) => {
+    cells.slice(0, 50).forEach((value) => {
       const cell = document.createElement("td");
       cell.textContent = value;
       row.append(cell);
@@ -1132,6 +1138,14 @@ const tabularTextToHtml = (value: string) => {
   });
   table.append(body);
   return table.outerHTML;
+};
+
+const isContentTable = (table: HTMLTableElement) => {
+  const rows = [...table.rows]
+    .map((row) => [...row.cells].map((cell) => cell.textContent?.trim() || ""))
+    .filter((cells) => cells.some(Boolean));
+  if (rows.length >= 2) return rows.every((cells) => cells.length > 1);
+  return rows.length === 1 && rows[0].length >= 3 && rows[0].filter(Boolean).length >= 2;
 };
 
 export const initRichTextEditors = (form: HTMLFormElement) => {
@@ -1173,7 +1187,10 @@ export const initRichTextEditors = (form: HTMLFormElement) => {
           if (/<table\b/i.test(clipboardHtml)) {
             const template = document.createElement("template");
             template.innerHTML = clipboardHtml;
-            const tables = [...template.content.querySelectorAll("table")].map((table) => table.outerHTML).join("<p></p>");
+            const tables = [...template.content.querySelectorAll("table")]
+              .filter((table): table is HTMLTableElement => table instanceof HTMLTableElement && isContentTable(table))
+              .map((table) => table.outerHTML)
+              .join("<p></p>");
             const cleanTables = sanitizeEditorHtml(tables);
             if (cleanTables) {
               tiptap.commands.insertContent(cleanTables);

@@ -57,81 +57,85 @@ const seoLimitFor = (key: string, fallback?: number) =>
           </div>
           <small data-field-error={field.key}></small>
         </fieldset>
-      ) : (
-        <label class:list={["admin-field", { wide: field.type === "textarea" || field.type === "richtext" || field.type === "multiselect" }]} data-admin-field={field.key}>
+      ) : field.type === "richtext" ? (
+        <div class="admin-field wide" data-admin-field={field.key}>
           <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
-          {field.type === "richtext" ? (
-            <div class="admin-rich-text" data-rich-text>
-              <div class:list={["admin-rich-text-toolbar", { "is-readonly": isView }]} role="toolbar" aria-label={`ابزارهای ویرایش ${field.label}`}>
-                <div class="admin-editor-tool-group">
-                  <button type="button" data-rich-command="undo" disabled={isView} title="واگرد" aria-label="واگرد"><Undo2 /></button>
-                  <button type="button" data-rich-command="redo" disabled={isView} title="از نو" aria-label="از نو"><Redo2 /></button>
-                </div>
-                <div class="admin-editor-tool-group admin-editor-format">
-                  <select data-rich-format disabled={isView} aria-label="نوع متن" title="نوع متن">
-                    <option value="p">Paragraph</option>
-                    <option value="h2">Heading 2</option>
-                    <option value="h3">Heading 3</option>
-                    <option value="blockquote">Blockquote</option>
-                  </select>
-                  <ChevronDown aria-hidden="true" />
-                </div>
-                <div class="admin-editor-tool-group">
-                  <button type="button" data-rich-command="bold" disabled={isView} title="ضخیم" aria-label="ضخیم"><Bold /></button>
-                  <button type="button" data-rich-command="italic" disabled={isView} title="مورب" aria-label="مورب"><Italic /></button>
-                  <button type="button" data-rich-command="underline" disabled={isView} title="زیرخط" aria-label="زیرخط"><Underline /></button>
-                </div>
-                <div class="admin-editor-tool-group">
-                  <button type="button" data-rich-command="insertUnorderedList" disabled={isView} title="فهرست نقطه‌ای" aria-label="فهرست نقطه‌ای"><List /></button>
-                  <button type="button" data-rich-command="insertOrderedList" disabled={isView} title="فهرست شماره‌ای" aria-label="فهرست شماره‌ای"><ListOrdered /></button>
-                  <button type="button" data-rich-command="formatBlock" data-rich-value="blockquote" disabled={isView} title="نقل‌قول" aria-label="نقل‌قول"><Quote /></button>
-                </div>
-                <div class="admin-editor-tool-group">
-                  <button type="button" data-rich-command="justifyRight" disabled={isView} title="راست‌چین" aria-label="راست‌چین"><TextAlignEnd /></button>
-                  <button type="button" data-rich-command="justifyCenter" disabled={isView} title="وسط‌چین" aria-label="وسط‌چین"><TextAlignCenter /></button>
-                  <button type="button" data-rich-command="justifyLeft" disabled={isView} title="چپ‌چین" aria-label="چپ‌چین"><TextAlignStart /></button>
-                </div>
-                <div class="admin-editor-tool-group">
-                  <button type="button" data-rich-command="createLink" disabled={isView} title="افزودن لینک" aria-label="افزودن لینک"><Link2 /></button>
-                  <button type="button" data-rich-command="unlink" disabled={isView} title="حذف لینک" aria-label="حذف لینک"><Unlink2 /></button>
-                  <button type="button" data-rich-insert-image disabled={isView} title="افزودن تصویر" aria-label="افزودن تصویر"><ImagePlus /></button>
-                </div>
-                <details class="admin-editor-table-menu">
-                  <summary title="ابزارهای جدول" aria-label="ابزارهای جدول"><Table2 /><ChevronDown /></summary>
-                  <div>
-                    <button type="button" data-rich-insert-table disabled={isView}><Table2 /> درج جدول</button>
-                    <button type="button" data-rich-table-command="addRowAfter" disabled><Rows3 /> افزودن ردیف</button>
-                    <button type="button" data-rich-table-command="addColumnAfter" disabled><Columns3 /> افزودن ستون</button>
-                    <button type="button" data-rich-table-command="deleteRow" disabled><Rows3 /> حذف ردیف</button>
-                    <button type="button" data-rich-table-command="deleteColumn" disabled><Columns3 /> حذف ستون</button>
-                    <button class="is-danger" type="button" data-rich-table-command="deleteTable" disabled><Trash2 /> حذف جدول</button>
-                  </div>
-                </details>
-                <div class="admin-editor-tool-group">
-                  <button type="button" data-rich-command="removeFormat" disabled={isView} title="پاک‌کردن قالب‌بندی" aria-label="پاک‌کردن قالب‌بندی"><RemoveFormatting /></button>
-                </div>
-                <input type="file" accept="image/jpeg,image/png,image/webp" data-rich-image-input hidden />
+          <div class="admin-rich-text" data-rich-text>
+            <div class:list={["admin-rich-text-toolbar", { "is-readonly": isView }]} role="toolbar" aria-label={`ابزارهای ویرایش ${field.label}`}>
+              <div class="admin-editor-tool-group">
+                <button type="button" data-rich-command="undo" disabled={isView} title="واگرد" aria-label="واگرد"><Undo2 /></button>
+                <button type="button" data-rich-command="redo" disabled={isView} title="از نو" aria-label="از نو"><Redo2 /></button>
               </div>
-              <div
-                class="admin-rich-text-editor"
-                contenteditable={isView ? "false" : "true"}
-                role="textbox"
-                aria-multiline="true"
-                data-rich-text-editor={field.key}
-                data-placeholder="متن فارسی را اینجا بنویسید…"
-              ></div>
-              {!isView && <p class="admin-editor-help">تصویر در محل نشانگر درج می‌شود. جدول آماده را می‌توانید مستقیماً از Excel، Google Sheets، Word یا یک صفحه وب کپی و اینجا Paste کنید.</p>}
-              <textarea
-                class="admin-rich-text-input"
-                name={field.key}
-                required={field.required}
-                disabled={isView}
-                data-rich-text-input={field.key}
-                tabindex="-1"
-                aria-hidden="true"
-              ></textarea>
+              <div class="admin-editor-tool-group admin-editor-format">
+                <select data-rich-format disabled={isView} aria-label="نوع متن" title="نوع متن">
+                  <option value="p">Paragraph</option>
+                  <option value="h2">Heading 2</option>
+                  <option value="h3">Heading 3</option>
+                  <option value="blockquote">Blockquote</option>
+                </select>
+                <ChevronDown aria-hidden="true" />
+              </div>
+              <div class="admin-editor-tool-group">
+                <button type="button" data-rich-command="bold" disabled={isView} title="ضخیم" aria-label="ضخیم"><Bold /></button>
+                <button type="button" data-rich-command="italic" disabled={isView} title="مورب" aria-label="مورب"><Italic /></button>
+                <button type="button" data-rich-command="underline" disabled={isView} title="زیرخط" aria-label="زیرخط"><Underline /></button>
+              </div>
+              <div class="admin-editor-tool-group">
+                <button type="button" data-rich-command="insertUnorderedList" disabled={isView} title="فهرست نقطه‌ای" aria-label="فهرست نقطه‌ای"><List /></button>
+                <button type="button" data-rich-command="insertOrderedList" disabled={isView} title="فهرست شماره‌ای" aria-label="فهرست شماره‌ای"><ListOrdered /></button>
+                <button type="button" data-rich-command="formatBlock" data-rich-value="blockquote" disabled={isView} title="نقل‌قول" aria-label="نقل‌قول"><Quote /></button>
+              </div>
+              <div class="admin-editor-tool-group">
+                <button type="button" data-rich-command="justifyRight" disabled={isView} title="راست‌چین" aria-label="راست‌چین"><TextAlignEnd /></button>
+                <button type="button" data-rich-command="justifyCenter" disabled={isView} title="وسط‌چین" aria-label="وسط‌چین"><TextAlignCenter /></button>
+                <button type="button" data-rich-command="justifyLeft" disabled={isView} title="چپ‌چین" aria-label="چپ‌چین"><TextAlignStart /></button>
+              </div>
+              <div class="admin-editor-tool-group">
+                <button type="button" data-rich-command="createLink" disabled={isView} title="افزودن لینک" aria-label="افزودن لینک"><Link2 /></button>
+                <button type="button" data-rich-command="unlink" disabled={isView} title="حذف لینک" aria-label="حذف لینک"><Unlink2 /></button>
+                <button type="button" data-rich-insert-image disabled={isView} title="افزودن تصویر" aria-label="افزودن تصویر"><ImagePlus /></button>
+              </div>
+              <details class="admin-editor-table-menu">
+                <summary title="ابزارهای جدول" aria-label="ابزارهای جدول"><Table2 /><ChevronDown /></summary>
+                <div>
+                  <button type="button" data-rich-insert-table disabled={isView}><Table2 /> درج جدول</button>
+                  <button type="button" data-rich-table-command="addRowAfter" disabled><Rows3 /> افزودن ردیف</button>
+                  <button type="button" data-rich-table-command="addColumnAfter" disabled><Columns3 /> افزودن ستون</button>
+                  <button type="button" data-rich-table-command="deleteRow" disabled><Rows3 /> حذف ردیف</button>
+                  <button type="button" data-rich-table-command="deleteColumn" disabled><Columns3 /> حذف ستون</button>
+                  <button class="is-danger" type="button" data-rich-table-command="deleteTable" disabled><Trash2 /> حذف جدول</button>
+                </div>
+              </details>
+              <div class="admin-editor-tool-group">
+                <button type="button" data-rich-command="removeFormat" disabled={isView} title="پاک‌کردن قالب‌بندی" aria-label="پاک‌کردن قالب‌بندی"><RemoveFormatting /></button>
+              </div>
+              <input type="file" accept="image/jpeg,image/png,image/webp" data-rich-image-input hidden />
             </div>
-          ) : field.type === "textarea" ? (
+            <div
+              class="admin-rich-text-editor"
+              contenteditable={isView ? "false" : "true"}
+              role="textbox"
+              aria-multiline="true"
+              data-rich-text-editor={field.key}
+              data-placeholder="متن فارسی را اینجا بنویسید…"
+            ></div>
+            {!isView && <p class="admin-editor-help">تصویر در محل نشانگر درج می‌شود. جدول آماده را می‌توانید مستقیماً از Excel، Google Sheets، Word یا یک صفحه وب کپی و اینجا Paste کنید.</p>}
+            <textarea
+              class="admin-rich-text-input"
+              name={field.key}
+              required={field.required}
+              disabled={isView}
+              data-rich-text-input={field.key}
+              tabindex="-1"
+              aria-hidden="true"
+            ></textarea>
+          </div>
+          <small data-field-error={field.key}></small>
+        </div>
+      ) : (
+        <label class:list={["admin-field", { wide: field.type === "textarea" || field.type === "multiselect" }]} data-admin-field={field.key}>
+          <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
+          {field.type === "textarea" ? (
             <textarea
               name={field.key}
               required={field.required}
