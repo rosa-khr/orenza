@@ -1029,6 +1029,11 @@ body.mobile-nav-is-open {
   display: inline-flex;
 }
 
+.category-nav,
+.mobile-category-nav {
+  display: contents;
+}
+
 .nav-products {
   position: relative;
   display: block;
@@ -3632,6 +3637,12 @@ body.mobile-nav-is-open {
 
   .nav-products {
     display: flex;
+  }
+
+  .category-nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
   }
 
   .nav-products-link {

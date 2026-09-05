@@ -65,6 +65,12 @@ type PopularFooterCategory = {
   slug: string;
 };
 
+type PublicNavCategory = PopularFooterCategory & {
+  id?: string;
+  parentCategoryId?: string | null;
+  children?: PopularFooterCategory[];
+};
+
 type HomepageBannerRow = {
   id: "aboveDiscount" | "aboveBest";
   columns: number;
@@ -323,6 +329,93 @@ const categoryHref = (slug: string) => {
   return `/products/${encodeURIComponent(slug)}/`;
 };
 
+const createSimpleNavLink = (item: PopularFooterCategory) => {
+  const link = document.createElement("a");
+  link.href = categoryHref(item.slug);
+  link.textContent = item.title;
+  return link;
+};
+
+const createDesktopCategoryItem = (item: PublicNavCategory) => {
+  const children = item.children?.filter((child) => child.slug !== item.slug) || [];
+  if (!children.length) return createSimpleNavLink(item);
+  const wrapper = document.createElement("div");
+  wrapper.className = "nav-products";
+  const link = document.createElement("a");
+  link.className = "nav-products-link";
+  link.href = categoryHref(item.slug);
+  link.textContent = item.title;
+  const toggle = document.createElement("button");
+  toggle.className = "nav-products-toggle";
+  toggle.type = "button";
+  toggle.setAttribute("aria-label", `نمایش زیرمجموعه ${item.title}`);
+  toggle.setAttribute("aria-expanded", "false");
+  const panel = document.createElement("div");
+  panel.className = "nav-products-panel";
+  [item, ...children].forEach((child) => {
+    const childLink = document.createElement("a");
+    childLink.href = categoryHref(child.slug);
+    const title = document.createElement("span");
+    title.textContent = child.title;
+    const summary = document.createElement("small");
+    summary.textContent = child.slug === item.slug ? "صفحه اصلی این دسته" : "زیرمجموعه";
+    childLink.append(title, summary);
+    panel.append(childLink);
+  });
+  wrapper.append(link, toggle, panel);
+  return wrapper;
+};
+
+const createMobileCategoryItem = (item: PublicNavCategory) => {
+  const children = item.children?.filter((child) => child.slug !== item.slug) || [];
+  if (!children.length) {
+    const link = document.createElement("a");
+    link.href = categoryHref(item.slug);
+    const title = document.createElement("span");
+    title.textContent = item.title;
+    const summary = document.createElement("small");
+    summary.textContent = "دسته‌بندی اصلی";
+    link.append(title, summary);
+    return link;
+  }
+  const section = document.createElement("section");
+  section.className = "mobile-nav-group";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.dataset.mobileAccordion = "";
+  button.setAttribute("aria-expanded", "false");
+  const title = document.createElement("span");
+  title.textContent = item.title;
+  const summary = document.createElement("small");
+  summary.textContent = "دسته‌بندی اصلی و زیرمجموعه‌ها";
+  button.append(title, summary);
+  const panel = document.createElement("div");
+  panel.className = "mobile-nav-submenu";
+  panel.hidden = true;
+  [item, ...children].forEach((child) => {
+    const childLink = document.createElement("a");
+    childLink.href = categoryHref(child.slug);
+    const childTitle = document.createElement("span");
+    childTitle.textContent = child.title;
+    const childSummary = document.createElement("small");
+    childSummary.textContent = child.slug === item.slug ? "صفحه اصلی این دسته" : "زیرمجموعه";
+    childLink.append(childTitle, childSummary);
+    panel.append(childLink);
+  });
+  section.append(button, panel);
+  return section;
+};
+
+const applyCategoryNavigation = (items: PublicNavCategory[]) => {
+  if (!items.length) return;
+  document.querySelectorAll<HTMLElement>("[data-category-nav]").forEach((root) => {
+    root.replaceChildren(...items.slice(0, 8).map(createDesktopCategoryItem));
+  });
+  document.querySelectorAll<HTMLElement>("[data-mobile-category-nav]").forEach((root) => {
+    root.replaceChildren(...items.slice(0, 8).map(createMobileCategoryItem));
+  });
+};
+
 const applyPopularFooterLinks = (items: PopularFooterCategory[]) => {
   if (!items.length) return;
   document.querySelectorAll<HTMLElement>("[data-footer-popular-links]").forEach((root) => {
@@ -398,4 +491,9 @@ void fetch("/api/v1/site-settings", { cache: "no-store", headers: { Accept: "app
 void fetch("/api/v1/categories/popular-footer", { cache: "no-store", headers: { Accept: "application/json" } })
   .then((response) => response.ok ? response.json() : Promise.reject(new Error("popular footer links unavailable")))
   .then((payload: { items: PopularFooterCategory[] }) => applyPopularFooterLinks(payload.items || []))
+  .catch(() => undefined);
+
+void fetch("/api/v1/categories/navigation", { cache: "no-store", headers: { Accept: "application/json" } })
+  .then((response) => response.ok ? response.json() : Promise.reject(new Error("category navigation unavailable")))
+  .then((payload: { items: PublicNavCategory[] }) => applyCategoryNavigation(payload.items || []))
   .catch(() => undefined);

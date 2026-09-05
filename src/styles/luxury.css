@@ -120,6 +120,11 @@ input {
   color: rgba(239, 228, 208, 0.68);
 }
 
+.category-nav,
+.mobile-category-nav {
+  display: contents;
+}
+
 .site-header .primary-nav a,
 .header-actions > a {
   position: relative;

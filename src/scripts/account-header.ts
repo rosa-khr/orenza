@@ -8,13 +8,10 @@ export const initAccountHeader = () => {
   const mobileNav = document.querySelector<HTMLElement>("[data-mobile-nav]");
   const openMobileNav = document.querySelector<HTMLButtonElement>("[data-mobile-nav-open]");
   const closeMobileNavButtons = document.querySelectorAll<HTMLButtonElement>("[data-mobile-nav-close]");
-  const mobileAccordionButtons = document.querySelectorAll<HTMLButtonElement>("[data-mobile-accordion]");
-  const productMenu = document.querySelector<HTMLElement>(".nav-products");
-  const productToggle = document.querySelector<HTMLButtonElement>(".nav-products-toggle");
   let lastFocusedElement: HTMLElement | null = null;
 
   const closeMobileAccordions = (except?: HTMLButtonElement) => {
-    mobileAccordionButtons.forEach((button) => {
+    mobileNav?.querySelectorAll<HTMLButtonElement>("[data-mobile-accordion]").forEach((button) => {
       if (button === except) return;
       button.setAttribute("aria-expanded", "false");
       const panel = button.nextElementSibling;
@@ -50,35 +47,52 @@ export const initAccountHeader = () => {
 
   openMobileNav?.addEventListener("click", openDrawer);
   closeMobileNavButtons.forEach((button) => button.addEventListener("click", closeDrawer));
-  mobileNav?.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((link) => link.addEventListener("click", closeDrawer));
-  mobileAccordionButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+  mobileNav?.addEventListener("click", (event) => {
+    const link = (event.target as HTMLElement).closest("a[href]");
+    if (link) {
+      closeDrawer();
+      return;
+    }
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-mobile-accordion]");
+    if (button) {
       const panel = button.nextElementSibling;
       if (!(panel instanceof HTMLElement)) return;
       const willOpen = button.getAttribute("aria-expanded") !== "true";
       closeMobileAccordions(button);
       button.setAttribute("aria-expanded", String(willOpen));
       panel.hidden = !willOpen;
-    });
+    }
   });
 
-  productToggle?.addEventListener("click", () => {
+  document.addEventListener("click", (event) => {
+    const productToggle = (event.target as HTMLElement).closest<HTMLButtonElement>(".nav-products-toggle");
+    if (!productToggle) return;
+    const productMenu = productToggle.closest<HTMLElement>(".nav-products");
     const isOpen = productMenu?.classList.toggle("is-open") ?? false;
+    document.querySelectorAll<HTMLElement>(".nav-products.is-open").forEach((menu) => {
+      if (menu !== productMenu) {
+        menu.classList.remove("is-open");
+        menu.querySelector<HTMLButtonElement>(".nav-products-toggle")?.setAttribute("aria-expanded", "false");
+      }
+    });
     productToggle.setAttribute("aria-expanded", String(isOpen));
   });
 
   document.addEventListener("pointerdown", (event) => {
-    if (productMenu && !productMenu.contains(event.target as Node)) {
-      productMenu.classList.remove("is-open");
-      productToggle?.setAttribute("aria-expanded", "false");
-    }
+    document.querySelectorAll<HTMLElement>(".nav-products.is-open").forEach((menu) => {
+      if (menu.contains(event.target as Node)) return;
+      menu.classList.remove("is-open");
+      menu.querySelector<HTMLButtonElement>(".nav-products-toggle")?.setAttribute("aria-expanded", "false");
+    });
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     closeDrawer();
-    productMenu?.classList.remove("is-open");
-    productToggle?.setAttribute("aria-expanded", "false");
+    document.querySelectorAll<HTMLElement>(".nav-products.is-open").forEach((menu) => {
+      menu.classList.remove("is-open");
+      menu.querySelector<HTMLButtonElement>(".nav-products-toggle")?.setAttribute("aria-expanded", "false");
+    });
   });
 
   if (!name && !mobileName) return;

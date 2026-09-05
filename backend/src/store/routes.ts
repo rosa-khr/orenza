@@ -112,6 +112,38 @@ export const registerStoreRoutes = (
     return { items: result.rows.map(toPublicRecord) };
   });
 
+  app.get("/api/v1/categories/navigation", async (_request, reply) => {
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT c.id, c.title, c.slug, c.parent_category_id,
+        COALESCE((
+          SELECT json_agg(json_build_object('id', child.id, 'title', child.title, 'slug', child.slug) ORDER BY
+            CASE child.slug
+              WHEN 'coffee-blends' THEN 1
+              WHEN 'cafe-drinks' THEN 2
+              WHEN 'herbal-tea' THEN 3
+              ELSE 20
+            END,
+            child.created_at ASC
+          )
+          FROM categories child
+          WHERE child.parent_category_id = c.id AND child.is_active = true
+        ), '[]'::json) AS children
+       FROM categories c
+       WHERE c.is_active = true
+         AND c.parent_category_id IS NULL
+         AND c.slug NOT IN ('products', 'wholesale', 'about-orenza')
+       ORDER BY CASE c.slug
+         WHEN 'coffee-blends' THEN 1
+         WHEN 'cafe-drinks' THEN 2
+         WHEN 'herbal-tea' THEN 3
+         ELSE 20
+       END, c.created_at ASC
+       LIMIT 8`
+    );
+    reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return { items: result.rows.map(toPublicRecord) };
+  });
+
   app.get("/api/v1/categories/:slug", async (request, reply) => {
     const { slug } = z.object({
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)

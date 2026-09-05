@@ -9,15 +9,10 @@ import Icon from "./Icon.astro";
   <nav class="primary-nav" aria-label="ناوبری اصلی">
     <a href="/">خانه</a>
     <a href="/about/">درباره اورنزا</a>
-    <div class="nav-products">
-      <a class="nav-products-link" href="/products/coffee-blends/">قهوه</a>
-      <button class="nav-products-toggle" type="button" aria-label="نمایش زیرمجموعه قهوه" aria-expanded="false"></button>
-      <div class="nav-products-panel">
-        <a href="/products/coffee-blends/"><span>قهوه</span><small>عربیکا و روبوستا</small></a>
-        <a href="/products/cafe-drinks/"><span>نوشیدنی‌های پودری</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
-        <a href="/products/herbal-tea/"><span>دمنوش</span><small>ترکیب‌های گیاهی و آرام</small></a>
-        <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
-      </div>
+    <div class="category-nav" data-category-nav>
+      <a href="/products/coffee-blends/">قهوه</a>
+      <a href="/products/cafe-drinks/">نوشیدنی‌های پودری</a>
+      <a href="/products/herbal-tea/">دمنوش</a>
     </div>
     <a href="/order/">سفارش اختصاصی</a>
   </nav>
@@ -52,18 +47,11 @@ import Icon from "./Icon.astro";
       </header>
       <nav>
         <a href="/"><span>خانه</span><small>بازگشت به صفحه اصلی</small></a>
-        <section class="mobile-nav-group">
-          <button type="button" data-mobile-accordion aria-expanded="false">
-            <span>محصولات</span>
-            <small>قهوه، نوشیدنی‌های پودری و دمنوش</small>
-          </button>
-          <div class="mobile-nav-submenu" hidden>
-            <a href="/products/coffee-blends/"><span>قهوه</span><small>عربیکا و روبوستا</small></a>
-            <a href="/products/cafe-drinks/"><span>نوشیدنی‌های پودری</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
-            <a href="/products/herbal-tea/"><span>دمنوش</span><small>ترکیب‌های گیاهی و آرام</small></a>
-            <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
-          </div>
-        </section>
+        <div class="mobile-category-nav" data-mobile-category-nav>
+          <a href="/products/coffee-blends/"><span>قهوه</span><small>عربیکا و روبوستا</small></a>
+          <a href="/products/cafe-drinks/"><span>نوشیدنی‌های پودری</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+          <a href="/products/herbal-tea/"><span>دمنوش</span><small>ترکیب‌های گیاهی و آرام</small></a>
+        </div>
         <a href="/order/"><span>سفارش اختصاصی</span><small>انتخاب ترکیب، رُست و آسیاب</small></a>
         <a href="/about/"><span>درباره اورنزا</span><small>داستان رُست و انتخاب دانه</small></a>
         <a href="/contact/"><span>ارتباط با ما</span><small>مشاوره و پیگیری سفارش</small></a>
