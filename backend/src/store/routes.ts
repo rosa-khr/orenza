@@ -64,6 +64,24 @@ const zarinpalAmount = (amountInToman: number) => {
 
 const zarinpalStartUrl = (authority: string) => `https://www.zarinpal.com/pg/StartPay/${authority}`;
 
+const productSlug = (titleEn: string) =>
+  titleEn
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "orenza-product";
+
+const categoryHref = (slug: string) => {
+  if (slug === "products") return "/products/";
+  if (slug === "wholesale") return "/wholesale/";
+  if (slug === "about-orenza") return "/about/";
+  return `/products/${encodeURIComponent(slug)}/`;
+};
+
 export const registerStoreRoutes = (
   app: FastifyInstance,
   pool: Pool,
@@ -93,6 +111,87 @@ export const registerStoreRoutes = (
       reply.header("X-Robots-Tag", "noindex, nofollow, noarchive");
     }
     return reply.code(204).send();
+  });
+
+  app.get("/api/v1/search", async (request, reply) => {
+    const { q } = z.object({ q: z.string().trim().min(2).max(80) }).parse(request.query);
+    const pattern = `%${q}%`;
+    const [products, categories, tags, articles] = await Promise.all([
+      pool.query<Record<string, unknown>>(
+        `SELECT id, title_fa, title_en, description, image_url
+         FROM products
+         WHERE is_active = true
+           AND (title_fa ILIKE $1 OR title_en ILIKE $1 OR description ILIKE $1)
+         ORDER BY CASE
+           WHEN title_fa ILIKE $2 OR title_en ILIKE $2 THEN 0
+           ELSE 1
+         END, sort_order ASC, created_at ASC
+         LIMIT 6`,
+        [pattern, `${q}%`]
+      ),
+      pool.query<Record<string, unknown>>(
+        `SELECT title, slug, seo_description
+         FROM categories
+         WHERE is_active = true
+           AND (title ILIKE $1 OR slug ILIKE $1 OR COALESCE(seo_description, '') ILIKE $1)
+         ORDER BY CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END, created_at ASC
+         LIMIT 6`,
+        [pattern, `${q}%`]
+      ),
+      pool.query<Record<string, unknown>>(
+        `SELECT title, slug, seo_description
+         FROM tags
+         WHERE title ILIKE $1 OR slug ILIKE $1 OR COALESCE(seo_description, '') ILIKE $1
+         ORDER BY CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END, title ASC
+         LIMIT 6`,
+        [pattern, `${q}%`]
+      ),
+      pool.query<Record<string, unknown>>(
+        `SELECT title, slug, summary, image_url
+         FROM articles
+         WHERE is_published = true
+           AND (title ILIKE $1 OR slug ILIKE $1 OR summary ILIKE $1)
+         ORDER BY CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END, created_at DESC
+         LIMIT 6`,
+        [pattern, `${q}%`]
+      )
+    ]);
+    const items = [
+      ...products.rows.map((row) => ({
+        type: "product",
+        label: "محصول",
+        title: row.title_fa,
+        subtitle: row.title_en || row.description,
+        href: `/products/${encodeURIComponent(productSlug(String(row.title_en || "")))}/`,
+        imageUrl: row.image_url
+      })),
+      ...categories.rows.map((row) => ({
+        type: "category",
+        label: "دسته‌بندی",
+        title: row.title,
+        subtitle: row.seo_description || "مشاهده دسته‌بندی",
+        href: categoryHref(String(row.slug || "")),
+        imageUrl: null
+      })),
+      ...tags.rows.map((row) => ({
+        type: "tag",
+        label: "تگ",
+        title: row.title,
+        subtitle: row.seo_description || "مشاهده تگ",
+        href: `/tags/${encodeURIComponent(String(row.slug || ""))}/`,
+        imageUrl: null
+      })),
+      ...articles.rows.map((row) => ({
+        type: "article",
+        label: "مقاله",
+        title: row.title,
+        subtitle: row.summary,
+        href: `/articles/${encodeURIComponent(String(row.slug || ""))}/`,
+        imageUrl: row.image_url
+      }))
+    ].slice(0, 12);
+    reply.header("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    return { items };
   });
 
   app.get("/api/v1/categories/popular-footer", async (_request, reply) => {

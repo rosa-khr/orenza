@@ -28,6 +28,16 @@ import Icon from "./Icon.astro";
   </a>
   <div class="header-actions">
     <a href="/contact/">ارتباط با ما</a>
+    <div class="header-search" data-header-search>
+      <button class="header-search-toggle" type="button" aria-label="باز کردن جست‌وجو" aria-expanded="false" data-header-search-toggle>
+        <Icon name="search" size={20} />
+      </button>
+      <form class="header-search-panel" action="/products/" method="get" role="search" data-header-search-panel hidden>
+        <Icon name="search" size={18} />
+        <input name="q" type="search" placeholder="جست‌وجوی محصول، مقاله، تگ یا دسته‌بندی" autocomplete="off" data-header-search-input />
+        <div class="header-search-results" data-header-search-results hidden aria-live="polite"></div>
+      </form>
+    </div>
     <a class="account-trigger" href="/account/profile/" aria-label="حساب کاربری" title="حساب کاربری">
       <Icon name="user" size={20} />
       <span data-header-account-name>ورود</span>

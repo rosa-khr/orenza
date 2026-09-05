@@ -620,6 +620,7 @@ body:has(.mobile-home-top) .support-chat-toggle {
 }
 
 .nav-products-panel,
+.header-search-panel,
 .mobile-nav-panel {
   background: rgba(255, 255, 255, 0.985);
   border-color: rgba(42, 35, 28, 0.12);
@@ -666,10 +667,33 @@ body:has(.mobile-home-top) .support-chat-toggle {
 }
 
 .nav-products-panel small,
+.header-search-results em,
 .mobile-nav-panel > header small,
 .mobile-nav-panel nav small,
 .mobile-profile-copy small {
   color: var(--text-muted);
+}
+
+.header-search-panel {
+  color: rgba(33, 30, 26, 0.78);
+}
+
+.header-search-panel input::placeholder {
+  color: rgba(33, 30, 26, 0.42);
+}
+
+.header-search-results a {
+  border-top-color: rgba(42, 35, 28, 0.09);
+  color: rgba(33, 30, 26, 0.78);
+}
+
+.header-search-results small {
+  border-color: rgba(45, 86, 68, 0.18);
+  color: #2d5644;
+}
+
+.header-search-results.is-message {
+  color: rgba(33, 30, 26, 0.5);
 }
 
 .mobile-nav-panel > header button,

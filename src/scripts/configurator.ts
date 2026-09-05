@@ -1,10 +1,12 @@
 import { initAtelier } from "./atelier";
 import { initAccountHeader } from "./account-header";
 import { initCart } from "./cart";
+import { initHeaderSearch } from "./header-search";
 import { initMotion } from "./motion";
 
 initAccountHeader();
 initCart();
+initHeaderSearch();
 initAtelier();
 initMotion();
 
