@@ -63,7 +63,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   categories: {
     table: "categories",
     columns: {
-      title: "title", slug: "slug", description: "description", seoTitle: "seo_title",
+      title: "title", slug: "slug", parentCategoryId: "parent_category_id", description: "description", seoTitle: "seo_title",
       seoDescription: "seo_description", imageUrl: "image_url",
       showInPopularFooter: "show_in_popular_footer", isActive: "is_active", ...audit
     },

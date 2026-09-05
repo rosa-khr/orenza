@@ -43,6 +43,7 @@ export interface Category {
   id: string;
   title: string;
   slug: string;
+  parentCategoryId: string | null;
   description: string | null;
   imageUrl: string | null;
   seoTitle: string;

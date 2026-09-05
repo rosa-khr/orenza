@@ -296,6 +296,7 @@ CREATE TABLE IF NOT EXISTS categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(160) NOT NULL,
   slug varchar(180) NOT NULL UNIQUE,
+  parent_category_id uuid REFERENCES categories(id) ON DELETE SET NULL,
   description text,
   image_url text,
   seo_title varchar(60),
@@ -603,6 +604,17 @@ ALTER TABLE categories ALTER COLUMN seo_title TYPE varchar(60);
 ALTER TABLE categories ALTER COLUMN seo_description TYPE varchar(150);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_in_popular_footer boolean NOT NULL DEFAULT false;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_category_id uuid;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'categories_parent_category_id_fkey'
+  ) THEN
+    ALTER TABLE categories
+      ADD CONSTRAINT categories_parent_category_id_fkey
+      FOREIGN KEY (parent_category_id) REFERENCES categories(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS content text;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_title varchar(60);
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_description varchar(150);

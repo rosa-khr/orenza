@@ -48,6 +48,7 @@ const homepageHeroBenefitItemSchema = z.object({
 export const categorySchema = z.object({
   title: z.string().trim().min(2).max(160),
   slug,
+  parentCategoryId: z.string().uuid().nullable().optional(),
   description: optionalRichText.optional(),
   imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().min(10).max(60),

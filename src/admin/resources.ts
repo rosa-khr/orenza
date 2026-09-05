@@ -288,6 +288,7 @@ export const adminResources: AdminResource[] = [
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
+      { key: "parentCategoryId", label: "دسته‌بندی پدر", type: "select" },
       { key: "description", label: "محتوای دسته‌بندی", type: "richtext" },
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },

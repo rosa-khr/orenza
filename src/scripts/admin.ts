@@ -1390,12 +1390,26 @@ export const initRichTextEditors = (form: HTMLFormElement) => {
 
 const loadLookups = async (form: HTMLFormElement) => {
   const category = form.querySelector<HTMLSelectElement>('[data-dynamic-options="categoryId"]');
+  const parentCategory = form.querySelector<HTMLSelectElement>('[data-dynamic-options="parentCategoryId"]');
   const tags = form.querySelector<HTMLSelectElement>('[data-dynamic-options="tagIds"]');
   const relatedProducts = form.querySelector<HTMLSelectElement>('[data-dynamic-options="relatedProductIds"]');
   const currentId = new URLSearchParams(location.search).get("id");
+  const loadCategories = category || parentCategory
+    ? fetchAllAdminRows("categories")
+      .then((items) => {
+        items.forEach((item) => {
+          const id = String(item.id || "");
+          if (!id) return;
+          const title = String(item.title || id);
+          const slug = String(item.slug || "");
+          const label = slug ? `${title} — ${slug}` : title;
+          if (category) category.add(new Option(label, id));
+          if (parentCategory && id !== currentId) parentCategory.add(new Option(label, id));
+        });
+      })
+    : Promise.resolve();
   await Promise.all([
-    category ? api<{ items: { id: string; title: string }[] }>("/api/v1/admin/categories?pageSize=100")
-      .then((payload) => payload.items.forEach((item) => category.add(new Option(item.title, item.id)))) : Promise.resolve(),
+    loadCategories,
     tags ? api<{ items: { id: string; title: string }[] }>("/api/v1/admin/tags?pageSize=100")
       .then((payload) => payload.items.forEach((item) => tags.add(new Option(item.title, item.id)))) : Promise.resolve(),
     relatedProducts ? api<{ items: { id: string; titleFa: string; titleEn: string }[] }>("/api/v1/admin/products?pageSize=100")
@@ -1741,7 +1755,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "multiselect") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : parseNumericInput(raw);
-      else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts"].includes(field.key)) body[field.key] = raw === "true";
+      else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts", "showInPopularFooter"].includes(field.key)) body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;
     });

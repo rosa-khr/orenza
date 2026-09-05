@@ -140,6 +140,9 @@ export class AdminRepository {
         [(data as { type: string }).type]
       );
     }
+    if (resource === "categories") {
+      await this.validateCategoryParent(null, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
+    }
     const entries = normalizedValues(data, config, resource === "roles");
     const columns = entries.map(([column]) => column);
     const values = entries.map(([, value]) => value);
@@ -199,6 +202,9 @@ export class AdminRepository {
         "UPDATE payment_methods SET is_active = false, updated_at = now() WHERE id <> $1 AND type = $2 AND is_active = true",
         [id, (data as { type: string }).type]
       );
+    }
+    if (resource === "categories") {
+      await this.validateCategoryParent(id, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
     }
     const entries = normalizedValues(
       data,
@@ -298,6 +304,32 @@ export class AdminRepository {
         );
       }
     });
+  }
+
+  private async validateCategoryParent(categoryId: string | null, parentCategoryId: string | null) {
+    if (!parentCategoryId) return;
+    if (categoryId && parentCategoryId === categoryId) {
+      throw Object.assign(new Error("دسته‌بندی نمی‌تواند پدر خودش باشد."), { statusCode: 422 });
+    }
+    const parent = await this.pool.query<{ id: string }>("SELECT id FROM categories WHERE id=$1", [parentCategoryId]);
+    if (!parent.rows[0]) {
+      throw Object.assign(new Error("دسته‌بندی پدر انتخاب‌شده پیدا نشد."), { statusCode: 422 });
+    }
+    if (!categoryId) return;
+    const descendant = await this.pool.query<{ id: string }>(
+      `WITH RECURSIVE descendants AS (
+        SELECT id FROM categories WHERE parent_category_id = $1
+        UNION ALL
+        SELECT c.id
+        FROM categories c
+        JOIN descendants d ON c.parent_category_id = d.id
+      )
+      SELECT id FROM descendants WHERE id = $2 LIMIT 1`,
+      [categoryId, parentCategoryId]
+    );
+    if (descendant.rows[0]) {
+      throw Object.assign(new Error("زیرمجموعه همین دسته‌بندی نمی‌تواند به عنوان پدر انتخاب شود."), { statusCode: 422 });
+    }
   }
 }
 
