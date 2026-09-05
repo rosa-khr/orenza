@@ -64,7 +64,8 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "categories",
     columns: {
       title: "title", slug: "slug", description: "description", seoTitle: "seo_title",
-      seoDescription: "seo_description", imageUrl: "image_url", isActive: "is_active", ...audit
+      seoDescription: "seo_description", imageUrl: "image_url",
+      showInPopularFooter: "show_in_popular_footer", isActive: "is_active", ...audit
     },
     search: ["title", "slug"],
     schema: categorySchema

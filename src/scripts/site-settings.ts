@@ -60,6 +60,11 @@ type PublicSiteSettings = {
   scripts: PublicServiceScript[];
 };
 
+type PopularFooterCategory = {
+  title: string;
+  slug: string;
+};
+
 type HomepageBannerRow = {
   id: "aboveDiscount" | "aboveBest";
   columns: number;
@@ -311,6 +316,27 @@ const applyHomepageHero = (settings: PublicSiteSettings) => {
   });
 };
 
+const categoryHref = (slug: string) => {
+  if (slug === "products") return "/products/";
+  if (slug === "wholesale") return "/wholesale/";
+  if (slug === "about-orenza") return "/about/";
+  return `/products/${encodeURIComponent(slug)}/`;
+};
+
+const applyPopularFooterLinks = (items: PopularFooterCategory[]) => {
+  if (!items.length) return;
+  document.querySelectorAll<HTMLElement>("[data-footer-popular-links]").forEach((root) => {
+    const heading = root.querySelector("span")?.cloneNode(true);
+    const links = items.slice(0, 8).map((item) => {
+      const link = document.createElement("a");
+      link.href = categoryHref(item.slug);
+      link.textContent = item.title;
+      return link;
+    });
+    root.replaceChildren(...(heading ? [heading] : []), ...links);
+  });
+};
+
 const applySettings = (settings: PublicSiteSettings) => {
   applyThemeColors(settings);
   setText("[data-site-brand-name]", settings.brandName);
@@ -367,4 +393,9 @@ const applySettings = (settings: PublicSiteSettings) => {
 void fetch("/api/v1/site-settings", { cache: "no-store", headers: { Accept: "application/json" } })
   .then((response) => response.ok ? response.json() : Promise.reject(new Error("site settings unavailable")))
   .then((payload: { item: PublicSiteSettings }) => applySettings(payload.item))
+  .catch(() => undefined);
+
+void fetch("/api/v1/categories/popular-footer", { cache: "no-store", headers: { Accept: "application/json" } })
+  .then((response) => response.ok ? response.json() : Promise.reject(new Error("popular footer links unavailable")))
+  .then((payload: { items: PopularFooterCategory[] }) => applyPopularFooterLinks(payload.items || []))
   .catch(() => undefined);

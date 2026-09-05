@@ -292,6 +292,7 @@ export const adminResources: AdminResource[] = [
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
+      { key: "showInPopularFooter", label: "نمایش در لینک‌های پربازدید فوتر", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
   },

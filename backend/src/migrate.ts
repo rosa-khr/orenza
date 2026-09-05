@@ -300,6 +300,7 @@ CREATE TABLE IF NOT EXISTS categories (
   image_url text,
   seo_title varchar(60),
   seo_description varchar(150),
+  show_in_popular_footer boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -601,6 +602,7 @@ UPDATE categories SET seo_description = left(seo_description, 150) WHERE seo_des
 ALTER TABLE categories ALTER COLUMN seo_title TYPE varchar(60);
 ALTER TABLE categories ALTER COLUMN seo_description TYPE varchar(150);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_in_popular_footer boolean NOT NULL DEFAULT false;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS content text;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_title varchar(60);
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_description varchar(150);
@@ -651,42 +653,51 @@ CREATE TABLE IF NOT EXISTS application_logs (
 CREATE INDEX IF NOT EXISTS application_logs_created_at_idx ON application_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS application_logs_level_idx ON application_logs(level);
 
-INSERT INTO categories (title, slug, description, seo_title, seo_description)
+INSERT INTO categories (title, slug, description, seo_title, seo_description, show_in_popular_footer)
 VALUES
-  ('قهوه‌های ترکیبی', 'coffee-blends',
+  ('قهوه', 'coffee-blends',
    'ترکیب‌های تازه‌رست عربیکا و روبوستا با انتخاب رُست و آسیاب متناسب با دستگاه شما.',
    'خرید قهوه ترکیبی تازه رست عربیکا و روبوستا',
-   'خرید قهوه ترکیبی تازه‌رست اورنزا در نسبت‌های مختلف عربیکا و روبوستا، با انتخاب وزن، درجه رُست و آسیاب مناسب اسپرسوساز، موکاپات و فرنچ‌پرس.'),
-  ('پودرهای نوشیدنی کافه‌ای', 'cafe-drinks',
+   'خرید قهوه ترکیبی تازه‌رست اورنزا در نسبت‌های مختلف عربیکا و روبوستا، با انتخاب وزن، درجه رُست و آسیاب مناسب اسپرسوساز، موکاپات و فرنچ‌پرس.',
+   true),
+  ('نوشیدنی‌های پودری', 'cafe-drinks',
    'پودرهای منتخب برای آماده‌کردن نوشیدنی‌های گرم و کافه‌ای در خانه یا محل کار.',
    'خرید چای ماسالا، ماچا، هات چاکلت و کاپوچینو',
-   'خرید آنلاین پودر چای ماسالا، ماچا، هات چاکلت و کاپوچینو با امکان انتخاب وزن و ارسال سراسر ایران.')
+   'خرید آنلاین پودر چای ماسالا، ماچا، هات چاکلت و کاپوچینو با امکان انتخاب وزن و ارسال سراسر ایران.',
+   true),
+  ('دمنوش', 'herbal-tea',
+   'دمنوش‌های گیاهی و خوش‌عطر برای فنجان‌های آرام، روزمره و آماده‌سازی ساده.',
+   'خرید دمنوش گیاهی اورنزا',
+   'خرید دمنوش گیاهی اورنزا با ترکیب‌های خوش‌عطر، بسته‌بندی تازه و ارسال سراسر ایران.',
+   true)
 ON CONFLICT (slug) DO UPDATE SET
   title=EXCLUDED.title,
   description=EXCLUDED.description,
   seo_title=EXCLUDED.seo_title,
   seo_description=EXCLUDED.seo_description,
+  show_in_popular_footer=EXCLUDED.show_in_popular_footer,
   updated_at=now();
 
-INSERT INTO categories (title, slug, description, seo_title, seo_description, is_active)
+INSERT INTO categories (title, slug, description, seo_title, seo_description, is_active, show_in_popular_footer)
 VALUES
   ('همه محصولات اورنزا', 'products',
    '<h2>خرید محصولات اورنزا</h2><p>مجموعه‌ای از قهوه‌های تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا برای انتخابی دقیق و خوش‌طعم.</p>',
    'خرید محصولات اورنزا؛ قهوه و نوشیدنی‌های کافه‌ای',
-   'خرید قهوه تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا با انتخاب وزن، رُست و آسیاب مناسب.', true),
+   'خرید قهوه تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا با انتخاب وزن، رُست و آسیاب مناسب.', true, false),
   ('خرید عمده', 'wholesale',
    '<h2>خرید عمده قهوه برای کافه و سازمان</h2><p>تأمین منظم قهوه تازه‌رست اورنزا برای کافه‌ها، رستوران‌ها و مجموعه‌های سازمانی با ترکیب و آسیاب متناسب با نیاز شما.</p>',
    'خرید عمده قهوه برای کافه، رستوران و سازمان',
-   'خرید عمده قهوه تازه‌رست اورنزا برای کافه، رستوران و سازمان با تأمین منظم و انتخاب ترکیب مناسب.', true),
+   'خرید عمده قهوه تازه‌رست اورنزا برای کافه، رستوران و سازمان با تأمین منظم و انتخاب ترکیب مناسب.', true, false),
   ('درباره اورنزا', 'about-orenza',
    '<h2>درباره اورنزا</h2><p>داستان اورنزا، انتخاب دانه و رُست تازه برای ساختن تجربه‌ای دقیق‌تر از قهوه.</p>',
    'درباره اورنزا؛ داستان رستری و قهوه تازه‌رست',
-   'با اورنزا و نگاه ما به انتخاب دانه، رُست تازه و آماده‌سازی قهوه آشنا شوید.', true)
+   'با اورنزا و نگاه ما به انتخاب دانه، رُست تازه و آماده‌سازی قهوه آشنا شوید.', true, false)
 ON CONFLICT (slug) DO UPDATE SET
   title=EXCLUDED.title,
   description=EXCLUDED.description,
   seo_title=EXCLUDED.seo_title,
   seo_description=EXCLUDED.seo_description,
+  show_in_popular_footer=EXCLUDED.show_in_popular_footer,
   updated_at=now();
 
 INSERT INTO products

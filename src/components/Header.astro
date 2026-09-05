@@ -7,13 +7,15 @@ import Icon from "./Icon.astro";
     <span></span><span></span><span></span>
   </button>
   <nav class="primary-nav" aria-label="ناوبری اصلی">
+    <a href="/">خانه</a>
     <a href="/about/">درباره اورنزا</a>
     <div class="nav-products">
-      <a class="nav-products-link" href="/products/">محصولات</a>
-      <button class="nav-products-toggle" type="button" aria-label="نمایش زیرمجموعه محصولات" aria-expanded="false"></button>
+      <a class="nav-products-link" href="/products/coffee-blends/">قهوه</a>
+      <button class="nav-products-toggle" type="button" aria-label="نمایش زیرمجموعه قهوه" aria-expanded="false"></button>
       <div class="nav-products-panel">
-        <a href="/products/coffee-blends/"><span>قهوه‌های ترکیبی</span><small>عربیکا و روبوستا</small></a>
-        <a href="/products/cafe-drinks/"><span>پودرهای نوشیدنی کافه‌ای</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+        <a href="/products/coffee-blends/"><span>قهوه</span><small>عربیکا و روبوستا</small></a>
+        <a href="/products/cafe-drinks/"><span>نوشیدنی‌های پودری</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+        <a href="/products/herbal-tea/"><span>دمنوش</span><small>ترکیب‌های گیاهی و آرام</small></a>
         <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
       </div>
     </div>
@@ -49,15 +51,16 @@ import Icon from "./Icon.astro";
         <button type="button" data-mobile-nav-close aria-label="بستن منو"><Icon name="close" size={19} /></button>
       </header>
       <nav>
+        <a href="/"><span>خانه</span><small>بازگشت به صفحه اصلی</small></a>
         <section class="mobile-nav-group">
           <button type="button" data-mobile-accordion aria-expanded="false">
             <span>محصولات</span>
-            <small>دسته‌بندی‌ها و خرید عمده</small>
+            <small>قهوه، نوشیدنی‌های پودری و دمنوش</small>
           </button>
           <div class="mobile-nav-submenu" hidden>
-            <a href="/products/"><span>همه محصولات</span><small>همه انتخاب‌های فعال اورنزا</small></a>
-            <a href="/products/coffee-blends/"><span>قهوه‌های ترکیبی</span><small>عربیکا و روبوستا</small></a>
-            <a href="/products/cafe-drinks/"><span>پودرهای نوشیدنی کافه‌ای</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+            <a href="/products/coffee-blends/"><span>قهوه</span><small>عربیکا و روبوستا</small></a>
+            <a href="/products/cafe-drinks/"><span>نوشیدنی‌های پودری</span><small>ماچا، ماسالا و هات‌چاکلت</small></a>
+            <a href="/products/herbal-tea/"><span>دمنوش</span><small>ترکیب‌های گیاهی و آرام</small></a>
             <a href="/wholesale/"><span>خرید عمده</span><small>ویژه کافه و سازمان</small></a>
           </div>
         </section>

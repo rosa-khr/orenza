@@ -47,6 +47,7 @@ export interface Category {
   imageUrl: string | null;
   seoTitle: string;
   seoDescription: string;
+  showInPopularFooter: boolean;
   isActive: boolean;
 }
 

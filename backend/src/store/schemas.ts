@@ -52,6 +52,7 @@ export const categorySchema = z.object({
   imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().min(10).max(60),
   seoDescription: z.string().trim().min(30).max(150),
+  showInPopularFooter: z.boolean().default(false),
   isActive: z.boolean().default(true)
 });
 

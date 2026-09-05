@@ -95,6 +95,23 @@ export const registerStoreRoutes = (
     return reply.code(204).send();
   });
 
+  app.get("/api/v1/categories/popular-footer", async (_request, reply) => {
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT title, slug
+       FROM categories
+       WHERE is_active = true AND show_in_popular_footer = true
+       ORDER BY CASE slug
+         WHEN 'coffee-blends' THEN 1
+         WHEN 'cafe-drinks' THEN 2
+         WHEN 'herbal-tea' THEN 3
+         ELSE 20
+       END, created_at ASC
+       LIMIT 8`
+    );
+    reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return { items: result.rows.map(toPublicRecord) };
+  });
+
   app.get("/api/v1/categories/:slug", async (request, reply) => {
     const { slug } = z.object({
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)

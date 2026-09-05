@@ -1115,7 +1115,7 @@ footer {
 
 .footer-main {
   display: grid;
-  grid-template-columns: 1.4fr 1fr .7fr;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr .7fr;
   gap: 70px;
   padding-bottom: 70px;
 }
@@ -1137,7 +1137,9 @@ footer {
   font-size: 11px;
 }
 
+.footer-links,
 .footer-contact,
+.footer-popular,
 .footer-social {
   display: flex;
   flex-direction: column;
@@ -1145,19 +1147,27 @@ footer {
   gap: 9px;
 }
 
+.footer-links > span,
 .footer-contact > span,
+.footer-popular > span,
 .footer-social > span {
   margin-bottom: 17px;
   color: #686860;
   font-size: 9px;
 }
 
+.footer-links a,
+.footer-links button,
 .footer-contact a,
+.footer-popular a,
 .footer-social a {
   font-size: 12px;
 }
 
+.footer-links a:hover,
+.footer-links button:hover,
 .footer-contact a:hover,
+.footer-popular a:hover,
 .footer-social a:hover {
   color: var(--gold-light);
 }

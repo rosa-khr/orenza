@@ -2763,12 +2763,17 @@ body.mobile-nav-is-open {
 }
 
 .footer-links,
+.footer-popular,
 .footer-contact,
 .footer-social {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 12px;
 }
 
 .footer-links > span,
+.footer-popular > span,
 .footer-contact > span,
 .footer-social > span {
   color: rgba(206, 176, 120, 0.68);
@@ -2777,6 +2782,7 @@ body.mobile-nav-is-open {
 
 .footer-links a,
 .footer-links button,
+.footer-popular a,
 .footer-contact a,
 .footer-social a {
   color: rgba(241, 232, 215, 0.72);

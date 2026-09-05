@@ -44,6 +44,7 @@ const root = document.querySelector<HTMLElement>("[data-category-products]");
 const list = root?.querySelector<HTMLElement>("[data-category-product-list]");
 if (root && list) {
   const money = new Intl.NumberFormat("fa-IR");
+  const directCartCategories = new Set(["cafe-drinks", "herbal-tea"]);
   const categorySlug = root.dataset.category || "";
   if (categorySlug) {
     fetch(`/api/v1/categories/${encodeURIComponent(categorySlug)}`)
@@ -80,7 +81,7 @@ if (root && list) {
       list.replaceChildren();
       items.forEach((product) => {
         const isPowderCategory =
-          root.dataset.category === "cafe-drinks" || product.categorySlug === "cafe-drinks";
+          directCartCategories.has(root.dataset.category || "") || directCartCategories.has(product.categorySlug);
         const article = document.createElement("article");
         const eyebrow = document.createElement("span");
         const title = document.createElement("h3");

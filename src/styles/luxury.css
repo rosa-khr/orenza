@@ -1505,6 +1505,7 @@ footer {
 }
 
 .footer-links,
+.footer-popular,
 .footer-contact,
 .footer-social {
   display: flex;
@@ -1514,6 +1515,7 @@ footer {
 }
 
 .footer-links > span,
+.footer-popular > span,
 .footer-contact > span,
 .footer-social > span {
   margin-bottom: 14px;
@@ -1523,6 +1525,7 @@ footer {
 
 .footer-links a,
 .footer-links button,
+.footer-popular a,
 .footer-contact a,
 .footer-social a {
   padding: 0;
@@ -2242,6 +2245,7 @@ footer {
 }
 
 .footer-links > span,
+.footer-popular > span,
 .footer-contact > span,
 .footer-social > span {
   font-size: 10px;
@@ -2249,6 +2253,7 @@ footer {
 
 .footer-links a,
 .footer-links button,
+.footer-popular a,
 .footer-contact a,
 .footer-social a {
   font-size: 12px;
@@ -3794,6 +3799,7 @@ p {
   flex: 1;
 }
 
+.footer-popular a,
 .footer-contact a,
 .footer-social a {
   display: inline-flex;

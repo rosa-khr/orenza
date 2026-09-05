@@ -91,11 +91,12 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       setText("[data-product-detail-blend]", item.blendType);
       setText("[data-product-detail-roast]", roastLabels[item.roastType] || "—");
       setText("[data-product-detail-stock]", item.stockStatus === "inStock" ? "موجود و قابل سفارش" : "ناموجود");
-      const isPowderedDrink = item.categorySlug === "cafe-drinks";
+      const directCartCategories = new Set(["cafe-drinks", "herbal-tea"]);
+      const isDirectCartCategory = directCartCategories.has(item.categorySlug);
       const roastSpec = root.querySelector<HTMLElement>("[data-product-detail-roast-spec]");
       const preparation = root.querySelector<HTMLElement>("[data-product-detail-preparation]");
-      if (roastSpec) roastSpec.hidden = isPowderedDrink;
-      if (preparation && isPowderedDrink) preparation.lastChild!.textContent = " آماده‌سازی سریع و بسته‌بندی‌شده";
+      if (roastSpec) roastSpec.hidden = isDirectCartCategory;
+      if (preparation && isDirectCartCategory) preparation.lastChild!.textContent = " آماده‌سازی سریع و بسته‌بندی‌شده";
 
       const image = root.querySelector<HTMLImageElement>("[data-product-detail-image]");
       const imagePlaceholder = root.querySelector<HTMLElement>("[data-product-detail-image-placeholder]");
@@ -162,12 +163,27 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       const internalLinks = root.querySelector<HTMLElement>("[data-product-detail-links]");
       const internalLinkGrid = root.querySelector<HTMLElement>("[data-product-detail-link-grid]");
       if (internalLinks && internalLinkGrid) {
-        const categoryTitle = item.categorySlug === "coffee-blends"
-          ? "مشاهده همه قهوه‌های ترکیبی"
-          : "مشاهده همه نوشیدنی‌های کافه‌ای";
-        const categoryDescription = item.categorySlug === "coffee-blends"
-          ? "مقایسه درصد عربیکا و روبوستا و انتخاب ترکیب مناسب"
-          : "انتخاب چای ماسالا، ماچا، هات چاکلت و کاپوچینو";
+        const categoryMeta: Record<string, { title: string; description: string; label: string; href: string }> = {
+          "coffee-blends": {
+            title: "مشاهده همه قهوه‌ها",
+            description: "مقایسه درصد عربیکا و روبوستا و انتخاب ترکیب مناسب",
+            label: "ساخت سفارش قهوه اختصاصی",
+            href: `/order/?product=${encodeURIComponent(productSlug(item.titleEn))}`
+          },
+          "cafe-drinks": {
+            title: "مشاهده همه نوشیدنی‌های پودری",
+            description: "انتخاب چای ماسالا، ماچا، هات چاکلت و کاپوچینو",
+            label: "خرید نوشیدنی‌های پودری",
+            href: "/products/cafe-drinks/"
+          },
+          "herbal-tea": {
+            title: "مشاهده همه دمنوش‌ها",
+            description: "انتخاب ترکیب‌های گیاهی و خوش‌عطر",
+            label: "خرید دمنوش",
+            href: "/products/herbal-tea/"
+          }
+        };
+        const meta = categoryMeta[item.categorySlug] || categoryMeta["coffee-blends"];
         const createLink = (href: string, title: string, description: string) => {
           const link = document.createElement("a");
           link.href = href;
@@ -180,12 +196,10 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
         };
 
         internalLinkGrid.append(
-          createLink(`/products/${item.categorySlug}/`, categoryTitle, categoryDescription),
+          createLink(`/products/${item.categorySlug}/`, meta.title, meta.description),
           createLink(
-            item.categorySlug === "coffee-blends"
-              ? `/order/?product=${encodeURIComponent(productSlug(item.titleEn))}`
-              : "/products/cafe-drinks/",
-            item.categorySlug === "coffee-blends" ? "ساخت سفارش قهوه اختصاصی" : "خرید نوشیدنی‌های کافه‌ای",
+            meta.href,
+            meta.label,
             item.categorySlug === "coffee-blends"
               ? "انتخاب وزن، رُست و آسیاب متناسب با دستگاه شما"
               : "مقایسه طعم‌ها، وزن‌ها و قیمت محصولات آماده"
@@ -232,7 +246,7 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
         action.disabled = true;
         if (actionLabel) actionLabel.textContent = "این محصول فعلاً ناموجود است";
       } else {
-        const directCart = item.saleType === "packaged" || item.categorySlug === "cafe-drinks";
+        const directCart = item.saleType === "packaged" || isDirectCartCategory;
         if (actionLabel) actionLabel.textContent = directCart ? "افزودن به سبد خرید" : "ادامه و انتخاب رُست";
         action.addEventListener("click", () => {
           if (!directCart) {
