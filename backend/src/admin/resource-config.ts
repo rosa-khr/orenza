@@ -55,6 +55,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
       stockStatus: "stock_status",
       purchasePricePerKg: "purchase_price_per_kg", salePricePerKg: "sale_price_per_kg",
       showInBestSellers: "show_in_best_sellers", showInDiscounts: "show_in_discounts",
+      showInPopularSearches: "show_in_popular_searches",
       isActive: "is_active", imageUrl: "image_url", ...audit
     },
     search: ["title_fa", "title_en", "blend_type"],
@@ -65,7 +66,8 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     columns: {
       title: "title", slug: "slug", parentCategoryId: "parent_category_id", description: "description", seoTitle: "seo_title",
       seoDescription: "seo_description", imageUrl: "image_url",
-      showInPopularFooter: "show_in_popular_footer", isActive: "is_active", ...audit
+      showInPopularFooter: "show_in_popular_footer", showInPopularSearches: "show_in_popular_searches",
+      isActive: "is_active", ...audit
     },
     search: ["title", "slug"],
     schema: categorySchema
@@ -119,7 +121,10 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   },
   tags: {
     table: "tags",
-    columns: { title: "title", slug: "slug", seoTitle: "seo_title", seoDescription: "seo_description", content: "content", ...audit },
+    columns: {
+      title: "title", slug: "slug", seoTitle: "seo_title", seoDescription: "seo_description",
+      content: "content", showInPopularSearches: "show_in_popular_searches", ...audit
+    },
     search: ["title", "slug"],
     schema: tagSchema
   },

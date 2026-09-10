@@ -1743,7 +1743,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "multiselect") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : parseNumericInput(raw);
-      else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts", "showInPopularFooter"].includes(field.key)) body[field.key] = raw === "true";
+      else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts", "showInPopularFooter", "showInPopularSearches"].includes(field.key)) body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;
     });

@@ -277,6 +277,7 @@ export const adminResources: AdminResource[] = [
       { key: "imageUrl", label: "تصویر محصول", type: "image", dir: "ltr" },
       { key: "showInBestSellers", label: "نمایش در پرفروش‌ترین‌ها", type: "select", options: yesNo, list: true },
       { key: "showInDiscounts", label: "نمایش در محصولات تخفیف‌دار", type: "select", options: yesNo, list: true },
+      { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
   },
@@ -294,6 +295,7 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
       { key: "showInPopularFooter", label: "نمایش در لینک‌های پربازدید فوتر", type: "select", options: yesNo, list: true },
+      { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
   },
@@ -456,7 +458,8 @@ export const adminResources: AdminResource[] = [
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
-      { key: "content", label: "محتوای تگ", type: "richtext" }
+      { key: "content", label: "محتوای تگ", type: "richtext" },
+      { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true }
     ]
   }
 ];

@@ -8,11 +8,22 @@ type SearchProduct = {
   imageUrl: string | null;
 };
 
+type PopularSearchItem = {
+  type: "product" | "article" | "tag" | "category";
+  label: string;
+  title: string;
+  subtitle: string | null;
+  href: string;
+  imageUrl: string | null;
+};
+
 const form = document.querySelector<HTMLFormElement>("[data-mobile-product-search]");
 const input = form?.querySelector<HTMLInputElement>("[data-mobile-product-search-input]");
 const results = form?.querySelector<HTMLElement>("[data-mobile-product-search-results]");
 let products: SearchProduct[] = [];
 let loading: Promise<void> | null = null;
+let popularLoading: Promise<void> | null = null;
+let popularItems: PopularSearchItem[] = [];
 
 const normalize = (value: string) => value
   .normalize("NFKD")
@@ -36,18 +47,86 @@ const loadProducts = () => {
   return loading;
 };
 
+const loadPopular = () => {
+  if (popularLoading) return popularLoading;
+  popularLoading = fetch(`/api/v1/search/popular?ts=${Date.now()}`, {
+    cache: "no-store",
+    headers: { Accept: "application/json" }
+  })
+    .then(async (response) => {
+      if (!response.ok) throw new Error();
+      const payload = await response.json() as { items?: PopularSearchItem[] };
+      popularItems = payload.items || [];
+    })
+    .catch(() => {
+      popularItems = [];
+    })
+    .finally(() => {
+      popularLoading = null;
+    });
+  return popularLoading;
+};
+
 const setExpanded = (expanded: boolean) => {
   if (!input || !results) return;
   input.setAttribute("aria-expanded", String(expanded));
   results.hidden = !expanded;
 };
 
+const renderPopular = async () => {
+  if (!input || !results) return;
+  results.replaceChildren();
+  results.textContent = "در حال بارگذاری…";
+  results.classList.add("is-message");
+  setExpanded(true);
+  await loadPopular();
+  if (normalize(input.value).length >= 2) return;
+
+  results.replaceChildren();
+  results.classList.remove("is-message");
+
+  const heading = document.createElement("p");
+  heading.className = "mobile-search-results-title";
+  heading.textContent = "جستجوهای پرطرفدار";
+  results.append(heading);
+
+  if (!popularItems.length) {
+    const empty = document.createElement("p");
+    empty.className = "mobile-search-empty";
+    empty.textContent = "هنوز موردی برای نمایش انتخاب نشده است.";
+    results.append(empty);
+    return;
+  }
+
+  popularItems.forEach((item) => {
+    const link = document.createElement("a");
+    link.href = item.href;
+    const visual = item.imageUrl ? document.createElement("img") : document.createElement("small");
+    if (item.imageUrl) {
+      (visual as HTMLImageElement).src = item.imageUrl;
+      (visual as HTMLImageElement).alt = "";
+      (visual as HTMLImageElement).loading = "lazy";
+    } else {
+      visual.className = "mobile-search-mark";
+      visual.textContent = item.label.slice(0, 1);
+      visual.setAttribute("aria-label", item.label);
+    }
+    const copy = document.createElement("span");
+    const title = document.createElement("b");
+    const subtitle = document.createElement("em");
+    title.textContent = item.title;
+    subtitle.textContent = item.subtitle || item.label;
+    copy.append(title, subtitle);
+    link.append(visual, copy);
+    results.append(link);
+  });
+};
+
 const render = async () => {
   if (!input || !results) return;
   const query = normalize(input.value);
   if (query.length < 2) {
-    results.replaceChildren();
-    setExpanded(false);
+    await renderPopular();
     return;
   }
 
@@ -108,7 +187,7 @@ const render = async () => {
 if (form && input && results) {
   input.addEventListener("focus", () => {
     void loadProducts();
-    if (input.value.trim().length >= 2) void render();
+    void render();
   });
   input.addEventListener("input", () => void render());
   form.addEventListener("submit", (event) => {

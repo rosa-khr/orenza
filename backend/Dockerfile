@@ -6,13 +6,11 @@ COPY backend/tsconfig.json ./
 COPY backend/src ./src
 RUN npm run build
 
-FROM node:20-bookworm-slim
+FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-ENV CHROMIUM_PATH=/usr/bin/chromium
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates chromium wget \
-  && rm -rf /var/lib/apt/lists/*
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+RUN apk add --no-cache ca-certificates chromium wget
 COPY backend/package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY --from=build /app/dist ./dist

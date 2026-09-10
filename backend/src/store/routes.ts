@@ -113,6 +113,65 @@ export const registerStoreRoutes = (
     return reply.code(204).send();
   });
 
+  app.get("/api/v1/search/popular", async (_request, reply) => {
+    const [products, categories, tags] = await Promise.all([
+      pool.query<Record<string, unknown>>(
+        `SELECT title_fa, title_en, description, image_url
+         FROM products
+         WHERE is_active = true AND show_in_popular_searches = true
+         ORDER BY sort_order ASC, created_at ASC
+         LIMIT 8`
+      ),
+      pool.query<Record<string, unknown>>(
+        `SELECT title, slug, seo_description, image_url
+         FROM categories
+         WHERE is_active = true AND show_in_popular_searches = true
+         ORDER BY CASE slug
+           WHEN 'coffee-blends' THEN 1
+           WHEN 'cafe-drinks' THEN 2
+           WHEN 'herbal-tea' THEN 3
+           ELSE 20
+         END, created_at ASC
+         LIMIT 8`
+      ),
+      pool.query<Record<string, unknown>>(
+        `SELECT title, slug, seo_description
+         FROM tags
+         WHERE show_in_popular_searches = true
+         ORDER BY title ASC
+         LIMIT 8`
+      )
+    ]);
+    const items = [
+      ...categories.rows.map((row) => ({
+        type: "category",
+        label: "دسته‌بندی",
+        title: row.title,
+        subtitle: row.seo_description || "مشاهده دسته‌بندی",
+        href: categoryHref(String(row.slug || "")),
+        imageUrl: row.image_url
+      })),
+      ...products.rows.map((row) => ({
+        type: "product",
+        label: "محصول",
+        title: row.title_fa,
+        subtitle: row.title_en || row.description,
+        href: `/products/${encodeURIComponent(productSlug(String(row.title_en || row.title_fa || "")))}/`,
+        imageUrl: row.image_url
+      })),
+      ...tags.rows.map((row) => ({
+        type: "tag",
+        label: "تگ",
+        title: row.title,
+        subtitle: row.seo_description || "مشاهده تگ",
+        href: `/tags/${encodeURIComponent(String(row.slug || ""))}/`,
+        imageUrl: null
+      }))
+    ].slice(0, 8);
+    reply.header("Cache-Control", "no-store");
+    return { items };
+  });
+
   app.get("/api/v1/search", async (request, reply) => {
     const { q } = z.object({ q: z.string().trim().min(2).max(80) }).parse(request.query);
     const pattern = `%${q}%`;

@@ -54,6 +54,7 @@ export const categorySchema = z.object({
   seoTitle: z.string().trim().min(10).max(60),
   seoDescription: z.string().trim().min(30).max(150),
   showInPopularFooter: z.boolean().default(false),
+  showInPopularSearches: z.boolean().default(false),
   isActive: z.boolean().default(true)
 });
 
@@ -79,6 +80,7 @@ export const productSchema = z.object({
   salePricePerKg: money,
   showInBestSellers: z.boolean().default(false),
   showInDiscounts: z.boolean().default(false),
+  showInPopularSearches: z.boolean().default(false),
   isActive: z.boolean().default(true),
   imageUrl: productImageUrl.optional()
 });
@@ -158,7 +160,8 @@ export const tagSchema = z.object({
   slug,
   seoTitle: z.string().trim().max(60).nullable().optional(),
   seoDescription: z.string().trim().max(150).nullable().optional(),
-  content: optionalRichText.optional()
+  content: optionalRichText.optional(),
+  showInPopularSearches: z.boolean().default(false)
 });
 
 export const orderAdminSchema = z.object({
