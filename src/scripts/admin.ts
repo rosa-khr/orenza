@@ -2687,7 +2687,16 @@ const initInvoice = async () => {
     const websiteLink = root.querySelector<HTMLAnchorElement>("[data-invoice-footer-website]");
     if (phoneLink) phoneLink.href = `tel:${String(settings.supportPhone || "").replace(/\s/g, "")}`;
     if (emailLink) emailLink.href = `mailto:${String(settings.supportEmail || "")}`;
-    if (instagramLink) instagramLink.href = String(settings.instagramUrl || "https://instagram.com/orenza.ir");
+    if (instagramLink) {
+      const instagramUrl = String(settings.instagramUrl || "https://instagram.com/orenza.ir");
+      instagramLink.href = instagramUrl;
+      const label = instagramLink.querySelector("[data-invoice-footer-instagram-label]");
+      const cleanLabel = instagramUrl
+        .replace(/^https?:\/\/(www\.)?instagram\.com\//, "")
+        .replace(/^@/, "")
+        .replace(/\/$/, "");
+      if (label) label.textContent = cleanLabel ? `@${cleanLabel}` : "@orenza.ir";
+    }
     if (websiteLink) {
       const websiteUrl = String(settings.websiteUrl || "https://orenza.ir");
       websiteLink.href = websiteUrl;

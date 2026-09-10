@@ -44,6 +44,15 @@ const orderStatusLabel = (value?: string | null) => ({
   canceled: "لغوشده"
 })[value || ""] || value || "—";
 const asMoney = (value: number | string | undefined) => `${money.format(Number(value || 0))} تومان`;
+const instagramLabel = (value: string) => {
+  const label = String(value || "https://instagram.com/orenza.ir")
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//, "")
+    .replace(/^@/, "")
+    .replace(/\/$/, "");
+  return label ? `@${label}` : "@orenza.ir";
+};
+const websiteLabel = (value: string) =>
+  String(value || "https://orenza.ir").replace(/^https?:\/\//, "").replace(/\/$/, "");
 
 const assetRoot = () => {
   const candidates = [
@@ -198,7 +207,7 @@ const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
             <div class="grand"><span>مبلغ قابل پرداخت</span><strong>${asMoney(order.finalAmount)}</strong></div>
           </div>
         </section>
-        <footer><div><strong>کیفیت اتفاقی نیست؛ حاصل دقت در انتخاب است.</strong><span>از اعتماد، همراهی و انتخاب ارزشمند شما سپاسگزاریم.</span></div><div class="contacts"><a>${escapeHtml(branding.supportPhone)}</a><a>${escapeHtml(branding.supportEmail)}</a><a>${escapeHtml(branding.instagramUrl)}</a><a>${escapeHtml(branding.websiteUrl)}</a></div></footer>
+        <footer><div><strong>کیفیت اتفاقی نیست؛ حاصل دقت در انتخاب است.</strong><span>از اعتماد، همراهی و انتخاب ارزشمند شما سپاسگزاریم.</span></div><div class="contacts"><a>${escapeHtml(branding.supportPhone)}</a><a>${escapeHtml(branding.supportEmail)}</a><a>${escapeHtml(instagramLabel(branding.instagramUrl))}</a><a>${escapeHtml(websiteLabel(branding.websiteUrl))}</a></div></footer>
       </main>
     </body>
   </html>`;
