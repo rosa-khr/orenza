@@ -1,5 +1,10 @@
 ---
 import AccountShell from "../../components/AccountShell.astro";
+import Icon from "../../components/Icon.astro";
+
+const next = Astro.url.searchParams.get("next");
+const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "";
+const cartReturnHref = safeNext.startsWith("/order/") ? safeNext : "/order/?cart=open";
 ---
 
 <AccountShell title="مشخصات فردی" current="profile">
@@ -9,7 +14,13 @@ import AccountShell from "../../components/AccountShell.astro";
       <label><span>نام و نام خانوادگی</span><input name="displayName" autocomplete="name" minlength="2" required /></label>
       <label><span>شماره موبایل</span><input name="phone" type="tel" autocomplete="tel" inputmode="numeric" pattern="09[0-9]{9}" /></label>
       <label><span>ایمیل متصل به حساب</span><input name="email" type="email" placeholder="ثبت نشده" disabled /></label>
-      <button class="account-primary" type="submit">ذخیره تغییرات</button>
+      <div class="account-form-actions">
+        <button class="account-primary" type="submit">ذخیره تغییرات</button>
+        <a class="account-cart-return" href={cartReturnHref}>
+          <Icon name="cart" size={17} />
+          بازگشت به سبد خرید
+        </a>
+      </div>
       <p class="account-status" data-profile-status aria-live="polite"></p>
     </form>
   </section>

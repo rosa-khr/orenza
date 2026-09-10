@@ -183,12 +183,15 @@ main {
 .auth-card form,
 .account-form {
   display: grid;
+  width: 100%;
+  max-width: 100%;
   gap: 14px;
 }
 
 .auth-card label,
 .account-form label {
   display: grid;
+  min-width: 0;
   gap: 7px;
 }
 
@@ -374,12 +377,12 @@ main {
 
 .account-page {
   direction: rtl;
-  width: min(100vw, 1320px);
+  width: min(100%, 1320px);
   overflow-x: clip;
   min-height: 100svh;
   max-width: 1320px;
-  margin: 0;
-  padding: calc(var(--header-height) + 28px) clamp(14px, 4vw, 44px) 64px;
+  margin: 0 auto;
+  padding: calc(var(--header-height) + 56px) clamp(14px, 4vw, 44px) 64px;
   background: var(--surface-cream);
 }
 
@@ -397,11 +400,16 @@ body:has(.account-page) .site-header {
 .account-heading {
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 14px 0 24px;
+  padding: 20px 0 28px;
   border-bottom: 1px solid var(--line-light);
+}
+
+.account-heading > div:first-child {
+  min-width: 0;
+  padding-top: 4px;
 }
 
 .account-heading h1 {
@@ -410,7 +418,7 @@ body:has(.account-page) .site-header {
   color: var(--text-dark);
   font-size: clamp(28px, 5vw, 44px);
   font-weight: 650;
-  line-height: 1.35;
+  line-height: 1.55;
 }
 
 .account-heading .eyebrow {
@@ -422,6 +430,37 @@ body:has(.account-page) .site-header {
   margin: 6px 0 0;
   color: var(--text-muted);
   font-size: 12px;
+}
+
+.account-heading-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.account-return-link {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(36, 75, 59, .34);
+  padding: 10px 18px;
+  color: var(--green);
+  font: 12px "Dana", Tahoma, sans-serif;
+}
+
+.account-cart-return {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(36, 75, 59, 0.5);
+  padding: 10px 18px;
+  color: var(--green);
+  font: 12px "Dana", Tahoma, sans-serif;
 }
 
 .account-tabs {
@@ -522,11 +561,14 @@ body:has(.account-page) .site-header {
   min-width: 0;
   display: grid;
   justify-items: stretch;
+  align-content: start;
   direction: rtl;
 }
 
 .account-route-panel {
   min-height: 0;
+  justify-self: start;
+  width: min(100%, 860px);
 }
 
 .account-panel {
@@ -534,9 +576,14 @@ body:has(.account-page) .site-header {
   text-align: right;
   width: 100%;
   min-width: 0;
+  overflow: hidden;
   padding: clamp(18px, 3vw, 32px);
   background: var(--surface-paper);
   border: 1px solid rgba(74, 58, 37, 0.12);
+}
+
+.account-panel * {
+  min-width: 0;
 }
 
 .account-panel > header {
@@ -569,18 +616,19 @@ body:has(.account-page) .site-header {
 
 .account-security-panel {
   justify-self: start;
-  width: min(100%, 920px);
-  max-width: 920px;
+  width: min(100%, 860px);
+  max-width: none;
 }
 
 .account-security-form {
   direction: rtl;
   width: 100%;
-  max-width: 780px;
+  max-width: 100%;
 }
 
 .account-form-row {
   display: grid;
+  min-width: 0;
   gap: 14px;
 }
 
@@ -601,6 +649,7 @@ body:has(.account-page) .site-header {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-start;
 }
 
 .address-list {
@@ -622,6 +671,7 @@ body:has(.account-page) .site-header {
   padding: 16px;
   background: #fffdf8;
   border: 1px solid rgba(74, 58, 37, 0.13);
+  border-radius: 12px;
 }
 
 .address-card > div:first-child {
@@ -645,6 +695,7 @@ body:has(.account-page) .site-header {
   margin: 10px 0 4px;
   color: #534b40;
   font-size: 11px;
+  line-height: 1.9;
 }
 
 .address-card small {
@@ -656,6 +707,7 @@ body:has(.account-page) .site-header {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+  justify-content: flex-start;
 }
 
 .address-card button {
@@ -668,6 +720,8 @@ body:has(.account-page) .site-header {
 }
 
 .address-form {
+  width: 100%;
+  max-width: 100%;
   margin-top: 18px;
   padding-top: 20px;
   border-top: 1px solid var(--line-light);
@@ -691,24 +745,21 @@ body:has(.account-page) .site-header {
   }
 
   .account-page {
-    padding-top: calc(var(--header-height) + 42px);
+    padding-top: calc(var(--header-height) + 84px);
     padding-bottom: 86px;
   }
 
   .account-form-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
 }
 
 @media (min-width: 900px) {
-  .account-page {
-    margin: 0 auto;
-  }
-
   .account-workspace {
-    grid-template-columns: minmax(230px, 270px) minmax(0, 1fr);
-    gap: clamp(18px, 3vw, 28px);
+    grid-template-columns: minmax(220px, 260px) minmax(0, 820px);
+    justify-content: center;
+    gap: clamp(18px, 3vw, 40px);
     align-items: start;
   }
 
@@ -750,11 +801,46 @@ body:has(.account-page) .site-header {
     background: rgba(48, 78, 64, .1);
   }
 
+  .account-address-panel .address-list {
+    max-width: 760px;
+  }
+
+  .account-address-panel .address-form {
+    max-width: 680px;
+  }
+
+  .account-address-panel > .account-secondary {
+    width: max-content;
+  }
+
+}
+
+@media (min-width: 900px) and (max-width: 1240px) {
+  .account-page {
+    padding-inline: 28px;
+  }
+
+  .account-workspace {
+    grid-template-columns: minmax(210px, 250px) minmax(0, 680px);
+    gap: 24px;
+  }
+
+  .account-route-panel {
+    width: min(100%, 680px);
+  }
+
+  .account-heading h1 {
+    font-size: clamp(30px, 4vw, 38px);
+  }
 }
 
 @media (min-width: 1180px) {
   .account-workspace {
-    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 280px) minmax(0, 860px);
+  }
+
+  .account-route-panel {
+    width: min(100%, 860px);
   }
 }
 
@@ -785,7 +871,13 @@ body:has(.account-page) .site-header {
     flex-direction: column;
   }
 
-  .account-heading .account-quiet-button {
+  .account-heading-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .account-heading .account-quiet-button,
+  .account-return-link {
     width: 100%;
     justify-content: center;
   }
@@ -823,7 +915,8 @@ body:has(.account-page) .site-header {
     white-space: nowrap;
   }
 
-  .account-form-actions > button {
+  .account-form-actions > button,
+  .account-form-actions > a {
     width: 100%;
   }
 }

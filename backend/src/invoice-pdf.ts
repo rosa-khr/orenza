@@ -70,10 +70,9 @@ const asDataUri = (data: Buffer, mime: string) => `data:${mime};base64,${data.to
 
 const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
   const root = assetRoot();
-  const [regularFont, demiBoldFont, logoSvg] = await Promise.all([
+  const [regularFont, demiBoldFont] = await Promise.all([
     readFile(path.join(root, "fonts/Dana-Regular.ttf")),
-    readFile(path.join(root, "fonts/Dana-DemiBold.ttf")),
-    readFile(path.join(root, "favicon.svg"))
+    readFile(path.join(root, "fonts/Dana-DemiBold.ttf"))
   ]);
   const signature = branding.invoiceSignature
     ? `<img src="${asDataUri(branding.invoiceSignature.data, branding.invoiceSignature.mime)}" alt="امضای فروشنده">`
@@ -107,10 +106,10 @@ const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
         .sheet { min-height:269mm; overflow:hidden; border-top:5px solid #173f30; border-radius:4px; background:#fffdf9; padding:12mm; box-shadow:0 8px 28px rgba(45,35,20,.08); }
         header { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; border-bottom:2px solid #173f30; padding-bottom:14px; }
         .brand { display:flex; align-items:center; gap:10px; direction:ltr; }
-        .brand img { width:46px; height:46px; }
-        .brand div { display:grid; }
-        .brand strong { color:#173f30; font-size:16px; letter-spacing:3px; }
-        .brand small { color:#9b8158; font-size:7px; letter-spacing:1.4px; }
+        .brand-mark { display:grid; width:38px; height:38px; place-items:center; border:1.4px solid #b48a4d; border-radius:50%; color:#91672f; font-size:16px; font-weight:600; line-height:1; }
+        .brand div { display:grid; gap:5px; text-align:left; }
+        .brand strong { color:#173f30; font-size:15px; line-height:1; letter-spacing:2.6px; }
+        .brand small { color:#8f806d; font-size:7px; line-height:1; letter-spacing:1.5px; }
         .title { text-align:center; }
         .title small { color:#a57735; font-size:8px; letter-spacing:1px; }
         .title h1 { margin:3px 0 0; color:#173f30; font-size:19px; }
@@ -163,7 +162,7 @@ const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
     <body>
       <main class="sheet">
         <header>
-          <div class="brand"><img src="${asDataUri(logoSvg, "image/svg+xml")}" alt="Orenza"><div><strong>${escapeHtml(branding.brandNameEn || "ORENZA")}</strong><small>COFFEE ROASTERS</small></div></div>
+          <div class="brand"><span class="brand-mark">O</span><div><strong>${escapeHtml(branding.brandNameEn || "ORENZA")}</strong><small>COFFEE ROASTERS</small></div></div>
           <div class="title"><small>صورتحساب فروش کالا</small><h1>فاکتور رسمی فروش</h1></div>
           <div class="meta"><div><span>شماره فاکتور</span><strong>${escapeHtml(order.orderNumber)}</strong></div><div><span>تاریخ صدور</span><strong>${escapeHtml(invoiceDate.format(new Date(order.createdAt)))}</strong></div></div>
         </header>

@@ -1115,37 +1115,38 @@ const sanitizeEditorHtml = (value: string) => {
   return template.innerHTML.trim();
 };
 
-const tabularTextToHtml = (value: string) => {
-  const lines = value.replace(/\r/g, "").split("\n");
-  while (lines.at(-1) === "") lines.pop();
-  const rows = lines
-    .map((line) => line.split("\t"))
-    .filter((cells) => cells.length > 1);
-  const looksTabular = rows.length >= 2
-    ? rows.every((cells) => cells.length > 1 && cells.some((cell) => cell.trim()))
-    : rows.length === 1 && rows[0].length >= 3 && rows[0].filter((cell) => cell.trim()).length >= 2;
-  if (!looksTabular) return "";
-  const table = document.createElement("table");
-  const body = document.createElement("tbody");
-  rows.slice(0, 200).forEach((cells) => {
-    const row = document.createElement("tr");
-    cells.slice(0, 50).forEach((value) => {
-      const cell = document.createElement("td");
-      cell.textContent = value;
-      row.append(cell);
-    });
-    body.append(row);
-  });
-  table.append(body);
-  return table.outerHTML;
+const escapeEditorText = (value: string) =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const plainTextToEditorHtml = (value: string) => {
+  const paragraphs = value
+    .replace(/\r/g, "")
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return paragraphs.map((paragraph) =>
+    `<p>${paragraph.split("\n").map((line) => escapeEditorText(line.trim())).join("<br>")}</p>`
+  ).join("");
 };
 
-const isContentTable = (table: HTMLTableElement) => {
-  const rows = [...table.rows]
-    .map((row) => [...row.cells].map((cell) => cell.textContent?.trim() || ""))
-    .filter((cells) => cells.some(Boolean));
-  if (rows.length >= 2) return rows.every((cells) => cells.length > 1);
-  return rows.length === 1 && rows[0].length >= 3 && rows[0].filter(Boolean).length >= 2;
+const flattenPastedTables = (value: string) => {
+  const template = document.createElement("template");
+  template.innerHTML = value;
+  template.content.querySelectorAll("table").forEach((table) => {
+    const fragment = document.createDocumentFragment();
+    table.querySelectorAll("tr").forEach((row) => {
+      const text = [...row.querySelectorAll("th,td")]
+        .map((cell) => cell.textContent?.trim())
+        .filter(Boolean)
+        .join(" - ");
+      if (!text) return;
+      const paragraph = document.createElement("p");
+      paragraph.textContent = text;
+      fragment.append(paragraph);
+    });
+    table.replaceWith(fragment);
+  });
+  return template.innerHTML;
 };
 
 export const initRichTextEditors = (form: HTMLFormElement) => {
@@ -1184,24 +1185,11 @@ export const initRichTextEditors = (form: HTMLFormElement) => {
           const clipboard = event.clipboardData;
           if (!clipboard) return false;
           const clipboardHtml = clipboard.getData("text/html");
-          if (/<table\b/i.test(clipboardHtml)) {
-            const template = document.createElement("template");
-            template.innerHTML = clipboardHtml;
-            const tables = [...template.content.querySelectorAll("table")]
-              .filter((table): table is HTMLTableElement => table instanceof HTMLTableElement && isContentTable(table))
-              .map((table) => table.outerHTML)
-              .join("<p></p>");
-            const cleanTables = sanitizeEditorHtml(tables);
-            if (cleanTables) {
-              tiptap.commands.insertContent(cleanTables);
-              toast("جدول از حافظه موقت درج شد.");
-              return true;
-            }
-          }
-          const tableHtml = tabularTextToHtml(clipboard.getData("text/plain"));
-          if (!tableHtml) return false;
-          tiptap.commands.insertContent(tableHtml);
-          toast("اطلاعات کپی‌شده به جدول تبدیل شد.");
+          const cleanHtml = clipboardHtml ? sanitizeEditorHtml(flattenPastedTables(clipboardHtml)) : "";
+          const plainHtml = plainTextToEditorHtml(clipboard.getData("text/plain"));
+          const content = cleanHtml || plainHtml;
+          if (!content) return false;
+          tiptap.commands.insertContent(content);
           return true;
         }
       },
@@ -2658,6 +2646,11 @@ const initInvoice = async () => {
   if (!root) return;
   const id = new URLSearchParams(location.search).get("id");
   if (!id) { toast("شناسه سفارش وجود ندارد.", "error"); return; }
+  const downloadLink = document.querySelector<HTMLAnchorElement>("[data-download-invoice]");
+  if (downloadLink) {
+    downloadLink.href = `/api/v1/admin/orders/${encodeURIComponent(id)}/invoice.pdf`;
+    downloadLink.download = "invoice.pdf";
+  }
   try {
     const [{ item }, { item: settings }] = await Promise.all([
       api<{ item: Record<string, unknown> & { items?: Record<string, unknown>[] } }>(
@@ -2665,6 +2658,7 @@ const initInvoice = async () => {
       ),
       api<{ item: Record<string, unknown> }>("/api/v1/admin/invoice-settings")
     ]);
+    if (downloadLink) downloadLink.download = `invoice-${String(item.orderNumber || id)}.pdf`;
     const set = (selector: string, value: string) => {
       const element = root.querySelector<HTMLElement>(selector);
       if (element) element.textContent = value;

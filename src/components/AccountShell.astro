@@ -8,10 +8,15 @@ interface Props {
 }
 
 const { title, current } = Astro.props;
+const next = Astro.url.searchParams.get("next");
+const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "";
+const nextSuffix = safeNext ? `?next=${encodeURIComponent(safeNext)}` : "";
+const returnHref = safeNext || "/";
+const returnLabel = safeNext.startsWith("/order/") ? "بازگشت به سبد خرید" : "بازگشت به فروشگاه";
 const menu = [
-  { key: "profile", label: "مشخصات فردی", detail: "نام و اطلاعات تماس", href: "/account/profile/", icon: "profile" },
-  { key: "addresses", label: "نشانی‌ها", detail: "نشانی‌های تحویل", href: "/account/addresses/", icon: "address" },
-  { key: "security", label: "امنیت حساب", detail: "مدیریت رمز عبور", href: "/account/security/", icon: "security" }
+  { key: "profile", label: "مشخصات فردی", detail: "نام و اطلاعات تماس", href: `/account/profile/${nextSuffix}`, icon: "profile" },
+  { key: "addresses", label: "نشانی‌ها", detail: "نشانی‌های تحویل", href: `/account/addresses/${nextSuffix}`, icon: "address" },
+  { key: "security", label: "امنیت حساب", detail: "مدیریت رمز عبور", href: `/account/security/${nextSuffix}`, icon: "security" }
 ] as const;
 ---
 
@@ -29,10 +34,16 @@ const menu = [
         <h1 data-account-title>حساب کاربری</h1>
         <p data-account-welcome>در حال بارگذاری اطلاعات حساب...</p>
       </div>
-      <button class="account-quiet-button" type="button" data-logout>
-        <Icon name="logout" size={17} />
-        خروج از حساب
-      </button>
+      <div class="account-heading-actions">
+        <a class="account-return-link" href={returnHref}>
+          <Icon name="store" size={17} />
+          {returnLabel}
+        </a>
+        <button class="account-quiet-button" type="button" data-logout>
+          <Icon name="logout" size={17} />
+          خروج از حساب
+        </button>
+      </div>
     </header>
 
     <div class="account-workspace">

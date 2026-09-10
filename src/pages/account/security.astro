@@ -1,5 +1,10 @@
 ---
 import AccountShell from "../../components/AccountShell.astro";
+import Icon from "../../components/Icon.astro";
+
+const next = Astro.url.searchParams.get("next");
+const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : "";
+const cartReturnHref = safeNext.startsWith("/order/") ? safeNext : "/order/?cart=open";
 ---
 
 <AccountShell title="امنیت حساب" current="security">
@@ -11,6 +16,10 @@ import AccountShell from "../../components/AccountShell.astro";
       <label><span>تکرار رمز عبور جدید</span><input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
       <div class="account-form-actions">
         <button class="account-primary" type="submit">ثبت رمز عبور جدید</button>
+        <a class="account-cart-return" href={cartReturnHref}>
+          <Icon name="cart" size={17} />
+          بازگشت به سبد خرید
+        </a>
       </div>
       <p class="account-status" data-password-status aria-live="polite"></p>
     </form>

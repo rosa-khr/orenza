@@ -7,9 +7,12 @@ import { AdminRepository } from "./repository.js";
 import { openPaymentReceipt } from "../payment-receipts.js";
 import {
   openInvoiceSignature,
+  readInvoiceSignature,
   removeInvoiceSignature,
   saveInvoiceSignature
 } from "../invoice-signatures.js";
+import { createInvoicePdf, type InvoiceBranding } from "../invoice-pdf.js";
+import type { NewOrder } from "../order-notifications.js";
 import { saveProductImage } from "../product-images.js";
 import { removeHomepageBanner, saveHomepageBanner } from "../homepage-banners.js";
 import { persistLog } from "../logger.js";
@@ -782,6 +785,71 @@ ${ai.instructions}
         invoiceSignatureUrl: settings.invoiceSignatureUrl
       }
     };
+  });
+
+  app.get("/api/v1/admin/orders/:id/invoice.pdf", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "orders"))) return;
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const [item, settings] = await Promise.all([
+      repository.find("orders", id) as Promise<Record<string, unknown> & { items?: Record<string, unknown>[] }>,
+      getSiteSettings(pool)
+    ]);
+    const payment = item.paymentMethodId
+      ? await pool.query<{ title: string }>("SELECT title FROM payment_methods WHERE id=$1 LIMIT 1", [item.paymentMethodId])
+      : null;
+    const signatureFileName = String(settings.invoiceSignatureUrl || "").split("/").pop();
+    const branding: InvoiceBranding = {
+      brandName: String(settings.brandName || "اورنزا"),
+      brandNameEn: String(settings.brandNameEn || "ORENZA"),
+      supportPhone: String(settings.supportPhone || ""),
+      supportEmail: String(settings.supportEmail || ""),
+      websiteUrl: String(settings.websiteUrl || "https://orenza.ir"),
+      instagramUrl: String(settings.instagramUrl || "https://instagram.com/orenza.ir"),
+      address: String(settings.address || ""),
+      invoiceNationalId: String(settings.invoiceNationalId || "۰۰۲۱۴۱۱۴۱۷"),
+      invoiceSignature: signatureFileName ? await readInvoiceSignature(signatureFileName) : null
+    };
+    const order: NewOrder = {
+      id: String(item.id),
+      orderNumber: String(item.orderNumber || item.id),
+      customerName: String(item.customerName || ""),
+      customerPhone: String(item.customerPhone || ""),
+      customerAddress: String(item.customerAddress || ""),
+      customerProvince: String(item.customerProvince || ""),
+      customerCity: String(item.customerCity || ""),
+      customerPostalCode: String(item.customerPostalCode || ""),
+      shippingMethod: String(item.shippingMethod || ""),
+      paymentMethodId: item.paymentMethodId ? String(item.paymentMethodId) : null,
+      paymentMethodTitle: payment?.rows[0]?.title || null,
+      paymentRefId: item.paymentRefId ? String(item.paymentRefId) : null,
+      paymentReceiptUrl: item.paymentReceiptUrl ? String(item.paymentReceiptUrl) : null,
+      paymentStatus: item.paymentStatus ? String(item.paymentStatus) : null,
+      orderStatus: item.orderStatus ? String(item.orderStatus) : null,
+      customerNote: item.customerNote ? String(item.customerNote) : null,
+      totalAmount: Number(item.totalAmount || 0),
+      discountAmount: Number(item.discountAmount || 0),
+      taxAmount: Number(item.taxAmount || 0),
+      finalAmount: Number(item.finalAmount || 0),
+      createdAt: item.createdAt instanceof Date ? item.createdAt : String(item.createdAt || new Date().toISOString()),
+      items: (item.items || []).map((orderItem) => ({
+        productTitle: String(orderItem.productTitle || "قهوه اورنزا"),
+        weight: Number(orderItem.weight || 0),
+        quantity: Number(orderItem.quantity || 0),
+        grindType: String(orderItem.grindType || "دان"),
+        roastType: String(orderItem.roastType || ""),
+        blendType: String(orderItem.blendType || ""),
+        brewMethod: orderItem.brewMethod ? String(orderItem.brewMethod) : null,
+        unitPrice: Number(orderItem.unitPrice || 0),
+        totalPrice: Number(orderItem.totalPrice || 0)
+      }))
+    };
+    const pdf = await createInvoicePdf(order, branding);
+    const fileName = `invoice-${order.orderNumber.replace(/[^\w.-]+/g, "-")}.pdf`;
+    reply
+      .type("application/pdf")
+      .header("Content-Disposition", `attachment; filename="${fileName}"`)
+      .header("Cache-Control", "private, max-age=60");
+    return reply.send(pdf);
   });
 
   app.post("/api/v1/admin/site-settings/invoice-signature", {

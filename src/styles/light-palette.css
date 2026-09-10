@@ -1951,7 +1951,9 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 }
 
 .account-menu nav a > .icon,
-.account-menu-order { color: #3d7059; }
+.account-menu-order,
+.account-return-link,
+.account-cart-return { color: #3d7059; }
 
 .account-content,
 .account-panel,
@@ -2021,7 +2023,20 @@ main:has(> .route-spacer) .weight-options button.is-selected {
   color: #304e40;
 }
 
-.account-menu-order:hover {
+.account-return-link {
+  border-radius: 10px;
+  background: #fff;
+}
+
+.account-cart-return {
+  border-radius: 10px;
+  background: #f1f8f4;
+  color: #304e40;
+}
+
+.account-menu-order:hover,
+.account-return-link:hover,
+.account-cart-return:hover {
   border-color: rgba(48, 78, 64, .42);
   background: #e7f2ec;
 }
