@@ -128,30 +128,6 @@ const enableRailDrag = (viewport: HTMLElement) => {
   }, true);
 };
 
-const enableRailMotion = (viewport: HTMLElement, track: HTMLElement, kind: "best" | "discount") => {
-  if (viewport.dataset.motionReady) return;
-  viewport.dataset.motionReady = "true";
-  const speed = kind === "discount" ? 0.026 : 0.024;
-  let frame = 0;
-  let previous = performance.now();
-  const tick = (time: number) => {
-    const delta = Math.min(40, time - previous);
-    previous = time;
-    const halfWidth = track.scrollWidth / 2;
-    const canMove = halfWidth > viewport.clientWidth;
-    if (
-      canMove &&
-      viewport.dataset.userDragging !== "true"
-    ) {
-      viewport.scrollLeft += speed * delta;
-      if (speed > 0 && viewport.scrollLeft >= halfWidth) viewport.scrollLeft -= halfWidth;
-    }
-    frame = requestAnimationFrame(tick);
-  };
-  frame = requestAnimationFrame(tick);
-  window.addEventListener("beforeunload", () => cancelAnimationFrame(frame), { once: true });
-};
-
 const renderRail = (kind: "best" | "discount", products: RailProduct[]) => {
   const enabledKey = kind === "best" ? "homepageBestSellersEnabled" : "homepageDiscountsEnabled";
   if (document.documentElement.dataset[enabledKey] === "false") return;
@@ -168,9 +144,8 @@ const renderRail = (kind: "best" | "discount", products: RailProduct[]) => {
     loopProducts.forEach((product) => group.append(card(product, badgeLabel)));
     return group;
   };
-  track.replaceChildren(makeGroup(), makeGroup());
+  track.replaceChildren(makeGroup());
   enableRailDrag(viewport);
-  enableRailMotion(viewport, track, kind);
   root.hidden = false;
 };
 

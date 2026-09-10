@@ -251,11 +251,12 @@ body:has(.mobile-home-top) .support-chat-toggle {
 
   body:has(.mobile-home-top) .home-banner-row { background: transparent; }
   body:has(.mobile-home-top) .home-banner-row[data-home-banner-row="aboveDiscount"] { order: 3; }
-  body:has(.mobile-home-top) .home-banner-row[data-home-banner-row="aboveBest"] { order: 6; }
   body:has(.mobile-home-top) .home-product-rails { padding: 12px 0; background: transparent; }
   body:has(.mobile-home-top) .home-product-rails:has(.product-rail-discount) { order: 4; }
   body:has(.mobile-home-top) .home-order-cta { order: 5; }
-  body:has(.mobile-home-top) .home-product-rails:has(.product-rail-best) { order: 7; }
+  body:has(.mobile-home-top) .espresso-banner { order: 6; }
+  body:has(.mobile-home-top) .home-banner-row[data-home-banner-row="aboveBest"] { order: 7; }
+  body:has(.mobile-home-top) .home-product-rails:has(.product-rail-best) { order: 8; }
 
   body:has(.mobile-home-top) .product-rail {
     margin: 0;
@@ -752,7 +753,6 @@ body:has(.mobile-home-top) .support-chat-toggle {
 }
 
 .atelier-section,
-.espresso-banner,
 .wholesale-process,
 .category-hero,
 .product-detail-page {
@@ -773,8 +773,8 @@ body:has(.mobile-home-top) .support-chat-toggle {
 .atelier-preview { background: #26211d; }
 
 .espresso-banner {
-  border-top: 1px solid var(--line-light);
-  border-bottom: 1px solid var(--line-light);
+  background: #f6efe5;
+  border: 0;
 }
 
 .auth-page,
@@ -1142,9 +1142,56 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 }
 
 .home-order-cta .button {
+  position: relative;
   flex: 0 0 auto;
-  min-height: 46px;
-  padding-inline: 22px;
+  min-height: 56px;
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(167, 122, 59, .34);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .08), transparent 46%),
+    #243d33;
+  box-shadow: 0 16px 36px rgba(36, 61, 51, .18);
+  color: #fff8eb;
+  padding: 0 24px 0 20px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.home-order-cta .button::before {
+  position: absolute;
+  inset: 1px;
+  border: 1px solid rgba(255, 248, 235, .08);
+  border-radius: 14px;
+  pointer-events: none;
+  content: "";
+}
+
+.home-order-cta .button span {
+  position: relative;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+}
+
+.home-order-cta .button svg {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  color: #d8b875;
+  transition: transform .2s ease;
+}
+
+.home-order-cta .button:hover {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .1), transparent 46%),
+    #1f352d;
+  box-shadow: 0 20px 44px rgba(36, 61, 51, .24);
+}
+
+.home-order-cta .button:hover svg {
+  transform: translateX(-3px);
 }
 
 /* Single-panel horizontal order wizard. */

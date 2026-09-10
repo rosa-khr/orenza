@@ -2760,20 +2760,43 @@ body.mobile-nav-is-open {
   font-size: 12px;
 }
 
-/* Real espresso banner */
+/* Orenza trust benefits */
 
 .espresso-banner {
+  position: relative;
   display: grid;
   min-height: 0;
   grid-template-columns: 1fr;
-  background: #e8ddca;
+  gap: 24px;
+  padding: 46px max(22px, calc((100vw - 1280px) / 2));
+  overflow: hidden;
+  background: #f6efe5;
   border: 0;
-  color: var(--text-dark);
+  color: #1f332a;
+}
+
+.espresso-banner::before {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/coffee-patern.JPG");
+  background-position: center;
+  background-size: 260px auto;
+  opacity: .28;
+  pointer-events: none;
+  content: "";
+}
+
+.espresso-banner::after {
+  display: none;
 }
 
 .espresso-banner-copy {
-  order: 1;
-  padding: 76px 22px 62px;
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1280px);
+  max-width: none;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .espresso-banner-copy::before {
@@ -2781,113 +2804,86 @@ body.mobile-nav-is-open {
 }
 
 .espresso-banner-copy p {
-  margin-bottom: 14px;
-  color: #806033;
+  margin-bottom: 9px;
+  color: #d5a963;
   font-size: 9px;
-  letter-spacing: 0.18em;
+  font-weight: 800;
+  letter-spacing: 0.16em;
 }
 
 .espresso-banner-copy h2 {
-  max-width: 560px;
-  color: #181713;
-  font-size: clamp(34px, 9vw, 54px);
-  font-weight: 400;
-  line-height: 1.55;
+  margin: 0;
+  color: #1f332a;
+  font-size: clamp(25px, 6vw, 36px);
+  font-weight: 850;
+  line-height: 1.45;
   text-shadow: none;
 }
 
 .espresso-banner-copy > span {
-  max-width: 440px;
-  margin-top: 20px;
-  color: #6e6558;
-  font-size: 13px;
-  line-height: 2.1;
-}
-
-.espresso-visual {
-  position: relative;
-  order: 2;
-  min-height: 430px;
-  margin: 0;
-  overflow: hidden;
-  background: #151412;
-}
-
-.espresso-visual::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, rgba(12, 11, 9, 0.08), transparent 45%, rgba(232, 221, 202, 0.08));
-  pointer-events: none;
-  content: "";
-}
-
-.espresso-visual img {
   display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 430px;
-  object-fit: cover;
-  object-position: center;
-  filter: saturate(0.82) contrast(1.02);
-  transform: scale(1.015);
-  animation: espresso-camera-breathe 9s ease-in-out infinite alternate;
+  max-width: 480px;
+  margin: 12px auto 0;
+  color: rgba(31, 51, 42, .72);
+  font-size: 13px;
+  line-height: 2;
 }
 
-.espresso-visual figcaption {
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  z-index: 2;
-  display: grid;
-  min-width: 112px;
-  grid-template-columns: 1fr auto;
-  gap: 6px 14px;
-  padding: 11px 12px;
-  background: rgba(12, 12, 10, 0.68);
-  border: 1px solid rgba(239, 228, 208, 0.18);
-  color: #efe4cf;
-  backdrop-filter: blur(8px);
-}
-
-.espresso-visual figcaption span {
-  align-self: center;
-  color: rgba(239, 228, 208, 0.64);
-  font: 8px Georgia, "Times New Roman", serif;
-  letter-spacing: 0.12em;
-}
-
-.espresso-visual figcaption strong {
-  font: 11px Georgia, "Times New Roman", serif;
-  letter-spacing: 0.06em;
-}
-
-.espresso-visual figcaption i {
+.orenza-benefit-grid {
   position: relative;
-  grid-column: 1 / -1;
-  height: 1px;
-  overflow: hidden;
-  background: rgba(239, 228, 208, 0.18);
+  z-index: 1;
+  display: grid;
+  width: min(100%, 1280px);
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 0 auto;
 }
 
-.espresso-visual figcaption i::after {
-  position: absolute;
-  inset: 0;
-  background: #bd9151;
-  content: "";
-  transform: scaleX(0);
-  transform-origin: right;
-  animation: espresso-five-seconds 5s ease-in-out infinite;
+.orenza-benefit-grid article {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  min-height: 128px;
+  padding: 24px 22px;
+  border: 1px solid rgba(185, 133, 53, .16);
+  border-radius: 8px;
+  background: rgba(255, 250, 241, .98);
+  box-shadow: 0 22px 54px rgba(64, 45, 24, .16);
+  backdrop-filter: blur(12px);
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
-@keyframes espresso-camera-breathe {
-  to { transform: scale(1.045); }
+.orenza-benefit-grid article:hover {
+  background: #fffaf1;
+  box-shadow: 0 26px 60px rgba(64, 45, 24, .2);
+  transform: translateY(-2px);
 }
 
-@keyframes espresso-five-seconds {
-  0%, 8% { opacity: 0; transform: scaleX(0); }
-  12% { opacity: 1; }
-  82% { opacity: 1; transform: scaleX(1); }
-  100% { opacity: 0; transform: scaleX(1); }
+.orenza-benefit-icon {
+  display: grid;
+  width: 78px;
+  height: 78px;
+  place-items: center;
+  border: 1px solid rgba(185, 133, 53, .44);
+  border-radius: 50%;
+  background: rgba(250, 244, 232, .76);
+  color: #c9943a;
+}
+
+.orenza-benefit-grid h3 {
+  margin: 0 0 5px;
+  color: #1f332a;
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.5;
+}
+
+.orenza-benefit-grid p {
+  margin: 0;
+  color: rgba(51, 61, 53, .68);
+  font-size: 12px;
+  line-height: 1.85;
 }
 
 /* Contact and footer */
@@ -4077,22 +4073,27 @@ body.mobile-nav-is-open {
   }
 
   .espresso-banner {
-    grid-template-columns: 0.9fr 1.1fr;
+    grid-template-columns: 1fr;
+    gap: 22px;
+    width: 100%;
+    margin: 0 0 26px;
+    padding-block: 44px;
+    border-radius: 0;
   }
 
   .espresso-banner-copy {
-    order: initial;
-    align-self: center;
-    padding: 90px clamp(42px, 7vw, 110px);
+    margin: 0 auto;
+    text-align: center;
   }
 
-  .espresso-visual {
-    order: initial;
-    min-height: 560px;
+  .orenza-benefit-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
   }
 
-  .espresso-visual img {
-    min-height: 560px;
+  .orenza-benefit-grid article {
+    min-height: 140px;
+    align-content: center;
   }
 
   .contact-stage {
@@ -6204,6 +6205,74 @@ body.mobile-nav-is-open {
 
 @media (prefers-reduced-motion: reduce) {
   .product-rail-track { animation: none; }
+}
+
+@media (max-width: 699px) {
+  .espresso-banner {
+    gap: 14px;
+    margin-bottom: 10px;
+    padding: 24px 10px 26px;
+  }
+
+  .espresso-banner::before {
+    background-size: 220px auto;
+    opacity: .22;
+  }
+
+  .espresso-banner-copy {
+    width: min(100%, 340px);
+  }
+
+  .espresso-banner-copy p {
+    margin-bottom: 6px;
+    font-size: 8px;
+  }
+
+  .espresso-banner-copy h2 {
+    font-size: 23px;
+    line-height: 1.35;
+  }
+
+  .espresso-banner-copy > span {
+    max-width: 280px;
+    margin-top: 6px;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+
+  .orenza-benefit-grid {
+    width: min(100%, 340px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .orenza-benefit-grid article {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 5px;
+    min-height: 88px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+
+  .orenza-benefit-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .orenza-benefit-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .orenza-benefit-grid h3 {
+    margin: 0;
+    font-size: 11px;
+  }
+
+  .orenza-benefit-grid p {
+    display: none;
+  }
 }
 
 /* Order builder: replace the old process animation with a quiet, live profile card. */
