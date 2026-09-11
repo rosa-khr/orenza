@@ -327,6 +327,8 @@ CREATE TABLE IF NOT EXISTS products (
   stock_status varchar(20) NOT NULL DEFAULT 'inStock' CHECK (stock_status IN ('inStock','outOfStock')),
   purchase_price_per_kg bigint NOT NULL DEFAULT 0 CHECK (purchase_price_per_kg >= 0),
   sale_price_per_kg bigint NOT NULL DEFAULT 0 CHECK (sale_price_per_kg >= 0),
+  discount_percent smallint CHECK (discount_percent IS NULL OR (discount_percent >= 0 AND discount_percent <= 100)),
+  discount_sale_price_per_kg bigint CHECK (discount_sale_price_per_kg IS NULL OR discount_sale_price_per_kg >= 0),
   price_per_100g bigint NOT NULL DEFAULT 0 CHECK (price_per_100g >= 0),
   price_per_250g bigint NOT NULL DEFAULT 0 CHECK (price_per_250g >= 0),
   price_per_500g bigint NOT NULL DEFAULT 0 CHECK (price_per_500g >= 0),
@@ -336,6 +338,7 @@ CREATE TABLE IF NOT EXISTS products (
   show_in_popular_searches boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
   image_url text,
+  product_image_urls text[] NOT NULL DEFAULT ARRAY[]::text[],
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -349,11 +352,14 @@ ALTER TABLE products ALTER COLUMN seo_title TYPE varchar(60);
 ALTER TABLE products ALTER COLUMN seo_description TYPE varchar(150);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_price_per_kg bigint NOT NULL DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sale_price_per_kg bigint NOT NULL DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_percent smallint;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS discount_sale_price_per_kg bigint;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sort_order smallint NOT NULL DEFAULT 100;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sale_type varchar(20) NOT NULL DEFAULT 'weighted';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS package_weight_grams integer NOT NULL DEFAULT 250;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_status varchar(20) NOT NULL DEFAULT 'inStock';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS product_content text;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image_urls text[] NOT NULL DEFAULT ARRAY[]::text[];
 
 CREATE TABLE IF NOT EXISTS price_import_jobs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

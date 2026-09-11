@@ -8,6 +8,7 @@ type ProductDetail = {
   description: string;
   productContent: string | null;
   imageUrl: string | null;
+  productImageUrls?: string[];
   blendType: string;
   categorySlug: string;
   roastType: "light" | "medium" | "mediumDark" | "dark";
@@ -16,11 +17,15 @@ type ProductDetail = {
   stockStatus: "inStock" | "outOfStock";
   packageWeightGrams: 250 | 500 | 1000;
   packagePrice: number | string;
+  salePricePerKg: number | string;
+  discountPercent?: number | string | null;
+  discountSalePricePerKg?: number | string | null;
   pricePer250g: number | string;
   pricePer500g: number | string;
   pricePer1000g: number | string;
   tags: { id: string; title: string; slug: string }[];
   relatedProducts: RelatedProduct[];
+  showInDiscounts: boolean;
 };
 
 type RelatedProduct = {
@@ -36,6 +41,7 @@ const root = document.querySelector<HTMLElement>("[data-product-detail]");
 const id = new URLSearchParams(location.search).get("id");
 const pathSlug = decodeURIComponent(location.pathname.split("/").filter(Boolean).at(-1) || "");
 const money = new Intl.NumberFormat("fa-IR");
+const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
 const weightLabels: Record<250 | 500 | 1000, string> = {
   250: "۲۵۰ گرم",
   500: "۵۰۰ گرم",
@@ -100,11 +106,120 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
 
       const image = root.querySelector<HTMLImageElement>("[data-product-detail-image]");
       const imagePlaceholder = root.querySelector<HTMLElement>("[data-product-detail-image-placeholder]");
-      if (image && item.imageUrl) {
-        image.src = item.imageUrl;
+      const galleryRoot = root.querySelector<HTMLElement>("[data-product-detail-gallery]");
+      const lightbox = root.querySelector<HTMLElement>("[data-product-image-lightbox]");
+      const lightboxImage = root.querySelector<HTMLImageElement>("[data-product-lightbox-image]");
+      const lightboxThumbs = root.querySelector<HTMLElement>("[data-product-lightbox-thumbs]");
+      const lightboxPrev = root.querySelector<HTMLButtonElement>("[data-product-lightbox-prev]");
+      const lightboxNext = root.querySelector<HTMLButtonElement>("[data-product-lightbox-next]");
+      const lightboxClose = root.querySelector<HTMLButtonElement>("[data-product-lightbox-close]");
+      const galleryImages = [...new Set([...(item.productImageUrls || []), item.imageUrl].filter(Boolean) as string[])];
+      let selectedImageIndex = 0;
+      const setProductImage = (imageUrl: string, index: number) => {
+        if (!image) return;
+        selectedImageIndex = index;
+        image.src = imageUrl;
         image.alt = item.titleFa;
         image.hidden = false;
         if (imagePlaceholder) imagePlaceholder.hidden = true;
+        galleryRoot?.querySelectorAll<HTMLButtonElement>("button").forEach((button, buttonIndex) => {
+          const selected = buttonIndex === index;
+          button.classList.toggle("is-selected", selected);
+          button.setAttribute("aria-pressed", String(selected));
+        });
+      };
+      const renderLightbox = () => {
+        if (!lightboxImage || !galleryImages.length) return;
+        const imageUrl = galleryImages[selectedImageIndex] || galleryImages[0]!;
+        lightboxImage.src = imageUrl;
+        lightboxImage.alt = item.titleFa;
+        lightboxThumbs?.querySelectorAll<HTMLButtonElement>("button").forEach((button, buttonIndex) => {
+          const selected = buttonIndex === selectedImageIndex;
+          button.classList.toggle("is-selected", selected);
+          button.setAttribute("aria-pressed", String(selected));
+        });
+      };
+      const openLightbox = (index = selectedImageIndex) => {
+        if (!lightbox || !galleryImages.length) return;
+        selectedImageIndex = index;
+        renderLightbox();
+        lightbox.hidden = false;
+        document.body.classList.add("product-lightbox-open");
+      };
+      const closeLightbox = () => {
+        if (!lightbox) return;
+        lightbox.hidden = true;
+        document.body.classList.remove("product-lightbox-open");
+      };
+      const moveLightbox = (direction: 1 | -1) => {
+        if (!galleryImages.length) return;
+        selectedImageIndex = (selectedImageIndex + direction + galleryImages.length) % galleryImages.length;
+        setProductImage(galleryImages[selectedImageIndex]!, selectedImageIndex);
+        renderLightbox();
+      };
+      if (galleryImages.length) {
+        setProductImage(galleryImages[0]!, 0);
+        image?.addEventListener("click", () => openLightbox(selectedImageIndex));
+        image?.setAttribute("role", "button");
+        image?.setAttribute("tabindex", "0");
+        image?.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openLightbox(selectedImageIndex);
+          }
+        });
+      }
+      if (galleryRoot && galleryImages.length > 1) {
+        galleryRoot.replaceChildren();
+        galleryImages.forEach((imageUrl, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.setAttribute("aria-label", `نمایش تصویر ${index + 1} ${item.titleFa}`);
+          button.setAttribute("aria-pressed", index === 0 ? "true" : "false");
+          if (index === 0) button.classList.add("is-selected");
+          const thumb = document.createElement("img");
+          thumb.src = imageUrl;
+          thumb.alt = "";
+          thumb.loading = "lazy";
+          button.append(thumb);
+          button.addEventListener("click", () => setProductImage(imageUrl, index));
+          button.addEventListener("dblclick", () => openLightbox(index));
+          galleryRoot.append(button);
+        });
+        galleryRoot.hidden = false;
+      }
+      if (lightbox && lightboxImage && galleryImages.length) {
+        lightboxThumbs?.replaceChildren();
+        galleryImages.forEach((imageUrl, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.setAttribute("aria-label", `نمایش تصویر ${index + 1} در اندازه بزرگ`);
+          button.setAttribute("aria-pressed", index === selectedImageIndex ? "true" : "false");
+          if (index === selectedImageIndex) button.classList.add("is-selected");
+          const thumb = document.createElement("img");
+          thumb.src = imageUrl;
+          thumb.alt = "";
+          thumb.loading = "lazy";
+          button.append(thumb);
+          button.addEventListener("click", () => {
+            selectedImageIndex = index;
+            setProductImage(imageUrl, index);
+            renderLightbox();
+          });
+          lightboxThumbs?.append(button);
+        });
+        lightboxClose?.addEventListener("click", closeLightbox);
+        lightboxPrev?.addEventListener("click", () => moveLightbox(-1));
+        lightboxNext?.addEventListener("click", () => moveLightbox(1));
+        lightbox.addEventListener("click", (event) => {
+          if (event.target === lightbox) closeLightbox();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (lightbox.hidden) return;
+          if (event.key === "Escape") closeLightbox();
+          if (event.key === "ArrowRight") moveLightbox(1);
+          if (event.key === "ArrowLeft") moveLightbox(-1);
+        });
       }
 
       const contentSection = root.querySelector<HTMLElement>("[data-product-detail-content-section]");
@@ -218,14 +333,55 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       let selectedWeight: 250 | 500 | 1000 =
         item.saleType === "packaged" ? item.packageWeightGrams : 250;
       const productPrice = (weight: 250 | 500 | 1000) =>
+        priceInfo(weight).final;
+      const regularPrice = (weight: 250 | 500 | 1000) =>
         item.saleType === "packaged"
-          ? Number(item.packagePrice || 0)
-          : Number(item[`pricePer${weight}g` as keyof ProductDetail] || 0);
+          ? Number(item.packagePrice || item.salePricePerKg || 0)
+          : Math.round(Number(item.salePricePerKg || 0) * weight / 1000);
+      const discountPrice = (weight: 250 | 500 | 1000) => {
+        const unitDiscount = Number(item.discountSalePricePerKg || 0);
+        if (unitDiscount > 0) return item.saleType === "packaged" ? unitDiscount : Math.round(unitDiscount * weight / 1000);
+        const percent = Number(item.discountPercent || 0);
+        return percent > 0 && percent < 100 ? Math.round(regularPrice(weight) * (1 - percent / 100)) : regularPrice(weight);
+      };
+      const priceInfo = (weight: 250 | 500 | 1000) => {
+        const regular = regularPrice(weight);
+        const discounted = discountPrice(weight);
+        const savedPercent = Number(item.discountPercent || 0);
+        const percent = savedPercent > 0
+          ? savedPercent
+          : regular > discounted
+            ? Math.round(((regular - discounted) / regular) * 100)
+            : 0;
+        return {
+          regular,
+          final: item.showInDiscounts && discounted > 0 && discounted < regular ? discounted : regular,
+          percent
+        };
+      };
+      const renderPrice = (weight: 250 | 500 | 1000) => {
+        const priceRoot = root.querySelector<HTMLElement>("[data-product-detail-price]");
+        if (!priceRoot) return;
+        const info = priceInfo(weight);
+        const hasDiscount = item.showInDiscounts && info.final < info.regular && info.percent > 0;
+        priceRoot.classList.toggle("has-product-detail-discount", hasDiscount);
+        priceRoot.replaceChildren();
+        if (hasDiscount) {
+          const line = document.createElement("span");
+          line.className = "product-detail-discount-line";
+          const oldPrice = document.createElement("del");
+          oldPrice.textContent = `${money.format(info.regular)} تومان`;
+          const badge = document.createElement("em");
+          badge.textContent = `${percentFormat.format(info.percent)}٪`;
+          line.append(oldPrice, badge);
+          priceRoot.append(line);
+        }
+        const current = document.createElement("b");
+        current.textContent = `${weightLabels[weight]} · ${money.format(info.final)} تومان`;
+        priceRoot.append(current);
+      };
       const update = () => {
-        setText(
-          "[data-product-detail-price]",
-          `${weightLabels[selectedWeight]} · ${money.format(productPrice(selectedWeight))} تومان`
-        );
+        renderPrice(selectedWeight);
         weights.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
           const selected = Number(button.dataset.weight) === selectedWeight;
           button.classList.toggle("is-selected", selected);

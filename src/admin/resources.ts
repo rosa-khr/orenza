@@ -8,6 +8,7 @@ export type AdminFieldType =
   | "checkbox"
   | "date"
   | "image"
+  | "image-gallery"
   | "permissions";
 
 export type AdminField = {
@@ -272,9 +273,12 @@ export const adminResources: AdminResource[] = [
       },
       { key: "purchasePricePerKg", label: "قیمت خرید واحد (تومان)", type: "number", required: true, min: 0, list: true },
       { key: "markupPercent", label: "درصد افزایش قیمت", type: "number", min: 0 },
-      { key: "salePricePerKg", label: "قیمت فروش واحد (تومان)", type: "number", required: true, min: 0, list: true },
+      { key: "salePricePerKg", label: "قیمت فروش واحد / قبل تخفیف (تومان)", type: "number", required: true, min: 0, list: true },
       { key: "profitPerKg", label: "سود واحد (تومان)", type: "number", list: true, readonly: true },
+      { key: "discountPercent", label: "درصد تخفیف شگفت‌انگیز", type: "number", min: 0 },
+      { key: "discountSalePricePerKg", label: "قیمت بعد از تخفیف (تومان)", type: "number", min: 0, readonly: true },
       { key: "imageUrl", label: "تصویر محصول", type: "image", dir: "ltr" },
+      { key: "productImageUrls", label: "تصاویر محصول", type: "image-gallery" },
       { key: "showInBestSellers", label: "نمایش در پرفروش‌ترین‌ها", type: "select", options: yesNo, list: true },
       { key: "showInDiscounts", label: "نمایش در محصولات تخفیف‌دار", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },

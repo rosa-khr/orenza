@@ -8,6 +8,8 @@ type ProductPriceRow = {
   title_fa: string;
   is_active: boolean;
   sale_price_per_kg: string;
+  discount_sale_price_per_kg: string | null;
+  show_in_discounts: boolean;
   purchase_price_per_kg: string;
   sale_type: "weighted" | "packaged";
   package_weight_grams: number;
@@ -54,7 +56,8 @@ export class OrderService {
     const createdOrder = await withTransaction<NewOrder>(this.pool, async (client) => {
       const productIds = [...new Set(data.items.map((item) => item.productId))];
       const products = await client.query<ProductPriceRow>(
-        `SELECT id, title_fa, is_active, sale_price_per_kg, purchase_price_per_kg, sale_type, package_weight_grams, stock_status
+        `SELECT id, title_fa, is_active, sale_price_per_kg, discount_sale_price_per_kg, show_in_discounts,
+          purchase_price_per_kg, sale_type, package_weight_grams, stock_status
          FROM products WHERE id = ANY($1::uuid[]) FOR SHARE`,
         [productIds]
       );
@@ -70,9 +73,14 @@ export class OrderService {
         if (product.sale_type === "packaged" && item.weight !== product.package_weight_grams) {
           throw Object.assign(new Error("وزن بسته این محصول تغییر کرده است؛ لطفاً دوباره آن را انتخاب کنید."), { statusCode: 422 });
         }
+        const regularSalePrice = Number(product.sale_price_per_kg);
+        const discountSalePrice = Number(product.discount_sale_price_per_kg || 0);
+        const effectiveSalePrice = product.show_in_discounts && discountSalePrice > 0 && discountSalePrice < regularSalePrice
+          ? discountSalePrice
+          : regularSalePrice;
         const unitPrice = product.sale_type === "packaged"
-          ? Number(product.sale_price_per_kg)
-          : Math.round(Number(product.sale_price_per_kg) * item.weight / 1000);
+          ? effectiveSalePrice
+          : Math.round(effectiveSalePrice * item.weight / 1000);
         const unitCost = product.sale_type === "packaged"
           ? Number(product.purchase_price_per_kg)
           : Math.round(Number(product.purchase_price_per_kg) * item.weight / 1000);

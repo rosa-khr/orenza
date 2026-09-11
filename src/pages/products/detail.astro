@@ -14,8 +14,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <section class="product-detail-stage">
       <figure class="product-detail-media">
-        <img data-product-detail-image hidden alt="" />
-        <div data-product-detail-image-placeholder><PackageOpen size={48} stroke-width={1} /><span>ORENZA</span></div>
+        <div class="product-detail-main-image">
+          <img data-product-detail-image hidden alt="" />
+          <div data-product-detail-image-placeholder><PackageOpen size={48} stroke-width={1} /><span>ORENZA</span></div>
+        </div>
+        <div class="product-detail-gallery" data-product-detail-gallery hidden></div>
       </figure>
 
       <div class="product-detail-copy">
@@ -75,6 +78,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <ArrowLeft size={16} stroke-width={1.5} aria-hidden="true" />
       </a>
     </nav>
+
+    <div class="product-image-lightbox" data-product-image-lightbox hidden>
+      <button class="product-image-lightbox-close" type="button" data-product-lightbox-close aria-label="بستن تصویر">×</button>
+      <button class="product-image-lightbox-nav is-prev" type="button" data-product-lightbox-prev aria-label="تصویر قبلی">‹</button>
+      <figure>
+        <img data-product-lightbox-image alt="" />
+      </figure>
+      <button class="product-image-lightbox-nav is-next" type="button" data-product-lightbox-next aria-label="تصویر بعدی">›</button>
+      <div class="product-image-lightbox-thumbs" data-product-lightbox-thumbs></div>
+    </div>
   </main>
 
   <script>

@@ -15,10 +15,13 @@ type CategoryProduct = {
   packageWeightGrams: 250 | 500 | 1000;
   packagePrice: number | string;
   salePricePerKg: number | string;
+  discountPercent?: number | string | null;
+  discountSalePricePerKg?: number | string | null;
   pricePer250g: number | string;
   pricePer500g: number | string;
   pricePer1000g: number | string;
   imageUrl: string | null;
+  showInDiscounts: boolean;
 };
 
 type CategoryInfo = {
@@ -44,6 +47,7 @@ const root = document.querySelector<HTMLElement>("[data-category-products]");
 const list = root?.querySelector<HTMLElement>("[data-category-product-list]");
 if (root && list) {
   const money = new Intl.NumberFormat("fa-IR");
+  const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
   const directCartCategories = new Set(["cafe-drinks", "herbal-tea"]);
   const categorySlug = root.dataset.category || "";
   if (categorySlug) {
@@ -90,6 +94,7 @@ if (root && list) {
         const footer = document.createElement("div");
         const blend = document.createElement("small");
         const price = document.createElement("strong");
+        price.className = "category-product-price";
         const detailUrl = productDetailUrl(product);
         const media = document.createElement("a");
         const detailLink = document.createElement("a");
@@ -142,10 +147,51 @@ if (root && list) {
           mediumDark: "متوسط رو به تیره",
           dark: "تیره"
         };
-        const productPrice = (weight: 250 | 500 | 1000) =>
+        const regularPrice = (weight: 250 | 500 | 1000) =>
           product.saleType === "packaged"
             ? Number(product.packagePrice || product.salePricePerKg || 0)
-            : Number(product[`pricePer${weight}g` as keyof CategoryProduct] || 0);
+            : Math.round(Number(product.salePricePerKg || 0) * weight / 1000);
+        const discountPrice = (weight: 250 | 500 | 1000) => {
+          const unitDiscount = Number(product.discountSalePricePerKg || 0);
+          if (unitDiscount > 0) return product.saleType === "packaged" ? unitDiscount : Math.round(unitDiscount * weight / 1000);
+          const percent = Number(product.discountPercent || 0);
+          return percent > 0 && percent < 100 ? Math.round(regularPrice(weight) * (1 - percent / 100)) : regularPrice(weight);
+        };
+        const priceInfo = (weight: 250 | 500 | 1000) => {
+          const regular = regularPrice(weight);
+          const discounted = discountPrice(weight);
+          const savedPercent = Number(product.discountPercent || 0);
+          const percent = savedPercent > 0
+            ? savedPercent
+            : regular > discounted
+              ? Math.round(((regular - discounted) / regular) * 100)
+              : 0;
+          return {
+            regular,
+            final: product.showInDiscounts && discounted > 0 && discounted < regular ? discounted : regular,
+            percent
+          };
+        };
+        const productPrice = (weight: 250 | 500 | 1000) => priceInfo(weight).final;
+        const renderPrice = (weight: 250 | 500 | 1000, includeWeight: boolean) => {
+          const info = priceInfo(weight);
+          const hasDiscount = product.showInDiscounts && info.final < info.regular && info.percent > 0;
+          price.classList.toggle("has-category-discount", hasDiscount);
+          price.replaceChildren();
+          if (hasDiscount) {
+            const line = document.createElement("span");
+            line.className = "category-discount-line";
+            const oldPrice = document.createElement("del");
+            oldPrice.textContent = `${money.format(info.regular)} تومان`;
+            const badge = document.createElement("em");
+            badge.textContent = `${percentFormat.format(info.percent)}٪`;
+            line.append(oldPrice, badge);
+            price.append(line);
+          }
+          const current = document.createElement("b");
+          current.textContent = `${includeWeight ? `${weightLabels[weight]} · ` : ""}${money.format(info.final)} تومان`;
+          price.append(current);
+        };
         const controls = document.createElement("div");
         controls.className = "category-buy-controls";
         const weights = document.createElement("div");
@@ -187,7 +233,7 @@ if (root && list) {
             weights.append(button);
           });
           const update = () => {
-            price.textContent = `${weightLabels[selectedWeight]} · ${money.format(productPrice(selectedWeight))} تومان`;
+            renderPrice(selectedWeight, true);
             weights.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
               const selected = Number(button.dataset.weight) === selectedWeight;
               button.classList.toggle("is-selected", selected);
@@ -205,7 +251,7 @@ if (root && list) {
           const packageLabel = document.createElement("span");
           packageLabel.className = "category-package-label";
           packageLabel.textContent = `بسته ${weightLabels[selectedWeight]}`;
-          price.textContent = `${money.format(productPrice(selectedWeight))} تومان`;
+          renderPrice(selectedWeight, false);
           actionButton.textContent = "افزودن بسته به سبد";
           actionButton.addEventListener("click", addPackagedToCart);
           controls.append(packageLabel, actionButton);

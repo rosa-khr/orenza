@@ -1003,6 +1003,33 @@ const initMoneyInputs = (form: HTMLFormElement) => {
   });
 };
 
+const enhanceBooleanSwitches = (root: ParentNode = document) => {
+  root.querySelectorAll<HTMLElement>("[data-boolean-switch-field]:not([data-boolean-switch-ready])").forEach((field) => {
+    field.dataset.booleanSwitchReady = "true";
+    const input = field.querySelector<HTMLInputElement>("[data-boolean-switch-value]");
+    const button = field.querySelector<HTMLButtonElement>("[data-boolean-switch-button]");
+    const label = field.querySelector<HTMLElement>("[data-boolean-switch-label]");
+    if (!input || !button || !label) return;
+    const trueValue = input.dataset.trueValue || "true";
+    const falseValue = input.dataset.falseValue || "false";
+    const trueLabel = input.dataset.trueLabel || "فعال";
+    const falseLabel = input.dataset.falseLabel || "غیرفعال";
+    const render = () => {
+      const isActive = input.value === trueValue;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+      label.textContent = isActive ? trueLabel : falseLabel;
+    };
+    button.addEventListener("click", () => {
+      input.value = input.value === trueValue ? falseValue : trueValue;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    input.addEventListener("change", render);
+    render();
+  });
+};
+
 const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   if (key === "permissions") {
     const selected = new Set(Array.isArray(value) ? value.map(String) : []);
@@ -1013,6 +1040,11 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   }
   const input = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
   if (!input) return;
+  if (key === "productImageUrls" && input instanceof HTMLInputElement && input.dataset.productGalleryValue !== undefined) {
+    input.value = JSON.stringify(Array.isArray(value) ? value.map(String).filter(Boolean) : []);
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return;
+  }
   if (input instanceof HTMLSelectElement && input.multiple) {
     const selected = new Set(Array.isArray(value) ? value.map(String) : []);
     [...input.options].forEach((option) => { option.selected = selected.has(option.value); });
@@ -1566,46 +1598,182 @@ const initPaymentCards = (form: HTMLFormElement, paymentMethodId: string, readon
 const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "categories") => {
   const root = form.querySelector<HTMLElement>("[data-catalog-image-upload]");
   const urlInput = form.elements.namedItem("imageUrl") as HTMLInputElement | null;
+  const galleryInput = form.elements.namedItem("productImageUrls") as HTMLInputElement | null;
   const fileInput = root?.querySelector<HTMLInputElement>("[data-catalog-image-input]");
   const preview = root?.querySelector<HTMLImageElement>("[data-catalog-image-preview]");
   const placeholder = root?.querySelector<HTMLElement>("[data-catalog-image-placeholder]");
+  const removeButton = root?.querySelector<HTMLButtonElement>("[data-catalog-image-remove]");
+  const galleryRoot = root?.querySelector<HTMLElement>("[data-product-gallery]");
   const imageLabel = resource === "categories" ? "بنر دسته‌بندی" : "تصویر محصول";
+  let shouldHydrateLegacyImage = true;
+  const readGallery = () => {
+    if (!galleryInput) return [];
+    try {
+      const parsed = JSON.parse(galleryInput.value || "[]");
+      return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  };
+  const writeGallery = (urls: string[]) => {
+    if (!galleryInput) return;
+    galleryInput.value = JSON.stringify([...new Set(urls.filter(Boolean))]);
+    galleryInput.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const removeImage = async (imageUrl: string) => {
+    if (!imageUrl) return;
+    const confirmed = await askConfirm("حذف تصویر محصول", "این تصویر از محصول حذف شود؟", "حذف تصویر");
+    if (!confirmed) return;
+    shouldHydrateLegacyImage = false;
+    const next = readGallery().filter((candidate) => candidate !== imageUrl);
+    if (urlInput) urlInput.value = next[0] || "";
+    writeGallery(next);
+    render();
+  };
+  const makePrimary = (imageUrl: string) => {
+    const gallery = readGallery();
+    if (!gallery.includes(imageUrl)) return;
+    const next = [imageUrl, ...gallery.filter((candidate) => candidate !== imageUrl)];
+    if (urlInput) urlInput.value = imageUrl;
+    writeGallery(next);
+    render();
+  };
+  const reorderGallery = (fromUrl: string, toUrl: string) => {
+    if (fromUrl === toUrl) return;
+    const gallery = readGallery();
+    const fromIndex = gallery.indexOf(fromUrl);
+    const toIndex = gallery.indexOf(toUrl);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const next = [...gallery];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved!);
+    if (urlInput) urlInput.value = next[0] || "";
+    writeGallery(next);
+    render();
+  };
   const render = () => {
-    const url = urlInput?.value.trim() || "";
+    let gallery = resource === "products" ? readGallery() : [];
+    const legacyUrl = urlInput?.value.trim() || "";
+    if (resource === "products" && galleryInput && shouldHydrateLegacyImage && legacyUrl && !gallery.includes(legacyUrl)) {
+      gallery = [legacyUrl, ...gallery];
+      writeGallery(gallery);
+    }
+    const url = gallery[0] || urlInput?.value.trim() || "";
+    if (urlInput && resource === "products" && gallery.length) urlInput.value = gallery[0]!;
     if (preview) {
       preview.hidden = !url;
       if (url) preview.src = url;
       else preview.removeAttribute("src");
     }
     if (placeholder) placeholder.hidden = Boolean(url);
+    if (removeButton) removeButton.hidden = !url;
+    if (galleryRoot) {
+      galleryRoot.replaceChildren();
+      gallery.forEach((imageUrl, index) => {
+        const item = document.createElement("article");
+        item.draggable = true;
+        item.dataset.galleryImage = imageUrl;
+        item.innerHTML = `
+          <img src="${imageUrl}" alt="تصویر ${index + 1} محصول">
+          <button type="button" class="admin-gallery-remove" data-gallery-remove aria-label="حذف تصویر">×</button>
+          <label class="admin-gallery-cover">
+            <input type="radio" name="productCoverImage" data-gallery-primary ${index === 0 ? "checked" : ""}>
+            <span>کاور</span>
+          </label>
+        `;
+        item.querySelector("[data-gallery-remove]")?.addEventListener("click", () => void removeImage(imageUrl));
+        item.querySelector("[data-gallery-primary]")?.addEventListener("change", () => makePrimary(imageUrl));
+        item.addEventListener("dragstart", (event) => {
+          event.dataTransfer?.setData("text/plain", imageUrl);
+          event.dataTransfer?.setDragImage(item, item.clientWidth / 2, item.clientHeight / 2);
+          item.classList.add("is-dragging");
+        });
+        item.addEventListener("dragend", () => {
+          item.classList.remove("is-dragging");
+          galleryRoot.querySelectorAll(".is-drop-target").forEach((node) => node.classList.remove("is-drop-target"));
+        });
+        item.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          item.classList.add("is-drop-target");
+        });
+        item.addEventListener("dragleave", () => item.classList.remove("is-drop-target"));
+        item.addEventListener("drop", (event) => {
+          event.preventDefault();
+          item.classList.remove("is-drop-target");
+          const fromUrl = event.dataTransfer?.getData("text/plain") || "";
+          reorderGallery(fromUrl, imageUrl);
+        });
+        galleryRoot.append(item);
+      });
+    }
   };
-  urlInput?.addEventListener("input", render);
-  fileInput?.addEventListener("change", async () => {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
+  const uploadFiles = async (files: File[]) => {
+    if (!files.length || !fileInput) return;
+    if (files.some((file) => file.size > 5 * 1024 * 1024)) {
       fileInput.value = "";
       toast(`حجم ${imageLabel} نباید بیشتر از ۵ مگابایت باشد.`, "error");
       return;
     }
-    const body = new FormData();
-    body.append("image", file);
     fileInput.disabled = true;
+    root?.classList.add("is-uploading");
     try {
       const endpoint = resource === "categories" ? "category-images" : "product-images";
-      const result = await api<{ url: string }>(`/api/v1/admin/${endpoint}`, {
-        method: "POST",
-        body
-      });
-      if (urlInput) urlInput.value = result.url;
+      const uploaded: string[] = [];
+      for (const file of files) {
+        const body = new FormData();
+        body.append("image", file);
+        const result = await api<{ url: string }>(`/api/v1/admin/${endpoint}`, {
+          method: "POST",
+          body
+        });
+        uploaded.push(result.url);
+      }
+      if (resource === "products" && galleryInput) {
+        const next = [...readGallery(), ...uploaded];
+        writeGallery(next);
+        if (urlInput) urlInput.value = next[0] || "";
+      } else if (urlInput) {
+        urlInput.value = uploaded[0] || "";
+      }
       render();
-      toast(`${imageLabel} بارگذاری شد؛ برای ثبت نهایی، تغییرات را ذخیره کنید.`);
+      toast(`${files.length > 1 ? "تصاویر محصول" : imageLabel} بارگذاری شد؛ برای ثبت نهایی، تغییرات را ذخیره کنید.`);
     } catch (error) {
       toast(error instanceof Error ? error.message : `بارگذاری ${imageLabel} انجام نشد.`, "error");
     } finally {
       fileInput.disabled = false;
       fileInput.value = "";
+      root?.classList.remove("is-uploading");
     }
+  };
+  urlInput?.addEventListener("input", render);
+  galleryInput?.addEventListener("change", render);
+  removeButton?.addEventListener("click", () => void (async () => {
+    const gallery = readGallery();
+    const currentUrl = gallery[0] || urlInput?.value.trim() || "";
+    await removeImage(currentUrl);
+  })());
+  root?.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    if (fileInput?.disabled) return;
+    root.classList.add("is-dragging");
+  });
+  root?.addEventListener("dragleave", (event) => {
+    if (!root.contains(event.relatedTarget as Node | null)) root.classList.remove("is-dragging");
+  });
+  root?.addEventListener("drop", (event) => {
+    event.preventDefault();
+    root.classList.remove("is-dragging");
+    if (fileInput?.disabled) return;
+    const files = [...(event.dataTransfer?.files || [])].filter((file) => /^image\/(jpeg|png|webp)$/.test(file.type));
+    if (!files.length) {
+      toast("فقط فایل‌های JPG، PNG یا WebP قابل بارگذاری هستند.", "error");
+      return;
+    }
+    void uploadFiles(resource === "products" ? files : files.slice(0, 1));
+  });
+  fileInput?.addEventListener("change", async () => {
+    const files = [...(fileInput.files || [])];
+    await uploadFiles(files);
   });
   render();
   return render;
@@ -1616,13 +1784,14 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   initMoneyInputs(form);
   await loadLookups(form);
   initMultiSelects(form);
+  enhanceBooleanSwitches(form);
   enhanceDropdowns(form);
   enhancePersianDates(form);
   initSeoCounters(form);
   const refreshCatalogImage = config.key === "products" || config.key === "categories"
     ? initCatalogImageUpload(form, config.key)
     : undefined;
-  const updateProductProfit = (source: "purchase" | "sale" | "markup" | "refresh" = "refresh") => {
+  const updateProductProfit = (source: "purchase" | "sale" | "markup" | "discount" | "refresh" = "refresh") => {
     if (config.key !== "products") return;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
     const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLSelectElement | null;
@@ -1630,6 +1799,8 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     const markup = form.elements.namedItem("markupPercent") as HTMLInputElement | null;
     const sale = form.elements.namedItem("salePricePerKg") as HTMLInputElement | null;
     const profit = form.elements.namedItem("profitPerKg") as HTMLInputElement | null;
+    const discountPercent = form.elements.namedItem("discountPercent") as HTMLInputElement | null;
+    const discountSale = form.elements.namedItem("discountSalePricePerKg") as HTMLInputElement | null;
     const purchaseValue = parseNumericInput(purchase?.value) || 0;
     const saleValue = parseNumericInput(sale?.value) || 0;
     let markupValue = parseNumericInput(markup?.value) || 0;
@@ -1644,10 +1815,21 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       markup.value = Number.isFinite(markupValue) ? markupValue.toFixed(2) : "";
     }
     const currentSaleValue = parseNumericInput(sale?.value) || 0;
+    const discountValue = parseNumericInput(discountPercent?.value) || 0;
+    if (discountSale) {
+      const nextDiscountSale = currentSaleValue > 0 && discountValue > 0 && discountValue < 100
+        ? Math.round(currentSaleValue * (1 - discountValue / 100))
+        : 0;
+      discountSale.value = nextDiscountSale ? String(nextDiscountSale) : "";
+      formatMoneyInput(discountSale);
+    }
     const isPackaged = saleType?.value === "packaged";
     const packageField = form.querySelector<HTMLElement>('[data-admin-field="packageWeightGrams"]');
     if (packageField) packageField.hidden = !isPackaged;
-    if (profit) profit.value = String(currentSaleValue - purchaseValue);
+    if (profit) {
+      profit.value = String(currentSaleValue - purchaseValue);
+      formatMoneyInput(profit);
+    }
     const breakdown = form.querySelector<HTMLElement>("[data-price-breakdown] > div");
     if (breakdown) {
       const weights = isPackaged ? [Number(packageWeight?.value || 250)] : [250, 500, 1000];
@@ -1687,6 +1869,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     (form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("purchase"));
     (form.elements.namedItem("markupPercent") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("markup"));
     (form.elements.namedItem("salePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("sale"));
+    (form.elements.namedItem("discountPercent") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("discount"));
     updateProductProfit();
   }
   const id = new URLSearchParams(location.search).get("id");
@@ -1738,10 +1921,18 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     const data = new FormData(form);
     const body: Record<string, unknown> = {};
     config.fields.forEach((field) => {
-      if (field.readonly) return;
+      if (field.readonly && field.key !== "discountSalePricePerKg") return;
       const raw = data.get(field.key);
       if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
       else if (field.type === "multiselect") body[field.key] = data.getAll(field.key).map(String);
+      else if (field.key === "productImageUrls") {
+        try {
+          const parsed = JSON.parse(String(raw || "[]"));
+          body[field.key] = Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+        } catch {
+          body[field.key] = [];
+        }
+      }
       else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : parseNumericInput(raw);
       else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts", "showInPopularFooter", "showInPopularSearches"].includes(field.key)) body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);

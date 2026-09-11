@@ -15,12 +15,15 @@ type RailProduct = {
   packagePrice: number | string;
   salePricePerKg: number | string;
   pricePer250g: number | string;
+  discountPercent?: number | string | null;
+  discountSalePricePerKg?: number | string | null;
   imageUrl: string | null;
   showInBestSellers: boolean;
   showInDiscounts: boolean;
 };
 
 const money = new Intl.NumberFormat("fa-IR");
+const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
 const weights = { 250: "۲۵۰ گرم", 500: "۵۰۰ گرم", 1000: "۱ کیلوگرم" } as const;
 const roastLabels = { light: "روشن", medium: "متوسط", mediumDark: "متوسط رو به تیره", dark: "تیره" };
 const cartIcon = `
@@ -32,9 +35,23 @@ const card = (product: RailProduct, badgeLabel: string) => {
   const article = document.createElement("article");
   article.className = "rail-product-card";
   const weight = product.saleType === "packaged" ? product.packageWeightGrams : 250;
-  const price = product.saleType === "packaged"
+  const regularPrice = product.saleType === "packaged"
     ? Number(product.packagePrice || product.salePricePerKg || 0)
     : Number(product.pricePer250g || 0);
+  const discountedUnitPrice = Number(product.discountSalePricePerKg || 0);
+  const storedPercent = Number(product.discountPercent || 0);
+  const discountedPrice = discountedUnitPrice > 0
+    ? (product.saleType === "packaged" ? discountedUnitPrice : Math.round(discountedUnitPrice * 0.25))
+    : storedPercent > 0 && storedPercent < 100
+      ? Math.round(regularPrice * (1 - storedPercent / 100))
+      : regularPrice;
+  const discountPercent = storedPercent > 0
+    ? storedPercent
+    : regularPrice > discountedPrice
+      ? Math.round(((regularPrice - discountedPrice) / regularPrice) * 100)
+      : 0;
+  const hasDiscount = product.showInDiscounts && regularPrice > discountedPrice && discountPercent > 0;
+  const price = hasDiscount ? discountedPrice : regularPrice;
   const url = productDetailUrl(product);
   article.innerHTML = `
     <a class="rail-product-media" href="${url}" aria-label="مشاهده ${product.titleFa}">
@@ -48,7 +65,11 @@ const card = (product: RailProduct, badgeLabel: string) => {
       <h3><a href="${url}">${product.titleFa}</a></h3>
       <p>${product.blendType}</p>
       <footer>
-        <div><b>${money.format(price)} تومان</b><span>${weights[weight]}</span></div>
+        <div>
+          ${hasDiscount ? `<em class="rail-discount-line"><del>${money.format(regularPrice)} تومان</del><strong>${percentFormat.format(discountPercent)}٪</strong></em>` : ""}
+          <b>${money.format(price)} تومان</b>
+          <span>${weights[weight]}</span>
+        </div>
         <button class="rail-cart-button" type="button"
           aria-label="${product.stockStatus === "outOfStock" ? "محصول ناموجود است" : `افزودن ${product.titleFa} به سبد خرید`}"
           title="${product.stockStatus === "outOfStock" ? "ناموجود" : "افزودن به سبد خرید"}"

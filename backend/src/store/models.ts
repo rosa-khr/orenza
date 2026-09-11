@@ -27,6 +27,8 @@ export interface Product {
   purchasePricePerKg: number;
   salePricePerKg: number;
   profitPerKg: number;
+  discountPercent: number | null;
+  discountSalePricePerKg: number | null;
   pricePer100g: number;
   pricePer250g: number;
   pricePer500g: number;
@@ -35,6 +37,7 @@ export interface Product {
   showInBestSellers: boolean;
   showInDiscounts: boolean;
   imageUrl: string | null;
+  productImageUrls: string[];
   createdAt: string;
   updatedAt: string;
 }

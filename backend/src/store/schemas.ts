@@ -10,6 +10,17 @@ const productImageUrl = z.union([
   z.literal(""),
   z.null()
 ]).transform((value) => value || null);
+const productImageGallery = z.union([
+  z.array(productImageUrl).max(12),
+  z.string().transform((value) => {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }).pipe(z.array(productImageUrl).max(12))
+]).transform((value) => value.filter(Boolean) as string[]);
 const money = z.number().int().min(0).max(10_000_000_000);
 const slug = z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const optionalRichText = z.union([z.string().max(100_000), z.literal(""), z.null()])
@@ -78,12 +89,18 @@ export const productSchema = z.object({
   stockStatus: z.enum(["inStock", "outOfStock"]).default("inStock"),
   purchasePricePerKg: money,
   salePricePerKg: money,
+  discountPercent: z.number().int().min(0).max(100).nullable().optional(),
+  discountSalePricePerKg: z.union([money, z.null()]).optional(),
   showInBestSellers: z.boolean().default(false),
   showInDiscounts: z.boolean().default(false),
   showInPopularSearches: z.boolean().default(false),
   isActive: z.boolean().default(true),
-  imageUrl: productImageUrl.optional()
-});
+  imageUrl: productImageUrl.optional(),
+  productImageUrls: productImageGallery.default([])
+}).transform((product) => ({
+  ...product,
+  imageUrl: product.productImageUrls[0] || product.imageUrl || null
+}));
 
 export const paymentMethodSchema = z.object({
   title: z.string().trim().min(2).max(120),

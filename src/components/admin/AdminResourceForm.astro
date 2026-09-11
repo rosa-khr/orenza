@@ -1,11 +1,7 @@
 ---
-import {
-  ArrowRight, Bold, ChevronDown, Columns3,
-  ImagePlus, Italic, Link2, List, ListOrdered, Quote, Redo2, RemoveFormatting,
-  Rows3, Save, Table2, TextAlignCenter, TextAlignEnd, TextAlignStart, Trash2,
-  Underline, Undo2, Unlink2
-} from "@lucide/astro";
+import { ArrowRight, Save } from "@lucide/astro";
 import { iranianBanks, type AdminResource } from "../../admin/resources";
+import AdminFieldControl from "./AdminFieldControl.astro";
 import AdminShell from "./AdminShell.astro";
 
 interface Props {
@@ -18,13 +14,28 @@ const labels = { add: "افزودن", edit: "ویرایش", view: "مشاهده"
 const isView = action === "view";
 const supportsCatalogImage = resource.key === "products" || resource.key === "categories";
 const catalogImageLabel = resource.key === "categories" ? "بنر دسته‌بندی" : "تصویر محصول";
-const orderReadonly = new Set([
-  "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
-  "discountAmount", "finalAmount", "customerNote"
-]);
-const moneyFieldKeys = new Set(["purchasePricePerKg", "salePricePerKg"]);
-const seoLimitFor = (key: string, fallback?: number) =>
-  key === "seoTitle" ? 60 : key === "seoDescription" ? 150 : fallback;
+const productPrimaryKeys = ["titleFa", "titleEn", "sortOrder", "categoryId"];
+const productFeatureKeys = new Set(["roastType", "coffeeType", "grindType", "blendType", "saleType", "packageWeightGrams"]);
+const productPriceKeys = new Set(["purchasePricePerKg", "markupPercent", "salePricePerKg", "profitPerKg", "discountPercent", "discountSalePricePerKg"]);
+const productDetailKeys = new Set(["description", "productContent", "tagIds", "relatedProductIds"]);
+const productSeoKeys = new Set(["seoTitle", "seoDescription"]);
+const productSidebarKeys = new Set(["imageUrl", "productImageUrls", "stockStatus", "showInBestSellers", "showInDiscounts", "showInPopularSearches", "isActive"]);
+const categoryPrimaryKeys = new Set(["title", "slug", "parentCategoryId"]);
+const categoryDetailKeys = new Set(["description"]);
+const categorySeoKeys = new Set(["seoTitle", "seoDescription"]);
+const categorySidebarKeys = new Set(["imageUrl", "showInPopularFooter", "showInPopularSearches", "isActive"]);
+const pickFields = (keys: Set<string>) => resource.fields.filter((field) => keys.has(field.key));
+const pickOrderedFields = (keys: string[]) =>
+  keys.map((key) => resource.fields.find((field) => field.key === key)).filter(Boolean) as typeof resource.fields;
+const primaryFields = resource.key === "products" ? pickOrderedFields(productPrimaryKeys) : pickFields(categoryPrimaryKeys);
+const featureFields = resource.key === "products" ? pickFields(productFeatureKeys) : [];
+const priceFields = resource.key === "products" ? pickFields(productPriceKeys) : [];
+const detailFields = resource.key === "products" ? pickFields(productDetailKeys) : pickFields(categoryDetailKeys);
+const seoFields = resource.key === "products" ? pickFields(productSeoKeys) : pickFields(categorySeoKeys);
+const sidebarFields = resource.key === "products" ? pickFields(productSidebarKeys) : pickFields(categorySidebarKeys);
+const sidebarToggleFields = sidebarFields.filter((field) => field.key !== "imageUrl" && field.key !== "productImageUrls");
+const sidebarImageField = sidebarFields.find((field) => field.key === "imageUrl");
+const sidebarGalleryField = sidebarFields.find((field) => field.key === "productImageUrls");
 ---
 
 <AdminShell
@@ -43,160 +54,88 @@ const seoLimitFor = (key: string, fallback?: number) =>
     data-mode={action}
     novalidate
   >
-    <div class="admin-form-grid">
-      {resource.fields.map((field) => field.type === "permissions" ? (
-        <fieldset class="admin-permission-field admin-field wide" data-admin-field={field.key} disabled={isView}>
-          <legend>{field.label}{field.required && !isView ? <i>*</i> : null}</legend>
-          <div>
-            {field.options?.map((option) => (
-              <label>
-                <input type="checkbox" name={field.key} value={option.value} />
-                <span>{option.label}</span>
-              </label>
-            ))}
-          </div>
-          <small data-field-error={field.key}></small>
-        </fieldset>
-      ) : field.type === "richtext" ? (
-        <div class="admin-field wide" data-admin-field={field.key}>
-          <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
-          <div class="admin-rich-text" data-rich-text>
-            <div class:list={["admin-rich-text-toolbar", { "is-readonly": isView }]} role="toolbar" aria-label={`ابزارهای ویرایش ${field.label}`}>
-              <div class="admin-editor-tool-group">
-                <button type="button" data-rich-command="undo" disabled={isView} title="واگرد" aria-label="واگرد"><Undo2 /></button>
-                <button type="button" data-rich-command="redo" disabled={isView} title="از نو" aria-label="از نو"><Redo2 /></button>
-              </div>
-              <div class="admin-editor-tool-group admin-editor-format">
-                <select data-rich-format disabled={isView} aria-label="نوع متن" title="نوع متن">
-                  <option value="p">Paragraph</option>
-                  <option value="h2">Heading 2</option>
-                  <option value="h3">Heading 3</option>
-                  <option value="blockquote">Blockquote</option>
-                </select>
-                <ChevronDown aria-hidden="true" />
-              </div>
-              <div class="admin-editor-tool-group">
-                <button type="button" data-rich-command="bold" disabled={isView} title="ضخیم" aria-label="ضخیم"><Bold /></button>
-                <button type="button" data-rich-command="italic" disabled={isView} title="مورب" aria-label="مورب"><Italic /></button>
-                <button type="button" data-rich-command="underline" disabled={isView} title="زیرخط" aria-label="زیرخط"><Underline /></button>
-              </div>
-              <div class="admin-editor-tool-group">
-                <button type="button" data-rich-command="insertUnorderedList" disabled={isView} title="فهرست نقطه‌ای" aria-label="فهرست نقطه‌ای"><List /></button>
-                <button type="button" data-rich-command="insertOrderedList" disabled={isView} title="فهرست شماره‌ای" aria-label="فهرست شماره‌ای"><ListOrdered /></button>
-                <button type="button" data-rich-command="formatBlock" data-rich-value="blockquote" disabled={isView} title="نقل‌قول" aria-label="نقل‌قول"><Quote /></button>
-              </div>
-              <div class="admin-editor-tool-group">
-                <button type="button" data-rich-command="justifyRight" disabled={isView} title="راست‌چین" aria-label="راست‌چین"><TextAlignEnd /></button>
-                <button type="button" data-rich-command="justifyCenter" disabled={isView} title="وسط‌چین" aria-label="وسط‌چین"><TextAlignCenter /></button>
-                <button type="button" data-rich-command="justifyLeft" disabled={isView} title="چپ‌چین" aria-label="چپ‌چین"><TextAlignStart /></button>
-              </div>
-              <div class="admin-editor-tool-group">
-                <button type="button" data-rich-command="createLink" disabled={isView} title="افزودن لینک" aria-label="افزودن لینک"><Link2 /></button>
-                <button type="button" data-rich-command="unlink" disabled={isView} title="حذف لینک" aria-label="حذف لینک"><Unlink2 /></button>
-                <button type="button" data-rich-insert-image disabled={isView} title="افزودن تصویر" aria-label="افزودن تصویر"><ImagePlus /></button>
-              </div>
-              <details class="admin-editor-table-menu">
-                <summary title="ابزارهای جدول" aria-label="ابزارهای جدول"><Table2 /><ChevronDown /></summary>
-                <div>
-                  <button type="button" data-rich-insert-table disabled={isView}><Table2 /> درج جدول</button>
-                  <button type="button" data-rich-table-command="addRowAfter" disabled><Rows3 /> افزودن ردیف</button>
-                  <button type="button" data-rich-table-command="addColumnAfter" disabled><Columns3 /> افزودن ستون</button>
-                  <button type="button" data-rich-table-command="deleteRow" disabled><Rows3 /> حذف ردیف</button>
-                  <button type="button" data-rich-table-command="deleteColumn" disabled><Columns3 /> حذف ستون</button>
-                  <button class="is-danger" type="button" data-rich-table-command="deleteTable" disabled><Trash2 /> حذف جدول</button>
-                </div>
-              </details>
-              <div class="admin-editor-tool-group">
-                <button type="button" data-rich-command="removeFormat" disabled={isView} title="پاک‌کردن قالب‌بندی" aria-label="پاک‌کردن قالب‌بندی"><RemoveFormatting /></button>
-              </div>
-              <input type="file" accept="image/jpeg,image/png,image/webp" data-rich-image-input hidden />
+    {supportsCatalogImage ? (
+      <div class="admin-catalog-form-layout">
+        <main class="admin-catalog-form-main">
+          <section class="admin-form-section">
+            <header>
+              <strong>اطلاعات اصلی</strong>
+            </header>
+            <div class="admin-form-grid">
+              {primaryFields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
             </div>
-            <div
-              class="admin-rich-text-editor"
-              contenteditable={isView ? "false" : "true"}
-              role="textbox"
-              aria-multiline="true"
-              data-rich-text-editor={field.key}
-              data-placeholder="متن فارسی را اینجا بنویسید…"
-            ></div>
-            {!isView && <p class="admin-editor-help">متن را مستقیماً Paste کنید؛ تصویر و جدول را از ابزارهای بالای ادیتور اضافه کنید.</p>}
-            <textarea
-              class="admin-rich-text-input"
-              name={field.key}
-              required={field.required}
-              disabled={isView}
-              data-rich-text-input={field.key}
-              tabindex="-1"
-              aria-hidden="true"
-            ></textarea>
-          </div>
-          <small data-field-error={field.key}></small>
-        </div>
-      ) : (
-        <label class:list={["admin-field", { wide: field.type === "textarea" || field.type === "multiselect" }]} data-admin-field={field.key}>
-          <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
-          {field.type === "textarea" ? (
-            <textarea
-              name={field.key}
-              required={field.required}
-              disabled={isView || (resource.key === "orders" && orderReadonly.has(field.key))}
-              minlength={field.required ? 2 : undefined}
-              maxlength={seoLimitFor(field.key, field.maxLength)}
-              data-seo-counter-limit={seoLimitFor(field.key)}
-            ></textarea>
-          ) : field.type === "multiselect" ? (
-            <>
-              <input type="text" data-tagify-field={field.key} disabled={isView} placeholder="برای جستجو و انتخاب کلیک کنید…" />
-              <select class="admin-tagify-source" name={field.key} multiple size="7" disabled={isView} data-dynamic-options={field.key} aria-hidden="true" tabindex="-1"></select>
-              <em class="admin-field-help">فقط موارد موجود در فهرست قابل انتخاب هستند و امکان ثبت مقدار جدید وجود ندارد.</em>
-            </>
-          ) : field.type === "select" ? (
-            <select name={field.key} required={field.required} disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))} data-dynamic-options={!field.options ? field.key : undefined}>
-              <option value="">انتخاب کنید</option>
-              {field.options?.map((option) => <option value={option.value}>{option.label}</option>)}
-            </select>
-          ) : (
-            <input
-              name={field.key}
-              type={field.type === "image" || moneyFieldKeys.has(field.key) ? "text" : field.type}
-              required={field.required}
-              disabled={isView || field.readonly || (resource.key === "orders" && orderReadonly.has(field.key))}
-              min={field.min}
-              maxlength={seoLimitFor(field.key, field.maxLength)}
-              inputmode={moneyFieldKeys.has(field.key) ? "numeric" : undefined}
-              data-money-input={moneyFieldKeys.has(field.key) ? "true" : undefined}
-              data-seo-counter-limit={seoLimitFor(field.key)}
-              dir={moneyFieldKeys.has(field.key) ? "ltr" : field.dir}
-            />
+          </section>
+          {resource.key === "products" && (
+            <details class="admin-form-accordion">
+              <summary>ویژگی‌های محصول</summary>
+              <div class="admin-form-grid">
+                {featureFields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
+              </div>
+            </details>
           )}
-          {seoLimitFor(field.key) && <em class="admin-seo-counter" data-seo-counter={field.key}></em>}
-          <small data-field-error={field.key}></small>
-        </label>
-      ))}
-    </div>
-    {resource.key === "products" && (
-      <section class="admin-price-breakdown" data-price-breakdown>
-        <header><span>محاسبه بر اساس وزن</span><small>مبالغ به تومان</small></header>
-        <div></div>
-      </section>
-    )}
-    {supportsCatalogImage && (
-      <section class="admin-product-image-upload" data-catalog-image-upload>
-        <div class="admin-product-image-preview">
-          <img data-catalog-image-preview hidden alt={`پیش‌نمایش ${catalogImageLabel}`} />
-          <span data-catalog-image-placeholder>{catalogImageLabel} هنوز بارگذاری نشده است.</span>
-        </div>
-        <div>
-          <strong>بارگذاری {catalogImageLabel}</strong>
-          <small>{resource.key === "categories" ? "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر افقی و عریض نتیجه بهتری دارد." : "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر مربع یا عمودی نتیجه بهتری دارد."}</small>
-          {!isView && (
-            <label>
-              انتخاب و بارگذاری {catalogImageLabel}
-              <input type="file" accept="image/jpeg,image/png,image/webp" data-catalog-image-input />
-            </label>
+          {resource.key === "products" && (
+            <details class="admin-form-accordion" open>
+              <summary>قیمت‌گذاری</summary>
+              <div class="admin-form-grid">
+                {priceFields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
+              </div>
+              <section class="admin-price-breakdown" data-price-breakdown>
+                <header><span>محاسبه بر اساس وزن</span><small>مبالغ به تومان</small></header>
+                <div></div>
+              </section>
+            </details>
           )}
-        </div>
-      </section>
+          <details class="admin-form-accordion">
+            <summary>محتوا</summary>
+            <div class="admin-form-grid">
+              {detailFields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
+            </div>
+          </details>
+          <details class="admin-form-accordion">
+            <summary>سئو</summary>
+            <div class="admin-form-grid">
+              {seoFields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
+            </div>
+          </details>
+        </main>
+        <aside class="admin-catalog-form-sidebar">
+          <section class="admin-product-image-upload" data-catalog-image-upload>
+            <div class="admin-product-image-preview">
+              <img data-catalog-image-preview hidden alt={`پیش‌نمایش ${catalogImageLabel}`} />
+              <span data-catalog-image-placeholder>{catalogImageLabel} هنوز بارگذاری نشده است.</span>
+              {!isView && resource.key === "products" && (
+                <button type="button" data-catalog-image-remove hidden>حذف تصویر</button>
+              )}
+            </div>
+            <div>
+              <strong>بارگذاری {catalogImageLabel}</strong>
+              <small>{resource.key === "categories" ? "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر افقی و عریض نتیجه بهتری دارد." : "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر مربع یا عمودی نتیجه بهتری دارد."}</small>
+              {!isView && (
+                <label>
+                  انتخاب و بارگذاری {catalogImageLabel}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" multiple={resource.key === "products"} data-catalog-image-input />
+                </label>
+              )}
+            </div>
+            {resource.key === "products" && <div class="admin-product-gallery" data-product-gallery></div>}
+          </section>
+          {sidebarImageField && <input type="hidden" name={sidebarImageField.key} />}
+          {sidebarGalleryField && <AdminFieldControl field={sidebarGalleryField} resourceKey={resource.key} isView={isView} />}
+          <section class="admin-form-section admin-form-section-compact">
+            <header>
+              <strong>نمایش‌ها</strong>
+              <small>فلگ‌های فعال و غیرفعال</small>
+            </header>
+            <div class="admin-flag-stack">
+              {sidebarToggleFields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
+            </div>
+          </section>
+        </aside>
+      </div>
+    ) : (
+      <div class="admin-form-grid">
+        {resource.fields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
+      </div>
     )}
     {resource.key === "payment-methods" && (
       <section class="admin-payment-cards" data-payment-cards hidden>

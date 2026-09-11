@@ -54,9 +54,10 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
       saleType: "sale_type", packageWeightGrams: "package_weight_grams",
       stockStatus: "stock_status",
       purchasePricePerKg: "purchase_price_per_kg", salePricePerKg: "sale_price_per_kg",
+      discountPercent: "discount_percent", discountSalePricePerKg: "discount_sale_price_per_kg",
       showInBestSellers: "show_in_best_sellers", showInDiscounts: "show_in_discounts",
       showInPopularSearches: "show_in_popular_searches",
-      isActive: "is_active", imageUrl: "image_url", ...audit
+      isActive: "is_active", imageUrl: "image_url", productImageUrls: "product_image_urls", ...audit
     },
     search: ["title_fa", "title_en", "blend_type"],
     schema: productSchema
