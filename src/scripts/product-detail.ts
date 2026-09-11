@@ -20,6 +20,9 @@ type ProductDetail = {
   salePricePerKg: number | string;
   discountPercent?: number | string | null;
   discountSalePricePerKg?: number | string | null;
+  canonicalUrl?: string | null;
+  robotsIndex?: boolean;
+  robotsFollow?: boolean;
   pricePer250g: number | string;
   pricePer500g: number | string;
   pricePer1000g: number | string;
@@ -88,9 +91,12 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", `${item.titleFa} | اورنزا`);
       document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", item.description);
       document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", productUrl);
+      const canonicalUrl = item.canonicalUrl ? new URL(item.canonicalUrl, location.origin).toString() : productUrl;
+      const robots = `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}${item.robotsIndex === false ? "" : ", max-image-preview:large"}`;
+      document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.setAttribute("content", robots);
       document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${item.titleFa} | اورنزا`);
       document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", item.description);
-      document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", productUrl);
+      document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", canonicalUrl);
       setText("[data-product-detail-en]", item.titleEn);
       setText("[data-product-detail-title]", item.titleFa);
       setText("[data-product-detail-description]", item.description);

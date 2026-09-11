@@ -38,6 +38,21 @@ type ResourceConfig = {
   fields: ResourceField[];
 };
 
+type ApiFieldErrors = {
+  fieldErrors?: Record<string, string[]>;
+  formErrors?: string[];
+};
+
+class ApiError extends Error {
+  fields?: ApiFieldErrors;
+
+  constructor(message: string, fields?: ApiFieldErrors) {
+    super(message);
+    this.name = "ApiError";
+    this.fields = fields;
+  }
+}
+
 const faNumber = new Intl.NumberFormat("fa-IR");
 const money = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
 const statusLabels: Record<string, string> = {
@@ -103,9 +118,9 @@ const createBankLogo = (code: string, label: string) => {
 };
 
 const api = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
-  const headers = options.body instanceof FormData
-    ? options.headers
-    : { "Content-Type": "application/json", ...(options.headers || {}) };
+  const headers = options.body && !(options.body instanceof FormData)
+    ? { "Content-Type": "application/json", ...(options.headers || {}) }
+    : options.headers;
   const response = await fetch(path, {
     credentials: "include",
     ...options,
@@ -118,7 +133,7 @@ const api = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
     throw new Error("برای ادامه، با حساب مدیر وارد شوید.");
   }
   const payload = response.status === 204 ? null : await response.json();
-  if (!response.ok) throw new Error(payload?.error || "انجام درخواست ممکن نشد.");
+  if (!response.ok) throw new ApiError(payload?.error || "انجام درخواست ممکن نشد.", payload?.fields);
   return payload as T;
 };
 
@@ -134,6 +149,22 @@ const toast = (message: string, type: "success" | "error" = "success") => {
     item.classList.remove("show");
     window.setTimeout(() => item.remove(), 220);
   }, 3200);
+};
+
+const renderApiFieldErrors = (form: HTMLFormElement, error: ApiError) => {
+  const fieldErrors = error.fields?.fieldErrors || {};
+  const firstKey = Object.keys(fieldErrors).find((key) => fieldErrors[key]?.length);
+  Object.entries(fieldErrors).forEach(([key, messages]) => {
+    const message = messages?.[0];
+    if (!message) return;
+    const fieldRoot = form.querySelector<HTMLElement>(`[data-admin-field="${CSS.escape(key)}"]`);
+    const errorNode = fieldRoot?.querySelector<HTMLElement>("[data-field-error]");
+    if (errorNode) errorNode.textContent = message;
+    fieldRoot?.classList.add("has-error");
+  });
+  if (!firstKey) return;
+  const control = form.elements.namedItem(firstKey) as HTMLElement | RadioNodeList | null;
+  if (control instanceof HTMLElement) control.focus();
 };
 
 const initSeoCounters = (root: ParentNode = document) => {
@@ -698,6 +729,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
 
   const storageKey = `orenza.admin.grid.${config.key}`;
   let gridApi: GridApi<Record<string, unknown>>;
+  const isCategoryList = config.key === "categories";
 
   const refreshCount = () => {
     if (!countElement || !gridApi) return;
@@ -723,6 +755,30 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       toast(error instanceof Error ? error.message : "خطا در دریافت اطلاعات", "error");
     } finally {
       gridApi.setGridOption("loading", false);
+    }
+  };
+
+  let categoryOrderSaving = false;
+  const persistCategoryOrder = async () => {
+    if (!isCategoryList || categoryOrderSaving) return;
+    const orderedIds: string[] = [];
+    gridApi.forEachNodeAfterFilterAndSort((node) => {
+      if (node.data?.id) orderedIds.push(String(node.data.id));
+    });
+    if (!orderedIds.length) return;
+    categoryOrderSaving = true;
+    try {
+      await api("/api/v1/admin/categories/reorder", {
+        method: "PUT",
+        body: JSON.stringify({ orderedIds })
+      });
+      toast("ترتیب منو ذخیره شد.");
+      await loadRows();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "ذخیره ترتیب منو انجام نشد.", "error");
+      await loadRows();
+    } finally {
+      categoryOrderSaving = false;
     }
   };
 
@@ -829,6 +885,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
         const slug = String(row.slug);
         if (slug === "products") return "/products/";
         if (slug === "wholesale") return "/wholesale/";
+        if (slug === "order") return "/order/";
         if (slug === "about-orenza") return "/about/";
         return `/products/${encodeURIComponent(slug)}/`;
       }
@@ -877,6 +934,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       headerName: "ردیف",
       valueGetter: ({ node }) => (node?.rowIndex ?? 0) + 1,
       valueFormatter: ({ value }) => faNumber.format(Number(value)),
+      rowDrag: isCategoryList,
       width: 78,
       minWidth: 78,
       maxWidth: 78,
@@ -929,17 +987,18 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     columnDefs: columns,
     rowData: [],
     animateRows: true,
+    rowDragManaged: isCategoryList,
     enableRtl: true,
     localeText: persianGridLocale,
     rowHeight: 56,
     headerHeight: 52,
-    pagination: true,
+    pagination: !isCategoryList,
     paginationPageSize: 15,
     paginationPageSizeSelector: [15, 25, 50, 100],
     suppressCellFocus: true,
     defaultColDef: {
       resizable: true,
-      sortable: true,
+      sortable: !isCategoryList,
       filter: true,
       floatingFilter: false,
       suppressHeaderMenuButton: false,
@@ -969,6 +1028,9 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       saveGridState();
     },
     onSortChanged: saveGridState,
+    onRowDragEnd: () => {
+      if (isCategoryList) void persistCategoryOrder();
+    },
     onColumnMoved: saveGridState,
     onColumnPinned: saveGridState,
     onColumnVisible: saveGridState,
@@ -1020,8 +1082,19 @@ const enhanceBooleanSwitches = (root: ParentNode = document) => {
       button.setAttribute("aria-pressed", String(isActive));
       label.textContent = isActive ? trueLabel : falseLabel;
     };
-    button.addEventListener("click", () => {
-      input.value = input.value === trueValue ? falseValue : trueValue;
+    button.addEventListener("click", async () => {
+      const nextValue = input.value === trueValue ? falseValue : trueValue;
+      if (input.name === "robotsIndex" && nextValue === trueValue) {
+        button.disabled = true;
+        const confirmed = await askConfirm(
+          "فعال‌سازی ایندکس",
+          "بعد از فعال شدن اجازه ایندکس، این گزینه دیگر قابل غیرفعال‌کردن نیست. ادامه می‌دهید؟",
+          "فعال‌سازی ایندکس"
+        );
+        button.disabled = false;
+        if (!confirmed) return;
+      }
+      input.value = nextValue;
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
     });
@@ -1075,6 +1148,17 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   if (richEditor?._tiptap) richEditor._tiptap.commands.setContent(sanitizeEditorHtml(normalizedValue), { emitUpdate: true });
   else if (richEditor) richEditor.innerHTML = sanitizeEditorHtml(normalizedValue);
   input.dispatchEvent(new Event("change", { bubbles: true }));
+};
+
+const lockIndexedRobotsControl = (form: HTMLFormElement, item: Record<string, unknown>) => {
+  if (item.robotsIndex !== true && item.robotsIndex !== "true") return;
+  const input = form.elements.namedItem("robotsIndex") as HTMLInputElement | null;
+  const field = input?.closest<HTMLElement>("[data-boolean-switch-field]");
+  const button = field?.querySelector<HTMLButtonElement>("[data-boolean-switch-button]");
+  if (!input || !field || !button) return;
+  button.disabled = true;
+  button.title = "این صفحه قبلاً برای ایندکس فعال شده و قابل غیرفعال‌کردن نیست.";
+  field.classList.add("is-locked");
 };
 
 const richTextTags = new Set([
@@ -1890,6 +1974,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     try {
       const { item } = await api<{ item: Record<string, unknown> }>(`/api/v1/admin/${config.key}/${id}`);
       config.fields.forEach((field) => setFormValue(form, field.key, item[field.key]));
+      lockIndexedRobotsControl(form, item);
       initSeoCounters(form);
       refreshCatalogImage?.();
       updateProductProfit();
@@ -1913,6 +1998,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     form.querySelectorAll("[data-field-error]").forEach((node) => { node.textContent = ""; });
+    form.querySelectorAll(".has-error").forEach((node) => node.classList.remove("has-error"));
     if (!form.checkValidity()) {
       form.reportValidity();
       toast("لطفاً فیلدهای ضروری را کامل و صحیح وارد کنید.", "error");
@@ -1934,7 +2020,10 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
         }
       }
       else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : parseNumericInput(raw);
-      else if (["isActive", "isPublished", "showInBestSellers", "showInDiscounts", "showInPopularFooter", "showInPopularSearches"].includes(field.key)) body[field.key] = raw === "true";
+      else if ([
+        "isActive", "isPublished", "showInBestSellers", "showInDiscounts",
+        "showInPopularFooter", "showInPopularSearches", "robotsIndex", "robotsFollow"
+      ].includes(field.key)) body[field.key] = raw === "true";
       else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;
     });
@@ -1954,6 +2043,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       window.setTimeout(() => { location.href = `/admin/${config.key}/list/`; }, 500);
     } catch (error) {
       const message = error instanceof Error ? error.message : "ذخیره انجام نشد.";
+      if (error instanceof ApiError) renderApiFieldErrors(form, error);
       toast(message, "error");
       button.disabled = false;
       button.textContent = "ذخیره تغییرات";

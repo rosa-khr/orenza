@@ -18,7 +18,8 @@ import {
   Users,
   Tags,
   X,
-  Calculator
+  Calculator,
+  Link2
 } from "@lucide/astro";
 import { adminResources } from "../../admin/resources";
 import "../../styles/admin.css";
@@ -42,6 +43,7 @@ const icons = {
   "discount-codes": BadgePercent,
   articles: BookOpenText,
   tags: Tags,
+  redirects: Link2,
   "service-scripts": Settings,
   "price-imports": Settings
 };
@@ -49,7 +51,7 @@ const navGroups = [
   { title: "فروشگاه", icon: Boxes, resources: ["products", "categories"] },
   { title: "حسابداری", icon: Calculator, resources: ["accounting", "price-imports"] },
   { title: "سفارش و پرداخت", icon: CreditCard, resources: ["orders", "payment-methods", "shipping-methods", "discount-codes"] },
-  { title: "محتوا و سئو", icon: BookOpenText, resources: ["articles", "tags", "content-templates", "content-generator"] },
+  { title: "محتوا و سئو", icon: BookOpenText, resources: ["articles", "tags", "redirects", "content-templates", "content-generator"] },
   { title: "کاربران و دسترسی", icon: ShieldCheck, resources: ["users", "roles"] }
 ];
 const resourceByKey = new Map(adminResources.filter((resource) => !resource.navHidden).map((resource) => [resource.key, resource]));

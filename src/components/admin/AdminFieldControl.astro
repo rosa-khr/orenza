@@ -31,6 +31,14 @@ const isBooleanSelect = field.type === "select" &&
 const trueLabel = field.options?.find((option) => option.value === "true")?.label || "فعال";
 const falseLabel = field.options?.find((option) => option.value === "false")?.label || "غیرفعال";
 const isCalculatedSubmitField = field.key === "discountSalePricePerKg";
+const booleanDefaultValue = field.key === "stockStatus"
+  ? "inStock"
+  : field.key === "robotsIndex" || field.key === "robotsFollow"
+    ? "true"
+    : "false";
+const fieldHelp = field.key === "canonicalUrl"
+  ? "آدرس اصلی و ترجیحی این صفحه برای موتورهای جست‌وجو؛ اگر خالی بماند، آدرس فعلی صفحه خودکار استفاده می‌شود."
+  : "";
 ---
 
 {field.type === "permissions" ? (
@@ -129,7 +137,7 @@ const isCalculatedSubmitField = field.key === "discountSalePricePerKg";
     <input
       type="hidden"
       name={field.key}
-      value={field.key === "stockStatus" ? "inStock" : "false"}
+      value={booleanDefaultValue}
       disabled={isReadonly}
       data-boolean-switch-value
       data-true-value={field.key === "stockStatus" ? "inStock" : "true"}
@@ -142,6 +150,7 @@ const isCalculatedSubmitField = field.key === "discountSalePricePerKg";
       <b data-boolean-switch-label>{falseLabel}</b>
     </button>
     <small data-field-error={field.key}></small>
+    {fieldHelp && <em class="admin-field-help">{fieldHelp}</em>}
   </label>
 ) : (
   <label class:list={["admin-field", { wide: field.type === "textarea" || field.type === "multiselect" }]} data-admin-field={field.key}>
@@ -181,6 +190,7 @@ const isCalculatedSubmitField = field.key === "discountSalePricePerKg";
         dir={moneyFieldKeys.has(field.key) ? "ltr" : field.dir}
       />
     )}
+    {fieldHelp && <em class="admin-field-help">{fieldHelp}</em>}
     {seoLimitFor(field.key) && <em class="admin-seo-counter" data-seo-counter={field.key}></em>}
     <small data-field-error={field.key}></small>
   </label>

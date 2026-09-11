@@ -25,7 +25,7 @@ const normalizeOpenAiKey = (value: string | undefined) =>
 
 const allPermissions = [
   "dashboard", "users", "roles", "products", "categories", "orders",
-  "payment-methods", "shipping-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
+  "payment-methods", "shipping-methods", "discount-codes", "articles", "tags", "redirects", "site-settings", "logs", "content-generator", "accounting", "price-imports"
 ] as const;
 
 export const registerAdminRoutes = (
@@ -165,6 +165,30 @@ export const registerAdminRoutes = (
       "SELECT id,title,slug FROM admin_roles WHERE is_active=true ORDER BY is_system DESC,title"
     );
     return { roles: roles.rows };
+  });
+
+  app.put("/api/v1/admin/categories/reorder", async (request, reply) => {
+    if (!(await requirePermission(request, reply, "categories"))) return;
+    const { orderedIds } = z.object({
+      orderedIds: z.array(z.string().uuid()).min(1).max(200)
+    }).parse(request.body);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      for (const [index, id] of orderedIds.entries()) {
+        await client.query(
+          "UPDATE categories SET sort_order=$1, updated_at=now() WHERE id=$2",
+          [index + 1, id]
+        );
+      }
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+    return { ok: true };
   });
 
   const normalizeImportText = (value: unknown) => String(value ?? "")

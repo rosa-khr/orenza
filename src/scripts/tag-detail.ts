@@ -10,6 +10,11 @@ type TaggedProduct = {
   categorySlug: string;
 };
 type TagDetail = TagLink & {
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  canonicalUrl?: string | null;
+  robotsIndex?: boolean;
+  robotsFollow?: boolean;
   content: string | null;
   products: TaggedProduct[];
   relatedTags: TagLink[];
@@ -35,15 +40,18 @@ if (root && slug && slug !== "detail") {
       return payload.item;
     })
     .then((item) => {
-      document.title = `${item.title} | اورنزا`;
-      const canonicalUrl = new URL(`/tags/${encodeURIComponent(item.slug)}/`, location.origin).toString();
-      const summary = `محصولات و مطالب مرتبط با ${item.title} در فروشگاه اورنزا`;
+      const pageTitle = item.seoTitle || item.title;
+      document.title = `${pageTitle} | اورنزا`;
+      const canonicalUrl = new URL(item.canonicalUrl || `/tags/${encodeURIComponent(item.slug)}/`, location.origin).toString();
+      const summary = item.seoDescription || `محصولات و مطالب مرتبط با ${item.title} در فروشگاه اورنزا`;
+      const robots = `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}${item.robotsIndex === false ? "" : ", max-image-preview:large"}`;
       document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", canonicalUrl);
+      document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.setAttribute("content", robots);
       document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", summary);
-      document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", `${item.title} | اورنزا`);
+      document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", `${pageTitle} | اورنزا`);
       document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", summary);
       document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", canonicalUrl);
-      document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${item.title} | اورنزا`);
+      document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${pageTitle} | اورنزا`);
       document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", summary);
       root.querySelector<HTMLElement>("[data-tag-title]")!.textContent = item.title;
       const content = root.querySelector<HTMLElement>("[data-tag-content]");

@@ -58,10 +58,10 @@ FROM admin_roles r
 JOIN (VALUES
   ('admin','dashboard'),('admin','users'),('admin','roles'),('admin','products'),
   ('admin','categories'),('admin','orders'),('admin','payment-methods'),('admin','shipping-methods'),
-  ('admin','discount-codes'),('admin','articles'),('admin','tags'),('admin','site-settings'),('admin','logs'),('admin','content-generator'),('admin','accounting'),('admin','price-imports'),
+  ('admin','discount-codes'),('admin','articles'),('admin','tags'),('admin','redirects'),('admin','site-settings'),('admin','logs'),('admin','content-generator'),('admin','accounting'),('admin','price-imports'),
   ('orders','dashboard'),('orders','orders'),
   ('seo','dashboard'),('seo','products'),('seo','categories'),('seo','articles'),('seo','tags'),
-  ('seo','site-settings')
+  ('seo','redirects'),('seo','site-settings')
 ) AS p(role_slug,permission_key) ON p.role_slug=r.slug
 ON CONFLICT DO NOTHING;
 
@@ -296,11 +296,15 @@ CREATE TABLE IF NOT EXISTS categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(160) NOT NULL,
   slug varchar(180) NOT NULL UNIQUE,
+  sort_order smallint NOT NULL DEFAULT 100,
   parent_category_id uuid REFERENCES categories(id) ON DELETE SET NULL,
   description text,
   image_url text,
   seo_title varchar(60),
   seo_description varchar(150),
+  canonical_url text,
+  robots_index boolean NOT NULL DEFAULT true,
+  robots_follow boolean NOT NULL DEFAULT true,
   show_in_popular_footer boolean NOT NULL DEFAULT false,
   show_in_popular_searches boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
@@ -316,6 +320,9 @@ CREATE TABLE IF NOT EXISTS products (
   description text NOT NULL,
   seo_title varchar(60),
   seo_description varchar(150),
+  canonical_url text,
+  robots_index boolean NOT NULL DEFAULT true,
+  robots_follow boolean NOT NULL DEFAULT true,
   product_content text,
   roast_type varchar(30) NOT NULL CHECK (roast_type IN ('light','medium','mediumDark','dark')),
   coffee_type varchar(20) NOT NULL CHECK (coffee_type IN ('bean','ground')),
@@ -346,6 +353,9 @@ CREATE INDEX IF NOT EXISTS products_category_idx ON products(category_id);
 CREATE INDEX IF NOT EXISTS products_active_idx ON products(is_active);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title varchar(60);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description varchar(150);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS canonical_url text;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
 UPDATE products SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE products SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE products ALTER COLUMN seo_title TYPE varchar(60);
@@ -487,6 +497,9 @@ CREATE TABLE IF NOT EXISTS tags (
   slug varchar(160) NOT NULL UNIQUE,
   seo_title varchar(60),
   seo_description varchar(150),
+  canonical_url text,
+  robots_index boolean NOT NULL DEFAULT true,
+  robots_follow boolean NOT NULL DEFAULT true,
   content text,
   show_in_popular_searches boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -518,6 +531,11 @@ CREATE TABLE IF NOT EXISTS articles (
   summary text NOT NULL,
   content text NOT NULL,
   image_url text,
+  seo_title varchar(60),
+  seo_description varchar(150),
+  canonical_url text,
+  robots_index boolean NOT NULL DEFAULT true,
+  robots_follow boolean NOT NULL DEFAULT true,
   tags text[] NOT NULL DEFAULT '{}',
   is_published boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -607,6 +625,10 @@ ALTER TABLE order_items ADD COLUMN IF NOT EXISTS unit_cost bigint;
 ALTER TABLE order_items ADD COLUMN IF NOT EXISTS total_cost bigint;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_title varchar(60);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(150);
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS canonical_url text;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order smallint NOT NULL DEFAULT 100;
 UPDATE categories SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE categories SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE categories ALTER COLUMN seo_title TYPE varchar(60);
@@ -628,11 +650,42 @@ END $$;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS content text;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_title varchar(60);
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_description varchar(150);
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS canonical_url text;
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS show_in_popular_searches boolean NOT NULL DEFAULT false;
 UPDATE tags SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE tags SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE tags ALTER COLUMN seo_title TYPE varchar(60);
 ALTER TABLE tags ALTER COLUMN seo_description TYPE varchar(150);
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS seo_title varchar(60);
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS seo_description varchar(150);
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS canonical_url text;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
+UPDATE articles SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
+UPDATE articles SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
+ALTER TABLE articles ALTER COLUMN seo_title TYPE varchar(60);
+ALTER TABLE articles ALTER COLUMN seo_description TYPE varchar(150);
+
+CREATE TABLE IF NOT EXISTS redirects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_path text NOT NULL,
+  destination text NOT NULL,
+  status_code integer NOT NULL DEFAULT 301 CHECK (status_code IN (301,302)),
+  entity_type varchar(80),
+  entity_id uuid,
+  is_active boolean NOT NULL DEFAULT true,
+  created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (source_path <> destination)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS redirects_active_source_unique
+  ON redirects(source_path)
+  WHERE is_active;
+CREATE INDEX IF NOT EXISTS redirects_entity_idx
+  ON redirects(entity_type, entity_id);
 ALTER TABLE payment_methods DROP CONSTRAINT IF EXISTS payment_methods_type_check;
 ALTER TABLE payment_methods ADD CONSTRAINT payment_methods_type_check CHECK (type IN ('cardToCard','bankGateway','zarinpal'));
 ALTER TABLE payment_methods ALTER COLUMN card_number DROP NOT NULL;
@@ -678,19 +731,19 @@ CREATE INDEX IF NOT EXISTS application_logs_level_idx ON application_logs(level)
 
 ALTER TABLE products ADD COLUMN IF NOT EXISTS show_in_popular_searches boolean NOT NULL DEFAULT false;
 
-INSERT INTO categories (title, slug, description, seo_title, seo_description, show_in_popular_footer, show_in_popular_searches)
+INSERT INTO categories (title, slug, sort_order, description, seo_title, seo_description, show_in_popular_footer, show_in_popular_searches)
 VALUES
-  ('قهوه', 'coffee-blends',
+  ('قهوه', 'coffee-blends', 20,
    'ترکیب‌های تازه‌رست عربیکا و روبوستا با انتخاب رُست و آسیاب متناسب با دستگاه شما.',
    'خرید قهوه ترکیبی تازه رست عربیکا و روبوستا',
    'خرید قهوه ترکیبی تازه‌رست اورنزا در نسبت‌های مختلف عربیکا و روبوستا، با انتخاب وزن، درجه رُست و آسیاب مناسب اسپرسوساز، موکاپات و فرنچ‌پرس.',
    true, true),
-  ('نوشیدنی‌های پودری', 'cafe-drinks',
+  ('نوشیدنی‌های پودری', 'cafe-drinks', 30,
    'پودرهای منتخب برای آماده‌کردن نوشیدنی‌های گرم و کافه‌ای در خانه یا محل کار.',
    'خرید چای ماسالا، ماچا، هات چاکلت و کاپوچینو',
    'خرید آنلاین پودر چای ماسالا، ماچا، هات چاکلت و کاپوچینو با امکان انتخاب وزن و ارسال سراسر ایران.',
    true, true),
-  ('دمنوش', 'herbal-tea',
+  ('دمنوش', 'herbal-tea', 40,
    'دمنوش‌های گیاهی و خوش‌عطر برای فنجان‌های آرام، روزمره و آماده‌سازی ساده.',
    'خرید دمنوش گیاهی اورنزا',
    'خرید دمنوش گیاهی اورنزا با ترکیب‌های خوش‌عطر، بسته‌بندی تازه و ارسال سراسر ایران.',
@@ -703,17 +756,21 @@ ON CONFLICT (slug) DO UPDATE SET
   show_in_popular_footer=EXCLUDED.show_in_popular_footer,
   updated_at=now();
 
-INSERT INTO categories (title, slug, description, seo_title, seo_description, is_active, show_in_popular_footer)
+INSERT INTO categories (title, slug, sort_order, description, seo_title, seo_description, is_active, show_in_popular_footer)
 VALUES
-  ('همه محصولات اورنزا', 'products',
+  ('همه محصولات اورنزا', 'products', 10,
    '<h2>خرید محصولات اورنزا</h2><p>مجموعه‌ای از قهوه‌های تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا برای انتخابی دقیق و خوش‌طعم.</p>',
    'خرید محصولات اورنزا؛ قهوه و نوشیدنی‌های کافه‌ای',
    'خرید قهوه تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا با انتخاب وزن، رُست و آسیاب مناسب.', true, false),
-  ('خرید عمده', 'wholesale',
+  ('خرید عمده', 'wholesale', 50,
    '<h2>خرید عمده قهوه برای کافه و سازمان</h2><p>تأمین منظم قهوه تازه‌رست اورنزا برای کافه‌ها، رستوران‌ها و مجموعه‌های سازمانی با ترکیب و آسیاب متناسب با نیاز شما.</p>',
    'خرید عمده قهوه برای کافه، رستوران و سازمان',
    'خرید عمده قهوه تازه‌رست اورنزا برای کافه، رستوران و سازمان با تأمین منظم و انتخاب ترکیب مناسب.', true, false),
-  ('درباره اورنزا', 'about-orenza',
+  ('سفارش اختصاصی', 'order', 60,
+   '<h2>سفارش اختصاصی قهوه</h2><p>انتخاب ترکیب، رُست، وزن و آسیاب متناسب با دستگاه و سلیقه شما.</p>',
+   'سفارش اختصاصی قهوه اورنزا',
+   'سفارش اختصاصی قهوه اورنزا با انتخاب ترکیب، رُست، وزن و آسیاب مناسب دستگاه شما.', true, false),
+  ('درباره اورنزا', 'about-orenza', 70,
    '<h2>درباره اورنزا</h2><p>داستان اورنزا، انتخاب دانه و رُست تازه برای ساختن تجربه‌ای دقیق‌تر از قهوه.</p>',
    'درباره اورنزا؛ داستان رستری و قهوه تازه‌رست',
    'با اورنزا و نگاه ما به انتخاب دانه، رُست تازه و آماده‌سازی قهوه آشنا شوید.', true, false)
@@ -724,6 +781,20 @@ ON CONFLICT (slug) DO UPDATE SET
   seo_description=EXCLUDED.seo_description,
   show_in_popular_footer=EXCLUDED.show_in_popular_footer,
   updated_at=now();
+
+UPDATE categories AS c
+SET sort_order = seed.sort_order
+FROM (VALUES
+  ('products', 10),
+  ('coffee-blends', 20),
+  ('cafe-drinks', 30),
+  ('herbal-tea', 40),
+  ('wholesale', 50),
+  ('order', 60),
+  ('about-orenza', 70)
+) AS seed(slug, sort_order)
+WHERE c.slug = seed.slug
+  AND c.sort_order = 100;
 
 INSERT INTO products
   (title_fa,title_en,category_id,description,roast_type,coffee_type,grind_type,blend_type,

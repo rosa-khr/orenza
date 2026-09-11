@@ -17,6 +17,7 @@ import {
 import { sendPasswordResetCode } from "./sms.js";
 import { registerAdminRoutes } from "./admin/routes.js";
 import { registerStoreRoutes } from "./store/routes.js";
+import { registerRedirects } from "./seo.js";
 import { createRequestId, ensureLogsTable, loggerOptions, registerRequestLogging } from "./logger.js";
 
 type UserRow = {
@@ -71,6 +72,7 @@ await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
 await app.register(multipart, {
   limits: { files: 1, fileSize: 20 * 1024 * 1024, fields: 2, parts: 3 }
 });
+registerRedirects(app, pool);
 
 const publicUser = (user: UserRow) => ({
   id: user.id,
@@ -151,10 +153,59 @@ const addressSchema = z.object({
 
 app.setErrorHandler((error, request, reply) => {
   if (error instanceof z.ZodError) {
-    return reply.code(422).send({ error: "لطفاً اطلاعات واردشده را بررسی کنید.", fields: error.flatten() });
+    const labels: Record<string, string> = {
+      title: "عنوان",
+      titleFa: "عنوان فارسی",
+      titleEn: "عنوان انگلیسی",
+      categoryId: "دسته‌بندی",
+      slug: "نامک",
+      canonicalUrl: "آدرس کنونیکال",
+      seoTitle: "عنوان سئو",
+      seoDescription: "توضیحات متا",
+      description: "توضیحات",
+      productContent: "محتوای محصول",
+      roastType: "پروفایل رُست",
+      coffeeType: "فرم پیش‌فرض",
+      grindType: "آسیاب پیش‌فرض",
+      blendType: "ترکیب دانه",
+      sortOrder: "ترتیب نمایش",
+      saleType: "نوع فروش",
+      packageWeightGrams: "وزن بسته",
+      stockStatus: "وضعیت موجودی",
+      purchasePricePerKg: "قیمت خرید واحد",
+      salePricePerKg: "قیمت فروش واحد",
+      discountPercent: "درصد تخفیف",
+      discountSalePricePerKg: "قیمت بعد از تخفیف",
+      imageUrl: "تصویر محصول",
+      productImageUrls: "گالری تصاویر محصول"
+    };
+    const formatIssue = (issue: z.ZodIssue) => {
+      const fieldKey = String(issue.path?.[0] || "");
+      const fieldLabel = labels[fieldKey] || fieldKey;
+      if (issue.code === "invalid_value") {
+        return fieldLabel ? `${fieldLabel}: یکی از گزینه‌های معتبر را انتخاب کنید.` : "یکی از گزینه‌های معتبر را انتخاب کنید.";
+      }
+      if (issue.code === "invalid_format") {
+        return fieldLabel ? `${fieldLabel}: گزینه انتخاب‌شده معتبر نیست.` : "گزینه انتخاب‌شده معتبر نیست.";
+      }
+      return fieldLabel ? `${fieldLabel}: ${issue.message}` : issue.message;
+    };
+    const firstIssue = error.issues[0];
+    const flattened = error.flatten((issue) => formatIssue(issue));
+    const message = firstIssue
+      ? formatIssue(firstIssue)
+      : "لطفاً اطلاعات واردشده را بررسی کنید.";
+    return reply.code(422).send({ error: message, fields: flattened });
   }
   if ((error as { code?: string }).code === "23505") {
-    return reply.code(409).send({ error: "این شماره موبایل یا ایمیل قبلاً ثبت شده است." });
+    const constraint = String((error as { constraint?: string }).constraint || "");
+    if (constraint.includes("slug")) {
+      return reply.code(409).send({ error: "این نامک قبلاً استفاده شده است. لطفاً یک آدرس متفاوت وارد کنید." });
+    }
+    if (constraint.includes("redirects_source_path")) {
+      return reply.code(409).send({ error: "برای این آدرس مبدا قبلاً یک ریدایرکت فعال ثبت شده است." });
+    }
+    return reply.code(409).send({ error: "این مقدار قبلاً ثبت شده است و باید یکتا باشد." });
   }
   if ((error as { code?: string }).code === "23503") {
     return reply.code(409).send({ error: "این رکورد به اطلاعات دیگری متصل است و قابل حذف نیست." });

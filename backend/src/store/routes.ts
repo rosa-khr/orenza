@@ -9,6 +9,7 @@ import { openProductImage } from "../product-images.js";
 import { openHomepageBanner } from "../homepage-banners.js";
 import { sanitizeRichText } from "../rich-text.js";
 import { persistLog } from "../logger.js";
+import { categoryHref, productSlug } from "../seo.js";
 
 type SessionUser = { id: string } | null;
 
@@ -63,24 +64,6 @@ const zarinpalAmount = (amountInToman: number) => {
 };
 
 const zarinpalStartUrl = (authority: string) => `https://www.zarinpal.com/pg/StartPay/${authority}`;
-
-const productSlug = (titleEn: string) =>
-  titleEn
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/['’]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "orenza-product";
-
-const categoryHref = (slug: string) => {
-  if (slug === "products") return "/products/";
-  if (slug === "wholesale") return "/wholesale/";
-  if (slug === "about-orenza") return "/about/";
-  return `/products/${encodeURIComponent(slug)}/`;
-};
 
 export const registerStoreRoutes = (
   app: FastifyInstance,
@@ -272,15 +255,10 @@ export const registerStoreRoutes = (
 
   app.get("/api/v1/categories/navigation", async (_request, reply) => {
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT c.id, c.title, c.slug, c.parent_category_id,
+      `SELECT c.id, c.title, c.slug, c.sort_order, c.parent_category_id,
         COALESCE((
-          SELECT json_agg(json_build_object('id', child.id, 'title', child.title, 'slug', child.slug) ORDER BY
-            CASE child.slug
-              WHEN 'coffee-blends' THEN 1
-              WHEN 'cafe-drinks' THEN 2
-              WHEN 'herbal-tea' THEN 3
-              ELSE 20
-            END,
+          SELECT json_agg(json_build_object('id', child.id, 'title', child.title, 'slug', child.slug, 'sortOrder', child.sort_order) ORDER BY
+            child.sort_order ASC,
             child.created_at ASC
           )
           FROM categories child
@@ -289,14 +267,8 @@ export const registerStoreRoutes = (
        FROM categories c
        WHERE c.is_active = true
          AND c.parent_category_id IS NULL
-         AND c.slug NOT IN ('products', 'wholesale', 'about-orenza')
-       ORDER BY CASE c.slug
-         WHEN 'coffee-blends' THEN 1
-         WHEN 'cafe-drinks' THEN 2
-         WHEN 'herbal-tea' THEN 3
-         ELSE 20
-       END, c.created_at ASC
-       LIMIT 8`
+       ORDER BY c.sort_order ASC, c.created_at ASC
+       LIMIT 12`
     );
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     return { items: result.rows.map(toPublicRecord) };
@@ -308,6 +280,7 @@ export const registerStoreRoutes = (
     }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
       `SELECT c.id,c.title,c.slug,c.description,c.image_url,c.seo_title,c.seo_description,
+          c.canonical_url,c.robots_index,c.robots_follow,
         COALESCE((
           SELECT json_agg(DISTINCT jsonb_build_object('id',t.id,'title',t.title,'slug',t.slug))
           FROM products p JOIN product_tags pt ON pt.product_id=p.id JOIN tags t ON t.id=pt.tag_id
@@ -328,7 +301,7 @@ export const registerStoreRoutes = (
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT id,title,slug,content FROM tags WHERE slug=$1`,
+      `SELECT id,title,slug,content,seo_title,seo_description,canonical_url,robots_index,robots_follow FROM tags WHERE slug=$1`,
       [slug]
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "تگ پیدا نشد." });

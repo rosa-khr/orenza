@@ -27,6 +27,11 @@ type CategoryProduct = {
 type CategoryInfo = {
   title: string;
   slug: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  canonicalUrl?: string | null;
+  robotsIndex?: boolean;
+  robotsFollow?: boolean;
   description: string | null;
   imageUrl: string | null;
   tags: { id: string; title: string; slug: string }[];
@@ -57,6 +62,21 @@ if (root && list) {
         return response.json() as Promise<{ item: CategoryInfo }>;
       })
       .then(({ item }) => {
+        const canonicalUrl = new URL(item.canonicalUrl || `/products/${encodeURIComponent(item.slug)}/`, location.origin).toString();
+        const robots = `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}${item.robotsIndex === false ? "" : ", max-image-preview:large"}`;
+        if (item.seoTitle) {
+          document.title = `${item.seoTitle} | اورنزا`;
+          document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", `${item.seoTitle} | اورنزا`);
+          document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${item.seoTitle} | اورنزا`);
+        }
+        if (item.seoDescription) {
+          document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", item.seoDescription);
+          document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", item.seoDescription);
+          document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", item.seoDescription);
+        }
+        document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", canonicalUrl);
+        document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", canonicalUrl);
+        document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.setAttribute("content", robots);
         const content = document.querySelector<HTMLElement>("[data-category-content]");
         if (content && item.description?.trim()) {
           content.innerHTML = item.description.trim();

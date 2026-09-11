@@ -325,6 +325,7 @@ const applyHomepageHero = (settings: PublicSiteSettings) => {
 const categoryHref = (slug: string) => {
   if (slug === "products") return "/products/";
   if (slug === "wholesale") return "/wholesale/";
+  if (slug === "order") return "/order/";
   if (slug === "about-orenza") return "/about/";
   return `/products/${encodeURIComponent(slug)}/`;
 };
@@ -348,7 +349,7 @@ const createDesktopCategoryItem = (item: PublicNavCategory) => {
   const toggle = document.createElement("button");
   toggle.className = "nav-products-toggle";
   toggle.type = "button";
-  toggle.setAttribute("aria-label", `نمایش زیرمجموعه ${item.title}`);
+  toggle.setAttribute("aria-label", `نمایش ${item.title}`);
   toggle.setAttribute("aria-expanded", "false");
   const panel = document.createElement("div");
   panel.className = "nav-products-panel";
@@ -357,9 +358,7 @@ const createDesktopCategoryItem = (item: PublicNavCategory) => {
     childLink.href = categoryHref(child.slug);
     const title = document.createElement("span");
     title.textContent = child.title;
-    const summary = document.createElement("small");
-    summary.textContent = child.slug === item.slug ? "صفحه اصلی این دسته" : "زیرمجموعه";
-    childLink.append(title, summary);
+    childLink.append(title);
     panel.append(childLink);
   });
   wrapper.append(link, toggle, panel);
@@ -373,9 +372,7 @@ const createMobileCategoryItem = (item: PublicNavCategory) => {
     link.href = categoryHref(item.slug);
     const title = document.createElement("span");
     title.textContent = item.title;
-    const summary = document.createElement("small");
-    summary.textContent = "دسته‌بندی اصلی";
-    link.append(title, summary);
+    link.append(title);
     return link;
   }
   const section = document.createElement("section");
@@ -386,9 +383,7 @@ const createMobileCategoryItem = (item: PublicNavCategory) => {
   button.setAttribute("aria-expanded", "false");
   const title = document.createElement("span");
   title.textContent = item.title;
-  const summary = document.createElement("small");
-  summary.textContent = "دسته‌بندی اصلی و زیرمجموعه‌ها";
-  button.append(title, summary);
+  button.append(title);
   const panel = document.createElement("div");
   panel.className = "mobile-nav-submenu";
   panel.hidden = true;
@@ -397,9 +392,7 @@ const createMobileCategoryItem = (item: PublicNavCategory) => {
     childLink.href = categoryHref(child.slug);
     const childTitle = document.createElement("span");
     childTitle.textContent = child.title;
-    const childSummary = document.createElement("small");
-    childSummary.textContent = child.slug === item.slug ? "صفحه اصلی این دسته" : "زیرمجموعه";
-    childLink.append(childTitle, childSummary);
+    childLink.append(childTitle);
     panel.append(childLink);
   });
   section.append(button, panel);

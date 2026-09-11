@@ -3,6 +3,21 @@ import { normalizePhone } from "../security.js";
 import { sanitizeRichText } from "../rich-text.js";
 
 const optionalUrl = z.union([z.string().url(), z.literal(""), z.null()]).transform((value) => value || null);
+const canonicalUrl = z.union([
+  z.string().trim().url(),
+  z.string().trim().regex(/^\/[^#]*$/),
+  z.literal(""),
+  z.null()
+]).transform((value) => {
+  if (!value) return null;
+  if (String(value).includes("#")) throw new Error("Canonical URL نباید شامل fragment باشد.");
+  return value;
+});
+const seoFields = {
+  canonicalUrl: canonicalUrl.optional(),
+  robotsIndex: z.boolean().default(true),
+  robotsFollow: z.boolean().default(true)
+};
 const hexColor = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/);
 const productImageUrl = z.union([
   z.string().url(),
@@ -22,7 +37,17 @@ const productImageGallery = z.union([
   }).pipe(z.array(productImageUrl).max(12))
 ]).transform((value) => value.filter(Boolean) as string[]);
 const money = z.number().int().min(0).max(10_000_000_000);
-const slug = z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const productMoney = (label: string) => z.number()
+  .int({ message: `${label} باید عدد صحیح باشد.` })
+  .min(0, { message: `${label} نمی‌تواند منفی باشد.` })
+  .max(10_000_000_000, { message: `${label} بیش از حد مجاز است.` });
+const slug = z.string()
+  .trim()
+  .min(2, { message: "نامک باید حداقل ۲ کاراکتر باشد." })
+  .max(180, { message: "نامک نمی‌تواند بیشتر از ۱۸۰ کاراکتر باشد." })
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: "نامک فقط می‌تواند شامل حروف انگلیسی کوچک، عدد و خط تیره باشد؛ مثل coffee-blends."
+  });
 const optionalRichText = z.union([z.string().max(100_000), z.literal(""), z.null()])
   .transform((value) => sanitizeRichText(value));
 const homepageBannerRowSchema = z.object({
@@ -59,38 +84,78 @@ const homepageHeroBenefitItemSchema = z.object({
 export const categorySchema = z.object({
   title: z.string().trim().min(2).max(160),
   slug,
+  sortOrder: z.number()
+    .int({ message: "ترتیب نمایش باید عدد صحیح باشد." })
+    .min(1, { message: "ترتیب نمایش باید حداقل ۱ باشد." })
+    .max(999, { message: "ترتیب نمایش نمی‌تواند بیشتر از ۹۹۹ باشد." })
+    .default(100),
   parentCategoryId: z.string().uuid().nullable().optional(),
   description: optionalRichText.optional(),
   imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().min(10).max(60),
   seoDescription: z.string().trim().min(30).max(150),
+  ...seoFields,
   showInPopularFooter: z.boolean().default(false),
   showInPopularSearches: z.boolean().default(false),
   isActive: z.boolean().default(true)
 });
 
 export const productSchema = z.object({
-  titleFa: z.string().trim().min(2).max(220),
-  titleEn: z.string().trim().min(2).max(220),
-  categoryId: z.string().uuid(),
-  description: z.string().trim().min(10).max(5000),
-  seoTitle: z.string().trim().max(60).nullable().optional(),
-  seoDescription: z.string().trim().max(150).nullable().optional(),
+  titleFa: z.string()
+    .trim()
+    .min(2, { message: "عنوان فارسی باید حداقل ۲ کاراکتر باشد." })
+    .max(220, { message: "عنوان فارسی نمی‌تواند بیشتر از ۲۲۰ کاراکتر باشد." }),
+  titleEn: z.string()
+    .trim()
+    .min(2, { message: "عنوان انگلیسی باید حداقل ۲ کاراکتر باشد." })
+    .max(220, { message: "عنوان انگلیسی نمی‌تواند بیشتر از ۲۲۰ کاراکتر باشد." }),
+  categoryId: z.string().uuid({ message: "یک دسته‌بندی معتبر انتخاب کنید." }),
+  description: z.string()
+    .trim()
+    .min(10, { message: "توضیحات محصول باید حداقل ۱۰ کاراکتر باشد." })
+    .max(5000, { message: "توضیحات محصول نمی‌تواند بیشتر از ۵۰۰۰ کاراکتر باشد." }),
+  seoTitle: z.string()
+    .trim()
+    .max(60, { message: "عنوان سئو نمی‌تواند بیشتر از ۶۰ کاراکتر باشد." })
+    .nullable()
+    .optional(),
+  seoDescription: z.string()
+    .trim()
+    .max(150, { message: "توضیحات متا نمی‌تواند بیشتر از ۱۵۰ کاراکتر باشد." })
+    .nullable()
+    .optional(),
+  ...seoFields,
   productContent: optionalRichText.optional(),
-  tagIds: z.array(z.string().uuid()).max(30).default([]),
-  relatedProductIds: z.array(z.string().uuid()).max(20).default([]),
+  tagIds: z.array(z.string().uuid({ message: "تگ انتخاب‌شده معتبر نیست." }))
+    .max(30, { message: "حداکثر ۳۰ تگ برای هر محصول قابل انتخاب است." })
+    .default([]),
+  relatedProductIds: z.array(z.string().uuid({ message: "محصول مرتبط انتخاب‌شده معتبر نیست." }))
+    .max(20, { message: "حداکثر ۲۰ محصول مرتبط قابل انتخاب است." })
+    .default([]),
   roastType: z.enum(["light", "medium", "mediumDark", "dark"]),
   coffeeType: z.enum(["bean", "ground"]),
   grindType: z.enum(["espresso", "mokaPot", "frenchPress", "turkish", "filter", "none"]).default("none"),
-  blendType: z.string().trim().min(2).max(120),
-  sortOrder: z.number().int().min(1).max(999).default(100),
+  blendType: z.string()
+    .trim()
+    .min(2, { message: "ترکیب دانه باید حداقل ۲ کاراکتر باشد." })
+    .max(120, { message: "ترکیب دانه نمی‌تواند بیشتر از ۱۲۰ کاراکتر باشد." }),
+  sortOrder: z.number()
+    .int({ message: "ترتیب نمایش باید عدد صحیح باشد." })
+    .min(1, { message: "ترتیب نمایش باید حداقل ۱ باشد." })
+    .max(999, { message: "ترتیب نمایش نمی‌تواند بیشتر از ۹۹۹ باشد." })
+    .default(100),
   saleType: z.enum(["weighted", "packaged"]).default("weighted"),
   packageWeightGrams: z.union([z.literal(250), z.literal(500), z.literal(1000)]).default(250),
   stockStatus: z.enum(["inStock", "outOfStock"]).default("inStock"),
-  purchasePricePerKg: money,
-  salePricePerKg: money,
-  discountPercent: z.number().int().min(0).max(100).nullable().optional(),
-  discountSalePricePerKg: z.union([money, z.null()]).optional(),
+  purchasePricePerKg: productMoney("قیمت خرید واحد"),
+  salePricePerKg: productMoney("قیمت فروش واحد"),
+  discountPercent: z.number()
+    .int({ message: "درصد تخفیف باید عدد صحیح باشد." })
+    .min(0, { message: "درصد تخفیف نمی‌تواند منفی باشد." })
+    .max(100, { message: "درصد تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد." })
+    .nullable()
+    .optional(),
+  discountSalePricePerKg: z.union([productMoney("قیمت بعد از تخفیف"), z.null()]).optional(),
   showInBestSellers: z.boolean().default(false),
   showInDiscounts: z.boolean().default(false),
   showInPopularSearches: z.boolean().default(false),
@@ -168,6 +233,9 @@ export const articleSchema = z.object({
   summary: z.string().trim().min(20).max(1000),
   content: z.string().trim().min(50).max(100_000).transform((value) => sanitizeRichText(value) || ""),
   imageUrl: optionalUrl.optional(),
+  seoTitle: z.string().trim().max(60).nullable().optional(),
+  seoDescription: z.string().trim().max(150).nullable().optional(),
+  ...seoFields,
   tags: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
   isPublished: z.boolean().default(false)
 });
@@ -177,6 +245,7 @@ export const tagSchema = z.object({
   slug,
   seoTitle: z.string().trim().max(60).nullable().optional(),
   seoDescription: z.string().trim().max(150).nullable().optional(),
+  ...seoFields,
   content: optionalRichText.optional(),
   showInPopularSearches: z.boolean().default(false)
 });
@@ -186,6 +255,17 @@ export const orderAdminSchema = z.object({
   orderStatus: z.enum(["new", "processing", "ready", "sent", "completed", "canceled"]),
   paymentReceiptUrl: optionalUrl.optional(),
   adminNote: z.string().trim().max(3000).nullable().optional()
+});
+
+export const redirectSchema = z.object({
+  sourcePath: z.string().trim().min(1).max(500),
+  destination: z.string().trim().min(1).max(500),
+  statusCode: z.coerce.number().int().refine((value) => value === 301 || value === 302, {
+    message: "نوع ریدایرکت باید 301 یا 302 باشد."
+  }).default(301),
+  entityType: z.string().trim().max(80).nullable().optional(),
+  entityId: z.string().uuid().nullable().optional(),
+  isActive: z.boolean().default(true)
 });
 
 export const adminUserSchema = z.object({
@@ -198,7 +278,7 @@ export const adminRoleSchema = z.object({
   slug: z.string().trim().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   permissions: z.array(z.enum([
     "dashboard", "users", "roles", "products", "categories", "orders",
-    "payment-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
+    "payment-methods", "shipping-methods", "discount-codes", "articles", "tags", "redirects", "site-settings", "logs", "content-generator", "accounting", "price-imports"
   ])).min(1),
   isActive: z.boolean().default(true)
 });

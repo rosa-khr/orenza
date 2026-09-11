@@ -1,9 +1,10 @@
 import type { Pool, PoolClient } from "pg";
+import { entityPublicPath, normalizeDestination, normalizeSitePath, upsertRedirect } from "../seo.js";
 import { resourceConfigs, type ResourceConfig } from "./resource-config.js";
 
 const allAdminPermissions = [
   "dashboard", "users", "roles", "products", "categories", "orders",
-  "payment-methods", "shipping-methods", "discount-codes", "articles", "tags", "site-settings", "logs", "content-generator", "accounting", "price-imports"
+  "payment-methods", "shipping-methods", "discount-codes", "articles", "tags", "redirects", "site-settings", "logs", "content-generator", "accounting", "price-imports"
 ];
 
 const camel = (key: string) => key.replace(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase());
@@ -85,7 +86,9 @@ export class AdminRepository {
     const count = await this.pool.query<{ total: string }>(`SELECT count(*) AS total FROM ${config.table} ${whereSql}`, values);
     values.push(input.pageSize, (input.page - 1) * input.pageSize);
     const select = selectFor(resource);
-    const orderBy = resource === "products" ? "sort_order ASC, created_at ASC" : "created_at DESC";
+    const orderBy = resource === "products" || resource === "categories"
+      ? "sort_order ASC, created_at ASC"
+      : "created_at DESC";
     const result = await this.pool.query<Record<string, unknown>>(
       `SELECT ${select} FROM ${config.table} ${whereSql} ORDER BY ${orderBy} LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values
@@ -134,6 +137,25 @@ export class AdminRepository {
     if (resource === "orders") throw Object.assign(new Error("سفارش از جریان خرید ثبت می‌شود."), { statusCode: 405 });
     if (resource === "users") throw Object.assign(new Error("حساب کاربری از مسیر ثبت‌نام فروشگاه ایجاد می‌شود."), { statusCode: 405 });
     const data = config.schema.parse(input);
+    if (resource === "redirects") {
+      data.sourcePath = normalizeSitePath(String(data.sourcePath || ""));
+      data.destination = normalizeDestination(String(data.destination || ""));
+      const row = await withTransaction(this.pool, async (client) => {
+        await upsertRedirect(client, {
+          sourcePath: String(data.sourcePath),
+          destination: String(data.destination),
+          statusCode: data.statusCode as 301 | 302,
+          entityType: (data.entityType as string | null | undefined) || null,
+          entityId: (data.entityId as string | null | undefined) || null
+        });
+        const result = await client.query<Record<string, unknown>>(
+          "SELECT * FROM redirects WHERE source_path=$1 AND is_active=true LIMIT 1",
+          [data.sourcePath]
+        );
+        return result.rows[0]!;
+      });
+      return toPublicRecord(row);
+    }
     if (resource === "payment-methods" && (data as { isActive?: boolean }).isActive) {
       await this.pool.query(
         "UPDATE payment_methods SET is_active = false, updated_at = now() WHERE type = $1 AND is_active = true",
@@ -142,6 +164,24 @@ export class AdminRepository {
     }
     if (resource === "categories") {
       await this.validateCategoryParent(null, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
+    }
+    if (resource === "redirects") {
+      data.sourcePath = normalizeSitePath(String(data.sourcePath || ""));
+      data.destination = normalizeDestination(String(data.destination || ""));
+      const client = await this.pool.connect();
+      try {
+        await upsertRedirect(client, {
+          sourcePath: String(data.sourcePath),
+          destination: String(data.destination),
+          statusCode: data.statusCode as 301 | 302,
+          entityType: (data.entityType as string | null | undefined) || null,
+          entityId: (data.entityId as string | null | undefined) || null
+        });
+      } finally {
+        client.release();
+      }
+      const row = await this.pool.query<Record<string, unknown>>("SELECT * FROM redirects WHERE source_path=$1 AND is_active=true", [data.sourcePath]);
+      return toPublicRecord(row.rows[0]!);
     }
     const entries = normalizedValues(data, config, resource === "roles");
     const columns = entries.map(([column]) => column);
@@ -173,6 +213,7 @@ export class AdminRepository {
     const data = resource === "orders"
       ? config.schema.parse(input)
       : config.schema.parse({ ...existing, ...(input as Record<string, unknown>) });
+    const oldPublicPath = entityPublicPath(resource, existing);
     if (
       resource === "orders" &&
       existing.orderStatus === "new" &&
@@ -192,6 +233,9 @@ export class AdminRepository {
     if (resource === "users") {
       data.displayName = [data.firstName, data.lastName].filter(Boolean).join(" ");
     }
+    if (["products", "categories", "tags", "articles"].includes(resource) && existing.robotsIndex === true) {
+      data.robotsIndex = true;
+    }
     if (resource === "roles" && existing.slug === "admin") {
       data.slug = "admin";
       data.isActive = true;
@@ -205,6 +249,26 @@ export class AdminRepository {
     }
     if (resource === "categories") {
       await this.validateCategoryParent(id, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
+    }
+    if (resource === "redirects") {
+      data.sourcePath = normalizeSitePath(String(data.sourcePath || ""));
+      data.destination = normalizeDestination(String(data.destination || ""));
+      const row = await withTransaction(this.pool, async (client) => {
+        await client.query("UPDATE redirects SET is_active=false,updated_at=now() WHERE id=$1", [id]);
+        await upsertRedirect(client, {
+          sourcePath: String(data.sourcePath),
+          destination: String(data.destination),
+          statusCode: data.statusCode as 301 | 302,
+          entityType: (data.entityType as string | null | undefined) || null,
+          entityId: (data.entityId as string | null | undefined) || null
+        });
+        const result = await client.query<Record<string, unknown>>(
+          "SELECT * FROM redirects WHERE source_path=$1 AND is_active=true LIMIT 1",
+          [data.sourcePath]
+        );
+        return result.rows[0]!;
+      });
+      return toPublicRecord(row);
     }
     const entries = normalizedValues(
       data,
@@ -229,6 +293,21 @@ export class AdminRepository {
         (data.tagIds as string[]) || [],
         ((data.relatedProductIds as string[]) || []).filter((relatedId) => relatedId !== id)
       );
+    }
+    const newPublicPath = entityPublicPath(resource, data);
+    if (oldPublicPath && newPublicPath && oldPublicPath !== newPublicPath) {
+      const client = await this.pool.connect();
+      try {
+        await upsertRedirect(client, {
+          sourcePath: oldPublicPath,
+          destination: newPublicPath,
+          statusCode: 301,
+          entityType: resource,
+          entityId: id
+        });
+      } finally {
+        client.release();
+      }
     }
     return toPublicRecord(result.rows[0]);
   }

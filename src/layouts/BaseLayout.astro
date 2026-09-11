@@ -16,6 +16,9 @@ interface Props {
   keywords: string[];
   pageType?: "website" | "article";
   noindex?: boolean;
+  canonicalUrl?: string | null;
+  robotsIndex?: boolean;
+  robotsFollow?: boolean;
 }
 
 const {
@@ -24,11 +27,24 @@ const {
   canonicalPath,
   keywords,
   pageType = "website",
-  noindex = false
+  noindex = false,
+  canonicalUrl = null,
+  robotsIndex = !noindex,
+  robotsFollow = !noindex
 } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL(Astro.url.origin);
-const canonical = new URL(canonicalPath, siteUrl);
+const normalizeCanonical = (value: string | null | undefined) => {
+  const input = String(value || "").trim();
+  const url = new URL(input || canonicalPath, siteUrl);
+  url.hash = "";
+  if (!input) url.search = "";
+  url.pathname = url.pathname.replace(/\/{2,}/g, "/");
+  if (!url.pathname.endsWith("/") && !url.pathname.includes(".")) url.pathname += "/";
+  return url;
+};
+const canonical = normalizeCanonical(canonicalUrl);
+const robotsContent = `${robotsIndex ? "index" : "noindex"}, ${robotsFollow ? "follow" : "nofollow"}${robotsIndex ? ", max-image-preview:large" : ""}`;
 const socialImage = new URL("/images/orenza-leopard-label.png", siteUrl);
 const fullTitle = `${title} | اورنزا`;
 
@@ -83,7 +99,7 @@ const schema = {
     <meta name="theme-color" content="#0b0b0a" />
     <meta name="description" content={description} data-site-meta="description" />
     <meta name="keywords" content={keywords.join(", ")} data-site-meta="keywords" />
-    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"} data-site-meta="robots" />
+    <meta name="robots" content={robotsContent} data-site-meta="robots" />
     <meta name="author" content="Orenza Coffee" />
     <meta property="og:type" content={pageType} />
     <meta property="og:locale" content="fa_IR" />
@@ -103,7 +119,7 @@ const schema = {
     <link rel="alternate" hreflang="fa-IR" href={canonical.toString()} />
     <link rel="alternate" hreflang="x-default" href={canonical.toString()} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" data-site-favicon />
-    {!noindex && <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)}></script>}
+    {robotsIndex && <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)}></script>}
     <title>{fullTitle}</title>
   </head>
   <body>

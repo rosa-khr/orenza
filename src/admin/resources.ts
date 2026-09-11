@@ -22,6 +22,7 @@ export type AdminField = {
   list?: boolean;
   readonly?: boolean;
   dir?: "rtl" | "ltr";
+  listOnly?: boolean;
 };
 
 export type AdminResource = {
@@ -52,6 +53,7 @@ const adminPermissions = [
   { label: "کدهای تخفیف", value: "discount-codes" },
   { label: "مقالات", value: "articles" },
   { label: "تگ‌ها", value: "tags" },
+  { label: "ریدایرکت‌ها", value: "redirects" },
   { label: "تنظیمات سایت", value: "site-settings" },
   { label: "گزارش لاگ‌ها", value: "logs" },
   { label: "محتوام", value: "content-generator" },
@@ -198,6 +200,9 @@ export const adminResources: AdminResource[] = [
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
+      { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
       { key: "tagIds", label: "برچسب‌های مرتبط", type: "multiselect" },
       { key: "relatedProductIds", label: "محصولات مرتبط", type: "multiselect" },
@@ -293,11 +298,15 @@ export const adminResources: AdminResource[] = [
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
+      { key: "sortOrder", label: "ترتیب منو", type: "number", required: true, min: 1, list: true },
       { key: "parentCategoryId", label: "دسته‌بندی پدر", type: "select" },
       { key: "description", label: "محتوای دسته‌بندی", type: "richtext" },
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
+      { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "showInPopularFooter", label: "نمایش در لینک‌های پربازدید فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
@@ -448,6 +457,11 @@ export const adminResources: AdminResource[] = [
       { key: "summary", label: "خلاصه", type: "textarea", required: true },
       { key: "content", label: "متن مقاله", type: "richtext", required: true },
       { key: "imageUrl", label: "تصویر شاخص", type: "image", dir: "ltr" },
+      { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
+      { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
+      { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "tags", label: "تگ‌ها (با ویرگول جدا شوند)", type: "text" },
       { key: "isPublished", label: "انتشار", type: "select", options: yesNo, list: true }
     ]
@@ -462,8 +476,34 @@ export const adminResources: AdminResource[] = [
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
+      { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "content", label: "محتوای تگ", type: "richtext" },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true }
+    ]
+  },
+  {
+    key: "redirects",
+    title: "ریدایرکت‌ها",
+    singular: "ریدایرکت",
+    description: "مدیریت Global آدرس‌های منتقل‌شده سایت",
+    fields: [
+      { key: "sourcePath", label: "آدرس مبدا", type: "text", required: true, dir: "ltr", list: true },
+      { key: "destination", label: "آدرس مقصد", type: "text", required: true, dir: "ltr", list: true },
+      {
+        key: "statusCode",
+        label: "نوع ریدایرکت",
+        type: "select",
+        required: true,
+        list: true,
+        options: [
+          { label: "۳۰۱ دائمی", value: "301" },
+          { label: "۳۰۲ موقت", value: "302" }
+        ]
+      },
+      { key: "entityType", label: "مرتبط با", type: "text", dir: "ltr", list: true, readonly: true, listOnly: true },
+      { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
   }
 ];

@@ -8,6 +8,7 @@ import {
   paymentCardSchema,
   paymentMethodSchema,
   productSchema,
+  redirectSchema,
   serviceScriptSchema,
   shippingMethodSchema,
   tagSchema
@@ -22,6 +23,13 @@ export type ResourceConfig = {
 };
 
 const audit = { createdAt: "created_at", updatedAt: "updated_at" };
+const seoColumns = {
+  seoTitle: "seo_title",
+  seoDescription: "seo_description",
+  canonicalUrl: "canonical_url",
+  robotsIndex: "robots_index",
+  robotsFollow: "robots_follow"
+};
 
 export const resourceConfigs: Record<string, ResourceConfig> = {
   roles: {
@@ -47,7 +55,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "products",
     columns: {
       titleFa: "title_fa", titleEn: "title_en", categoryId: "category_id", description: "description",
-      seoTitle: "seo_title", seoDescription: "seo_description",
+      ...seoColumns,
       productContent: "product_content",
       roastType: "roast_type", coffeeType: "coffee_type", grindType: "grind_type", blendType: "blend_type",
       sortOrder: "sort_order",
@@ -65,8 +73,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   categories: {
     table: "categories",
     columns: {
-      title: "title", slug: "slug", parentCategoryId: "parent_category_id", description: "description", seoTitle: "seo_title",
-      seoDescription: "seo_description", imageUrl: "image_url",
+      title: "title", slug: "slug", sortOrder: "sort_order", parentCategoryId: "parent_category_id", description: "description", ...seoColumns, imageUrl: "image_url",
       showInPopularFooter: "show_in_popular_footer", showInPopularSearches: "show_in_popular_searches",
       isActive: "is_active", ...audit
     },
@@ -115,7 +122,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "articles",
     columns: {
       title: "title", slug: "slug", summary: "summary", content: "content", imageUrl: "image_url",
-      tags: "tags", isPublished: "is_published", ...audit
+      ...seoColumns, tags: "tags", isPublished: "is_published", ...audit
     },
     search: ["title", "slug", "summary"],
     schema: articleSchema
@@ -123,11 +130,20 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   tags: {
     table: "tags",
     columns: {
-      title: "title", slug: "slug", seoTitle: "seo_title", seoDescription: "seo_description",
+      title: "title", slug: "slug", ...seoColumns,
       content: "content", showInPopularSearches: "show_in_popular_searches", ...audit
     },
     search: ["title", "slug"],
     schema: tagSchema
+  },
+  redirects: {
+    table: "redirects",
+    columns: {
+      sourcePath: "source_path", destination: "destination", statusCode: "status_code",
+      entityType: "entity_type", entityId: "entity_id", isActive: "is_active", ...audit
+    },
+    search: ["source_path", "destination", "entity_type"],
+    schema: redirectSchema
   },
   "service-scripts": {
     table: "service_scripts",

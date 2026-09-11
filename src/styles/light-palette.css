@@ -4331,8 +4331,9 @@ main:has(> .route-spacer) .weight-options button.is-selected {
   }
 
   .product-image-lightbox figure {
-    width: 100%;
-    height: 70vh;
+    width: min(100%, 330px);
+    height: min(56vh, 420px);
+    padding: 12px;
   }
 
   .product-image-lightbox-close {
@@ -4344,9 +4345,8 @@ main:has(> .route-spacer) .weight-options button.is-selected {
   }
 
   .product-image-lightbox-nav {
-    width: 34px;
-    height: 48px;
-    font-size: 34px;
+    width: 36px;
+    height: 36px;
   }
 
   .product-image-lightbox-nav.is-prev {
