@@ -1084,16 +1084,6 @@ const enhanceBooleanSwitches = (root: ParentNode = document) => {
     };
     button.addEventListener("click", async () => {
       const nextValue = input.value === trueValue ? falseValue : trueValue;
-      if (input.name === "robotsIndex" && nextValue === trueValue) {
-        button.disabled = true;
-        const confirmed = await askConfirm(
-          "فعال‌سازی ایندکس",
-          "بعد از فعال شدن اجازه ایندکس، این گزینه دیگر قابل غیرفعال‌کردن نیست. ادامه می‌دهید؟",
-          "فعال‌سازی ایندکس"
-        );
-        button.disabled = false;
-        if (!confirmed) return;
-      }
       input.value = nextValue;
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
@@ -1148,17 +1138,6 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   if (richEditor?._tiptap) richEditor._tiptap.commands.setContent(sanitizeEditorHtml(normalizedValue), { emitUpdate: true });
   else if (richEditor) richEditor.innerHTML = sanitizeEditorHtml(normalizedValue);
   input.dispatchEvent(new Event("change", { bubbles: true }));
-};
-
-const lockIndexedRobotsControl = (form: HTMLFormElement, item: Record<string, unknown>) => {
-  if (item.robotsIndex !== true && item.robotsIndex !== "true") return;
-  const input = form.elements.namedItem("robotsIndex") as HTMLInputElement | null;
-  const field = input?.closest<HTMLElement>("[data-boolean-switch-field]");
-  const button = field?.querySelector<HTMLButtonElement>("[data-boolean-switch-button]");
-  if (!input || !field || !button) return;
-  button.disabled = true;
-  button.title = "این صفحه قبلاً برای ایندکس فعال شده و قابل غیرفعال‌کردن نیست.";
-  field.classList.add("is-locked");
 };
 
 const richTextTags = new Set([
@@ -1974,7 +1953,6 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     try {
       const { item } = await api<{ item: Record<string, unknown> }>(`/api/v1/admin/${config.key}/${id}`);
       config.fields.forEach((field) => setFormValue(form, field.key, item[field.key]));
-      lockIndexedRobotsControl(form, item);
       initSeoCounters(form);
       refreshCatalogImage?.();
       updateProductProfit();
@@ -2373,6 +2351,18 @@ type SiteSettingsPayload = {
   themeSupportColor: string;
   themeHeaderIconColor: string;
   searchIndexingEnabled: boolean;
+  robotsRules: string;
+  sitemapEnabled: boolean;
+  sitemapStaticEnabled: boolean;
+  sitemapProductsEnabled: boolean;
+  sitemapCategoriesEnabled: boolean;
+  sitemapTagsEnabled: boolean;
+  sitemapArticlesEnabled: boolean;
+  sitemapStaticChangefreq: string;
+  sitemapProductsChangefreq: string;
+  sitemapCategoriesChangefreq: string;
+  sitemapTagsChangefreq: string;
+  sitemapArticlesChangefreq: string;
   invoiceNationalId: string;
   invoiceSignatureUrl: string | null;
   contentAiModel: string;
@@ -2429,6 +2419,35 @@ const defaultHomepageBannerRows = (): HomepageBannerRow[] => [
   { id: "aboveBest", title: "بالای پرطرفدارها", columns: 3, isActive: false, items: [] }
 ];
 
+const defaultRobotsRules = `User-agent: *
+Allow: /
+Allow: /_assets/
+Allow: /images/
+Allow: /api/v1/product-images/
+Disallow: /admin/
+Disallow: /account/
+Disallow: /login/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /payment/
+Disallow: /payment-result/
+Disallow: /order-success/
+Disallow: /api/
+Disallow: /search?q=*
+Disallow: /*?*
+Disallow: /*utm_*
+Disallow: /*sort*
+Disallow: /*filter*
+Disallow: /*page*
+Disallow: /temp/
+Disallow: /test/
+Disallow: /upload/
+Disallow: /oldproduct/
+Disallow: /compare/
+Disallow: /favorite/
+Disallow: /review/
+Disallow: /comment/`;
+
 const maxHomepageBannerItems = (columns: number) =>
   Math.min(4, Math.max(1, Number(columns) || 3));
 
@@ -2454,9 +2473,19 @@ const initSiteSettings = async () => {
     form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
   const settingsButtons = Array.from(form.querySelectorAll<HTMLButtonElement>("[data-settings-group-target]"));
   const settingsSections = Array.from(form.querySelectorAll<HTMLElement>("[data-settings-group]"));
-  const settingsGroups = new Set(settingsButtons.map((button) => button.dataset.settingsGroupTarget || ""));
+  const settingsNavLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-site-settings-nav]"));
+  const defaultSettingsGroup = form.dataset.defaultSettingsGroup || "general";
+  const groupFromUrl = () => {
+    const fromHash = location.hash.replace("#settings-", "");
+    if (fromHash) return fromHash;
+    return new URLSearchParams(location.search).get("group") || "";
+  };
+  const settingsGroups = new Set([
+    ...settingsButtons.map((button) => button.dataset.settingsGroupTarget || ""),
+    ...settingsSections.map((section) => section.dataset.settingsGroup || "")
+  ].filter(Boolean));
   const showSettingsGroup = (group: string, updateHash = false) => {
-    const nextGroup = settingsGroups.has(group) ? group : "general";
+    const nextGroup = settingsGroups.has(group) ? group : defaultSettingsGroup;
     settingsButtons.forEach((button) => {
       const isActive = button.dataset.settingsGroupTarget === nextGroup;
       button.classList.toggle("is-active", isActive);
@@ -2464,6 +2493,9 @@ const initSiteSettings = async () => {
     });
     settingsSections.forEach((section) => {
       section.hidden = section.dataset.settingsGroup !== nextGroup;
+    });
+    settingsNavLinks.forEach((link) => {
+      link.classList.toggle("active", link.dataset.siteSettingsNav === nextGroup);
     });
     if (updateHash) {
       history.replaceState(null, "", `#settings-${nextGroup}`);
@@ -2485,7 +2517,7 @@ const initSiteSettings = async () => {
   window.addEventListener("hashchange", () => {
     showSettingsGroup(window.location.hash.replace("#settings-", ""));
   });
-  showSettingsGroup(window.location.hash.replace("#settings-", ""));
+  showSettingsGroup(groupFromUrl() || defaultSettingsGroup);
   const showSignature = (url: string | null) => {
     if (signaturePreview) {
       signaturePreview.hidden = !url;
@@ -2722,6 +2754,12 @@ const initSiteSettings = async () => {
     if (!input("themeFooterColor").value) input("themeFooterColor").value = "#211d19";
     if (!input("themeSupportColor").value) input("themeSupportColor").value = "#173f33";
     if (!input("themeHeaderIconColor").value) input("themeHeaderIconColor").value = "#2d5644";
+    if (!input("robotsRules").value) input("robotsRules").value = defaultRobotsRules;
+    if (!input("sitemapStaticChangefreq").value) input("sitemapStaticChangefreq").value = "weekly";
+    if (!input("sitemapProductsChangefreq").value) input("sitemapProductsChangefreq").value = "weekly";
+    if (!input("sitemapCategoriesChangefreq").value) input("sitemapCategoriesChangefreq").value = "weekly";
+    if (!input("sitemapTagsChangefreq").value) input("sitemapTagsChangefreq").value = "monthly";
+    if (!input("sitemapArticlesChangefreq").value) input("sitemapArticlesChangefreq").value = "monthly";
     initSeoCounters(form);
     showSignature(item.invoiceSignatureUrl);
     showBanner("desktop", item.homepageBannerDesktopUrl);
@@ -2901,6 +2939,18 @@ const initSiteSettings = async () => {
           themeSupportColor: input("themeSupportColor").value,
           themeHeaderIconColor: input("themeHeaderIconColor").value,
           searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked,
+          robotsRules: input("robotsRules").value,
+          sitemapEnabled: (input("sitemapEnabled") as HTMLInputElement).checked,
+          sitemapStaticEnabled: (input("sitemapStaticEnabled") as HTMLInputElement).checked,
+          sitemapProductsEnabled: (input("sitemapProductsEnabled") as HTMLInputElement).checked,
+          sitemapCategoriesEnabled: (input("sitemapCategoriesEnabled") as HTMLInputElement).checked,
+          sitemapTagsEnabled: (input("sitemapTagsEnabled") as HTMLInputElement).checked,
+          sitemapArticlesEnabled: (input("sitemapArticlesEnabled") as HTMLInputElement).checked,
+          sitemapStaticChangefreq: input("sitemapStaticChangefreq").value,
+          sitemapProductsChangefreq: input("sitemapProductsChangefreq").value,
+          sitemapCategoriesChangefreq: input("sitemapCategoriesChangefreq").value,
+          sitemapTagsChangefreq: input("sitemapTagsChangefreq").value,
+          sitemapArticlesChangefreq: input("sitemapArticlesChangefreq").value,
           invoiceNationalId: input("invoiceNationalId").value,
           contentAiApiKey: input("contentAiApiKey").value,
           contentAiModel: input("contentAiModel").value,

@@ -23,7 +23,12 @@ export const siteSettingsSelect = `
   homepage_discounts_text_color,homepage_discounts_badge_label,
   homepage_discounts_badge_color,homepage_discounts_icon_color,
   theme_surface_color,theme_footer_color,theme_support_color,theme_header_icon_color,
-  search_indexing_enabled,invoice_national_id,invoice_signature_url,updated_at`;
+  search_indexing_enabled,robots_rules,
+  sitemap_enabled,sitemap_static_enabled,sitemap_products_enabled,sitemap_categories_enabled,
+  sitemap_tags_enabled,sitemap_articles_enabled,sitemap_static_changefreq,
+  sitemap_products_changefreq,sitemap_categories_changefreq,sitemap_tags_changefreq,
+  sitemap_articles_changefreq,
+  invoice_national_id,invoice_signature_url,updated_at`;
 
 const aiSettingsSecret = () => createHash("sha256")
   .update(process.env.CONTENT_SETTINGS_SECRET || process.env.PASSWORD_RESET_SECRET || "orenza-content-settings-secret")
@@ -97,11 +102,16 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       homepage_discounts_text_color=$45,homepage_discounts_badge_label=$46,
       homepage_discounts_badge_color=$47,homepage_discounts_icon_color=$48,
       theme_surface_color=$49,theme_footer_color=$50,theme_support_color=$51,theme_header_icon_color=$52,
-      search_indexing_enabled=$53,invoice_national_id=$54,
-      content_ai_api_key=CASE WHEN $55 <> '' THEN $55 ELSE content_ai_api_key END,
-      content_ai_model=$56,
-      content_ai_instructions=$57,content_ai_default_audience=$58,content_ai_default_tone=$59,
-      content_ai_default_length=$60,content_ai_default_language=$61,
+      search_indexing_enabled=$53,robots_rules=$54,
+      sitemap_enabled=$55,sitemap_static_enabled=$56,sitemap_products_enabled=$57,
+      sitemap_categories_enabled=$58,sitemap_tags_enabled=$59,sitemap_articles_enabled=$60,
+      sitemap_static_changefreq=$61,sitemap_products_changefreq=$62,sitemap_categories_changefreq=$63,
+      sitemap_tags_changefreq=$64,sitemap_articles_changefreq=$65,
+      invoice_national_id=$66,
+      content_ai_api_key=CASE WHEN $67 <> '' THEN $67 ELSE content_ai_api_key END,
+      content_ai_model=$68,
+      content_ai_instructions=$69,content_ai_default_audience=$70,content_ai_default_tone=$71,
+      content_ai_default_length=$72,content_ai_default_language=$73,
       updated_at=now()
      WHERE id=1 RETURNING ${siteSettingsSelect}`,
     [
@@ -125,7 +135,12 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       data.homepageDiscountsTextColor, data.homepageDiscountsBadgeLabel,
       data.homepageDiscountsBadgeColor, data.homepageDiscountsIconColor,
       data.themeSurfaceColor, data.themeFooterColor, data.themeSupportColor, data.themeHeaderIconColor,
-      data.searchIndexingEnabled, data.invoiceNationalId,
+      data.searchIndexingEnabled, data.robotsRules,
+      data.sitemapEnabled, data.sitemapStaticEnabled, data.sitemapProductsEnabled,
+      data.sitemapCategoriesEnabled, data.sitemapTagsEnabled, data.sitemapArticlesEnabled,
+      data.sitemapStaticChangefreq, data.sitemapProductsChangefreq, data.sitemapCategoriesChangefreq,
+      data.sitemapTagsChangefreq, data.sitemapArticlesChangefreq,
+      data.invoiceNationalId,
       data.contentAiApiKey ? encryptSetting(data.contentAiApiKey) : "",
       data.contentAiModel || "gpt-5", data.contentAiInstructions || "از ادعای پزشکی یا اطلاعات ساختگی خودداری کن؛ محتوای کم‌حجم و ناقص تولید نکن؛ ساختار مقاله را با H1 و H2 و در صورت نیاز H3 ارائه کن؛ عنوان SEO و توضیحات متا را جداگانه بنویس.",
       data.contentAiDefaultAudience || "مخاطب عمومی فروشگاه اورنزا", data.contentAiDefaultTone || "حرفه‌ای، گرم و متقاعدکننده",

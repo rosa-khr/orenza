@@ -16,7 +16,8 @@ const canonicalUrl = z.union([
 const seoFields = {
   canonicalUrl: canonicalUrl.optional(),
   robotsIndex: z.boolean().default(true),
-  robotsFollow: z.boolean().default(true)
+  robotsFollow: z.boolean().default(true),
+  sitemapChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly")
 };
 const hexColor = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/);
 const productImageUrl = z.union([
@@ -337,6 +338,18 @@ export const siteSettingsSchema = z.object({
   themeSupportColor: hexColor.default("#173f33"),
   themeHeaderIconColor: hexColor.default("#2d5644"),
   searchIndexingEnabled: z.boolean(),
+  robotsRules: z.string().trim().min(10).max(6000),
+  sitemapEnabled: z.boolean().default(true),
+  sitemapStaticEnabled: z.boolean().default(true),
+  sitemapProductsEnabled: z.boolean().default(true),
+  sitemapCategoriesEnabled: z.boolean().default(true),
+  sitemapTagsEnabled: z.boolean().default(true),
+  sitemapArticlesEnabled: z.boolean().default(true),
+  sitemapStaticChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly"),
+  sitemapProductsChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly"),
+  sitemapCategoriesChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly"),
+  sitemapTagsChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
+  sitemapArticlesChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
   invoiceNationalId: z.string().trim().min(10).max(20),
   contentAiApiKey: z.string().trim().max(500).optional(),
   contentAiModel: z.string().trim().min(2).max(100).optional()

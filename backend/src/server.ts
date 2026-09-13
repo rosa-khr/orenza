@@ -160,6 +160,8 @@ app.setErrorHandler((error, request, reply) => {
       categoryId: "دسته‌بندی",
       slug: "نامک",
       canonicalUrl: "آدرس کنونیکال",
+      sitemapChangefreq: "فرکانس سایت‌مپ",
+      robotsRules: "قوانین robots.txt",
       seoTitle: "عنوان سئو",
       seoDescription: "توضیحات متا",
       description: "توضیحات",

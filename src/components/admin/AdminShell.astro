@@ -54,6 +54,14 @@ const navGroups = [
   { title: "محتوا و سئو", icon: BookOpenText, resources: ["articles", "tags", "redirects", "content-templates", "content-generator"] },
   { title: "کاربران و دسترسی", icon: ShieldCheck, resources: ["users", "roles"] }
 ];
+const settingsLinks = [
+  { key: "site-settings-general", group: "general", href: "/admin/site-settings/#settings-general", label: "تنظیمات عمومی" },
+  { key: "site-settings-homepage", group: "homepage", href: "/admin/site-settings/#settings-homepage", label: "هوم‌پیج" },
+  { key: "site-settings-banners", group: "banners", href: "/admin/site-settings/#settings-banners", label: "بنرها" },
+  { key: "site-settings-sitemap", group: "sitemap", href: "/admin/site-settings/#settings-sitemap", label: "سایت‌مپ" },
+  { key: "site-settings-robots", group: "robots", href: "/admin/site-settings/#settings-robots", label: "ربات‌ها" },
+  { key: "site-settings-invoice", group: "invoice", href: "/admin/site-settings/#settings-invoice", label: "فاکتور" }
+];
 const resourceByKey = new Map(adminResources.filter((resource) => !resource.navHidden).map((resource) => [resource.key, resource]));
 ---
 
@@ -119,7 +127,16 @@ const resourceByKey = new Map(adminResources.filter((resource) => !resource.navH
             );
           })}
           <a class:list={{ active: active === "logs" }} href="/admin/logs/" data-admin-permission="logs"><Terminal size={17} stroke-width={1.45} /><span>گزارش لاگ‌ها</span></a>
-          <a class:list={{ active: active === "site-settings" }} href="/admin/site-settings/" data-admin-permission="site-settings"><Settings size={17} stroke-width={1.45} /><span>تنظیمات کلی سایت</span></a>
+          <details class="admin-nav-group" open={active.startsWith("site-settings")}>
+            <summary><Settings size={18} stroke-width={1.45} /><span>تنظیمات سایت</span><ChevronDown size={14} stroke-width={1.45} /></summary>
+            <div>
+              {settingsLinks.map((item) => (
+                <a class:list={{ active: active === item.key }} href={item.href} data-admin-permission="site-settings" data-site-settings-nav={item.group}>
+                  <Settings size={17} stroke-width={1.45} /><span>{item.label}</span>
+                </a>
+              ))}
+            </div>
+          </details>
         </nav>
         <button class="admin-logout" type="button" data-admin-logout>
           <LogOut size={17} stroke-width={1.45} /> خروج از مدیریت

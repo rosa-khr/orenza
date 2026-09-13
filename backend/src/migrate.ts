@@ -166,6 +166,45 @@ CREATE TABLE IF NOT EXISTS site_settings (
   theme_support_color varchar(20) NOT NULL DEFAULT '#173f33',
   theme_header_icon_color varchar(20) NOT NULL DEFAULT '#2d5644',
   search_indexing_enabled boolean NOT NULL DEFAULT true,
+  robots_rules text NOT NULL DEFAULT 'User-agent: *
+Allow: /
+Allow: /_assets/
+Allow: /images/
+Allow: /api/v1/product-images/
+Disallow: /admin/
+Disallow: /account/
+Disallow: /login/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /payment/
+Disallow: /payment-result/
+Disallow: /order-success/
+Disallow: /api/
+Disallow: /search?q=*
+Disallow: /*?*
+Disallow: /*utm_*
+Disallow: /*sort*
+Disallow: /*filter*
+Disallow: /*page*
+Disallow: /temp/
+Disallow: /test/
+Disallow: /upload/
+Disallow: /oldproduct/
+Disallow: /compare/
+Disallow: /favorite/
+Disallow: /review/
+Disallow: /comment/',
+  sitemap_enabled boolean NOT NULL DEFAULT true,
+  sitemap_static_enabled boolean NOT NULL DEFAULT true,
+  sitemap_products_enabled boolean NOT NULL DEFAULT true,
+  sitemap_categories_enabled boolean NOT NULL DEFAULT true,
+  sitemap_tags_enabled boolean NOT NULL DEFAULT true,
+  sitemap_articles_enabled boolean NOT NULL DEFAULT true,
+  sitemap_static_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
+  sitemap_products_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
+  sitemap_categories_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
+  sitemap_tags_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
+  sitemap_articles_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -180,6 +219,57 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_desktop_url varchar(500);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_mobile_url varchar(500);
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS robots_rules text NOT NULL DEFAULT 'User-agent: *
+Allow: /
+Allow: /_assets/
+Allow: /images/
+Allow: /api/v1/product-images/
+Disallow: /admin/
+Disallow: /account/
+Disallow: /login/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /payment/
+Disallow: /payment-result/
+Disallow: /order-success/
+Disallow: /api/
+Disallow: /search?q=*
+Disallow: /*?*
+Disallow: /*utm_*
+Disallow: /*sort*
+Disallow: /*filter*
+Disallow: /*page*
+Disallow: /temp/
+Disallow: /test/
+Disallow: /upload/
+Disallow: /oldproduct/
+Disallow: /compare/
+Disallow: /favorite/
+Disallow: /review/
+Disallow: /comment/';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_static_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_products_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_categories_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_tags_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_articles_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_static_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_products_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_categories_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_tags_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_articles_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 UPDATE site_settings SET homepage_seo_title = left(homepage_seo_title, 60) WHERE length(homepage_seo_title) > 60;
 UPDATE site_settings SET homepage_seo_description = left(homepage_seo_description, 150) WHERE length(homepage_seo_description) > 150;
 ALTER TABLE site_settings ALTER COLUMN homepage_seo_title TYPE varchar(60);
@@ -305,6 +395,7 @@ CREATE TABLE IF NOT EXISTS categories (
   canonical_url text,
   robots_index boolean NOT NULL DEFAULT true,
   robots_follow boolean NOT NULL DEFAULT true,
+  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
   show_in_popular_footer boolean NOT NULL DEFAULT false,
   show_in_popular_searches boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
@@ -323,6 +414,7 @@ CREATE TABLE IF NOT EXISTS products (
   canonical_url text,
   robots_index boolean NOT NULL DEFAULT true,
   robots_follow boolean NOT NULL DEFAULT true,
+  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
   product_content text,
   roast_type varchar(30) NOT NULL CHECK (roast_type IN ('light','medium','mediumDark','dark')),
   coffee_type varchar(20) NOT NULL CHECK (coffee_type IN ('bean','ground')),
@@ -356,6 +448,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description varchar(150);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS canonical_url text;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
 UPDATE products SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE products SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE products ALTER COLUMN seo_title TYPE varchar(60);
@@ -500,6 +593,7 @@ CREATE TABLE IF NOT EXISTS tags (
   canonical_url text,
   robots_index boolean NOT NULL DEFAULT true,
   robots_follow boolean NOT NULL DEFAULT true,
+  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   content text,
   show_in_popular_searches boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -536,6 +630,7 @@ CREATE TABLE IF NOT EXISTS articles (
   canonical_url text,
   robots_index boolean NOT NULL DEFAULT true,
   robots_follow boolean NOT NULL DEFAULT true,
+  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   tags text[] NOT NULL DEFAULT '{}',
   is_published boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -628,6 +723,7 @@ ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(150);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS canonical_url text;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order smallint NOT NULL DEFAULT 100;
 UPDATE categories SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE categories SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
@@ -653,6 +749,7 @@ ALTER TABLE tags ADD COLUMN IF NOT EXISTS seo_description varchar(150);
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS canonical_url text;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 ALTER TABLE tags ADD COLUMN IF NOT EXISTS show_in_popular_searches boolean NOT NULL DEFAULT false;
 UPDATE tags SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE tags SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
@@ -663,6 +760,7 @@ ALTER TABLE articles ADD COLUMN IF NOT EXISTS seo_description varchar(150);
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS canonical_url text;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 UPDATE articles SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE articles SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE articles ALTER COLUMN seo_title TYPE varchar(60);

@@ -40,6 +40,15 @@ const yesNo = [
   { label: "فعال", value: "true" },
   { label: "غیرفعال", value: "false" }
 ];
+const sitemapFrequencyOptions = [
+  { label: "همیشه", value: "always" },
+  { label: "ساعتی", value: "hourly" },
+  { label: "روزانه", value: "daily" },
+  { label: "هفتگی", value: "weekly" },
+  { label: "ماهانه", value: "monthly" },
+  { label: "سالانه", value: "yearly" },
+  { label: "هرگز", value: "never" }
+];
 
 const adminPermissions = [
   { label: "داشبورد", value: "dashboard" },
@@ -201,8 +210,7 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
-      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
+      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
       { key: "tagIds", label: "برچسب‌های مرتبط", type: "multiselect" },
       { key: "relatedProductIds", label: "محصولات مرتبط", type: "multiselect" },
@@ -305,8 +313,7 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
-      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
+      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "showInPopularFooter", label: "نمایش در لینک‌های پربازدید فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
@@ -460,8 +467,7 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
-      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
+      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "tags", label: "تگ‌ها (با ویرگول جدا شوند)", type: "text" },
       { key: "isPublished", label: "انتشار", type: "select", options: yesNo, list: true }
     ]
@@ -477,8 +483,7 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
-      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
+      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "content", label: "محتوای تگ", type: "richtext" },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true }
     ]

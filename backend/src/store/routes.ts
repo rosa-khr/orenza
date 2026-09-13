@@ -48,6 +48,60 @@ const getPublicOrigin = (request: FastifyRequest) => {
 };
 
 const isLocalOrigin = (origin: string) => /localhost|127\.0\.0\.1|0\.0\.0\.0/.test(origin);
+const sitemapFrequencyValues = new Set(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]);
+
+const xmlEscape = (value: string) => value
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&apos;");
+
+const sitemapUrl = (origin: string, path: string) =>
+  `${origin}${path.startsWith("/") ? path : `/${path}`}`;
+
+const normalizeSitemapChangefreq = (value: unknown, fallback: string) => {
+  const candidate = String(value || fallback || "weekly");
+  return sitemapFrequencyValues.has(candidate) ? candidate : "weekly";
+};
+
+const sitemapXml = (entries: { loc: string; lastmod?: string | null; changefreq: string }[]) =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+  entries.map((entry) =>
+    `  <url>\n` +
+    `    <loc>${xmlEscape(entry.loc)}</loc>\n` +
+    (entry.lastmod ? `    <lastmod>${xmlEscape(new Date(entry.lastmod).toISOString())}</lastmod>\n` : "") +
+    `    <changefreq>${xmlEscape(entry.changefreq)}</changefreq>\n` +
+    `  </url>`
+  ).join("\n") +
+  `\n</urlset>\n`;
+
+const toSitemapLastmod = (value: unknown) => {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
+};
+
+const sitemapIndexXml = (origin: string, entries: { path: string; lastmod?: unknown }[]) =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+  entries.map((entry) =>
+    `  <sitemap>\n` +
+    `    <loc>${xmlEscape(sitemapUrl(origin, entry.path))}</loc>\n` +
+    `    <lastmod>${xmlEscape(toSitemapLastmod(entry.lastmod))}</lastmod>\n` +
+    `  </sitemap>`
+  ).join("\n") +
+  `\n</sitemapindex>\n`;
+
+const normalizeRobotsRules = (value: unknown) =>
+  String(value || "User-agent: *\nAllow: /")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => !/^sitemap:/i.test(line.trim()))
+    .join("\n")
+    .trim();
 
 const zarinpalErrorMessage = (payload: { data?: { message?: string }; errors?: unknown }) => {
   const errors = payload.errors as { message?: string; code?: number } | undefined;
@@ -335,12 +389,111 @@ export const registerStoreRoutes = (
     return { item };
   });
 
-  app.get("/api/v1/site-settings/robots.txt", async (_request, reply) => {
+  app.get("/api/v1/site-settings/robots.txt", async (request, reply) => {
     const settings = await getSiteSettings(pool);
     reply.type("text/plain; charset=utf-8").header("Cache-Control", "no-store");
-    return settings.searchIndexingEnabled
-      ? "User-agent: *\nAllow: /\n\nSitemap: https://orenza.ir/sitemap-index.xml\n"
-      : "User-agent: *\nDisallow: /\n";
+    if (!settings.searchIndexingEnabled) return "User-agent: *\nDisallow: /\n";
+    const rules = normalizeRobotsRules(settings.robotsRules);
+    const sitemapLine = settings.sitemapEnabled === false ? "" : `\n\nSitemap: ${sitemapUrl(getPublicOrigin(request), "/sitemap-index.xml")}`;
+    return `${rules || "User-agent: *\nAllow: /"}${sitemapLine}\n`;
+  });
+
+  app.get("/api/v1/site-settings/sitemap-index.xml", async (request, reply) => {
+    const settings = await getSiteSettings(pool);
+    reply.type("application/xml; charset=utf-8").header("Cache-Control", "public, max-age=300");
+    if (!settings.searchIndexingEnabled || settings.sitemapEnabled === false) {
+      return sitemapIndexXml(getPublicOrigin(request), []);
+    }
+    const [products, categories, tags, articles] = await Promise.all([
+      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM products WHERE is_active=true AND robots_index=true"),
+      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM categories WHERE is_active=true AND robots_index=true"),
+      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM tags WHERE robots_index=true"),
+      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM articles WHERE is_published=true AND robots_index=true")
+    ]);
+    const entries = [
+      settings.sitemapStaticEnabled !== false ? { path: "/sitemap/sitemap-statics.xml", lastmod: settings.updatedAt } : null,
+      settings.sitemapProductsEnabled !== false ? { path: "/sitemap/sitemap-products.xml", lastmod: products.rows[0]?.lastmod } : null,
+      settings.sitemapCategoriesEnabled !== false ? { path: "/sitemap/sitemap-categories.xml", lastmod: categories.rows[0]?.lastmod } : null,
+      settings.sitemapTagsEnabled !== false ? { path: "/sitemap/sitemap-tags.xml", lastmod: tags.rows[0]?.lastmod } : null,
+      settings.sitemapArticlesEnabled !== false ? { path: "/sitemap/sitemap-articles.xml", lastmod: articles.rows[0]?.lastmod } : null
+    ].filter(Boolean) as { path: string; lastmod?: unknown }[];
+    return sitemapIndexXml(getPublicOrigin(request), entries);
+  });
+
+  app.get("/api/v1/site-settings/sitemap/:kind.xml", async (request, reply) => {
+    const { kind } = z.object({
+      kind: z.enum([
+        "statics", "products", "categories", "tags", "articles",
+        "sitemap-statics", "sitemap-products", "sitemap-categories", "sitemap-tags", "sitemap-articles"
+      ])
+    }).parse(request.params);
+    const sitemapKind = kind.replace(/^sitemap-/, "");
+    const settings = await getSiteSettings(pool);
+    const origin = getPublicOrigin(request);
+    reply.type("application/xml; charset=utf-8").header("Cache-Control", "public, max-age=300");
+    if (!settings.searchIndexingEnabled || settings.sitemapEnabled === false) return sitemapXml([]);
+    if (sitemapKind === "statics") {
+      if (settings.sitemapStaticEnabled === false) return sitemapXml([]);
+      const changefreq = normalizeSitemapChangefreq(settings.sitemapStaticChangefreq, "weekly");
+      return sitemapXml(["/", "/products/", "/order/", "/about/", "/contact/", "/wholesale/"].map((path) => ({
+        loc: sitemapUrl(origin, path),
+        changefreq
+      })));
+    }
+    if (sitemapKind === "products") {
+      if (settings.sitemapProductsEnabled === false) return sitemapXml([]);
+      const result = await pool.query<Record<string, unknown>>(
+        `SELECT p.title_en,p.title_fa,p.updated_at,p.sitemap_changefreq
+         FROM products p JOIN categories c ON c.id=p.category_id
+         WHERE p.is_active=true AND p.robots_index=true AND c.is_active=true
+         ORDER BY p.sort_order ASC,p.created_at ASC`
+      );
+      return sitemapXml(result.rows.map((row) => ({
+        loc: sitemapUrl(origin, `/products/${encodeURIComponent(productSlug(String(row.title_en || row.title_fa || "")))}/`),
+        lastmod: String(row.updated_at || ""),
+        changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapProductsChangefreq || "weekly"))
+      })));
+    }
+    if (sitemapKind === "categories") {
+      if (settings.sitemapCategoriesEnabled === false) return sitemapXml([]);
+      const result = await pool.query<Record<string, unknown>>(
+        `SELECT slug,updated_at,sitemap_changefreq
+         FROM categories
+         WHERE is_active=true AND robots_index=true
+         ORDER BY sort_order ASC,created_at ASC`
+      );
+      return sitemapXml(result.rows.map((row) => ({
+        loc: sitemapUrl(origin, categoryHref(String(row.slug || ""))),
+        lastmod: String(row.updated_at || ""),
+        changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapCategoriesChangefreq || "weekly"))
+      })));
+    }
+    if (sitemapKind === "tags") {
+      if (settings.sitemapTagsEnabled === false) return sitemapXml([]);
+      const result = await pool.query<Record<string, unknown>>(
+        `SELECT slug,updated_at,sitemap_changefreq
+         FROM tags
+         WHERE robots_index=true
+         ORDER BY updated_at DESC`
+      );
+      return sitemapXml(result.rows.map((row) => ({
+        loc: sitemapUrl(origin, `/tags/${encodeURIComponent(String(row.slug || ""))}/`),
+        lastmod: String(row.updated_at || ""),
+        changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapTagsChangefreq || "monthly"))
+      })));
+    }
+    if (settings.sitemapArticlesEnabled === false) return sitemapXml([]);
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT slug,updated_at,sitemap_changefreq
+       FROM articles
+       WHERE is_published=true AND robots_index=true
+       ORDER BY updated_at DESC`
+    );
+    return sitemapXml(result.rows.map((row) => ({
+      loc: sitemapUrl(origin, `/articles/${encodeURIComponent(String(row.slug || ""))}/`),
+      lastmod: String(row.updated_at || ""),
+      changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapArticlesChangefreq || "monthly"))
+    })));
   });
 
   app.get("/api/v1/products", async (request) => {

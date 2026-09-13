@@ -28,7 +28,8 @@ const seoColumns = {
   seoDescription: "seo_description",
   canonicalUrl: "canonical_url",
   robotsIndex: "robots_index",
-  robotsFollow: "robots_follow"
+  robotsFollow: "robots_follow",
+  sitemapChangefreq: "sitemap_changefreq"
 };
 
 export const resourceConfigs: Record<string, ResourceConfig> = {

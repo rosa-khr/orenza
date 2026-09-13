@@ -1,26 +1,26 @@
 ---
 import { GripVertical, ImagePlus, Plus, Save, ScrollText, Trash2, Upload } from "@lucide/astro";
 import AdminShell from "../../components/admin/AdminShell.astro";
+
+const settingsGroups = ["general", "homepage", "banners", "sitemap", "robots", "invoice"] as const;
+
+const requestedGroup = Astro.url.searchParams.get("group") || "general";
+const settingsGroup = settingsGroups.includes(requestedGroup as typeof settingsGroups[number])
+  ? requestedGroup
+  : "general";
 ---
 
 <AdminShell
   title="تنظیمات سایت"
   description="اطلاعات عمومی، هویت بصری، سئو و وضعیت ایندکس فروشگاه"
-  active="site-settings"
+  active={`site-settings-${settingsGroup}`}
   actionLabel="تنظیمات"
 >
   <a class="admin-secondary-action" href="/admin/service-scripts/list/" slot="heading-action">
     <ScrollText size={17} stroke-width={1.5} /> اسکریپت‌های سرویس
   </a>
 
-  <form class="admin-site-settings" data-admin-site-settings novalidate>
-    <nav class="admin-settings-menu" data-settings-menu aria-label="منوی تنظیمات سایت">
-      <button type="button" data-settings-group-target="general">تنظیمات کلی</button>
-      <button type="button" data-settings-group-target="homepage">هوم‌پیج</button>
-      <button type="button" data-settings-group-target="banners">بنرها</button>
-      <button type="button" data-settings-group-target="invoice">فاکتور</button>
-    </nav>
-
+  <form class="admin-site-settings" data-admin-site-settings data-default-settings-group={settingsGroup} novalidate>
     <section class="admin-card" data-settings-group="general">
       <header><span>GENERAL SETTINGS</span><h2>اطلاعات عمومی</h2><p>اطلاعاتی که در هویت برند و راه‌های ارتباطی نمایش داده می‌شود.</p></header>
       <div class="admin-form-grid">
@@ -275,6 +275,62 @@ import AdminShell from "../../components/admin/AdminShell.astro";
       </div>
     </section>
 
+    <section class="admin-card admin-indexing-setting" data-settings-group="sitemap">
+      <header><span>SITEMAP SETTINGS</span><h2>تنظیمات سایت‌مپ</h2><p>نقشه‌های XML سایت و فرکانس پیشنهادی بررسی صفحات توسط موتورهای جست‌وجو.</p></header>
+      <div class="admin-form-grid">
+        <label class="admin-product-rail-toggle wide">
+          <input type="checkbox" name="sitemapEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>سایت‌مپ فعال باشد</strong><small>اگر خاموش باشد، sitemap-index.xml بدون آیتم خروجی می‌دهد.</small></span>
+        </label>
+        <label class="admin-product-rail-toggle">
+          <input type="checkbox" name="sitemapStaticEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>صفحات ثابت</strong><small>خانه، محصولات، سفارش، درباره، تماس و خرید عمده</small></span>
+        </label>
+        <label class="admin-field"><span>فرکانس صفحات ثابت</span><select name="sitemapStaticChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-product-rail-toggle">
+          <input type="checkbox" name="sitemapProductsEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>محصولات</strong><small>محصولات فعال فروشگاه</small></span>
+        </label>
+        <label class="admin-field"><span>فرکانس پیش‌فرض محصولات</span><select name="sitemapProductsChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-product-rail-toggle">
+          <input type="checkbox" name="sitemapCategoriesEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>دسته‌بندی‌ها</strong><small>دسته‌بندی‌های فعال و صفحات منو</small></span>
+        </label>
+        <label class="admin-field"><span>فرکانس پیش‌فرض دسته‌بندی‌ها</span><select name="sitemapCategoriesChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-product-rail-toggle">
+          <input type="checkbox" name="sitemapTagsEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>تگ‌ها</strong><small>صفحات برچسب‌های محتوایی</small></span>
+        </label>
+        <label class="admin-field"><span>فرکانس پیش‌فرض تگ‌ها</span><select name="sitemapTagsChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-product-rail-toggle">
+          <input type="checkbox" name="sitemapArticlesEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>مقالات</strong><small>فقط مقالات منتشرشده</small></span>
+        </label>
+        <label class="admin-field"><span>فرکانس پیش‌فرض مقالات</span><select name="sitemapArticlesChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+      </div>
+    </section>
+
+    <section class="admin-card admin-indexing-setting" data-settings-group="robots">
+      <header><span>ROBOTS SETTINGS</span><h2>تنظیمات robots.txt</h2><p>مسیرهایی که موتورهای جست‌وجو اجازه خزش دارند یا ندارند را برای فروشگاه تنظیم کنید.</p></header>
+      <label>
+        <input type="checkbox" name="searchIndexingEnabled" />
+        <span><strong>ایندکس سایت فعال باشد</strong><small>اگر خاموش شود robots.txt کل سایت را Disallow می‌کند.</small></span>
+      </label>
+      <div class="admin-form-grid">
+        <label class="admin-field wide">
+          <span>قوانین robots.txt</span>
+          <textarea name="robotsRules" required minlength="10" maxlength="6000" dir="ltr" rows="18"></textarea>
+          <em class="admin-field-help">خط Sitemap به‌صورت خودکار بر اساس تنظیمات سایت‌مپ اضافه می‌شود؛ لازم نیست اینجا وارد شود.</em>
+        </label>
+      </div>
+    </section>
+
     <section class="admin-card" data-settings-group="general">
       <header><span>AI CONTENT GENERATION</span><h2>تنظیمات تولید محتوا</h2><p>کلید سرویس برای تولید محتوا و تحلیل تصویر کلمات کلیدی؛ کلید به‌صورت رمزنگاری‌شده ذخیره می‌شود.</p></header>
       <div class="admin-form-grid">
@@ -287,14 +343,6 @@ import AdminShell from "../../components/admin/AdminShell.astro";
         <label class="admin-field"><span>زبان پیش‌فرض</span><select name="contentAiDefaultLanguage"><option value="fa">فارسی</option><option value="en">English</option></select></label>
         <small class="admin-field wide admin-ai-key-state" data-ai-key-state>در حال بررسی وضعیت کلید…</small>
       </div>
-    </section>
-
-    <section class="admin-card admin-indexing-setting" data-settings-group="general">
-      <header><span>SEARCH ENGINE INDEXING</span><h2>دسترسی موتورهای جست‌وجو</h2><p>غیرفعال‌کردن این گزینه، robots.txt و هدر noindex را هم‌زمان فعال می‌کند.</p></header>
-      <label>
-        <input type="checkbox" name="searchIndexingEnabled" />
-        <span><strong>ایندکس سایت فعال باشد</strong><small>برای سایت منتشرشده روشن بماند؛ در محیط آزمایشی خاموشش کنید.</small></span>
-      </label>
     </section>
 
     <footer class="admin-site-settings-actions">
