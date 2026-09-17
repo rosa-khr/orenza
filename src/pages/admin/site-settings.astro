@@ -32,6 +32,7 @@ const settingsGroup = settingsGroups.includes(requestedGroup as typeof settingsG
         <label class="admin-field"><span>لینک واتساپ</span><input name="whatsappUrl" type="url" required dir="ltr" /></label>
         <label class="admin-field"><span>لینک بله</span><input name="baleUrl" type="url" required dir="ltr" /></label>
         <label class="admin-field"><span>لینک اینستاگرام</span><input name="instagramUrl" type="url" required dir="ltr" /></label>
+        <label class="admin-field"><span>لینک تلگرام</span><input name="telegramUrl" type="url" required dir="ltr" /></label>
         <label class="admin-field"><span>آدرس وب‌سایت</span><input name="websiteUrl" type="url" required dir="ltr" value="https://orenza.ir" /></label>
         <label class="admin-field wide"><span>نشانی مجموعه</span><textarea name="address"></textarea></label>
       </div>
@@ -46,9 +47,10 @@ const settingsGroup = settingsGroups.includes(requestedGroup as typeof settingsG
         <label class="admin-field"><span>رنگ فوتر</span><input name="themeFooterColor" type="color" required /></label>
         <label class="admin-field"><span>رنگ آیکن پشتیبانی</span><input name="themeSupportColor" type="color" required /></label>
         <label class="admin-field"><span>رنگ آیکن‌های هدر</span><input name="themeHeaderIconColor" type="color" required /></label>
-        <label class="admin-field wide"><span>عنوان ارتباط با ما در فوتر</span><input name="footerHeading" required /></label>
-        <label class="admin-field wide"><span>متن راهنمای فوتر</span><textarea name="footerDescription" required></textarea></label>
-        <label class="admin-field wide"><span>متن کپی‌رایت</span><input name="footerCopyright" required /></label>
+        <label class="admin-field wide"><span>عنوان ستون ارتباط و شبکه‌های اجتماعی</span><input name="footerHeading" required /></label>
+        <label class="admin-field wide"><span>توضیحات کوتاه زیر لوگوی فوتر</span><textarea name="footerDescription" required></textarea></label>
+        <label class="admin-field wide"><span>متن کپی‌رایت فارسی</span><input name="footerCopyright" required /></label>
+        <label class="admin-field wide"><span>متن کپی‌رایت انگلیسی</span><input name="footerCopyrightEn" required dir="ltr" /></label>
       </div>
     </section>
 

@@ -2306,11 +2306,13 @@ type SiteSettingsPayload = {
   whatsappUrl: string;
   baleUrl: string;
   instagramUrl: string;
+  telegramUrl: string;
   websiteUrl: string;
   address: string | null;
   footerHeading: string;
   footerDescription: string;
   footerCopyright: string;
+  footerCopyrightEn: string;
   logoUrl: string | null;
   faviconUrl: string;
   homepageSeoTitle: string;
@@ -2891,11 +2893,13 @@ const initSiteSettings = async () => {
           whatsappUrl: input("whatsappUrl").value,
           baleUrl: input("baleUrl").value,
           instagramUrl: input("instagramUrl").value,
+          telegramUrl: input("telegramUrl").value,
           websiteUrl: input("websiteUrl").value,
           address: input("address").value || null,
           footerHeading: input("footerHeading").value,
           footerDescription: input("footerDescription").value,
           footerCopyright: input("footerCopyright").value,
+          footerCopyrightEn: input("footerCopyrightEn").value,
           logoUrl: input("logoUrl").value || null,
           faviconUrl: input("faviconUrl").value,
           homepageSeoTitle: input("homepageSeoTitle").value,

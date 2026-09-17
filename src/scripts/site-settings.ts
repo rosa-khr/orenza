@@ -1,3 +1,5 @@
+import { productDetailUrl } from "./product-url";
+
 type PublicServiceScript = {
   provider: "gtm" | "ga4" | "searchConsole";
   serviceKey: string;
@@ -13,10 +15,12 @@ type PublicSiteSettings = {
   whatsappUrl: string;
   baleUrl: string;
   instagramUrl: string;
+  telegramUrl: string;
   address: string | null;
   footerHeading: string;
   footerDescription: string;
   footerCopyright: string;
+  footerCopyrightEn: string;
   logoUrl: string | null;
   faviconUrl: string;
   homepageSeoTitle: string;
@@ -63,6 +67,13 @@ type PublicSiteSettings = {
 type PopularFooterCategory = {
   title: string;
   slug: string;
+};
+
+type FooterQuickLink = {
+  entityType: "category" | "product";
+  title: string;
+  slug: string | null;
+  titleEn: string | null;
 };
 
 type PublicNavCategory = PopularFooterCategory & {
@@ -423,14 +434,38 @@ const applyPopularFooterLinks = (items: PopularFooterCategory[]) => {
   });
 };
 
+const applyFooterQuickLinks = (items: FooterQuickLink[]) => {
+  if (!items.length) return;
+  document.querySelectorAll<HTMLElement>("[data-footer-quick-links]").forEach((root) => {
+    const linksRoot = root.querySelector<HTMLElement>(".site-footer__menu-links") || root;
+    const links = items.slice(0, 8).map((item) => {
+      const link = document.createElement("a");
+      link.href = item.entityType === "product" && item.titleEn
+        ? productDetailUrl({ titleEn: item.titleEn })
+        : categoryHref(item.slug || "products");
+      link.textContent = item.title;
+      return link;
+    });
+    linksRoot.replaceChildren(...links);
+  });
+};
+
 const applySettings = (settings: PublicSiteSettings) => {
+  const footerCopyright = settings.footerCopyright === "© ۲۰۲۶ قهوه اورنزا؛ تمامی حقوق محفوظ است."
+    ? "تمامی حقوق قهوه اورنزا محفوظ است."
+    : settings.footerCopyright;
+  const footerCopyrightEn = settings.footerCopyrightEn === "© 2026 ORENZA. All rights reserved."
+    ? "orenza @2026"
+    : settings.footerCopyrightEn;
+
   applyThemeColors(settings);
   setText("[data-site-brand-name]", settings.brandName);
   setText("[data-site-brand-name-en]", settings.brandNameEn);
   setText("[data-site-brand-tagline]", settings.brandTagline);
   setText("[data-site-footer-heading]", settings.footerHeading);
   setText("[data-site-footer-description]", settings.footerDescription);
-  setText("[data-site-footer-copyright]", settings.footerCopyright);
+  setText("[data-site-footer-copyright]", footerCopyright);
+  setText("[data-site-footer-copyright-en]", footerCopyrightEn);
   setText("[data-site-phone]", settings.supportPhone);
   setText("[data-site-email]", settings.supportEmail);
   setHref("[data-site-phone-link]", `tel:${settings.supportPhone.replace(/\s/g, "")}`);
@@ -438,6 +473,7 @@ const applySettings = (settings: PublicSiteSettings) => {
   setHref("[data-site-whatsapp-link]", settings.whatsappUrl);
   setHref("[data-site-bale-link]", settings.baleUrl);
   setHref("[data-site-instagram-link]", settings.instagramUrl);
+  setHref("[data-site-telegram-link]", settings.telegramUrl);
   const desktopBanner = document.querySelector<HTMLImageElement>("[data-site-homepage-banner-desktop]");
   if (desktopBanner && settings.homepageBannerDesktopUrl) desktopBanner.src = settings.homepageBannerDesktopUrl;
   const mobileBanner = document.querySelector<HTMLSourceElement>("[data-site-homepage-banner-mobile]");
@@ -484,6 +520,11 @@ void fetch("/api/v1/site-settings", { cache: "no-store", headers: { Accept: "app
 void fetch("/api/v1/categories/popular-footer", { cache: "no-store", headers: { Accept: "application/json" } })
   .then((response) => response.ok ? response.json() : Promise.reject(new Error("popular footer links unavailable")))
   .then((payload: { items: PopularFooterCategory[] }) => applyPopularFooterLinks(payload.items || []))
+  .catch(() => undefined);
+
+void fetch("/api/v1/footer/quick-links", { cache: "no-store", headers: { Accept: "application/json" } })
+  .then((response) => response.ok ? response.json() : Promise.reject(new Error("footer quick links unavailable")))
+  .then((payload: { items: FooterQuickLink[] }) => applyFooterQuickLinks(payload.items || []))
   .catch(() => undefined);
 
 void fetch("/api/v1/categories/navigation", { cache: "no-store", headers: { Accept: "application/json" } })

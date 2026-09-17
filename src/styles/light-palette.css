@@ -63,14 +63,53 @@ body:has(.mobile-home-top) .support-chat-toggle {
 .support-chat-options a:hover { background: #f6f2e9; }
 
 @media (max-width: 699px) {
-  .support-chat-toggle,
-  body:has(.mobile-home-top) .support-chat-toggle {
-    min-height: 48px;
-    border-radius: 15px;
-    padding: 4px 6px 4px 11px;
+  .support-chat {
+    left: max(14px, env(safe-area-inset-left));
+    bottom: max(14px, env(safe-area-inset-bottom));
   }
 
-  .support-chat-toggle-mark { width: 36px; height: 36px; flex-basis: 36px; border-radius: 11px; }
+  .support-chat-toggle,
+  body:has(.mobile-home-top) .support-chat-toggle {
+    width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 4px;
+  }
+
+  .support-chat-toggle-mark {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .support-chat-toggle-copy { display: none; }
+
+  .support-chat-panel {
+    width: min(270px, calc(100vw - 28px));
+    border-radius: 14px;
+  }
+
+  .support-chat-panel-heading {
+    gap: 8px;
+    padding: 11px 12px;
+  }
+
+  .support-chat-panel-heading strong { font-size: 12px; }
+  .support-chat-panel-heading small { font-size: 9px; }
+
+  .support-chat-options {
+    gap: 4px;
+    padding: 7px;
+  }
+
+  .support-chat-options a {
+    gap: 7px;
+    padding: 9px 10px;
+    font-size: 11px;
+  }
 }
 
 .mobile-home-top,
@@ -105,15 +144,23 @@ body:has(.mobile-home-top) .support-chat-toggle {
   }
 
   .mobile-quick-links {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    display: flex;
     gap: 7px;
     direction: rtl;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
+
+  .mobile-quick-links::-webkit-scrollbar { display: none; }
 
   .mobile-quick-links a {
     display: grid;
     min-width: 0;
+    flex: 0 0 calc((100% - 21px) / 4);
     min-height: 82px;
     place-content: center;
     justify-items: center;
@@ -123,6 +170,7 @@ body:has(.mobile-home-top) .support-chat-toggle {
     background: #fff;
     color: #24272c;
     box-shadow: 0 1px 2px rgba(35, 42, 52, .05);
+    scroll-snap-align: start;
   }
 
   .mobile-quick-links a span {

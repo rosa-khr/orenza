@@ -307,6 +307,27 @@ export const registerStoreRoutes = (
     return { items: result.rows.map(toPublicRecord) };
   });
 
+  app.get("/api/v1/footer/quick-links", async (_request, reply) => {
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT entity_type, title, slug, title_en, sort_order
+       FROM (
+         SELECT 'category'::text AS entity_type, title, slug, NULL::text AS title_en,
+           sort_order, created_at
+         FROM categories
+         WHERE is_active = true AND show_in_popular_footer = true
+         UNION ALL
+         SELECT 'product'::text AS entity_type, title_fa AS title, NULL::text AS slug, title_en,
+           sort_order, created_at
+         FROM products
+         WHERE is_active = true AND show_in_popular_footer = true
+       ) AS footer_links
+       ORDER BY sort_order ASC, created_at ASC
+       LIMIT 8`
+    );
+    reply.header("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    return { items: result.rows.map(toPublicRecord) };
+  });
+
   app.get("/api/v1/categories/navigation", async (_request, reply) => {
     const result = await pool.query<Record<string, unknown>>(
       `SELECT c.id, c.title, c.slug, c.sort_order, c.parent_category_id,

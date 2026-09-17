@@ -121,10 +121,12 @@ CREATE TABLE IF NOT EXISTS site_settings (
   whatsapp_url varchar(500) NOT NULL DEFAULT 'https://wa.me/989103060396',
   bale_url varchar(500) NOT NULL DEFAULT 'https://ble.ir/khoobrooz',
   instagram_url varchar(500) NOT NULL DEFAULT 'https://instagram.com/orenza.ir',
+  telegram_url varchar(500) NOT NULL DEFAULT 'https://t.me/orenza_ir',
   address text,
   footer_heading varchar(300) NOT NULL DEFAULT 'هر انتخابی داستان خودش را دارد؛ بیایید داستان مناسب شما را پیدا کنیم.',
   footer_description varchar(500) NOT NULL DEFAULT 'طعم دلخواه و دستگاهت را بگو؛ ترکیب مناسب را با هم پیدا می‌کنیم.',
-  footer_copyright varchar(300) NOT NULL DEFAULT '© ۲۰۲۶ قهوه اورنزا؛ تمامی حقوق محفوظ است.',
+  footer_copyright varchar(300) NOT NULL DEFAULT 'تمامی حقوق قهوه اورنزا محفوظ است.',
+  footer_copyright_en varchar(300) NOT NULL DEFAULT 'orenza @2026',
   logo_url varchar(500),
   favicon_url varchar(500) NOT NULL DEFAULT '/favicon.svg',
   homepage_seo_title varchar(60) NOT NULL DEFAULT 'خرید قهوه تازه رست با آسیاب دلخواه',
@@ -346,6 +348,22 @@ ALTER TABLE site_settings
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS theme_header_icon_color varchar(20) NOT NULL DEFAULT '#2d5644';
 ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS telegram_url varchar(500) NOT NULL DEFAULT 'https://t.me/orenza_ir';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS footer_copyright_en varchar(300) NOT NULL DEFAULT 'orenza @2026';
+UPDATE site_settings
+SET footer_heading = 'ارتباط و شبکه‌های اجتماعی'
+WHERE footer_heading = 'هر انتخابی داستان خودش را دارد؛ بیایید داستان مناسب شما را پیدا کنیم.';
+UPDATE site_settings
+SET footer_description = 'قهوه تازه، انتخاب دقیق و تجربه‌ای آرام برای لحظه‌های بهتر زندگی.'
+WHERE footer_description = 'طعم دلخواه و دستگاهت را بگو؛ ترکیب مناسب را با هم پیدا می‌کنیم.';
+UPDATE site_settings
+SET footer_copyright = 'تمامی حقوق قهوه اورنزا محفوظ است.'
+WHERE footer_copyright = '© ۲۰۲۶ قهوه اورنزا؛ تمامی حقوق محفوظ است.';
+UPDATE site_settings
+SET footer_copyright_en = 'orenza @2026'
+WHERE footer_copyright_en = '© 2026 ORENZA. All rights reserved.';
+ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS content_ai_api_key text;
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS content_ai_model varchar(100) NOT NULL DEFAULT 'gpt-5';
@@ -434,6 +452,7 @@ CREATE TABLE IF NOT EXISTS products (
   price_per_1000g bigint NOT NULL DEFAULT 0 CHECK (price_per_1000g >= 0),
   show_in_best_sellers boolean NOT NULL DEFAULT false,
   show_in_discounts boolean NOT NULL DEFAULT false,
+  show_in_popular_footer boolean NOT NULL DEFAULT false,
   show_in_popular_searches boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
   image_url text,
@@ -828,6 +847,7 @@ CREATE INDEX IF NOT EXISTS application_logs_created_at_idx ON application_logs(c
 CREATE INDEX IF NOT EXISTS application_logs_level_idx ON application_logs(level);
 
 ALTER TABLE products ADD COLUMN IF NOT EXISTS show_in_popular_searches boolean NOT NULL DEFAULT false;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS show_in_popular_footer boolean NOT NULL DEFAULT false;
 
 INSERT INTO categories (title, slug, sort_order, description, seo_title, seo_description, show_in_popular_footer, show_in_popular_searches)
 VALUES

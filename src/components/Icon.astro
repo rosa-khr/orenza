@@ -2,7 +2,6 @@
 import {
   ArrowLeft,
   Bean,
-  Camera,
   Coffee,
   Contact,
   LayoutDashboard,
@@ -56,8 +55,8 @@ interface Props {
 }
 
 const { name, size = 20 } = Astro.props;
+const isInstagram = name === "instagram";
 const icons = {
-  instagram: Camera,
   whatsapp: MessageCircle,
   bale: MessageCircleCheck,
   phone: Phone,
@@ -80,14 +79,24 @@ const icons = {
   bell: Bell,
   coffee: Coffee,
   store: Store
-} satisfies Record<IconName, typeof ArrowLeft>;
-const LucideIcon = icons[name];
+} satisfies Record<Exclude<IconName, "instagram">, typeof ArrowLeft>;
+const LucideIcon = icons[name as keyof typeof icons] ?? MessageCircle;
 ---
 
-<LucideIcon
-  class={`icon icon-${name}`}
-  width={size}
-  height={size}
-  stroke-width={1.45}
-  aria-hidden="true"
-/>
+{
+  isInstagram ? (
+    <svg class="icon icon-instagram" width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="4.2" y="4.2" width="15.6" height="15.6" rx="4.2" stroke="currentColor" stroke-width="1.45" />
+      <circle cx="12" cy="12" r="3.55" stroke="currentColor" stroke-width="1.45" />
+      <circle cx="16.65" cy="7.35" r="1" fill="currentColor" />
+    </svg>
+  ) : (
+    <LucideIcon
+      class={`icon icon-${name}`}
+      width={size}
+      height={size}
+      stroke-width={1.45}
+      aria-hidden="true"
+    />
+  )
+}

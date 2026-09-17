@@ -294,6 +294,7 @@ export const adminResources: AdminResource[] = [
       { key: "productImageUrls", label: "تصاویر محصول", type: "image-gallery" },
       { key: "showInBestSellers", label: "نمایش در پرفروش‌ترین‌ها", type: "select", options: yesNo, list: true },
       { key: "showInDiscounts", label: "نمایش در محصولات تخفیف‌دار", type: "select", options: yesNo, list: true },
+      { key: "showInPopularFooter", label: "نمایش در دسترسی سریع فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
@@ -314,7 +315,7 @@ export const adminResources: AdminResource[] = [
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
       { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
-      { key: "showInPopularFooter", label: "نمایش در لینک‌های پربازدید فوتر", type: "select", options: yesNo, list: true },
+      { key: "showInPopularFooter", label: "نمایش در دسترسی سریع فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
