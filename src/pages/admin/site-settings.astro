@@ -1,5 +1,9 @@
 ---
-import { GripVertical, ImagePlus, Plus, Save, ScrollText, Trash2, Upload } from "@lucide/astro";
+import {
+  Bold, ChevronDown, GripVertical, ImagePlus, Italic, Link2, List, ListOrdered,
+  Plus, Quote, Redo2, RemoveFormatting, Save, ScrollText, TextAlignCenter,
+  TextAlignEnd, TextAlignStart, Trash2, Underline, Undo2, Unlink2, Upload
+} from "@lucide/astro";
 import AdminShell from "../../components/admin/AdminShell.astro";
 
 const settingsGroups = ["general", "homepage", "banners", "sitemap", "robots", "invoice"] as const;
@@ -51,6 +55,21 @@ const settingsGroup = settingsGroups.includes(requestedGroup as typeof settingsG
         <label class="admin-field wide"><span>توضیحات کوتاه زیر لوگوی فوتر</span><textarea name="footerDescription" required></textarea></label>
         <label class="admin-field wide"><span>متن کپی‌رایت فارسی</span><input name="footerCopyright" required /></label>
         <label class="admin-field wide"><span>متن کپی‌رایت انگلیسی</span><input name="footerCopyrightEn" required dir="ltr" /></label>
+        <div class="admin-field wide">
+          <span>متن صفحه قوانین سایت</span>
+          <div class="admin-rich-text" data-rich-text>
+            <div class="admin-rich-text-toolbar" role="toolbar" aria-label="ابزارهای ویرایش قوانین سایت">
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="undo" title="واگرد"><Undo2 /></button><button type="button" data-rich-command="redo" title="از نو"><Redo2 /></button></div>
+              <div class="admin-editor-tool-group admin-editor-format"><select data-rich-format aria-label="نوع متن"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Blockquote</option></select><ChevronDown /></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="bold" title="ضخیم"><Bold /></button><button type="button" data-rich-command="italic" title="مورب"><Italic /></button><button type="button" data-rich-command="underline" title="زیرخط"><Underline /></button></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="insertUnorderedList" title="فهرست نقطه‌ای"><List /></button><button type="button" data-rich-command="insertOrderedList" title="فهرست شماره‌ای"><ListOrdered /></button><button type="button" data-rich-command="formatBlock" data-rich-value="blockquote" title="نقل‌قول"><Quote /></button></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="justifyRight" title="راست‌چین"><TextAlignEnd /></button><button type="button" data-rich-command="justifyCenter" title="وسط‌چین"><TextAlignCenter /></button><button type="button" data-rich-command="justifyLeft" title="چپ‌چین"><TextAlignStart /></button></div>
+              <div class="admin-editor-tool-group"><button type="button" data-rich-command="createLink" title="افزودن لینک"><Link2 /></button><button type="button" data-rich-command="unlink" title="حذف لینک"><Unlink2 /></button><button type="button" data-rich-command="removeFormat" title="پاک‌کردن قالب‌بندی"><RemoveFormatting /></button></div>
+            </div>
+            <div class="admin-rich-text-editor" role="textbox" aria-multiline="true" data-rich-text-editor="termsContent" data-placeholder="قوانین سایت را اینجا بنویسید…"></div>
+            <textarea class="admin-rich-text-input" name="termsContent" required minlength="50" maxlength="20000" data-rich-text-input="termsContent" tabindex="-1" aria-hidden="true"></textarea>
+          </div>
+        </div>
       </div>
     </section>
 

@@ -3602,6 +3602,27 @@ body.mobile-nav-is-open {
   filter: grayscale(.2);
 }
 
+.checkout-terms-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 13px;
+  border: 1px solid rgba(36, 75, 59, .18);
+  border-radius: 7px;
+  background: rgba(248, 250, 248, .82);
+  padding: 11px 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: .72rem;
+  line-height: 1.8;
+}
+
+.checkout-terms-consent:has(input:checked) { border-color: rgba(36, 75, 59, .48); }
+.checkout-terms-consent.is-invalid { border-color: var(--red); background: #fff7f5; }
+.checkout-terms-consent input { width: 17px; height: 17px; flex: 0 0 17px; margin: 3px 0 0; accent-color: var(--green); }
+.checkout-terms-consent > span { display: flex; min-width: 0; flex: 1; align-items: baseline; justify-content: space-between; gap: 10px; }
+.checkout-terms-consent a { flex: 0 0 auto; color: var(--green); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
 .cart-checkout > small[data-copy-status] {
   display: block;
   color: var(--red);

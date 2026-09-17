@@ -2313,6 +2313,7 @@ type SiteSettingsPayload = {
   footerDescription: string;
   footerCopyright: string;
   footerCopyrightEn: string;
+  termsContent: string;
   logoUrl: string | null;
   faviconUrl: string;
   homepageSeoTitle: string;
@@ -2740,6 +2741,7 @@ const initSiteSettings = async () => {
         field.value = Array.isArray(value) ? value.join("، ") : value === null ? "" : String(value);
       }
     });
+    initRichTextEditors(form);
     if (!input("homepageBestSellersTitle").value) input("homepageBestSellersTitle").value = "پرفروش‌ترین‌ها";
     if (!input("homepageBestSellersColor").value) input("homepageBestSellersColor").value = "#173f30";
     if (!input("homepageBestSellersTextColor").value) input("homepageBestSellersTextColor").value = "#ffffff";
@@ -2900,6 +2902,7 @@ const initSiteSettings = async () => {
           footerDescription: input("footerDescription").value,
           footerCopyright: input("footerCopyright").value,
           footerCopyrightEn: input("footerCopyrightEn").value,
+          termsContent: input("termsContent").value,
           logoUrl: input("logoUrl").value || null,
           faviconUrl: input("faviconUrl").value,
           homepageSeoTitle: input("homepageSeoTitle").value,

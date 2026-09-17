@@ -21,6 +21,7 @@ type PublicSiteSettings = {
   footerDescription: string;
   footerCopyright: string;
   footerCopyrightEn: string;
+  termsContent: string;
   logoUrl: string | null;
   faviconUrl: string;
   homepageSeoTitle: string;
@@ -115,6 +116,33 @@ type HomepageHeroBenefitIcon =
 type HomepageHeroBenefitItem = {
   text: string;
   icon: HomepageHeroBenefitIcon;
+};
+
+const sanitizePublicContent = (value: string) => {
+  const template = document.createElement("template");
+  template.innerHTML = value || "";
+  const allowedTags = new Set(["P", "H2", "H3", "STRONG", "B", "EM", "I", "U", "UL", "OL", "LI", "BLOCKQUOTE", "A", "BR"]);
+  const nodes = [...template.content.querySelectorAll("*")];
+  nodes.forEach((node) => {
+    if (!allowedTags.has(node.tagName)) {
+      node.replaceWith(...node.childNodes);
+      return;
+    }
+    const rawHref = node instanceof HTMLAnchorElement ? node.getAttribute("href") || "" : "";
+    const textAlign = node instanceof HTMLElement && ["right", "center", "left"].includes(node.style.textAlign)
+      ? node.style.textAlign
+      : "";
+    [...node.attributes].forEach((attribute) => node.removeAttribute(attribute.name));
+    if (textAlign) node.setAttribute("style", `text-align: ${textAlign}`);
+    if (node instanceof HTMLAnchorElement) {
+      const safeHref = /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(rawHref) ? rawHref : "";
+      if (safeHref) {
+        node.setAttribute("href", safeHref);
+        if (/^https?:\/\//i.test(safeHref)) node.setAttribute("rel", "noreferrer");
+      }
+    }
+  });
+  return template.innerHTML;
 };
 
 const heroBenefitIcons: Record<HomepageHeroBenefitIcon, string> = {
@@ -466,6 +494,9 @@ const applySettings = (settings: PublicSiteSettings) => {
   setText("[data-site-footer-description]", settings.footerDescription);
   setText("[data-site-footer-copyright]", footerCopyright);
   setText("[data-site-footer-copyright-en]", footerCopyrightEn);
+  document.querySelectorAll<HTMLElement>("[data-site-terms-content]").forEach((root) => {
+    root.innerHTML = sanitizePublicContent(settings.termsContent);
+  });
   setText("[data-site-phone]", settings.supportPhone);
   setText("[data-site-email]", settings.supportEmail);
   setHref("[data-site-phone-link]", `tel:${settings.supportPhone.replace(/\s/g, "")}`);

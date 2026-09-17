@@ -1411,6 +1411,80 @@ footer {
   white-space: nowrap;
 }
 
+.terms-page {
+  width: min(calc(100% - 40px), 920px);
+  margin-inline: auto;
+  padding: clamp(72px, 9vw, 120px) 0;
+}
+
+.terms-page header {
+  margin-bottom: 38px;
+  border-bottom: 1px solid #ded4c7;
+  padding-bottom: 30px;
+}
+
+.terms-page header span {
+  color: #9a642d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+}
+
+.terms-page h1 {
+  margin: 10px 0 12px;
+  color: #211d19;
+  font-size: clamp(30px, 5vw, 48px);
+  letter-spacing: 0;
+}
+
+.terms-page header p {
+  margin: 0;
+  color: #756b63;
+  line-height: 2;
+}
+
+.terms-page article {
+  color: #514a44;
+  font-size: 15px;
+  line-height: 2.35;
+}
+
+.terms-page article p,
+.terms-page article ul,
+.terms-page article ol,
+.terms-page article blockquote {
+  margin: 0 0 18px;
+}
+
+.terms-page article h2 {
+  margin: 34px 0 12px;
+  color: #253c32;
+  font-size: 24px;
+}
+
+.terms-page article h3 {
+  margin: 28px 0 10px;
+  color: #3b4a43;
+  font-size: 19px;
+}
+
+.terms-page article ul,
+.terms-page article ol {
+  padding-right: 24px;
+}
+
+.terms-page article blockquote {
+  border-right: 3px solid #a87435;
+  background: #f7f3ec;
+  padding: 12px 16px;
+}
+
+.terms-page article a {
+  color: #835621;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 @media (max-width: 1100px) {
   .site-footer__container {
     grid-template-columns: repeat(2, minmax(0, 1fr));

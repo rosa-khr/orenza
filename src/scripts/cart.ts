@@ -20,7 +20,7 @@ type SavedAddress = {
 
 type PaymentMethod = {
   id: string;
-  type: "cardToCard" | "zarinpal";
+  type: "cardToCard" | "bankGateway" | "zarinpal";
   title: string;
   cards: PaymentCard[];
 };
@@ -87,6 +87,7 @@ export const initCart = () => {
   const cartDiscount = document.querySelector<HTMLElement>("[data-cart-discount]");
   const cartDiscountRow = document.querySelector<HTMLElement>("[data-cart-discount-row]");
   const cartTax = document.querySelector<HTMLElement>("[data-cart-tax]");
+  const cartTaxRow = document.querySelector<HTMLElement>("[data-cart-tax-row]");
   const cartFinal = document.querySelector<HTMLElement>("[data-cart-final]");
   const paymentCard = document.querySelector<HTMLElement>("[data-payment-card]");
   const paymentCardList = document.querySelector<HTMLElement>("[data-payment-card-list]");
@@ -95,6 +96,7 @@ export const initCart = () => {
   const paymentRef = document.querySelector<HTMLInputElement>("[data-payment-ref]");
   const paymentReceipt = document.querySelector<HTMLInputElement>("[data-payment-receipt]");
   const paymentReceiptName = document.querySelector<HTMLElement>("[data-payment-receipt-name]");
+  const termsAccepted = document.querySelector<HTMLInputElement>("[data-terms-accepted]");
   const registerOrderButton = document.querySelector<HTMLButtonElement>("[data-register-order]");
   const orderState = document.querySelector<HTMLElement>("[data-order-state]");
   const addedChoice = document.querySelector<HTMLElement>("[data-cart-added-choice]");
@@ -136,7 +138,10 @@ export const initCart = () => {
   const saveCart = () => localStorage.setItem("orenza-cart", JSON.stringify(cart));
   const subtotal = () => cart.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
   const taxableAmount = () => Math.max(0, subtotal() - discountAmount);
-  const taxAmount = () => submittedOrder ? Number(submittedOrder.taxAmount || 0) : Math.round(taxableAmount() * 0.10);
+  const usesOnlineGateway = () => Boolean(paymentMethod && paymentMethod.type !== "cardToCard");
+  const taxAmount = () => submittedOrder
+    ? Number(submittedOrder.taxAmount || 0)
+    : usesOnlineGateway() ? Math.round(taxableAmount() * 0.10) : 0;
   const finalAmount = () => submittedOrder ? Number(submittedOrder.finalAmount || 0) : taxableAmount() + taxAmount();
   const formatUploadSize = (bytes: number) => {
     if (bytes >= 1024 * 1024) {
@@ -160,6 +165,7 @@ export const initCart = () => {
     paymentInputs.some((input) => input.checked) &&
     Boolean(paymentMethod && selectedPaymentCard) &&
     Boolean(paymentRef?.value.trim() && paymentRef.checkValidity() && selectedReceipt) &&
+    Boolean(termsAccepted?.checked) &&
     cart.length > 0;
 
   const setCheckoutFieldError = (
@@ -197,6 +203,7 @@ export const initCart = () => {
     if (cartDiscount) cartDiscount.textContent = `− ${numberFormatter.format(discountAmount)} تومان`;
     if (cartDiscountRow) cartDiscountRow.hidden = discountAmount === 0;
     if (cartTax) cartTax.textContent = `${numberFormatter.format(taxAmount())} تومان`;
+    if (cartTaxRow) cartTaxRow.hidden = !usesOnlineGateway() && !submittedOrder?.taxAmount;
     if (cartFinal) cartFinal.textContent = `${numberFormatter.format(finalAmount())} تومان`;
   };
 
@@ -269,10 +276,14 @@ export const initCart = () => {
         paymentMethodList.replaceChildren();
         const label = document.createElement("label");
         label.className = "choice-card";
-        label.innerHTML = `<input type="radio" name="payment-method" value="کارت‌به‌کارت" checked required /><span><strong>${paymentMethod.title || "کارت‌به‌کارت"}</strong><small>بررسی فیش توسط مدیریت</small></span>`;
+        label.innerHTML = `<input type="radio" name="payment-method" value="کارت‌به‌کارت" data-payment-kind="${paymentMethod.type}" checked required /><span><strong>${paymentMethod.title || "کارت‌به‌کارت"}</strong><small>بررسی فیش توسط مدیریت</small></span>`;
         paymentMethodList.append(label);
         paymentInputs.splice(0, paymentInputs.length, ...paymentMethodList.querySelectorAll<HTMLInputElement>('input[name="payment-method"]'));
-        paymentInputs.forEach((input) => input.addEventListener("change", updateOrderLinks));
+        paymentInputs.forEach((input) => input.addEventListener("change", () => {
+          submittedOrder = null;
+          updateTotals();
+          updateOrderLinks();
+        }));
       }
       if (paymentCardList) {
         paymentCardList.replaceChildren();
@@ -322,6 +333,7 @@ export const initCart = () => {
       }
       if (paymentCard) paymentCard.hidden = false;
       if (paymentProof) paymentProof.hidden = false;
+      updateTotals();
       updateOrderLinks();
     } catch {
       paymentMethod = null;
@@ -514,6 +526,12 @@ export const initCart = () => {
       showCheckoutAlert("تصویر فیش واریزی را از دوربین یا گالری انتخاب کن.", paymentReceipt);
       return;
     }
+    if (!termsAccepted?.checked) {
+      termsAccepted?.closest(".checkout-terms-consent")?.classList.add("is-invalid");
+      termsAccepted?.scrollIntoView({ behavior: "smooth", block: "center" });
+      showCheckoutAlert("برای ثبت سفارش، مطالعه و پذیرش قوانین سایت الزامی است.", termsAccepted);
+      return;
+    }
     if (!cart.length) showCheckoutAlert("سبد سفارش خالی است.");
   };
 
@@ -563,6 +581,7 @@ export const initCart = () => {
         paymentCardId: selectedPaymentCard?.id,
         paymentRefId: normalizeDigits(paymentRef?.value.trim() || ""),
         discountCode: discountCode?.value.trim() || undefined,
+        termsAccepted: termsAccepted?.checked === true,
         customerNote: null,
         items: cart.map((item) => ({
           productId: item.productId,
@@ -963,6 +982,10 @@ export const initCart = () => {
   });
 
   registerOrderButton?.addEventListener("click", () => { void submitOrderOnly(); });
+  termsAccepted?.addEventListener("change", () => {
+    termsAccepted.closest(".checkout-terms-consent")?.classList.remove("is-invalid");
+    updateOrderLinks();
+  });
   checkoutAlertCloseButtons.forEach((button) => button.addEventListener("click", closeCheckoutAlert));
   continueChoice?.addEventListener("click", hideAddedChoice);
   viewCartChoice?.addEventListener("click", () => {

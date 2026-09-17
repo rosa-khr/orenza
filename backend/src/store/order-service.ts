@@ -96,8 +96,6 @@ export class OrderService {
       const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
       const discount = await resolveDiscount(client, data.discountCode, totalAmount);
       const taxableAmount = Math.max(0, totalAmount - discount.amount);
-      const taxAmount = Math.round(taxableAmount * 0.10);
-      const finalAmount = taxableAmount + taxAmount;
       const payment = await client.query<{ id: string; type: "cardToCard" | "bankGateway" | "zarinpal" }>(
         "SELECT id,type FROM payment_methods WHERE id = $1 AND is_active = true FOR SHARE",
         [data.paymentMethodId]
@@ -106,6 +104,8 @@ export class OrderService {
       if (!paymentMethod) {
         throw Object.assign(new Error("روش پرداخت انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
       }
+      const taxAmount = paymentMethod.type === "cardToCard" ? 0 : Math.round(taxableAmount * 0.10);
+      const finalAmount = taxableAmount + taxAmount;
       if (paymentMethod.type === "cardToCard") {
         if (!data.paymentCardId) {
           throw Object.assign(new Error("برای کارت‌به‌کارت، انتخاب کارت الزامی است."), { statusCode: 422 });

@@ -6,7 +6,7 @@ import { siteSettingsSchema } from "./store/schemas.js";
 export const siteSettingsSelect = `
   brand_name,brand_name_en,brand_tagline,support_phone,support_email,
   whatsapp_url,bale_url,instagram_url,telegram_url,website_url,address,footer_heading,footer_description,
-  footer_copyright,footer_copyright_en,logo_url,favicon_url,homepage_seo_title,
+  footer_copyright,footer_copyright_en,terms_content,logo_url,favicon_url,homepage_seo_title,
   homepage_seo_description,homepage_seo_keywords,homepage_og_image_url,
   homepage_hero_eyebrow,homepage_hero_title,homepage_hero_title_accent,
   homepage_hero_description,homepage_hero_primary_label,homepage_hero_primary_href,
@@ -112,7 +112,7 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       content_ai_model=$68,
       content_ai_instructions=$69,content_ai_default_audience=$70,content_ai_default_tone=$71,
       content_ai_default_length=$72,content_ai_default_language=$73,
-      telegram_url=$74,footer_copyright_en=$75,
+      telegram_url=$74,footer_copyright_en=$75,terms_content=$76,
       updated_at=now()
      WHERE id=1 RETURNING ${siteSettingsSelect}`,
     [
@@ -146,7 +146,7 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       data.contentAiModel || "gpt-5", data.contentAiInstructions || "از ادعای پزشکی یا اطلاعات ساختگی خودداری کن؛ محتوای کم‌حجم و ناقص تولید نکن؛ ساختار مقاله را با H1 و H2 و در صورت نیاز H3 ارائه کن؛ عنوان SEO و توضیحات متا را جداگانه بنویس.",
       data.contentAiDefaultAudience || "مخاطب عمومی فروشگاه اورنزا", data.contentAiDefaultTone || "حرفه‌ای، گرم و متقاعدکننده",
       data.contentAiDefaultLength || "medium", data.contentAiDefaultLanguage || "fa",
-      data.telegramUrl, data.footerCopyrightEn
+      data.telegramUrl, data.footerCopyrightEn, data.termsContent
     ]
   );
   return toPublicRecord(result.rows[0]!);

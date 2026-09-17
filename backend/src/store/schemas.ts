@@ -301,6 +301,7 @@ export const siteSettingsSchema = z.object({
   footerDescription: z.string().trim().min(10).max(500),
   footerCopyright: z.string().trim().min(5).max(300),
   footerCopyrightEn: z.string().trim().min(5).max(300),
+  termsContent: z.string().trim().min(50).max(20000),
   logoUrl: optionalUrl,
   faviconUrl: z.string().trim().min(1).max(500),
   homepageSeoTitle: z.string().trim().min(10).max(60),
@@ -407,6 +408,7 @@ export const createOrderSchema = z.object({
   paymentRefId: z.string().trim().min(4).max(80).regex(/^[0-9]+$/, "کد پیگیری باید فقط شامل ارقام ۰ تا ۹ باشد.").optional(),
   paymentReceiptUrl: z.string().trim().max(500).optional(),
   discountCode: z.string().trim().max(60).optional(),
+  termsAccepted: z.literal(true, { error: "پذیرش قوانین سایت برای ثبت سفارش الزامی است." }),
   customerNote: z.string().trim().max(2000).nullable().optional(),
   items: z.array(orderItemInputSchema).min(1).max(30)
 });

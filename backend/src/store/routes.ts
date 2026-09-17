@@ -456,7 +456,7 @@ export const registerStoreRoutes = (
     if (sitemapKind === "statics") {
       if (settings.sitemapStaticEnabled === false) return sitemapXml([]);
       const changefreq = normalizeSitemapChangefreq(settings.sitemapStaticChangefreq, "weekly");
-      return sitemapXml(["/", "/products/", "/order/", "/about/", "/contact/", "/wholesale/"].map((path) => ({
+      return sitemapXml(["/", "/products/", "/order/", "/about/", "/contact/", "/terms/", "/wholesale/"].map((path) => ({
         loc: sitemapUrl(origin, path),
         changefreq
       })));

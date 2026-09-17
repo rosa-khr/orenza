@@ -96,7 +96,7 @@ import Icon from "./Icon.astro";
       <section class="checkout-totals" aria-label="مبلغ سفارش">
         <div><span>مبلغ اقلام</span><strong data-cart-subtotal>۰ تومان</strong></div>
         <div data-cart-discount-row hidden><span>تخفیف</span><strong data-cart-discount>۰ تومان</strong></div>
-        <div><span>مالیات ارزش افزوده ۱۰٪</span><strong data-cart-tax>۰ تومان</strong></div>
+        <div data-cart-tax-row hidden><span>مالیات ارزش افزوده ۱۰٪</span><strong data-cart-tax>۰ تومان</strong></div>
         <div><span>مبلغ نهایی</span><strong data-cart-final>۰ تومان</strong></div>
       </section>
 
@@ -126,6 +126,14 @@ import Icon from "./Icon.astro";
       <p class="checkout-payment-guide" data-payment-guide>
         مبلغ نهایی را به یکی از کارت‌های بالا واریز کن. پس از ثبت کد پیگیری و فیش، سفارش برای تأیید مدیریت ارسال می‌شود و آماده‌سازی بعد از تأیید آغاز خواهد شد.
       </p>
+
+      <label class="checkout-terms-consent">
+        <input type="checkbox" data-terms-accepted required />
+        <span>
+          <span>قوانین و شرایط سایت را مطالعه کرده‌ام و می‌پذیرم.</span>
+          <a href="/terms/" target="_blank" rel="noopener">مشاهده قوانین</a>
+        </span>
+      </label>
 
       <button class="checkout-register-order" type="button" data-register-order disabled aria-disabled="true">
         ثبت سفارش و ارسال برای تأیید

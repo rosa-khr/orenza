@@ -127,6 +127,13 @@ CREATE TABLE IF NOT EXISTS site_settings (
   footer_description varchar(500) NOT NULL DEFAULT 'طعم دلخواه و دستگاهت را بگو؛ ترکیب مناسب را با هم پیدا می‌کنیم.',
   footer_copyright varchar(300) NOT NULL DEFAULT 'تمامی حقوق قهوه اورنزا محفوظ است.',
   footer_copyright_en varchar(300) NOT NULL DEFAULT 'orenza @2026',
+  terms_content text NOT NULL DEFAULT 'با ثبت سفارش در فروشگاه اورنزا، کاربر تأیید می‌کند اطلاعات سفارش و نشانی تحویل را به‌درستی وارد کرده است.
+
+قیمت، موجودی و شرایط ارسال کالاها مطابق اطلاعات نمایش‌داده‌شده در زمان ثبت سفارش محاسبه می‌شود. در صورت بروز خطا یا تغییر ضروری، پشتیبانی اورنزا برای هماهنگی با خریدار تماس خواهد گرفت.
+
+اطلاعات شخصی کاربران فقط برای پردازش سفارش، ارسال کالا و ارائه خدمات پشتیبانی استفاده می‌شود و بدون مجوز قانونی در اختیار اشخاص دیگر قرار نمی‌گیرد.
+
+شرایط مرجوعی یا لغو سفارش با توجه به نوع محصول، وضعیت بسته‌بندی و مرحله آماده‌سازی بررسی می‌شود. برای پیگیری هر درخواست با پشتیبانی اورنزا تماس بگیرید.',
   logo_url varchar(500),
   favicon_url varchar(500) NOT NULL DEFAULT '/favicon.svg',
   homepage_seo_title varchar(60) NOT NULL DEFAULT 'خرید قهوه تازه رست با آسیاب دلخواه',
@@ -351,6 +358,14 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS telegram_url varchar(500) NOT NULL DEFAULT 'https://t.me/orenza_ir';
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS footer_copyright_en varchar(300) NOT NULL DEFAULT 'orenza @2026';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS terms_content text NOT NULL DEFAULT 'با ثبت سفارش در فروشگاه اورنزا، کاربر تأیید می‌کند اطلاعات سفارش و نشانی تحویل را به‌درستی وارد کرده است.
+
+قیمت، موجودی و شرایط ارسال کالاها مطابق اطلاعات نمایش‌داده‌شده در زمان ثبت سفارش محاسبه می‌شود. در صورت بروز خطا یا تغییر ضروری، پشتیبانی اورنزا برای هماهنگی با خریدار تماس خواهد گرفت.
+
+اطلاعات شخصی کاربران فقط برای پردازش سفارش، ارسال کالا و ارائه خدمات پشتیبانی استفاده می‌شود و بدون مجوز قانونی در اختیار اشخاص دیگر قرار نمی‌گیرد.
+
+شرایط مرجوعی یا لغو سفارش با توجه به نوع محصول، وضعیت بسته‌بندی و مرحله آماده‌سازی بررسی می‌شود. برای پیگیری هر درخواست با پشتیبانی اورنزا تماس بگیرید.';
 UPDATE site_settings
 SET footer_heading = 'ارتباط و شبکه‌های اجتماعی'
 WHERE footer_heading = 'هر انتخابی داستان خودش را دارد؛ بیایید داستان مناسب شما را پیدا کنیم.';
