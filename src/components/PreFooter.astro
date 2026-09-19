@@ -1,0 +1,218 @@
+---
+import { BadgeCheck, Headphones, PackageCheck, ShieldCheck } from "@lucide/astro";
+
+const trustPoints = [
+  { title: "انتخاب و تأمین با دقت", icon: ShieldCheck },
+  { title: "توجه به کیفیت و اصالت محصول", icon: BadgeCheck },
+  { title: "بسته‌بندی استاندارد", icon: PackageCheck },
+  { title: "پاسخ‌گویی و همراهی پس از خرید", icon: Headphones }
+];
+---
+
+<section class="pre-footer is-motion-ready" dir="rtl" aria-labelledby="pre-footer-title" data-pre-footer>
+  <div class="pre-footer__inner">
+    <header class="pre-footer__intro">
+      <span>تعهد اورنزا</span>
+      <h2 id="pre-footer-title">انتخاب با خیال راحت</h2>
+      <p>
+        در اورنزا، کیفیت محصول، اصالت مواد اولیه و تجربه‌ای که به دست شما می‌رسد برای ما به یک اندازه مهم است.
+        محصولات با دقت انتخاب، آماده و بسته‌بندی می‌شوند تا فرآیند انتخاب برای مشتری روشن‌تر و مطمئن‌تر باشد.
+      </p>
+    </header>
+
+    <ul class="pre-footer__trust" aria-label="تعهدهای اورنزا">
+      {trustPoints.map(({ title, icon: TrustIcon }) => (
+        <li>
+          <TrustIcon size={24} stroke-width={1.45} aria-hidden="true" />
+          <span>{title}</span>
+        </li>
+      ))}
+    </ul>
+
+    <a class="pre-footer__link" href="/products/">
+      <span>مشاهده محصولات</span>
+      <span aria-hidden="true">←</span>
+    </a>
+  </div>
+</section>
+
+<script is:inline>
+  (() => {
+    const section = document.querySelector("[data-pre-footer]");
+    if (!section) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      section.classList.add("is-visible");
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      section.classList.add("is-visible");
+      observer.unobserve(section);
+    }, { threshold: 0.18 });
+
+    observer.observe(section);
+  })();
+</script>
+
+<style>
+  .pre-footer {
+    position: relative;
+    border-bottom: 1px solid rgba(70, 59, 45, .11);
+    background: #fafaf7;
+    color: #282621;
+  }
+
+  .pre-footer__inner {
+    position: relative;
+    display: grid;
+    width: min(1180px, calc(100% - 80px));
+    min-height: 242px;
+    margin-inline: auto;
+    place-items: center;
+    align-content: center;
+    gap: 18px;
+    padding-block: 34px;
+  }
+
+  .pre-footer__intro {
+    display: grid;
+    max-width: 720px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .pre-footer__intro > span {
+    color: #9a6a32;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .pre-footer__intro h2 {
+    margin: 6px 0 8px;
+    color: #29251f;
+    font-size: 27px;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .pre-footer__intro p {
+    margin: 0;
+    color: #665f55;
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  .pre-footer__trust {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    border-block: 1px solid rgba(36, 75, 59, .12);
+    padding: 14px 0;
+    list-style: none;
+  }
+
+  .pre-footer__trust li {
+    display: flex;
+    min-width: 0;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding-inline: 18px;
+    color: #3e3a34;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .pre-footer__trust li + li { border-right: 1px solid rgba(36, 75, 59, .1); }
+  .pre-footer__trust svg { flex: 0 0 auto; color: #95622f; }
+
+  .pre-footer__link {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid rgba(36, 75, 59, .46);
+    border-radius: 5px;
+    padding: 7px 15px;
+    color: #244b3b;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+  }
+
+  .pre-footer__link:hover,
+  .pre-footer__link:focus-visible {
+    border-color: #244b3b;
+    background: #244b3b;
+    color: #fff;
+  }
+
+  .is-motion-ready .pre-footer__intro,
+  .is-motion-ready .pre-footer__trust li,
+  .is-motion-ready .pre-footer__link {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 620ms cubic-bezier(.22, 1, .36, 1), transform 620ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .is-motion-ready .pre-footer__trust li:nth-child(1) { transition-delay: 90ms; }
+  .is-motion-ready .pre-footer__trust li:nth-child(2) { transition-delay: 165ms; }
+  .is-motion-ready .pre-footer__trust li:nth-child(3) { transition-delay: 240ms; }
+  .is-motion-ready .pre-footer__trust li:nth-child(4) { transition-delay: 315ms; }
+  .is-motion-ready .pre-footer__link { transform: translateY(10px); transition-delay: 390ms; }
+
+  .is-motion-ready.is-visible .pre-footer__intro,
+  .is-motion-ready.is-visible .pre-footer__trust li,
+  .is-motion-ready.is-visible .pre-footer__link {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 699px) {
+    .pre-footer__inner {
+      width: min(100% - 32px, 560px);
+      min-height: 0;
+      gap: 22px;
+      padding-block: 48px;
+    }
+
+    .pre-footer__intro h2 { margin-top: 7px; font-size: 22px; }
+    .pre-footer__intro p { font-size: 11px; line-height: 2; }
+
+    .pre-footer__trust {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding-block: 4px;
+    }
+
+    .pre-footer__trust li {
+      min-height: 70px;
+      flex-direction: column;
+      gap: 7px;
+      padding: 12px 8px;
+      font-size: 9px;
+      line-height: 1.7;
+    }
+
+    .pre-footer__trust li + li { border-right: 0; }
+    .pre-footer__trust li:nth-child(even) { border-right: 1px solid rgba(36, 75, 59, .1); }
+    .pre-footer__trust li:nth-child(n + 3) { border-top: 1px solid rgba(36, 75, 59, .1); }
+    .pre-footer__trust svg { width: 21px; height: 21px; }
+    .pre-footer__link { min-height: 38px; font-size: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .is-motion-ready .pre-footer__intro,
+    .is-motion-ready .pre-footer__trust li,
+    .is-motion-ready .pre-footer__link {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>

@@ -1,51 +1,40 @@
 ---
-import { BadgeCheck, RefreshCcw, ShieldCheck, Truck } from "@lucide/astro";
-
-const benefits = [
+const selectionSteps = [
   {
-    title: "ارسال سریع",
-    description: "تهران و کرج، آماده‌سازی و ارسال سریع‌تر.",
-    icon: Truck
+    number: "01",
+    title: "بر اساس طعم انتخاب کنید",
+    description: "از طعم‌های قوی و تلخ تا انتخاب‌های ملایم، گیاهی و معطر."
   },
   {
-    title: "ضمانت اصالت",
-    description: "دانه و مواد اولیه با منشأ مشخص.",
-    icon: ShieldCheck
+    number: "02",
+    title: "تفاوت محصولات را بشناسید",
+    description: "ترکیبات، ویژگی‌ها و روش مصرف هر محصول به‌صورت روشن و قابل مقایسه ارائه می‌شود."
   },
   {
-    title: "امکان مرجوعی",
-    description: "ایراد واقعی سفارش را پیگیری و جبران می‌کنیم.",
-    icon: RefreshCcw
-  },
-  {
-    title: "کیفیت ثابت",
-    description: "ترکیب، رست و آسیاب با استاندارد ثابت.",
-    icon: BadgeCheck
+    number: "03",
+    title: "برای موقعیت مناسب انتخاب کنید",
+    description: "برای شروع روز، پذیرایی، استراحت یا یک انتخاب روزمره؛ هر محصول کاربرد خودش را دارد."
   }
 ];
 ---
 
 <section id="espresso-ritual" class="espresso-banner" aria-labelledby="espresso-banner-title">
   <div class="espresso-banner-copy">
-    <p>WHY ORENZA</p>
-    <h2 id="espresso-banner-title">چرا اورنزا را انتخاب کنیم؟</h2>
-    <span>خرید قهوه باید هم خوش‌طعم باشد، هم دقیق، سریع و قابل اعتماد.</span>
+    <p>ORENZA SELECTION</p>
+    <h2 id="espresso-banner-title">انتخابی که از سلیقه شما شروع می‌شود</h2>
+    <span>
+      محصول مناسب برای هر کسی یکسان نیست.<br />
+      در اورنزا، انتخاب را بر اساس طعم، سبک مصرف و موقعیتی که برای آن خرید می‌کنید ساده‌تر می‌کنیم.
+    </span>
   </div>
 
-  <div class="orenza-benefit-grid" aria-label="مزیت‌های خرید از اورنزا">
-    {benefits.map((benefit) => {
-      const BenefitIcon = benefit.icon;
-      return (
-        <article>
-          <span class="orenza-benefit-icon" aria-hidden="true">
-            <BenefitIcon size={42} stroke-width={1.45} />
-          </span>
-          <div>
-            <h3>{benefit.title}</h3>
-            <p>{benefit.description}</p>
-          </div>
-        </article>
-      );
-    })}
+  <div class="orenza-selection-grid" aria-label="راهنمای انتخاب محصولات اورنزا">
+    {selectionSteps.map((step) => (
+      <article>
+        <span class="orenza-selection-number" aria-hidden="true">{step.number}</span>
+        <h3>{step.title}</h3>
+        <p>{step.description}</p>
+      </article>
+    ))}
   </div>
 </section>

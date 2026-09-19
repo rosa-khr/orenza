@@ -17,8 +17,12 @@ import { ArrowLeft } from "@lucide/astro";
   keywords={["خرید قهوه تازه رست", "قهوه اسپرسو", "قهوه عربیکا", "قهوه روبوستا", "آسیاب قهوه", "قهوه اورنزا"]}
 >
   <MobileHomeTop />
-  <Hero />
-  <Manifesto />
+  <div class="home-hero-transition" data-hero-transition>
+    <div class="home-hero-transition__layers">
+      <Hero />
+      <Manifesto />
+    </div>
+  </div>
   <HomeBannerRow slotId="aboveDiscount" />
   <ProductRails kind="discount" />
   <section class="home-order-cta" aria-labelledby="home-order-title">
