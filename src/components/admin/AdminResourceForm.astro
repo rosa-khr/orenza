@@ -17,14 +17,14 @@ const structuredResources = new Set(["products", "categories", "articles", "tags
 const isStructuredForm = structuredResources.has(resource.key);
 const supportsCatalogImage = resource.key === "products" || resource.key === "categories";
 const catalogImageLabel = resource.key === "categories" ? "بنر دسته‌بندی" : "تصویر محصول";
-const productPrimaryKeys = ["titleFa", "titleEn", "sortOrder", "categoryId"];
+const productPrimaryKeys = ["titleFa", "titleEn", "slug", "sortOrder", "categoryId"];
 const productFeatureKeys = new Set(["roastType", "coffeeType", "grindType", "blendType", "saleType", "packageWeightGrams"]);
 const productPriceKeys = new Set(["purchasePricePerKg", "markupPercent", "salePricePerKg", "profitPerKg", "discountPercent", "discountSalePricePerKg"]);
 const productDetailKeys = new Set(["description", "productContent", "tagIds", "relatedProductIds"]);
-const sharedSeoKeys = ["seoTitle", "seoDescription", "canonicalUrl", "sitemapChangefreq"];
+const sharedSeoKeys = ["seoTitle", "seoDescription", "canonicalUrl"];
 const productSeoKeys = new Set(sharedSeoKeys);
 const productSidebarKeys = new Set(["imageUrl", "productImageUrls", "stockStatus", "showInBestSellers", "showInDiscounts", "showInPopularFooter", "showInPopularSearches", "isActive"]);
-const categoryPrimaryKeys = new Set(["title", "slug", "sortOrder", "parentCategoryId"]);
+const categoryPrimaryKeys = new Set(["title", "slug", "parentCategoryId"]);
 const categoryDetailKeys = new Set(["description"]);
 const categorySeoKeys = new Set(sharedSeoKeys);
 const categorySidebarKeys = new Set(["imageUrl", "showInPopularFooter", "showInPopularSearches", "isActive"]);

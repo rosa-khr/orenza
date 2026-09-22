@@ -24,10 +24,11 @@ export const siteSettingsSelect = `
   homepage_discounts_badge_color,homepage_discounts_icon_color,
   theme_surface_color,theme_footer_color,theme_support_color,theme_header_icon_color,
   search_indexing_enabled,robots_rules,
-  sitemap_enabled,sitemap_static_enabled,sitemap_products_enabled,sitemap_categories_enabled,
-  sitemap_tags_enabled,sitemap_articles_enabled,sitemap_static_changefreq,
+  sitemap_enabled,sitemap_homepage_enabled,sitemap_terms_enabled,sitemap_static_enabled,sitemap_products_enabled,sitemap_categories_enabled,
+  sitemap_tags_enabled,sitemap_articles_enabled,sitemap_homepage_changefreq,sitemap_terms_changefreq,sitemap_static_changefreq,
   sitemap_products_changefreq,sitemap_categories_changefreq,sitemap_tags_changefreq,
-  sitemap_articles_changefreq,
+  sitemap_articles_changefreq,sitemap_homepage_priority,sitemap_terms_priority,sitemap_static_priority,
+  sitemap_products_priority,sitemap_categories_priority,sitemap_tags_priority,sitemap_articles_priority,
   invoice_national_id,invoice_signature_url,updated_at`;
 
 const aiSettingsSecret = () => createHash("sha256")
@@ -113,6 +114,10 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       content_ai_instructions=$69,content_ai_default_audience=$70,content_ai_default_tone=$71,
       content_ai_default_length=$72,content_ai_default_language=$73,
       telegram_url=$74,footer_copyright_en=$75,terms_content=$76,
+      sitemap_homepage_changefreq=$77,sitemap_homepage_priority=$78,sitemap_static_priority=$79,
+      sitemap_products_priority=$80,sitemap_categories_priority=$81,sitemap_tags_priority=$82,
+      sitemap_articles_priority=$83,sitemap_homepage_enabled=$84,
+      sitemap_terms_enabled=$85,sitemap_terms_changefreq=$86,sitemap_terms_priority=$87,
       updated_at=now()
      WHERE id=1 RETURNING ${siteSettingsSelect}`,
     [
@@ -146,7 +151,11 @@ export const updateSiteSettings = async (pool: Pool, input: unknown) => {
       data.contentAiModel || "gpt-5", data.contentAiInstructions || "از ادعای پزشکی یا اطلاعات ساختگی خودداری کن؛ محتوای کم‌حجم و ناقص تولید نکن؛ ساختار مقاله را با H1 و H2 و در صورت نیاز H3 ارائه کن؛ عنوان SEO و توضیحات متا را جداگانه بنویس.",
       data.contentAiDefaultAudience || "مخاطب عمومی فروشگاه اورنزا", data.contentAiDefaultTone || "حرفه‌ای، گرم و متقاعدکننده",
       data.contentAiDefaultLength || "medium", data.contentAiDefaultLanguage || "fa",
-      data.telegramUrl, data.footerCopyrightEn, data.termsContent
+      data.telegramUrl, data.footerCopyrightEn, data.termsContent,
+      data.sitemapHomepageChangefreq, data.sitemapHomepagePriority, data.sitemapStaticPriority,
+      data.sitemapProductsPriority, data.sitemapCategoriesPriority, data.sitemapTagsPriority,
+      data.sitemapArticlesPriority, data.sitemapHomepageEnabled,
+      data.sitemapTermsEnabled, data.sitemapTermsChangefreq, data.sitemapTermsPriority
     ]
   );
   return toPublicRecord(result.rows[0]!);

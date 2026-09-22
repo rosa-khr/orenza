@@ -203,7 +203,7 @@ const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
           <div class="summary">
             <div><span>جمع مبلغ اقلام</span><strong>${asMoney(order.totalAmount)}</strong></div>
             <div><span>تخفیف</span><strong>${asMoney(order.discountAmount)}</strong></div>
-            <div><span>مالیات ارزش افزوده ۱۰٪</span><strong>${asMoney(order.taxAmount)}</strong></div>
+            <div><span>مالیات ارزش افزوده ${money.format(Number(order.taxPercent))}٪</span><strong>${asMoney(order.taxAmount)}</strong></div>
             <div class="grand"><span>مبلغ قابل پرداخت</span><strong>${asMoney(order.finalAmount)}</strong></div>
           </div>
         </section>

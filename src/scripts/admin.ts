@@ -29,6 +29,7 @@ type ResourceField = {
   maxLength?: number;
   options?: { label: string; value: string }[];
   readonly?: boolean;
+  listOnly?: boolean;
 };
 
 type ResourceConfig = {
@@ -763,7 +764,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     if (!isCategoryList || categoryOrderSaving) return;
     const orderedIds: string[] = [];
     gridApi.forEachNodeAfterFilterAndSort((node) => {
-      if (node.data?.id) orderedIds.push(String(node.data.id));
+      if (node.data?.id && node.data.isDeleted !== true) orderedIds.push(String(node.data.id));
     });
     if (!orderedIds.length) return;
     categoryOrderSaving = true;
@@ -783,15 +784,18 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
   };
 
   const deleteRow = async (id: string) => {
+    const isSoftDelete = config.key === "products" || config.key === "categories";
     const accepted = await askConfirm(
-      "حذف رکورد",
-      "این عملیات قابل بازگشت نیست. از حذف این رکورد مطمئن هستید؟",
-      "بله، حذف شود"
+      isSoftDelete ? "تغییر وضعیت به حذف‌شده" : "حذف رکورد",
+      isSoftDelete
+        ? "رکورد در دیتابیس باقی می‌ماند، اما دیگر در سایت نمایش داده نمی‌شود. ادامه می‌دهید؟"
+        : "این عملیات قابل بازگشت نیست. از حذف این رکورد مطمئن هستید؟",
+      isSoftDelete ? "بله، حذف نرم انجام شود" : "بله، حذف شود"
     );
     if (!accepted) return;
     try {
       await api(`/api/v1/admin/${config.key}/${id}`, { method: "DELETE" });
-      toast("رکورد با موفقیت حذف شد.");
+      toast(isSoftDelete ? "وضعیت رکورد به حذف‌شده تغییر کرد." : "رکورد با موفقیت حذف شد.");
       await loadRows();
     } catch (error) {
       toast(error instanceof Error ? error.message : "حذف انجام نشد.", "error");
@@ -855,6 +859,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     actions.className = "admin-row-actions";
     if (!row?.id) return actions;
     const id = String(row.id);
+    const isDeleted = row.isDeleted === true;
     const link = (href: string, label: string, icon: string, newTab = false) => {
       const anchor = document.createElement("a");
       anchor.href = href;
@@ -874,12 +879,10 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       element.addEventListener("click", onClick);
       return element;
     };
-    actions.append(
-      link(`/admin/${config.key}/view/?id=${id}`, "مشاهده", gridIcons.eye),
-      link(`/admin/${config.key}/edit/?id=${id}`, "ویرایش", gridIcons.pencil)
-    );
+    actions.append(link(`/admin/${config.key}/view/?id=${id}`, "مشاهده", gridIcons.eye));
+    if (!isDeleted) actions.append(link(`/admin/${config.key}/edit/?id=${id}`, "ویرایش", gridIcons.pencil));
     const publicUrl = (() => {
-      if (config.key === "products" && row.titleEn) return `/products/${encodeURIComponent(productSlug(String(row.titleEn)))}/`;
+      if (config.key === "products" && row.titleEn) return `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.titleEn))))}/`;
       if (config.key === "tags" && row.slug) return `/tags/${encodeURIComponent(String(row.slug))}/`;
       if (config.key === "categories" && row.slug) {
         const slug = String(row.slug);
@@ -891,7 +894,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       }
       return null;
     })();
-    if (publicUrl) actions.append(link(publicUrl, "مشاهده در سایت", gridIcons.external, true));
+    if (publicUrl && !isDeleted) actions.append(link(publicUrl, "مشاهده در سایت", gridIcons.external, true));
     const isPendingOrder = config.key === "orders" && row.orderStatus === "new" && row.paymentStatus === "pending";
     const isPreparingOrder = config.key === "orders" && row.orderStatus === "processing";
     const isReadyOrder = config.key === "orders" && row.orderStatus === "ready";
@@ -923,7 +926,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
         button("ثبت ارسال سفارش", gridIcons.truck, () => void changeFulfillmentStatus(row, "sent"))
       );
     }
-    if (config.key !== "users" && (config.key !== "orders" || isPendingOrder)) {
+    if (!isDeleted && config.key !== "users" && (config.key !== "orders" || isPendingOrder)) {
       actions.append(button("حذف", gridIcons.trash, () => void deleteRow(id)));
     }
     return actions;
@@ -944,7 +947,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     },
     ...config.fields.map((field): ColDef<Record<string, unknown>> => {
       const isStatus = [
-        "isActive", "isPublished", "orderStatus", "paymentStatus", "saleType", "stockStatus",
+        "isActive", "isPublished", "recordStatus", "orderStatus", "paymentStatus", "saleType", "stockStatus",
         "role", "hasPassword", "isSystem"
       ].includes(field.key);
       return {
@@ -1480,7 +1483,7 @@ const loadLookups = async (form: HTMLFormElement) => {
   const loadCategories = category || parentCategory
     ? fetchAllAdminRows("categories")
       .then((items) => {
-        items.forEach((item) => {
+        items.filter((item) => item.isDeleted !== true).forEach((item) => {
           const id = String(item.id || "");
           if (!id) return;
           const title = String(item.title || id);
@@ -1495,8 +1498,8 @@ const loadLookups = async (form: HTMLFormElement) => {
     loadCategories,
     tags ? api<{ items: { id: string; title: string }[] }>("/api/v1/admin/tags?pageSize=100")
       .then((payload) => payload.items.forEach((item) => tags.add(new Option(item.title, item.id)))) : Promise.resolve(),
-    relatedProducts ? api<{ items: { id: string; titleFa: string; titleEn: string }[] }>("/api/v1/admin/products?pageSize=100")
-      .then((payload) => payload.items.filter((item) => item.id !== currentId).forEach((item) => {
+    relatedProducts ? api<{ items: { id: string; titleFa: string; titleEn: string; isDeleted?: boolean }[] }>("/api/v1/admin/products?pageSize=100")
+      .then((payload) => payload.items.filter((item) => item.id !== currentId && item.isDeleted !== true).forEach((item) => {
         relatedProducts.add(new Option(`${item.titleFa} — ${item.titleEn}`, item.id));
       })) : Promise.resolve()
   ]).catch(() => undefined);
@@ -1953,6 +1956,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     try {
       const { item } = await api<{ item: Record<string, unknown> }>(`/api/v1/admin/${config.key}/${id}`);
       config.fields.forEach((field) => setFormValue(form, field.key, item[field.key]));
+      if (config.key === "products" && !item.slug) setFormValue(form, "slug", productSlug(String(item.titleEn || "")));
       initSeoCounters(form);
       refreshCatalogImage?.();
       updateProductProfit();
@@ -1985,6 +1989,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     const data = new FormData(form);
     const body: Record<string, unknown> = {};
     config.fields.forEach((field) => {
+      if (field.listOnly) return;
       if (field.readonly && field.key !== "discountSalePricePerKg") return;
       const raw = data.get(field.key);
       if (field.type === "permissions") body[field.key] = data.getAll(field.key).map(String);
@@ -2356,16 +2361,27 @@ type SiteSettingsPayload = {
   searchIndexingEnabled: boolean;
   robotsRules: string;
   sitemapEnabled: boolean;
+  sitemapHomepageEnabled: boolean;
+  sitemapTermsEnabled: boolean;
   sitemapStaticEnabled: boolean;
   sitemapProductsEnabled: boolean;
   sitemapCategoriesEnabled: boolean;
   sitemapTagsEnabled: boolean;
   sitemapArticlesEnabled: boolean;
+  sitemapHomepageChangefreq: string;
+  sitemapTermsChangefreq: string;
   sitemapStaticChangefreq: string;
   sitemapProductsChangefreq: string;
   sitemapCategoriesChangefreq: string;
   sitemapTagsChangefreq: string;
   sitemapArticlesChangefreq: string;
+  sitemapHomepagePriority: number;
+  sitemapTermsPriority: number;
+  sitemapStaticPriority: number;
+  sitemapProductsPriority: number;
+  sitemapCategoriesPriority: number;
+  sitemapTagsPriority: number;
+  sitemapArticlesPriority: number;
   invoiceNationalId: string;
   invoiceSignatureUrl: string | null;
   contentAiModel: string;
@@ -2436,12 +2452,26 @@ Disallow: /payment/
 Disallow: /payment-result/
 Disallow: /order-success/
 Disallow: /api/
-Disallow: /search?q=*
-Disallow: /*?*
-Disallow: /*utm_*
-Disallow: /*sort*
-Disallow: /*filter*
-Disallow: /*page*
+Disallow: /*?q=
+Disallow: /*&q=
+Disallow: /*?sort=
+Disallow: /*&sort=
+Disallow: /*?sortBy=
+Disallow: /*&sortBy=
+Disallow: /*?filter=
+Disallow: /*&filter=
+Disallow: /*?page=
+Disallow: /*&page=
+Disallow: /*?weight=
+Disallow: /*&weight=
+Disallow: /*?product=
+Disallow: /*&product=
+Disallow: /*?cart=
+Disallow: /*&cart=
+Disallow: /*?id=
+Disallow: /*&id=
+Disallow: /*?utm_
+Disallow: /*&utm_
 Disallow: /temp/
 Disallow: /test/
 Disallow: /upload/
@@ -2759,11 +2789,20 @@ const initSiteSettings = async () => {
     if (!input("themeSupportColor").value) input("themeSupportColor").value = "#173f33";
     if (!input("themeHeaderIconColor").value) input("themeHeaderIconColor").value = "#2d5644";
     if (!input("robotsRules").value) input("robotsRules").value = defaultRobotsRules;
-    if (!input("sitemapStaticChangefreq").value) input("sitemapStaticChangefreq").value = "weekly";
-    if (!input("sitemapProductsChangefreq").value) input("sitemapProductsChangefreq").value = "weekly";
-    if (!input("sitemapCategoriesChangefreq").value) input("sitemapCategoriesChangefreq").value = "weekly";
+    if (!input("sitemapHomepageChangefreq").value) input("sitemapHomepageChangefreq").value = "monthly";
+    if (!input("sitemapTermsChangefreq").value) input("sitemapTermsChangefreq").value = "monthly";
+    if (!input("sitemapStaticChangefreq").value) input("sitemapStaticChangefreq").value = "monthly";
+    if (!input("sitemapProductsChangefreq").value) input("sitemapProductsChangefreq").value = "monthly";
+    if (!input("sitemapCategoriesChangefreq").value) input("sitemapCategoriesChangefreq").value = "monthly";
     if (!input("sitemapTagsChangefreq").value) input("sitemapTagsChangefreq").value = "monthly";
     if (!input("sitemapArticlesChangefreq").value) input("sitemapArticlesChangefreq").value = "monthly";
+    if (!input("sitemapHomepagePriority").value) input("sitemapHomepagePriority").value = "0.9";
+    if (!input("sitemapTermsPriority").value) input("sitemapTermsPriority").value = "0.9";
+    if (!input("sitemapStaticPriority").value) input("sitemapStaticPriority").value = "0.8";
+    if (!input("sitemapProductsPriority").value) input("sitemapProductsPriority").value = "0.9";
+    if (!input("sitemapCategoriesPriority").value) input("sitemapCategoriesPriority").value = "0.8";
+    if (!input("sitemapTagsPriority").value) input("sitemapTagsPriority").value = "0.7";
+    if (!input("sitemapArticlesPriority").value) input("sitemapArticlesPriority").value = "0.7";
     initSeoCounters(form);
     showSignature(item.invoiceSignatureUrl);
     showBanner("desktop", item.homepageBannerDesktopUrl);
@@ -2948,16 +2987,27 @@ const initSiteSettings = async () => {
           searchIndexingEnabled: (input("searchIndexingEnabled") as HTMLInputElement).checked,
           robotsRules: input("robotsRules").value,
           sitemapEnabled: (input("sitemapEnabled") as HTMLInputElement).checked,
+          sitemapHomepageEnabled: (input("sitemapHomepageEnabled") as HTMLInputElement).checked,
+          sitemapTermsEnabled: (input("sitemapTermsEnabled") as HTMLInputElement).checked,
           sitemapStaticEnabled: (input("sitemapStaticEnabled") as HTMLInputElement).checked,
           sitemapProductsEnabled: (input("sitemapProductsEnabled") as HTMLInputElement).checked,
           sitemapCategoriesEnabled: (input("sitemapCategoriesEnabled") as HTMLInputElement).checked,
           sitemapTagsEnabled: (input("sitemapTagsEnabled") as HTMLInputElement).checked,
           sitemapArticlesEnabled: (input("sitemapArticlesEnabled") as HTMLInputElement).checked,
+          sitemapHomepageChangefreq: input("sitemapHomepageChangefreq").value,
+          sitemapTermsChangefreq: input("sitemapTermsChangefreq").value,
           sitemapStaticChangefreq: input("sitemapStaticChangefreq").value,
           sitemapProductsChangefreq: input("sitemapProductsChangefreq").value,
           sitemapCategoriesChangefreq: input("sitemapCategoriesChangefreq").value,
           sitemapTagsChangefreq: input("sitemapTagsChangefreq").value,
           sitemapArticlesChangefreq: input("sitemapArticlesChangefreq").value,
+          sitemapHomepagePriority: Number(input("sitemapHomepagePriority").value),
+          sitemapTermsPriority: Number(input("sitemapTermsPriority").value),
+          sitemapStaticPriority: Number(input("sitemapStaticPriority").value),
+          sitemapProductsPriority: Number(input("sitemapProductsPriority").value),
+          sitemapCategoriesPriority: Number(input("sitemapCategoriesPriority").value),
+          sitemapTagsPriority: Number(input("sitemapTagsPriority").value),
+          sitemapArticlesPriority: Number(input("sitemapArticlesPriority").value),
           invoiceNationalId: input("invoiceNationalId").value,
           contentAiApiKey: input("contentAiApiKey").value,
           contentAiModel: input("contentAiModel").value,
@@ -3009,6 +3059,7 @@ const initInvoice = async () => {
     set("[data-invoice-total]", `${money.format(Number(item.totalAmount || 0))} تومان`);
     set("[data-invoice-discount]", `${money.format(Number(item.discountAmount || 0))} تومان`);
     set("[data-invoice-tax]", `${money.format(Number(item.taxAmount || 0))} تومان`);
+    set("[data-invoice-tax-label]", `مالیات ارزش افزوده ${faNumber.format(Number(item.taxPercent ?? 10))}٪`);
     set("[data-invoice-final]", `${money.format(Number(item.finalAmount || 0))} تومان`);
     set("[data-invoice-seller-name]", String(settings.brandName || "اورنزا"));
     set("[data-invoice-signature-name]", String(settings.brandName || "اورنزا"));

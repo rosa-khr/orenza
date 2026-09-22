@@ -38,7 +38,13 @@ const selectFor = (resource: string) => {
       ARRAY(SELECT permission_key FROM admin_role_permissions
             WHERE role_id=admin_roles.id ORDER BY permission_key) AS permissions`;
   }
-  if (resource === "products") return "*, (sale_price_per_kg - purchase_price_per_kg) AS profit_per_kg";
+  if (resource === "products") return `*,
+    (sale_price_per_kg - purchase_price_per_kg) AS profit_per_kg,
+    (deleted_at IS NOT NULL) AS is_deleted,
+    CASE WHEN deleted_at IS NOT NULL THEN 'deleted' WHEN is_active THEN 'active' ELSE 'inactive' END AS record_status`;
+  if (resource === "categories") return `*,
+    (deleted_at IS NOT NULL) AS is_deleted,
+    CASE WHEN deleted_at IS NOT NULL THEN 'deleted' WHEN is_active THEN 'active' ELSE 'inactive' END AS record_status`;
   return "*";
 };
 
@@ -164,6 +170,21 @@ export class AdminRepository {
     }
     if (resource === "categories") {
       await this.validateCategoryParent(null, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
+      return withTransaction(this.pool, async (client) => {
+        // Keep simultaneous category creations in a deterministic sibling order.
+        await client.query("LOCK TABLE categories IN SHARE ROW EXCLUSIVE MODE");
+        const next = await client.query<{ sort_order: number }>(
+          "SELECT COALESCE(MAX(sort_order), 0) + 1 AS sort_order FROM categories WHERE parent_category_id IS NOT DISTINCT FROM $1::uuid",
+          [data.parentCategoryId || null]
+        );
+        data.sortOrder = next.rows[0]!.sort_order;
+        const entries = normalizedValues(data, config);
+        const result = await client.query<Record<string, unknown>>(
+          `INSERT INTO categories (${entries.map(([column]) => column).join(",")}) VALUES (${entries.map((_, index) => `$${index + 1}`).join(",")}) RETURNING *`,
+          entries.map(([, value]) => value)
+        );
+        return toPublicRecord(result.rows[0]!);
+      });
     }
     if (resource === "redirects") {
       data.sourcePath = normalizeSitePath(String(data.sourcePath || ""));
@@ -210,6 +231,9 @@ export class AdminRepository {
   async update(resource: string, id: string, input: unknown) {
     const config = configFor(resource);
     const existing = await this.find(resource, id);
+    if ((resource === "products" || resource === "categories") && existing.isDeleted === true) {
+      throw Object.assign(new Error("رکورد حذف‌شده قابل ویرایش نیست."), { statusCode: 409 });
+    }
     const data = resource === "orders"
       ? config.schema.parse(input)
       : config.schema.parse({ ...existing, ...(input as Record<string, unknown>) });
@@ -322,6 +346,16 @@ export class AdminRepository {
       if (role.rows[0]?.is_system) {
         throw Object.assign(new Error("نقش‌های سیستمی قابل حذف نیستند."), { statusCode: 422 });
       }
+    }
+    if (resource === "products" || resource === "categories") {
+      const result = await this.pool.query(
+        `UPDATE ${config.table}
+            SET deleted_at=now(),is_active=false,updated_at=now()
+          WHERE id=$1 AND deleted_at IS NULL`,
+        [id]
+      );
+      if (!result.rowCount) throw Object.assign(new Error("رکورد موردنظر پیدا نشد یا قبلاً حذف شده است."), { statusCode: 404 });
+      return;
     }
     const result = resource === "orders"
       ? await this.pool.query(

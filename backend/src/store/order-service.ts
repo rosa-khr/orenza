@@ -96,15 +96,16 @@ export class OrderService {
       const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
       const discount = await resolveDiscount(client, data.discountCode, totalAmount);
       const taxableAmount = Math.max(0, totalAmount - discount.amount);
-      const payment = await client.query<{ id: string; type: "cardToCard" | "bankGateway" | "zarinpal" }>(
-        "SELECT id,type FROM payment_methods WHERE id = $1 AND is_active = true FOR SHARE",
+      const payment = await client.query<{ id: string; type: "cardToCard" | "bankGateway" | "zarinpal"; tax_percent: number | string }>(
+        "SELECT id,type,tax_percent FROM payment_methods WHERE id = $1 AND is_active = true FOR SHARE",
         [data.paymentMethodId]
       );
       const paymentMethod = payment.rows[0];
       if (!paymentMethod) {
         throw Object.assign(new Error("روش پرداخت انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
       }
-      const taxAmount = paymentMethod.type === "cardToCard" ? 0 : Math.round(taxableAmount * 0.10);
+      const taxPercent = Number(paymentMethod.tax_percent || 0);
+      const taxAmount = Math.round(taxableAmount * taxPercent / 100);
       const finalAmount = taxableAmount + taxAmount;
       if (paymentMethod.type === "cardToCard") {
         if (!data.paymentCardId) {
@@ -125,15 +126,15 @@ export class OrderService {
       const order = await client.query<Record<string, unknown>>(
         `INSERT INTO orders
           (order_number,user_id,customer_name,customer_phone,customer_address,customer_province,
-           customer_city,customer_postal_code,shipping_method,total_amount,discount_amount,tax_amount,final_amount,
+           customer_city,customer_postal_code,shipping_method,total_amount,discount_amount,tax_amount,tax_percent,final_amount,
            discount_code_id,payment_method_id,payment_card_id,payment_ref_id,payment_receipt_url,
            payment_status,order_status,customer_note)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'pending','new',$19)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'pending','new',$20)
          RETURNING *`,
         [
           nextOrderNumber(), userId, data.customerName, data.customerPhone, data.customerAddress,
           data.customerProvince, data.customerCity, data.customerPostalCode, data.shippingMethod,
-          totalAmount, discount.amount, taxAmount, finalAmount, discount.id, data.paymentMethodId,
+          totalAmount, discount.amount, taxAmount, taxPercent, finalAmount, discount.id, data.paymentMethodId,
           data.paymentCardId ?? null, data.paymentRefId ?? null, data.paymentReceiptUrl ?? null,
           data.customerNote ?? null
         ]
@@ -157,12 +158,19 @@ export class OrderService {
     return createdOrder;
   }
 
-  async validateDiscount(code: string, totalAmount: number) {
+  async validateDiscount(code: string, totalAmount: number, paymentMethodId?: string) {
     return withTransaction(this.pool, async (client) => {
       const discount = await resolveDiscount(client, code, totalAmount);
       const taxableAmount = Math.max(0, totalAmount - discount.amount);
-      const taxAmount = Math.round(taxableAmount * 0.10);
-      return { code: code.toUpperCase(), discountAmount: discount.amount, taxAmount, finalAmount: taxableAmount + taxAmount };
+      const payment = paymentMethodId
+        ? await client.query<{ tax_percent: number | string }>(
+            "SELECT tax_percent FROM payment_methods WHERE id=$1 AND is_active=true",
+            [paymentMethodId]
+          )
+        : null;
+      const taxPercent = Number(payment?.rows[0]?.tax_percent ?? 10);
+      const taxAmount = Math.round(taxableAmount * taxPercent / 100);
+      return { code: code.toUpperCase(), discountAmount: discount.amount, taxPercent, taxAmount, finalAmount: taxableAmount + taxAmount };
     });
   }
 

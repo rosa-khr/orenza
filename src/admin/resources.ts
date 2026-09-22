@@ -17,6 +17,7 @@ export type AdminField = {
   type: AdminFieldType;
   required?: boolean;
   min?: number;
+  max?: number;
   maxLength?: number;
   options?: { label: string; value: string }[];
   list?: boolean;
@@ -40,14 +41,10 @@ const yesNo = [
   { label: "فعال", value: "true" },
   { label: "غیرفعال", value: "false" }
 ];
-const sitemapFrequencyOptions = [
-  { label: "همیشه", value: "always" },
-  { label: "ساعتی", value: "hourly" },
-  { label: "روزانه", value: "daily" },
-  { label: "هفتگی", value: "weekly" },
-  { label: "ماهانه", value: "monthly" },
-  { label: "سالانه", value: "yearly" },
-  { label: "هرگز", value: "never" }
+const recordStatusOptions = [
+  { label: "فعال", value: "active" },
+  { label: "غیرفعال", value: "inactive" },
+  { label: "حذف‌شده", value: "deleted" }
 ];
 
 const adminPermissions = [
@@ -203,14 +200,15 @@ export const adminResources: AdminResource[] = [
     description: "قهوه‌ها، قیمت هر وزن و وضعیت عرضه",
     fields: [
       { key: "titleFa", label: "عنوان فارسی", type: "text", required: true, list: true },
+      { key: "recordStatus", label: "وضعیت", type: "select", options: recordStatusOptions, list: true, listOnly: true },
       { key: "sortOrder", label: "ترتیب نمایش", type: "number", required: true, min: 1, list: true },
       { key: "titleEn", label: "عنوان انگلیسی", type: "text", required: true, dir: "ltr" },
+      { key: "slug", label: "نامک / آدرس محصول", type: "text", dir: "ltr", maxLength: 220 },
       { key: "categoryId", label: "دسته‌بندی", type: "select", required: true },
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
       { key: "tagIds", label: "برچسب‌های مرتبط", type: "multiselect" },
       { key: "relatedProductIds", label: "محصولات مرتبط", type: "multiselect" },
@@ -296,7 +294,7 @@ export const adminResources: AdminResource[] = [
       { key: "showInDiscounts", label: "نمایش در محصولات تخفیف‌دار", type: "select", options: yesNo, list: true },
       { key: "showInPopularFooter", label: "نمایش در دسترسی سریع فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
-      { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
+      { key: "isActive", label: "وضعیت انتشار", type: "select", options: yesNo }
     ]
   },
   {
@@ -306,18 +304,18 @@ export const adminResources: AdminResource[] = [
     description: "ساختار مرتب محصولات فروشگاه",
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
+      { key: "recordStatus", label: "وضعیت", type: "select", options: recordStatusOptions, list: true, listOnly: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
-      { key: "sortOrder", label: "ترتیب منو", type: "number", required: true, min: 1, list: true },
+      { key: "sortOrder", label: "ترتیب منو", type: "number", list: true, listOnly: true },
       { key: "parentCategoryId", label: "دسته‌بندی پدر", type: "select" },
       { key: "description", label: "محتوای دسته‌بندی", type: "richtext" },
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "showInPopularFooter", label: "نمایش در دسترسی سریع فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
-      { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
+      { key: "isActive", label: "وضعیت انتشار", type: "select", options: yesNo }
     ]
   },
   {
@@ -332,6 +330,7 @@ export const adminResources: AdminResource[] = [
       { key: "customerAddress", label: "نشانی تحویل", type: "textarea" },
       { key: "totalAmount", label: "مبلغ کل", type: "number", list: true },
       { key: "discountAmount", label: "تخفیف", type: "number" },
+      { key: "taxPercent", label: "درصد مالیات", type: "number", readonly: true },
       { key: "taxAmount", label: "مالیات", type: "number", list: true },
       { key: "finalAmount", label: "مبلغ نهایی", type: "number", list: true },
       { key: "paymentRefId", label: "کد پیگیری واریز", type: "text", dir: "ltr", list: true, readonly: true },
@@ -386,6 +385,7 @@ export const adminResources: AdminResource[] = [
         ]
       },
       { key: "merchantId", label: "شناسه پذیرنده / Merchant ID", type: "text", dir: "ltr" },
+      { key: "taxPercent", label: "درصد مالیات", type: "number", required: true, min: 0, max: 100, list: true },
       { key: "isActive", label: "وضعیت", type: "select", options: yesNo, list: true }
     ]
   },
@@ -468,7 +468,6 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "tags", label: "تگ‌ها (با ویرگول جدا شوند)", type: "text" },
       { key: "isPublished", label: "انتشار", type: "select", options: yesNo, list: true }
     ]
@@ -484,7 +483,6 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "sitemapChangefreq", label: "فرکانس سایت‌مپ", type: "select", required: true, options: sitemapFrequencyOptions },
       { key: "content", label: "محتوای تگ", type: "richtext" },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true }
     ]

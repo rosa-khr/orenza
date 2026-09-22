@@ -25,6 +25,7 @@ const sampleOrder: NewOrder = {
   totalAmount: 1_350_000,
   discountAmount: 0,
   taxAmount: 135_000,
+  taxPercent: 10,
   finalAmount: 1_485_000,
   createdAt: new Date(),
   items: [

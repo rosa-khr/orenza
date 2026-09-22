@@ -473,7 +473,7 @@ const applyFooterQuickLinks = (items: FooterQuickLink[]) => {
     const links = items.slice(0, 8).map((item) => {
       const link = document.createElement("a");
       link.href = item.entityType === "product" && item.titleEn
-        ? productDetailUrl({ titleEn: item.titleEn })
+        ? productDetailUrl({ titleEn: item.titleEn, slug: item.slug })
         : categoryHref(item.slug || "products");
       link.textContent = item.title;
       return link;

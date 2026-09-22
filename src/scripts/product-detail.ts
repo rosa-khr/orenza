@@ -3,6 +3,7 @@ import { productDetailUrl, productSlug } from "./product-url";
 
 type ProductDetail = {
   id: string;
+  slug?: string | null;
   titleFa: string;
   titleEn: string;
   description: string;
@@ -73,7 +74,7 @@ const loadProduct = async () => {
   const response = await fetch("/api/v1/products");
   const payload = await response.json() as { items?: ProductDetail[]; error?: string };
   if (!response.ok) throw new Error(payload.error || "محصول پیدا نشد.");
-  const item = (payload.items || []).find((product) => productSlug(product.titleEn) === pathSlug);
+  const item = (payload.items || []).find((product) => (product.slug || productSlug(product.titleEn)) === pathSlug);
   if (!item) throw new Error("محصول پیدا نشد.");
   return { item };
 };

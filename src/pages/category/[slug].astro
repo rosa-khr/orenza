@@ -23,8 +23,8 @@ const isDirectProductCategory = category.slug === "cafe-drinks" || category.slug
     <img class="category-hero-banner" data-category-hero-banner hidden alt={`بنر ${category.title}`} />
     <div>
       <p class="eyebrow">{category.eyebrow}</p>
-      <h1>{category.title}</h1>
-      <p>{category.lead}</p>
+      <h1 data-category-title>{category.title}</h1>
+      <p data-category-lead>{category.lead}</p>
       <a class="button button-primary" href={isDirectProductCategory ? "#category-products-title" : "/order/"}>
         {isDirectProductCategory ? "انتخاب محصول" : "انتخاب و سفارش"}
       </a>

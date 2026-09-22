@@ -60,6 +60,7 @@ export interface PaymentMethod {
   title: string;
   type: "cardToCard" | "bankGateway" | "zarinpal";
   merchantId: string | null;
+  taxPercent: number;
   isActive: boolean;
 }
 
@@ -126,6 +127,8 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   discountAmount: number;
+  taxPercent: number;
+  taxAmount: number;
   finalAmount: number;
   paymentMethodId: string;
   paymentCardId: string | null;

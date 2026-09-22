@@ -35,6 +35,7 @@ export type NewOrder = {
   customerNote?: string | null;
   totalAmount: number | string;
   discountAmount: number | string;
+  taxPercent: number | string;
   taxAmount: number | string;
   finalAmount: number | string;
   createdAt: string | Date;
@@ -185,7 +186,7 @@ export const sendOrderEmail = async (
       `وضعیت پرداخت: ${paymentStatusLabel(order.paymentStatus)}`,
       `جمع اقلام: ${money.format(Number(order.totalAmount))} تومان`,
       `تخفیف: ${money.format(Number(order.discountAmount))} تومان`,
-      `مالیات: ${money.format(Number(order.taxAmount))} تومان`,
+      `مالیات ارزش افزوده ${money.format(Number(order.taxPercent))}٪: ${money.format(Number(order.taxAmount))} تومان`,
       `مبلغ نهایی: ${money.format(Number(order.finalAmount))} تومان`,
       `روش ارسال: ${shippingLabel(order.shippingMethod)}`,
       `نشانی: ${order.customerProvince}، ${order.customerCity}، ${order.customerAddress}`,
@@ -244,7 +245,7 @@ export const sendOrderEmail = async (
             <div style="margin-top:18px;overflow:hidden;border:1px solid #ded3c2;border-radius:12px">
               <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #eee5d8"><span>جمع اقلام</span><strong>${money.format(Number(order.totalAmount))} تومان</strong></div>
               <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #eee5d8"><span>تخفیف</span><strong>${money.format(Number(order.discountAmount))} تومان</strong></div>
-              <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #eee5d8"><span>مالیات ارزش افزوده</span><strong>${money.format(Number(order.taxAmount))} تومان</strong></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #eee5d8"><span>مالیات ارزش افزوده ${money.format(Number(order.taxPercent))}٪</span><strong>${money.format(Number(order.taxAmount))} تومان</strong></div>
               <div style="background:#173f30;padding:11px 16px;color:#fff;text-align:center"><span style="display:block;color:#b9c9c2;font-size:10px">مبلغ نهایی سفارش</span><strong style="font-size:18px">${money.format(Number(order.finalAmount))} تومان</strong></div>
             </div>
             ${paymentReceipt && receiptCid ? `<div style="margin-top:18px;border:1px solid #ded3c2;border-radius:12px;background:#faf6ef;padding:14px;text-align:center"><strong style="display:block;margin-bottom:10px;color:#173f30">تصویر فیش واریزی مشتری</strong><img src="cid:${receiptCid}" alt="فیش واریزی" style="display:block;max-width:100%;max-height:420px;margin:auto;border-radius:8px;border:1px solid #e0d5c5"></div>` : ""}

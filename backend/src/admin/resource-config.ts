@@ -28,8 +28,7 @@ const seoColumns = {
   seoDescription: "seo_description",
   canonicalUrl: "canonical_url",
   robotsIndex: "robots_index",
-  robotsFollow: "robots_follow",
-  sitemapChangefreq: "sitemap_changefreq"
+  robotsFollow: "robots_follow"
 };
 
 export const resourceConfigs: Record<string, ResourceConfig> = {
@@ -55,7 +54,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   products: {
     table: "products",
     columns: {
-      titleFa: "title_fa", titleEn: "title_en", categoryId: "category_id", description: "description",
+      titleFa: "title_fa", titleEn: "title_en", slug: "slug", categoryId: "category_id", description: "description",
       ...seoColumns,
       productContent: "product_content",
       roastType: "roast_type", coffeeType: "coffee_type", grindType: "grind_type", blendType: "blend_type",
@@ -85,7 +84,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   "payment-methods": {
     table: "payment_methods",
     columns: {
-      title: "title", type: "type", merchantId: "merchant_id", isActive: "is_active", ...audit
+      title: "title", type: "type", merchantId: "merchant_id", taxPercent: "tax_percent", isActive: "is_active", ...audit
     },
     search: ["title", "account_owner", "bank_name"],
     schema: paymentMethodSchema
@@ -161,7 +160,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     columns: {
       orderNumber: "order_number", customerName: "customer_name", customerPhone: "customer_phone",
       customerAddress: "customer_address", totalAmount: "total_amount", discountAmount: "discount_amount",
-      taxAmount: "tax_amount", finalAmount: "final_amount", paymentMethodId: "payment_method_id",
+      taxPercent: "tax_percent", taxAmount: "tax_amount", finalAmount: "final_amount", paymentMethodId: "payment_method_id",
       paymentCardId: "payment_card_id", paymentAuthority: "payment_authority", paymentRefId: "payment_ref_id",
       paymentStatus: "payment_status", orderStatus: "order_status", paymentReceiptUrl: "payment_receipt_url", customerNote: "customer_note",
       adminNote: "admin_note", ...audit
@@ -170,7 +169,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     schema: orderAdminSchema,
     adminReadonly: [
       "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
-      "discountAmount", "taxAmount", "finalAmount", "paymentMethodId", "paymentCardId",
+      "discountAmount", "taxPercent", "taxAmount", "finalAmount", "paymentMethodId", "paymentCardId",
       "paymentAuthority", "paymentRefId", "customerNote"
     ]
   }

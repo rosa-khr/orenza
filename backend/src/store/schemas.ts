@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { normalizePhone } from "../security.js";
 import { sanitizeRichText } from "../rich-text.js";
+import { normalizeSlug, productSlug } from "../seo.js";
 
 const optionalUrl = z.union([z.string().url(), z.literal(""), z.null()]).transform((value) => value || null);
 const canonicalUrl = z.union([
@@ -16,8 +17,7 @@ const canonicalUrl = z.union([
 const seoFields = {
   canonicalUrl: canonicalUrl.optional(),
   robotsIndex: z.boolean().default(true),
-  robotsFollow: z.boolean().default(true),
-  sitemapChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly")
+  robotsFollow: z.boolean().default(true)
 };
 const hexColor = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/);
 const productImageUrl = z.union([
@@ -42,13 +42,13 @@ const productMoney = (label: string) => z.number()
   .int({ message: `${label} باید عدد صحیح باشد.` })
   .min(0, { message: `${label} نمی‌تواند منفی باشد.` })
   .max(10_000_000_000, { message: `${label} بیش از حد مجاز است.` });
-const slug = z.string()
-  .trim()
+const normalizedSlug = z.string().transform(normalizeSlug);
+const slug = normalizedSlug.pipe(z.string()
   .min(2, { message: "نامک باید حداقل ۲ کاراکتر باشد." })
   .max(180, { message: "نامک نمی‌تواند بیشتر از ۱۸۰ کاراکتر باشد." })
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     message: "نامک فقط می‌تواند شامل حروف انگلیسی کوچک، عدد و خط تیره باشد؛ مثل coffee-blends."
-  });
+  }));
 const optionalRichText = z.union([z.string().max(100_000), z.literal(""), z.null()])
   .transform((value) => sanitizeRichText(value));
 const homepageBannerRowSchema = z.object({
@@ -88,7 +88,7 @@ export const categorySchema = z.object({
   sortOrder: z.number()
     .int({ message: "ترتیب نمایش باید عدد صحیح باشد." })
     .min(1, { message: "ترتیب نمایش باید حداقل ۱ باشد." })
-    .max(999, { message: "ترتیب نمایش نمی‌تواند بیشتر از ۹۹۹ باشد." })
+    .max(32767)
     .default(100),
   parentCategoryId: z.string().uuid().nullable().optional(),
   description: optionalRichText.optional(),
@@ -110,6 +110,8 @@ export const productSchema = z.object({
     .trim()
     .min(2, { message: "عنوان انگلیسی باید حداقل ۲ کاراکتر باشد." })
     .max(220, { message: "عنوان انگلیسی نمی‌تواند بیشتر از ۲۲۰ کاراکتر باشد." }),
+  slug: z.preprocess((value) => value === "" || value === null ? undefined : value,
+    normalizedSlug.pipe(z.string().min(1).max(220).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)).optional()),
   categoryId: z.string().uuid({ message: "یک دسته‌بندی معتبر انتخاب کنید." }),
   description: z.string()
     .trim()
@@ -166,6 +168,7 @@ export const productSchema = z.object({
   productImageUrls: productImageGallery.default([])
 }).transform((product) => ({
   ...product,
+  slug: product.slug || productSlug(product.titleEn),
   imageUrl: product.productImageUrls[0] || product.imageUrl || null
 }));
 
@@ -173,6 +176,7 @@ export const paymentMethodSchema = z.object({
   title: z.string().trim().min(2).max(120),
   type: z.enum(["cardToCard", "bankGateway", "zarinpal"]),
   merchantId: z.string().trim().min(8).max(80).nullable().optional(),
+  taxPercent: z.coerce.number().min(0).max(100).default(10),
   isActive: z.boolean().default(true)
 }).superRefine((data, context) => {
   if ((data.type === "zarinpal" || data.type === "bankGateway") && !data.merchantId) {
@@ -344,16 +348,27 @@ export const siteSettingsSchema = z.object({
   searchIndexingEnabled: z.boolean(),
   robotsRules: z.string().trim().min(10).max(6000),
   sitemapEnabled: z.boolean().default(true),
+  sitemapHomepageEnabled: z.boolean().default(true),
+  sitemapTermsEnabled: z.boolean().default(true),
   sitemapStaticEnabled: z.boolean().default(true),
   sitemapProductsEnabled: z.boolean().default(true),
   sitemapCategoriesEnabled: z.boolean().default(true),
   sitemapTagsEnabled: z.boolean().default(true),
   sitemapArticlesEnabled: z.boolean().default(true),
-  sitemapStaticChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly"),
-  sitemapProductsChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly"),
-  sitemapCategoriesChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("weekly"),
+  sitemapHomepageChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
+  sitemapTermsChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
+  sitemapStaticChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
+  sitemapProductsChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
+  sitemapCategoriesChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
   sitemapTagsChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
   sitemapArticlesChangefreq: z.enum(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"]).default("monthly"),
+  sitemapHomepagePriority: z.coerce.number().min(0).max(1).default(0.9),
+  sitemapTermsPriority: z.coerce.number().min(0).max(1).default(0.9),
+  sitemapStaticPriority: z.coerce.number().min(0).max(1).default(0.8),
+  sitemapProductsPriority: z.coerce.number().min(0).max(1).default(0.9),
+  sitemapCategoriesPriority: z.coerce.number().min(0).max(1).default(0.8),
+  sitemapTagsPriority: z.coerce.number().min(0).max(1).default(0.7),
+  sitemapArticlesPriority: z.coerce.number().min(0).max(1).default(0.7),
   invoiceNationalId: z.string().trim().min(10).max(20),
   contentAiApiKey: z.string().trim().max(500).optional(),
   contentAiModel: z.string().trim().min(2).max(100).optional()

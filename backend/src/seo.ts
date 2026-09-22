@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { Pool, PoolClient } from "pg";
 
-export const productSlug = (titleEn: string) =>
-  titleEn
+export const normalizeSlug = (value: string) =>
+  value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
@@ -10,7 +10,10 @@ export const productSlug = (titleEn: string) =>
     .replace(/&/g, " and ")
     .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "orenza-product";
+    .replace(/^-+|-+$/g, "");
+
+export const productSlug = (titleEn: string) =>
+  normalizeSlug(titleEn) || "orenza-product";
 
 export const categoryHref = (slug: string) => {
   if (slug === "products") return "/products/";
@@ -49,7 +52,7 @@ export const normalizeDestination = (value: string) => {
 };
 
 export const entityPublicPath = (resource: string, data: Record<string, unknown>) => {
-  if (resource === "products") return `/products/${encodeURIComponent(productSlug(String(data.titleEn || data.title_en || "")))}/`;
+  if (resource === "products") return `/products/${encodeURIComponent(String(data.slug || productSlug(String(data.titleEn || data.title_en || ""))))}/`;
   if (resource === "categories") return categoryHref(String(data.slug || ""));
   if (resource === "tags") return `/tags/${encodeURIComponent(String(data.slug || ""))}/`;
   if (resource === "articles") return `/articles/${encodeURIComponent(String(data.slug || ""))}/`;

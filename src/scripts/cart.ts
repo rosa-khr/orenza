@@ -22,6 +22,7 @@ type PaymentMethod = {
   id: string;
   type: "cardToCard" | "bankGateway" | "zarinpal";
   title: string;
+  taxPercent: number;
   cards: PaymentCard[];
 };
 
@@ -49,6 +50,7 @@ type SubmittedOrder = {
   totalAmount: number;
   discountAmount: number;
   taxAmount: number;
+  taxPercent: number;
   finalAmount: number;
 };
 
@@ -87,6 +89,7 @@ export const initCart = () => {
   const cartDiscount = document.querySelector<HTMLElement>("[data-cart-discount]");
   const cartDiscountRow = document.querySelector<HTMLElement>("[data-cart-discount-row]");
   const cartTax = document.querySelector<HTMLElement>("[data-cart-tax]");
+  const cartTaxLabel = document.querySelector<HTMLElement>("[data-cart-tax-label]");
   const cartTaxRow = document.querySelector<HTMLElement>("[data-cart-tax-row]");
   const cartFinal = document.querySelector<HTMLElement>("[data-cart-final]");
   const paymentCard = document.querySelector<HTMLElement>("[data-payment-card]");
@@ -138,10 +141,12 @@ export const initCart = () => {
   const saveCart = () => localStorage.setItem("orenza-cart", JSON.stringify(cart));
   const subtotal = () => cart.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
   const taxableAmount = () => Math.max(0, subtotal() - discountAmount);
-  const usesOnlineGateway = () => Boolean(paymentMethod && paymentMethod.type !== "cardToCard");
+  const taxPercent = () => submittedOrder
+    ? Number(submittedOrder.taxPercent || 0)
+    : Number(paymentMethod?.taxPercent || 0);
   const taxAmount = () => submittedOrder
     ? Number(submittedOrder.taxAmount || 0)
-    : usesOnlineGateway() ? Math.round(taxableAmount() * 0.10) : 0;
+    : Math.round(taxableAmount() * taxPercent() / 100);
   const finalAmount = () => submittedOrder ? Number(submittedOrder.finalAmount || 0) : taxableAmount() + taxAmount();
   const formatUploadSize = (bytes: number) => {
     if (bytes >= 1024 * 1024) {
@@ -202,8 +207,9 @@ export const initCart = () => {
     if (cartSubtotal) cartSubtotal.textContent = `${numberFormatter.format(subtotal())} تومان`;
     if (cartDiscount) cartDiscount.textContent = `− ${numberFormatter.format(discountAmount)} تومان`;
     if (cartDiscountRow) cartDiscountRow.hidden = discountAmount === 0;
+    if (cartTaxLabel) cartTaxLabel.textContent = `مالیات ارزش افزوده ${numberFormatter.format(taxPercent())}٪`;
     if (cartTax) cartTax.textContent = `${numberFormatter.format(taxAmount())} تومان`;
-    if (cartTaxRow) cartTaxRow.hidden = !usesOnlineGateway() && !submittedOrder?.taxAmount;
+    if (cartTaxRow) cartTaxRow.hidden = taxPercent() <= 0;
     if (cartFinal) cartFinal.textContent = `${numberFormatter.format(finalAmount())} تومان`;
   };
 
@@ -942,7 +948,7 @@ export const initCart = () => {
       const response = await fetch("/api/v1/discounts/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, totalAmount: subtotal() })
+        body: JSON.stringify({ code, totalAmount: subtotal(), paymentMethodId: paymentMethod?.id })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "کد تخفیف معتبر نیست.");

@@ -15,7 +15,7 @@ interface Props {
 const { field, resourceKey, isView } = Astro.props;
 const orderReadonly = new Set([
   "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
-  "discountAmount", "finalAmount", "customerNote"
+  "discountAmount", "taxPercent", "finalAmount", "customerNote"
 ]);
 const moneyFieldKeys = new Set([
   "purchasePricePerKg", "salePricePerKg", "profitPerKg", "discountSalePricePerKg",
@@ -183,6 +183,7 @@ const fieldHelp = field.key === "canonicalUrl"
         disabled={isCalculatedSubmitField ? isView : isReadonly}
         readonly={isCalculatedSubmitField || field.readonly}
         min={field.min}
+        max={field.max}
         maxlength={seoLimitFor(field.key, field.maxLength)}
         inputmode={moneyFieldKeys.has(field.key) ? "numeric" : undefined}
         data-money-input={moneyFieldKeys.has(field.key) ? "true" : undefined}

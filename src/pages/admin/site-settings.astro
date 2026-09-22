@@ -297,7 +297,7 @@ const settingsGroup = settingsGroups.includes(requestedGroup as typeof settingsG
     </section>
 
     <section class="admin-card admin-indexing-setting" data-settings-group="sitemap">
-      <header><span>SITEMAP SETTINGS</span><h2>تنظیمات سایت‌مپ</h2><p>نقشه‌های XML سایت و فرکانس پیشنهادی بررسی صفحات توسط موتورهای جست‌وجو.</p></header>
+      <header><span>SITEMAP SETTINGS</span><h2>تنظیمات سایت‌مپ</h2><p>فرکانس و اولویت صفحه اصلی، صفحات ثابت و انواع محتوای سایت فقط از این بخش مدیریت می‌شود.</p></header>
       <div class="admin-form-grid">
         <label class="admin-product-rail-toggle wide">
           <input type="checkbox" name="sitemapEnabled" />
@@ -305,35 +305,54 @@ const settingsGroup = settingsGroups.includes(requestedGroup as typeof settingsG
           <span><strong>سایت‌مپ فعال باشد</strong><small>اگر خاموش باشد، sitemap-index.xml بدون آیتم خروجی می‌دهد.</small></span>
         </label>
         <label class="admin-product-rail-toggle">
+          <input type="checkbox" name="sitemapHomepageEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>صفحه اصلی</strong><small>آدرس اصلی فروشگاه</small></span>
+        </label>
+        <label class="admin-field"><span>فرکانس صفحه اصلی</span><select name="sitemapHomepageChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-field"><span>اولویت صفحه اصلی</span><input type="number" name="sitemapHomepagePriority" min="0" max="1" step="0.1" required /></label>
+        <label class="admin-product-rail-toggle">
+          <input type="checkbox" name="sitemapTermsEnabled" />
+          <span class="admin-toggle-track" aria-hidden="true"></span>
+          <span><strong>قوانین سایت</strong><small>صفحه مهم قوانین و شرایط استفاده</small></span>
+        </label>
+        <label class="admin-field"><span>فرکانس قوانین سایت</span><select name="sitemapTermsChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-field"><span>اولویت قوانین سایت</span><input type="number" name="sitemapTermsPriority" min="0" max="1" step="0.1" required /></label>
+        <label class="admin-product-rail-toggle">
           <input type="checkbox" name="sitemapStaticEnabled" />
           <span class="admin-toggle-track" aria-hidden="true"></span>
-          <span><strong>صفحات ثابت</strong><small>خانه، محصولات، سفارش، درباره، تماس و خرید عمده</small></span>
+          <span><strong>صفحات ثابت</strong><small>فهرست محصولات، سفارش، درباره، تماس و خرید عمده</small></span>
         </label>
         <label class="admin-field"><span>فرکانس صفحات ثابت</span><select name="sitemapStaticChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-field"><span>اولویت صفحات ثابت</span><input type="number" name="sitemapStaticPriority" min="0" max="1" step="0.1" required /></label>
         <label class="admin-product-rail-toggle">
           <input type="checkbox" name="sitemapProductsEnabled" />
           <span class="admin-toggle-track" aria-hidden="true"></span>
           <span><strong>محصولات</strong><small>محصولات فعال فروشگاه</small></span>
         </label>
         <label class="admin-field"><span>فرکانس پیش‌فرض محصولات</span><select name="sitemapProductsChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-field"><span>اولویت محصولات</span><input type="number" name="sitemapProductsPriority" min="0" max="1" step="0.1" required /></label>
         <label class="admin-product-rail-toggle">
           <input type="checkbox" name="sitemapCategoriesEnabled" />
           <span class="admin-toggle-track" aria-hidden="true"></span>
           <span><strong>دسته‌بندی‌ها</strong><small>دسته‌بندی‌های فعال و صفحات منو</small></span>
         </label>
         <label class="admin-field"><span>فرکانس پیش‌فرض دسته‌بندی‌ها</span><select name="sitemapCategoriesChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-field"><span>اولویت دسته‌بندی‌ها</span><input type="number" name="sitemapCategoriesPriority" min="0" max="1" step="0.1" required /></label>
         <label class="admin-product-rail-toggle">
           <input type="checkbox" name="sitemapTagsEnabled" />
           <span class="admin-toggle-track" aria-hidden="true"></span>
           <span><strong>تگ‌ها</strong><small>صفحات برچسب‌های محتوایی</small></span>
         </label>
         <label class="admin-field"><span>فرکانس پیش‌فرض تگ‌ها</span><select name="sitemapTagsChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-field"><span>اولویت تگ‌ها</span><input type="number" name="sitemapTagsPriority" min="0" max="1" step="0.1" required /></label>
         <label class="admin-product-rail-toggle">
           <input type="checkbox" name="sitemapArticlesEnabled" />
           <span class="admin-toggle-track" aria-hidden="true"></span>
-          <span><strong>مقالات</strong><small>فقط مقالات منتشرشده</small></span>
+          <span><strong>مقالات و اخبار</strong><small>فقط مطالب منتشرشده</small></span>
         </label>
         <label class="admin-field"><span>فرکانس پیش‌فرض مقالات</span><select name="sitemapArticlesChangefreq" required><option value="always">همیشه</option><option value="hourly">ساعتی</option><option value="daily">روزانه</option><option value="weekly">هفتگی</option><option value="monthly">ماهانه</option><option value="yearly">سالانه</option><option value="never">هرگز</option></select></label>
+        <label class="admin-field"><span>اولویت مقالات</span><input type="number" name="sitemapArticlesPriority" min="0" max="1" step="0.1" required /></label>
       </div>
     </section>
 

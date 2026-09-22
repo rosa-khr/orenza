@@ -1,4 +1,5 @@
 import { pool } from "./db.js";
+import { backfillProductSlugs } from "./product-slug-migration.js";
 
 const migration = `
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -189,12 +190,26 @@ Disallow: /payment/
 Disallow: /payment-result/
 Disallow: /order-success/
 Disallow: /api/
-Disallow: /search?q=*
-Disallow: /*?*
-Disallow: /*utm_*
-Disallow: /*sort*
-Disallow: /*filter*
-Disallow: /*page*
+Disallow: /*?q=
+Disallow: /*&q=
+Disallow: /*?sort=
+Disallow: /*&sort=
+Disallow: /*?sortBy=
+Disallow: /*&sortBy=
+Disallow: /*?filter=
+Disallow: /*&filter=
+Disallow: /*?page=
+Disallow: /*&page=
+Disallow: /*?weight=
+Disallow: /*&weight=
+Disallow: /*?product=
+Disallow: /*&product=
+Disallow: /*?cart=
+Disallow: /*&cart=
+Disallow: /*?id=
+Disallow: /*&id=
+Disallow: /*?utm_
+Disallow: /*&utm_
 Disallow: /temp/
 Disallow: /test/
 Disallow: /upload/
@@ -204,16 +219,27 @@ Disallow: /favorite/
 Disallow: /review/
 Disallow: /comment/',
   sitemap_enabled boolean NOT NULL DEFAULT true,
+  sitemap_homepage_enabled boolean NOT NULL DEFAULT true,
+  sitemap_terms_enabled boolean NOT NULL DEFAULT true,
   sitemap_static_enabled boolean NOT NULL DEFAULT true,
   sitemap_products_enabled boolean NOT NULL DEFAULT true,
   sitemap_categories_enabled boolean NOT NULL DEFAULT true,
   sitemap_tags_enabled boolean NOT NULL DEFAULT true,
   sitemap_articles_enabled boolean NOT NULL DEFAULT true,
-  sitemap_static_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
-  sitemap_products_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
-  sitemap_categories_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
+  sitemap_homepage_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
+  sitemap_terms_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
+  sitemap_static_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
+  sitemap_products_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
+  sitemap_categories_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   sitemap_tags_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   sitemap_articles_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
+  sitemap_homepage_priority numeric(2,1) NOT NULL DEFAULT 0.9,
+  sitemap_terms_priority numeric(2,1) NOT NULL DEFAULT 0.9,
+  sitemap_static_priority numeric(2,1) NOT NULL DEFAULT 0.8,
+  sitemap_products_priority numeric(2,1) NOT NULL DEFAULT 0.9,
+  sitemap_categories_priority numeric(2,1) NOT NULL DEFAULT 0.8,
+  sitemap_tags_priority numeric(2,1) NOT NULL DEFAULT 0.7,
+  sitemap_articles_priority numeric(2,1) NOT NULL DEFAULT 0.7,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -243,12 +269,26 @@ Disallow: /payment/
 Disallow: /payment-result/
 Disallow: /order-success/
 Disallow: /api/
-Disallow: /search?q=*
-Disallow: /*?*
-Disallow: /*utm_*
-Disallow: /*sort*
-Disallow: /*filter*
-Disallow: /*page*
+Disallow: /*?q=
+Disallow: /*&q=
+Disallow: /*?sort=
+Disallow: /*&sort=
+Disallow: /*?sortBy=
+Disallow: /*&sortBy=
+Disallow: /*?filter=
+Disallow: /*&filter=
+Disallow: /*?page=
+Disallow: /*&page=
+Disallow: /*?weight=
+Disallow: /*&weight=
+Disallow: /*?product=
+Disallow: /*&product=
+Disallow: /*?cart=
+Disallow: /*&cart=
+Disallow: /*?id=
+Disallow: /*&id=
+Disallow: /*?utm_
+Disallow: /*&utm_
 Disallow: /temp/
 Disallow: /test/
 Disallow: /upload/
@@ -257,8 +297,43 @@ Disallow: /compare/
 Disallow: /favorite/
 Disallow: /review/
 Disallow: /comment/';
+UPDATE site_settings
+SET robots_rules = replace(
+  robots_rules,
+  'Disallow: /search?q=*
+Disallow: /*?*
+Disallow: /*utm_*
+Disallow: /*sort*
+Disallow: /*filter*
+Disallow: /*page*',
+  'Disallow: /*?q=
+Disallow: /*&q=
+Disallow: /*?sort=
+Disallow: /*&sort=
+Disallow: /*?sortBy=
+Disallow: /*&sortBy=
+Disallow: /*?filter=
+Disallow: /*&filter=
+Disallow: /*?page=
+Disallow: /*&page=
+Disallow: /*?weight=
+Disallow: /*&weight=
+Disallow: /*?product=
+Disallow: /*&product=
+Disallow: /*?cart=
+Disallow: /*&cart=
+Disallow: /*?id=
+Disallow: /*&id=
+Disallow: /*?utm_
+Disallow: /*&utm_'
+)
+WHERE strpos(robots_rules, 'Disallow: /*?*') > 0;
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_homepage_enabled boolean NOT NULL DEFAULT true;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_terms_enabled boolean NOT NULL DEFAULT true;
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_static_enabled boolean NOT NULL DEFAULT true;
 ALTER TABLE site_settings
@@ -270,15 +345,33 @@ ALTER TABLE site_settings
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_articles_enabled boolean NOT NULL DEFAULT true;
 ALTER TABLE site_settings
-  ADD COLUMN IF NOT EXISTS sitemap_static_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+  ADD COLUMN IF NOT EXISTS sitemap_homepage_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 ALTER TABLE site_settings
-  ADD COLUMN IF NOT EXISTS sitemap_products_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+  ADD COLUMN IF NOT EXISTS sitemap_terms_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 ALTER TABLE site_settings
-  ADD COLUMN IF NOT EXISTS sitemap_categories_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+  ADD COLUMN IF NOT EXISTS sitemap_static_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_products_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_categories_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_tags_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_articles_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_homepage_priority numeric(2,1) NOT NULL DEFAULT 0.9;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_terms_priority numeric(2,1) NOT NULL DEFAULT 0.9;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_static_priority numeric(2,1) NOT NULL DEFAULT 0.8;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_products_priority numeric(2,1) NOT NULL DEFAULT 0.9;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_categories_priority numeric(2,1) NOT NULL DEFAULT 0.8;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_tags_priority numeric(2,1) NOT NULL DEFAULT 0.7;
+ALTER TABLE site_settings
+  ADD COLUMN IF NOT EXISTS sitemap_articles_priority numeric(2,1) NOT NULL DEFAULT 0.7;
 UPDATE site_settings SET homepage_seo_title = left(homepage_seo_title, 60) WHERE length(homepage_seo_title) > 60;
 UPDATE site_settings SET homepage_seo_description = left(homepage_seo_description, 150) WHERE length(homepage_seo_description) > 150;
 ALTER TABLE site_settings ALTER COLUMN homepage_seo_title TYPE varchar(60);
@@ -428,10 +521,11 @@ CREATE TABLE IF NOT EXISTS categories (
   canonical_url text,
   robots_index boolean NOT NULL DEFAULT true,
   robots_follow boolean NOT NULL DEFAULT true,
-  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
+  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   show_in_popular_footer boolean NOT NULL DEFAULT false,
   show_in_popular_searches boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
+  deleted_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -440,6 +534,7 @@ CREATE TABLE IF NOT EXISTS products (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title_fa varchar(220) NOT NULL,
   title_en varchar(220) NOT NULL,
+  slug text,
   category_id uuid NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   description text NOT NULL,
   seo_title varchar(60),
@@ -447,7 +542,7 @@ CREATE TABLE IF NOT EXISTS products (
   canonical_url text,
   robots_index boolean NOT NULL DEFAULT true,
   robots_follow boolean NOT NULL DEFAULT true,
-  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly',
+  sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   product_content text,
   roast_type varchar(30) NOT NULL CHECK (roast_type IN ('light','medium','mediumDark','dark')),
   coffee_type varchar(20) NOT NULL CHECK (coffee_type IN ('bean','ground')),
@@ -472,17 +567,20 @@ CREATE TABLE IF NOT EXISTS products (
   is_active boolean NOT NULL DEFAULT true,
   image_url text,
   product_image_urls text[] NOT NULL DEFAULT ARRAY[]::text[],
+  deleted_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS products_category_idx ON products(category_id);
 CREATE INDEX IF NOT EXISTS products_active_idx ON products(is_active);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS slug text;
+CREATE UNIQUE INDEX IF NOT EXISTS products_slug_unique ON products(slug);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title varchar(60);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description varchar(150);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS canonical_url text;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
-ALTER TABLE products ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 UPDATE products SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE products SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE products ALTER COLUMN seo_title TYPE varchar(60);
@@ -497,6 +595,10 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS package_weight_grams integer NOT N
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_status varchar(20) NOT NULL DEFAULT 'inStock';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS product_content text;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image_urls text[] NOT NULL DEFAULT ARRAY[]::text[];
+ALTER TABLE products ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+CREATE INDEX IF NOT EXISTS products_deleted_at_idx ON products(deleted_at);
+CREATE INDEX IF NOT EXISTS categories_deleted_at_idx ON categories(deleted_at);
 
 CREATE TABLE IF NOT EXISTS price_import_jobs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -579,6 +681,7 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   account_owner varchar(160),
   bank_name varchar(100),
   merchant_id varchar(80),
+  tax_percent numeric(5,2) NOT NULL DEFAULT 10 CHECK (tax_percent >= 0 AND tax_percent <= 100),
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -711,6 +814,7 @@ CREATE TABLE IF NOT EXISTS orders (
   total_amount bigint NOT NULL CHECK (total_amount >= 0),
   discount_amount bigint NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
   tax_amount bigint NOT NULL DEFAULT 0 CHECK (tax_amount >= 0),
+  tax_percent numeric(5,2) NOT NULL DEFAULT 10 CHECK (tax_percent >= 0 AND tax_percent <= 100),
   final_amount bigint NOT NULL CHECK (final_amount >= 0),
   discount_code_id uuid REFERENCES discount_codes(id) ON DELETE SET NULL,
   payment_method_id uuid NOT NULL REFERENCES payment_methods(id) ON DELETE RESTRICT,
@@ -757,7 +861,7 @@ ALTER TABLE categories ADD COLUMN IF NOT EXISTS seo_description varchar(150);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS canonical_url text;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
-ALTER TABLE categories ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'weekly';
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order smallint NOT NULL DEFAULT 100;
 UPDATE categories SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE categories SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
@@ -799,6 +903,15 @@ UPDATE articles SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL 
 UPDATE articles SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE articles ALTER COLUMN seo_title TYPE varchar(60);
 ALTER TABLE articles ALTER COLUMN seo_description TYPE varchar(150);
+ALTER TABLE categories ALTER COLUMN sitemap_changefreq SET DEFAULT 'monthly';
+ALTER TABLE products ALTER COLUMN sitemap_changefreq SET DEFAULT 'monthly';
+ALTER TABLE tags ALTER COLUMN sitemap_changefreq SET DEFAULT 'monthly';
+ALTER TABLE articles ALTER COLUMN sitemap_changefreq SET DEFAULT 'monthly';
+ALTER TABLE site_settings ALTER COLUMN sitemap_static_changefreq SET DEFAULT 'monthly';
+ALTER TABLE site_settings ALTER COLUMN sitemap_products_changefreq SET DEFAULT 'monthly';
+ALTER TABLE site_settings ALTER COLUMN sitemap_categories_changefreq SET DEFAULT 'monthly';
+ALTER TABLE site_settings ALTER COLUMN sitemap_tags_changefreq SET DEFAULT 'monthly';
+ALTER TABLE site_settings ALTER COLUMN sitemap_articles_changefreq SET DEFAULT 'monthly';
 
 CREATE TABLE IF NOT EXISTS redirects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -824,8 +937,14 @@ ALTER TABLE payment_methods ALTER COLUMN card_number DROP NOT NULL;
 ALTER TABLE payment_methods ALTER COLUMN account_owner DROP NOT NULL;
 ALTER TABLE payment_methods ALTER COLUMN bank_name DROP NOT NULL;
 ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS merchant_id varchar(80);
+ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS tax_percent numeric(5,2) NOT NULL DEFAULT 10;
+ALTER TABLE payment_methods DROP CONSTRAINT IF EXISTS payment_methods_tax_percent_check;
+ALTER TABLE payment_methods ADD CONSTRAINT payment_methods_tax_percent_check CHECK (tax_percent >= 0 AND tax_percent <= 100);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_card_id uuid REFERENCES payment_cards(id) ON DELETE RESTRICT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount bigint NOT NULL DEFAULT 0 CHECK (tax_amount >= 0);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_percent numeric(5,2) NOT NULL DEFAULT 10;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_tax_percent_check;
+ALTER TABLE orders ADD CONSTRAINT orders_tax_percent_check CHECK (tax_percent >= 0 AND tax_percent <= 100);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_authority varchar(80);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_ref_id varchar(80);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_receipt_url text;
@@ -881,13 +1000,7 @@ VALUES
    'خرید دمنوش گیاهی اورنزا',
    'خرید دمنوش گیاهی اورنزا با ترکیب‌های خوش‌عطر، بسته‌بندی تازه و ارسال سراسر ایران.',
    true, true)
-ON CONFLICT (slug) DO UPDATE SET
-  title=EXCLUDED.title,
-  description=EXCLUDED.description,
-  seo_title=EXCLUDED.seo_title,
-  seo_description=EXCLUDED.seo_description,
-  show_in_popular_footer=EXCLUDED.show_in_popular_footer,
-  updated_at=now();
+ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO categories (title, slug, sort_order, description, seo_title, seo_description, is_active, show_in_popular_footer)
 VALUES
@@ -907,13 +1020,7 @@ VALUES
    '<h2>درباره اورنزا</h2><p>داستان اورنزا، انتخاب دانه و رُست تازه برای ساختن تجربه‌ای دقیق‌تر از قهوه.</p>',
    'درباره اورنزا؛ داستان رستری و قهوه تازه‌رست',
    'با اورنزا و نگاه ما به انتخاب دانه، رُست تازه و آماده‌سازی قهوه آشنا شوید.', true, false)
-ON CONFLICT (slug) DO UPDATE SET
-  title=EXCLUDED.title,
-  description=EXCLUDED.description,
-  seo_title=EXCLUDED.seo_title,
-  seo_description=EXCLUDED.seo_description,
-  show_in_popular_footer=EXCLUDED.show_in_popular_footer,
-  updated_at=now();
+ON CONFLICT (slug) DO NOTHING;
 
 UPDATE categories AS c
 SET sort_order = seed.sort_order
@@ -1096,6 +1203,7 @@ WHERE NOT EXISTS (SELECT 1 FROM payment_methods p WHERE p.type = seed.type);
 
 try {
   await pool.query(migration);
+  await backfillProductSlugs(pool);
   await pool.query("DELETE FROM user_sessions WHERE expires_at < now()");
   await pool.query("DELETE FROM password_reset_codes WHERE expires_at < now() - interval '1 day'");
   console.log("Database migration completed.");

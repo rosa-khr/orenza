@@ -1,5 +1,6 @@
 type ProductUrlSource = {
   titleEn: string;
+  slug?: string | null;
 };
 
 export const productSlug = (titleEn: string) =>
@@ -14,4 +15,4 @@ export const productSlug = (titleEn: string) =>
     .replace(/^-+|-+$/g, "") || "orenza-product";
 
 export const productDetailUrl = (product: ProductUrlSource) =>
-  `/products/${encodeURIComponent(productSlug(product.titleEn))}/`;
+  `/products/${encodeURIComponent(product.slug || productSlug(product.titleEn))}/`;

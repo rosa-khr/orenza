@@ -18,6 +18,7 @@ type PaymentMethodRow = {
   title: string;
   type: "cardToCard" | "bankGateway" | "zarinpal";
   merchant_id: string | null;
+  tax_percent: number | string;
 };
 
 type PaymentOrderRow = {
@@ -61,11 +62,15 @@ const sitemapUrl = (origin: string, path: string) =>
   `${origin}${path.startsWith("/") ? path : `/${path}`}`;
 
 const normalizeSitemapChangefreq = (value: unknown, fallback: string) => {
-  const candidate = String(value || fallback || "weekly");
-  return sitemapFrequencyValues.has(candidate) ? candidate : "weekly";
+  const candidate = String(value || fallback || "monthly");
+  return sitemapFrequencyValues.has(candidate) ? candidate : "monthly";
+};
+const normalizeSitemapPriority = (value: unknown, fallback: number) => {
+  const candidate = Number(value ?? fallback);
+  return Number.isFinite(candidate) && candidate >= 0 && candidate <= 1 ? candidate : fallback;
 };
 
-const sitemapXml = (entries: { loc: string; lastmod?: string | null; changefreq: string }[]) =>
+const sitemapXml = (entries: { loc: string; lastmod?: string | null; changefreq: string; priority: number }[]) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
   entries.map((entry) =>
@@ -73,25 +78,27 @@ const sitemapXml = (entries: { loc: string; lastmod?: string | null; changefreq:
     `    <loc>${xmlEscape(entry.loc)}</loc>\n` +
     (entry.lastmod ? `    <lastmod>${xmlEscape(new Date(entry.lastmod).toISOString())}</lastmod>\n` : "") +
     `    <changefreq>${xmlEscape(entry.changefreq)}</changefreq>\n` +
+    `    <priority>${entry.priority.toFixed(1)}</priority>\n` +
     `  </url>`
   ).join("\n") +
   `\n</urlset>\n`;
 
 const toSitemapLastmod = (value: unknown) => {
-  if (!value) return new Date().toISOString().slice(0, 10);
+  if (!value) return null;
   const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 };
 
 const sitemapIndexXml = (origin: string, entries: { path: string; lastmod?: unknown }[]) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-  entries.map((entry) =>
-    `  <sitemap>\n` +
-    `    <loc>${xmlEscape(sitemapUrl(origin, entry.path))}</loc>\n` +
-    `    <lastmod>${xmlEscape(toSitemapLastmod(entry.lastmod))}</lastmod>\n` +
-    `  </sitemap>`
-  ).join("\n") +
+  entries.map((entry) => {
+    const lastmod = toSitemapLastmod(entry.lastmod);
+    return `  <sitemap>\n` +
+      `    <loc>${xmlEscape(sitemapUrl(origin, entry.path))}</loc>\n` +
+      (lastmod ? `    <lastmod>${xmlEscape(lastmod)}</lastmod>\n` : "") +
+      `  </sitemap>`;
+  }).join("\n") +
   `\n</sitemapindex>\n`;
 
 const normalizeRobotsRules = (value: unknown) =>
@@ -153,7 +160,7 @@ export const registerStoreRoutes = (
   app.get("/api/v1/search/popular", async (_request, reply) => {
     const [products, categories, tags] = await Promise.all([
       pool.query<Record<string, unknown>>(
-        `SELECT title_fa, title_en, description, image_url
+        `SELECT title_fa, title_en, slug, description, image_url
          FROM products
          WHERE is_active = true AND show_in_popular_searches = true
          ORDER BY sort_order ASC, created_at ASC
@@ -193,7 +200,7 @@ export const registerStoreRoutes = (
         label: "محصول",
         title: row.title_fa,
         subtitle: row.title_en || row.description,
-        href: `/products/${encodeURIComponent(productSlug(String(row.title_en || row.title_fa || "")))}/`,
+        href: `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.title_en || row.title_fa || ""))))}/`,
         imageUrl: row.image_url
       })),
       ...tags.rows.map((row) => ({
@@ -214,7 +221,7 @@ export const registerStoreRoutes = (
     const pattern = `%${q}%`;
     const [products, categories, tags, articles] = await Promise.all([
       pool.query<Record<string, unknown>>(
-        `SELECT id, title_fa, title_en, description, image_url
+        `SELECT id, title_fa, title_en, slug, description, image_url
          FROM products
          WHERE is_active = true
            AND (title_fa ILIKE $1 OR title_en ILIKE $1 OR description ILIKE $1)
@@ -258,7 +265,7 @@ export const registerStoreRoutes = (
         label: "محصول",
         title: row.title_fa,
         subtitle: row.title_en || row.description,
-        href: `/products/${encodeURIComponent(productSlug(String(row.title_en || "")))}/`,
+        href: `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.title_en || ""))))}/`,
         imageUrl: row.image_url
       })),
       ...categories.rows.map((row) => ({
@@ -316,7 +323,7 @@ export const registerStoreRoutes = (
          FROM categories
          WHERE is_active = true AND show_in_popular_footer = true
          UNION ALL
-         SELECT 'product'::text AS entity_type, title_fa AS title, NULL::text AS slug, title_en,
+         SELECT 'product'::text AS entity_type, title_fa AS title, slug, title_en,
            sort_order, created_at
          FROM products
          WHERE is_active = true AND show_in_popular_footer = true
@@ -413,7 +420,7 @@ export const registerStoreRoutes = (
     item.content = sanitizeRichText(String(item.content || ""));
     const [products, relatedTags] = await Promise.all([
       pool.query<Record<string, unknown>>(
-        `SELECT p.id,p.title_fa,p.title_en,p.description,p.image_url,p.blend_type,
+        `SELECT p.id,p.title_fa,p.title_en,p.slug,p.description,p.image_url,p.blend_type,
                 c.slug AS category_slug,c.title AS category_title
          FROM product_tags pt
          JOIN products p ON p.id=pt.product_id
@@ -443,28 +450,46 @@ export const registerStoreRoutes = (
     reply.type("text/plain; charset=utf-8").header("Cache-Control", "no-store");
     if (!settings.searchIndexingEnabled) return "User-agent: *\nDisallow: /\n";
     const rules = normalizeRobotsRules(settings.robotsRules);
-    const sitemapLine = settings.sitemapEnabled === false ? "" : `\n\nSitemap: ${sitemapUrl(getPublicOrigin(request), "/sitemap-index.xml")}`;
+    const sitemapLine = settings.sitemapEnabled === false ? "" : `\n\nSitemap: ${sitemapUrl(getPublicOrigin(request), "/sitemap.xml")}`;
     return `${rules || "User-agent: *\nAllow: /"}${sitemapLine}\n`;
   });
 
   app.get("/api/v1/site-settings/sitemap-index.xml", async (request, reply) => {
     const settings = await getSiteSettings(pool);
-    reply.type("application/xml; charset=utf-8").header("Cache-Control", "public, max-age=300");
+    reply.type("application/xml; charset=utf-8")
+      .header("Cache-Control", "public, max-age=300");
     if (!settings.searchIndexingEnabled || settings.sitemapEnabled === false) {
       return sitemapIndexXml(getPublicOrigin(request), []);
     }
     const [products, categories, tags, articles] = await Promise.all([
-      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM products WHERE is_active=true AND robots_index=true"),
-      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM categories WHERE is_active=true AND robots_index=true"),
-      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM tags WHERE robots_index=true"),
-      pool.query<{ lastmod: string | null }>("SELECT max(updated_at)::text AS lastmod FROM articles WHERE is_published=true AND robots_index=true")
+      pool.query<{ total: string; lastmod: string | null }>(
+        `SELECT count(*)::text AS total,max(p.updated_at)::text AS lastmod
+           FROM products p JOIN categories c ON c.id=p.category_id
+          WHERE p.is_active=true AND p.deleted_at IS NULL AND p.robots_index=true
+            AND c.is_active=true AND c.deleted_at IS NULL`
+      ),
+      pool.query<{ total: string; lastmod: string | null }>(
+        `SELECT count(*)::text AS total,max(updated_at)::text AS lastmod
+           FROM categories
+          WHERE is_active=true AND deleted_at IS NULL AND robots_index=true
+            AND slug NOT IN ('products','wholesale','order','about-orenza')`
+      ),
+      pool.query<{ total: string; lastmod: string | null }>(
+        "SELECT count(*)::text AS total,max(updated_at)::text AS lastmod FROM tags WHERE robots_index=true"
+      ),
+      pool.query<{ total: string; lastmod: string | null }>(
+        "SELECT count(*)::text AS total,max(updated_at)::text AS lastmod FROM articles WHERE is_published=true AND robots_index=true"
+      )
     ]);
+    const hasRows = (result: { rows: { total: string }[] }) => Number(result.rows[0]?.total || 0) > 0;
     const entries = [
-      settings.sitemapStaticEnabled !== false ? { path: "/sitemap/sitemap-statics.xml", lastmod: settings.updatedAt } : null,
-      settings.sitemapProductsEnabled !== false ? { path: "/sitemap/sitemap-products.xml", lastmod: products.rows[0]?.lastmod } : null,
-      settings.sitemapCategoriesEnabled !== false ? { path: "/sitemap/sitemap-categories.xml", lastmod: categories.rows[0]?.lastmod } : null,
-      settings.sitemapTagsEnabled !== false ? { path: "/sitemap/sitemap-tags.xml", lastmod: tags.rows[0]?.lastmod } : null,
-      settings.sitemapArticlesEnabled !== false ? { path: "/sitemap/sitemap-articles.xml", lastmod: articles.rows[0]?.lastmod } : null
+      settings.sitemapHomepageEnabled !== false || settings.sitemapTermsEnabled !== false || settings.sitemapStaticEnabled !== false
+        ? { path: "/sitemap/sitemap-statics.xml", lastmod: settings.updatedAt }
+        : null,
+      settings.sitemapProductsEnabled !== false && hasRows(products) ? { path: "/sitemap/sitemap-products.xml", lastmod: products.rows[0]?.lastmod } : null,
+      settings.sitemapCategoriesEnabled !== false && hasRows(categories) ? { path: "/sitemap/sitemap-categories.xml", lastmod: categories.rows[0]?.lastmod } : null,
+      settings.sitemapTagsEnabled !== false && hasRows(tags) ? { path: "/sitemap/sitemap-tags.xml", lastmod: tags.rows[0]?.lastmod } : null,
+      settings.sitemapArticlesEnabled !== false && hasRows(articles) ? { path: "/sitemap/sitemap-blogs.xml", lastmod: articles.rows[0]?.lastmod } : null
     ].filter(Boolean) as { path: string; lastmod?: unknown }[];
     return sitemapIndexXml(getPublicOrigin(request), entries);
   });
@@ -472,55 +497,76 @@ export const registerStoreRoutes = (
   app.get("/api/v1/site-settings/sitemap/:kind.xml", async (request, reply) => {
     const { kind } = z.object({
       kind: z.enum([
-        "statics", "products", "categories", "tags", "articles",
-        "sitemap-statics", "sitemap-products", "sitemap-categories", "sitemap-tags", "sitemap-articles"
+        "statics", "products", "categories", "tags", "articles", "blogs",
+        "sitemap-statics", "sitemap-products", "sitemap-categories", "sitemap-tags", "sitemap-articles", "sitemap-blogs"
       ])
     }).parse(request.params);
-    const sitemapKind = kind.replace(/^sitemap-/, "");
+    const requestedKind = kind.replace(/^sitemap-/, "");
+    const sitemapKind = requestedKind === "blogs" ? "articles" : requestedKind;
     const settings = await getSiteSettings(pool);
     const origin = getPublicOrigin(request);
-    reply.type("application/xml; charset=utf-8").header("Cache-Control", "public, max-age=300");
+    reply.type("application/xml; charset=utf-8")
+      .header("Cache-Control", "public, max-age=300");
     if (!settings.searchIndexingEnabled || settings.sitemapEnabled === false) return sitemapXml([]);
     if (sitemapKind === "statics") {
-      if (settings.sitemapStaticEnabled === false) return sitemapXml([]);
-      const changefreq = normalizeSitemapChangefreq(settings.sitemapStaticChangefreq, "weekly");
-      return sitemapXml(["/", "/products/", "/order/", "/about/", "/contact/", "/terms/", "/wholesale/"].map((path) => ({
-        loc: sitemapUrl(origin, path),
-        changefreq
-      })));
+      if (settings.sitemapHomepageEnabled === false && settings.sitemapTermsEnabled === false && settings.sitemapStaticEnabled === false) return sitemapXml([]);
+      const homepageChangefreq = normalizeSitemapChangefreq(settings.sitemapHomepageChangefreq, "monthly");
+      const termsChangefreq = normalizeSitemapChangefreq(settings.sitemapTermsChangefreq, "monthly");
+      const staticChangefreq = normalizeSitemapChangefreq(settings.sitemapStaticChangefreq, "monthly");
+      const homepagePriority = normalizeSitemapPriority(settings.sitemapHomepagePriority, 0.9);
+      const termsPriority = normalizeSitemapPriority(settings.sitemapTermsPriority, 0.9);
+      const staticPriority = normalizeSitemapPriority(settings.sitemapStaticPriority, 0.8);
+      return sitemapXml([
+        settings.sitemapHomepageEnabled !== false
+          ? { loc: sitemapUrl(origin, "/"), lastmod: String(settings.updatedAt || ""), changefreq: homepageChangefreq, priority: homepagePriority }
+          : null,
+        settings.sitemapTermsEnabled !== false
+          ? { loc: sitemapUrl(origin, "/terms/"), lastmod: String(settings.updatedAt || ""), changefreq: termsChangefreq, priority: termsPriority }
+          : null,
+        ...(settings.sitemapStaticEnabled !== false ? ["/products/", "/order/", "/about/", "/contact/", "/wholesale/"].map((path) => ({
+          loc: sitemapUrl(origin, path),
+          lastmod: String(settings.updatedAt || ""),
+          changefreq: staticChangefreq,
+          priority: staticPriority
+        })) : [])
+      ].filter(Boolean) as { loc: string; lastmod: string; changefreq: string; priority: number }[]);
     }
     if (sitemapKind === "products") {
       if (settings.sitemapProductsEnabled === false) return sitemapXml([]);
       const result = await pool.query<Record<string, unknown>>(
-        `SELECT p.title_en,p.title_fa,p.updated_at,p.sitemap_changefreq
+        `SELECT p.title_en,p.title_fa,p.slug,p.updated_at
          FROM products p JOIN categories c ON c.id=p.category_id
-         WHERE p.is_active=true AND p.robots_index=true AND c.is_active=true
+         WHERE p.is_active=true AND p.deleted_at IS NULL AND p.robots_index=true
+           AND c.is_active=true AND c.deleted_at IS NULL
          ORDER BY p.sort_order ASC,p.created_at ASC`
       );
       return sitemapXml(result.rows.map((row) => ({
-        loc: sitemapUrl(origin, `/products/${encodeURIComponent(productSlug(String(row.title_en || row.title_fa || "")))}/`),
+        loc: sitemapUrl(origin, `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.title_en || row.title_fa || ""))))}/`),
         lastmod: String(row.updated_at || ""),
-        changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapProductsChangefreq || "weekly"))
+        changefreq: normalizeSitemapChangefreq(settings.sitemapProductsChangefreq, "monthly"),
+        priority: normalizeSitemapPriority(settings.sitemapProductsPriority, 0.9)
       })));
     }
     if (sitemapKind === "categories") {
       if (settings.sitemapCategoriesEnabled === false) return sitemapXml([]);
       const result = await pool.query<Record<string, unknown>>(
-        `SELECT slug,updated_at,sitemap_changefreq
+        `SELECT slug,updated_at
          FROM categories
-         WHERE is_active=true AND robots_index=true
+         WHERE is_active=true AND deleted_at IS NULL AND robots_index=true
+           AND slug NOT IN ('products','wholesale','order','about-orenza')
          ORDER BY sort_order ASC,created_at ASC`
       );
       return sitemapXml(result.rows.map((row) => ({
         loc: sitemapUrl(origin, categoryHref(String(row.slug || ""))),
         lastmod: String(row.updated_at || ""),
-        changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapCategoriesChangefreq || "weekly"))
+        changefreq: normalizeSitemapChangefreq(settings.sitemapCategoriesChangefreq, "monthly"),
+        priority: normalizeSitemapPriority(settings.sitemapCategoriesPriority, 0.8)
       })));
     }
     if (sitemapKind === "tags") {
       if (settings.sitemapTagsEnabled === false) return sitemapXml([]);
       const result = await pool.query<Record<string, unknown>>(
-        `SELECT slug,updated_at,sitemap_changefreq
+        `SELECT slug,updated_at
          FROM tags
          WHERE robots_index=true
          ORDER BY updated_at DESC`
@@ -528,12 +574,13 @@ export const registerStoreRoutes = (
       return sitemapXml(result.rows.map((row) => ({
         loc: sitemapUrl(origin, `/tags/${encodeURIComponent(String(row.slug || ""))}/`),
         lastmod: String(row.updated_at || ""),
-        changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapTagsChangefreq || "monthly"))
+        changefreq: normalizeSitemapChangefreq(settings.sitemapTagsChangefreq, "monthly"),
+        priority: normalizeSitemapPriority(settings.sitemapTagsPriority, 0.7)
       })));
     }
     if (settings.sitemapArticlesEnabled === false) return sitemapXml([]);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT slug,updated_at,sitemap_changefreq
+      `SELECT slug,updated_at
        FROM articles
        WHERE is_published=true AND robots_index=true
        ORDER BY updated_at DESC`
@@ -541,7 +588,8 @@ export const registerStoreRoutes = (
     return sitemapXml(result.rows.map((row) => ({
       loc: sitemapUrl(origin, `/articles/${encodeURIComponent(String(row.slug || ""))}/`),
       lastmod: String(row.updated_at || ""),
-      changefreq: normalizeSitemapChangefreq(row.sitemap_changefreq, String(settings.sitemapArticlesChangefreq || "monthly"))
+      changefreq: normalizeSitemapChangefreq(settings.sitemapArticlesChangefreq, "monthly"),
+      priority: normalizeSitemapPriority(settings.sitemapArticlesPriority, 0.7)
     })));
   });
 
@@ -590,7 +638,7 @@ export const registerStoreRoutes = (
         COALESCE((SELECT json_agg(json_build_object('id',t.id,'title',t.title,'slug',t.slug) ORDER BY t.title)
           FROM product_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.product_id=p.id), '[]'::json) AS tags,
         COALESCE((SELECT json_agg(json_build_object(
-          'id',rp.id,'titleFa',rp.title_fa,'titleEn',rp.title_en,'description',rp.description,
+          'id',rp.id,'titleFa',rp.title_fa,'titleEn',rp.title_en,'slug',rp.slug,'description',rp.description,
           'imageUrl',rp.image_url,'categorySlug',rc.slug
         ) ORDER BY prp.created_at)
           FROM product_related_products prp
@@ -625,7 +673,7 @@ export const registerStoreRoutes = (
 
   app.get("/api/v1/payment-methods/active", async () => {
     const result = await pool.query<PaymentMethodRow>(
-      `SELECT id,title,type,merchant_id
+      `SELECT id,title,type,merchant_id,tax_percent
        FROM payment_methods
        WHERE is_active = true AND type IN ('cardToCard','zarinpal')
        ORDER BY CASE WHEN type = 'zarinpal' THEN 0 WHEN type = 'cardToCard' THEN 1 ELSE 2 END, created_at DESC`
@@ -647,6 +695,7 @@ export const registerStoreRoutes = (
       title: method.title,
       type: method.type,
       merchantId: method.merchant_id,
+      taxPercent: Number(method.tax_percent || 0),
       cards: (cardsByMethod.get(method.id) || []).map(toPublicRecord)
     }));
     const fallbackItem = methods.find((method) => method.type === "cardToCard") || methods[0] || null;
@@ -666,9 +715,10 @@ export const registerStoreRoutes = (
   app.post("/api/v1/discounts/validate", async (request) => {
     const data = z.object({
       code: z.string().trim().min(3).max(60),
-      totalAmount: z.number().int().min(0)
+      totalAmount: z.number().int().min(0),
+      paymentMethodId: z.string().uuid().optional()
     }).parse(request.body);
-    return orderService.validateDiscount(data.code, data.totalAmount);
+    return orderService.validateDiscount(data.code, data.totalAmount, data.paymentMethodId);
   });
 
   app.post("/api/v1/orders", { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } }, async (request, reply) => {

@@ -491,8 +491,8 @@ a { color: inherit; text-decoration: none; }
   align-self: center;
   padding: 0 10px;
 }
-.status-true, .status-paid, .status-ready, .status-sent, .status-completed { border-color: #bdd5c9; background: #edf4f0; color: var(--admin-green); }
-.status-false, .status-rejected, .status-canceled { border-color: #dfc0b9; background: #f8eeeb; color: var(--admin-red); }
+.status-true, .status-active, .status-paid, .status-ready, .status-sent, .status-completed { border-color: #bdd5c9; background: #edf4f0; color: var(--admin-green); }
+.status-false, .status-inactive, .status-deleted, .status-rejected, .status-canceled { border-color: #dfc0b9; background: #f8eeeb; color: var(--admin-red); }
 .status-new, .status-pending, .status-processing { border-color: #e4c98f; background: #fff8e9; color: #8a5b14; }
 .status-weighted { border-color: #bfd0dc; background: #edf4f8; color: #294f68; }
 .status-packaged { border-color: #ddc79f; background: #fbf4e7; color: #775522; }

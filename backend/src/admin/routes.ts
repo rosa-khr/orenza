@@ -177,7 +177,7 @@ export const registerAdminRoutes = (
       await client.query("BEGIN");
       for (const [index, id] of orderedIds.entries()) {
         await client.query(
-          "UPDATE categories SET sort_order=$1, updated_at=now() WHERE id=$2",
+          "UPDATE categories SET sort_order=$1, updated_at=now() WHERE id=$2 AND deleted_at IS NULL",
           [index + 1, id]
         );
       }
@@ -224,7 +224,7 @@ export const registerAdminRoutes = (
   app.get("/api/v1/admin/price-imports/sample", async (request, reply) => {
     if (!(await requirePermission(request, reply, "price-imports"))) return;
     const products = await pool.query<{ id: string; title_fa: string; purchase_price_per_kg: number }>(
-      "SELECT id,title_fa,purchase_price_per_kg FROM products ORDER BY sort_order ASC, title_fa ASC"
+      "SELECT id,title_fa,purchase_price_per_kg FROM products WHERE deleted_at IS NULL ORDER BY sort_order ASC, title_fa ASC"
     );
     const sheet = XLSX.utils.aoa_to_sheet([
       ["product_id", "product", "purchase_price_per_kg_toman", "increase_type", "increase_value"],
@@ -852,6 +852,7 @@ ${ai.instructions}
       customerNote: item.customerNote ? String(item.customerNote) : null,
       totalAmount: Number(item.totalAmount || 0),
       discountAmount: Number(item.discountAmount || 0),
+      taxPercent: Number(item.taxPercent ?? 10),
       taxAmount: Number(item.taxAmount || 0),
       finalAmount: Number(item.finalAmount || 0),
       createdAt: item.createdAt instanceof Date ? item.createdAt : String(item.createdAt || new Date().toISOString()),
