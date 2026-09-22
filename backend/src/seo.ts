@@ -17,7 +17,7 @@ export const categoryHref = (slug: string) => {
   if (slug === "wholesale") return "/wholesale/";
   if (slug === "order") return "/order/";
   if (slug === "about-orenza") return "/about/";
-  return `/products/${encodeURIComponent(slug)}/`;
+  return `/category/${encodeURIComponent(slug)}/`;
 };
 
 export const normalizeSitePath = (value: string) => {

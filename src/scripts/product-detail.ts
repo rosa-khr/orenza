@@ -295,13 +295,13 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
             title: "مشاهده همه نوشیدنی‌های پودری",
             description: "انتخاب چای ماسالا، ماچا، هات چاکلت و کاپوچینو",
             label: "خرید نوشیدنی‌های پودری",
-            href: "/products/cafe-drinks/"
+            href: "/category/cafe-drinks/"
           },
           "herbal-tea": {
             title: "مشاهده همه دمنوش‌ها",
             description: "انتخاب ترکیب‌های گیاهی و خوش‌عطر",
             label: "خرید دمنوش",
-            href: "/products/herbal-tea/"
+            href: "/category/herbal-tea/"
           }
         };
         const meta = categoryMeta[item.categorySlug] || categoryMeta["coffee-blends"];
@@ -317,7 +317,7 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
         };
 
         internalLinkGrid.append(
-          createLink(`/products/${item.categorySlug}/`, meta.title, meta.description),
+          createLink(`/category/${item.categorySlug}/`, meta.title, meta.description),
           createLink(
             meta.href,
             meta.label,

@@ -20,7 +20,7 @@ const defaultItems: HeaderSearchItem[] = [
     label: "دسته‌بندی",
     title: "قهوه‌های اورنزا",
     subtitle: "عربیکا، روبوستا و ترکیب‌های پیشنهادی",
-    href: "/products/coffee-blends/",
+    href: "/category/coffee-blends/",
     imageUrl: null
   },
   {
@@ -28,7 +28,7 @@ const defaultItems: HeaderSearchItem[] = [
     label: "دسته‌بندی",
     title: "نوشیدنی‌های پودری",
     subtitle: "ماچا، ماسالا، هات‌چاکلت و نوشیدنی‌های کافه‌ای",
-    href: "/products/cafe-drinks/",
+    href: "/category/cafe-drinks/",
     imageUrl: null
   },
   {
@@ -36,7 +36,7 @@ const defaultItems: HeaderSearchItem[] = [
     label: "دسته‌بندی",
     title: "دمنوش‌ها",
     subtitle: "ترکیب‌های گیاهی برای روزهای آرام‌تر",
-    href: "/products/herbal-tea/",
+    href: "/category/herbal-tea/",
     imageUrl: null
   }
 ];

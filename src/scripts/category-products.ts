@@ -71,7 +71,7 @@ if (root && list) {
         if (dynamicTitle) dynamicTitle.textContent = item.title;
         const dynamicLead = document.querySelector<HTMLElement>("[data-category-lead]");
         if (dynamicLead) dynamicLead.textContent = item.seoDescription || `محصولات دسته‌بندی ${item.title} در اورنزا`;
-        const canonicalUrl = new URL(item.canonicalUrl || `/products/${encodeURIComponent(item.slug)}/`, location.origin).toString();
+        const canonicalUrl = new URL(item.canonicalUrl || `/category/${encodeURIComponent(item.slug)}/`, location.origin).toString();
         const robots = `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}${item.robotsIndex === false ? "" : ", max-image-preview:large"}`;
         if (item.seoTitle || dynamicTitle) {
           const pageTitle = `${item.seoTitle || item.title} | اورنزا`;

@@ -16,7 +16,7 @@ const isDirectProductCategory = category.slug === "cafe-drinks" || category.slug
 <BaseLayout
   title={category.seoTitle}
   description={category.seoDescription}
-  canonicalPath={`/products/${category.slug}/`}
+  canonicalPath={`/category/${category.slug}/`}
   keywords={[...category.keywords]}
 >
   <section class="category-hero" data-category-hero data-category-slug={category.slug}>

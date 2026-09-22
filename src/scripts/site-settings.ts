@@ -366,7 +366,7 @@ const categoryHref = (slug: string) => {
   if (slug === "wholesale") return "/wholesale/";
   if (slug === "order") return "/order/";
   if (slug === "about-orenza") return "/about/";
-  return `/products/${encodeURIComponent(slug)}/`;
+  return `/category/${encodeURIComponent(slug)}/`;
 };
 
 const createSimpleNavLink = (item: PopularFooterCategory) => {
@@ -392,7 +392,7 @@ const createDesktopCategoryItem = (item: PublicNavCategory) => {
   toggle.setAttribute("aria-expanded", "false");
   const panel = document.createElement("div");
   panel.className = "nav-products-panel";
-  [item, ...children].forEach((child) => {
+  children.forEach((child) => {
     const childLink = document.createElement("a");
     childLink.href = categoryHref(child.slug);
     const title = document.createElement("span");
@@ -416,17 +416,21 @@ const createMobileCategoryItem = (item: PublicNavCategory) => {
   }
   const section = document.createElement("section");
   section.className = "mobile-nav-group";
-  const button = document.createElement("button");
-  button.type = "button";
-  button.dataset.mobileAccordion = "";
-  button.setAttribute("aria-expanded", "false");
+  const link = document.createElement("a");
+  link.href = categoryHref(item.slug);
   const title = document.createElement("span");
   title.textContent = item.title;
-  button.append(title);
+  link.append(title);
+  const button = document.createElement("button");
+  button.className = "mobile-nav-group-toggle";
+  button.type = "button";
+  button.dataset.mobileAccordion = "";
+  button.setAttribute("aria-label", `نمایش زیرشاخه‌های ${item.title}`);
+  button.setAttribute("aria-expanded", "false");
   const panel = document.createElement("div");
   panel.className = "mobile-nav-submenu";
   panel.hidden = true;
-  [item, ...children].forEach((child) => {
+  children.forEach((child) => {
     const childLink = document.createElement("a");
     childLink.href = categoryHref(child.slug);
     const childTitle = document.createElement("span");
@@ -434,7 +438,7 @@ const createMobileCategoryItem = (item: PublicNavCategory) => {
     childLink.append(childTitle);
     panel.append(childLink);
   });
-  section.append(button, panel);
+  section.append(link, button, panel);
   return section;
 };
 

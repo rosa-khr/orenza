@@ -887,7 +887,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
         if (slug === "wholesale") return "/wholesale/";
         if (slug === "order") return "/order/";
         if (slug === "about-orenza") return "/about/";
-        return `/products/${encodeURIComponent(slug)}/`;
+        return `/category/${encodeURIComponent(slug)}/`;
       }
       return null;
     })();

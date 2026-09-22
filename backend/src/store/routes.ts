@@ -358,7 +358,22 @@ export const registerStoreRoutes = (
       [slug]
     );
     reply.header("Cache-Control", "no-store");
-    reply.header("X-Accel-Redirect", result.rowCount ? "/__category_detail" : "/__product_detail");
+    if (result.rowCount) return reply.code(301).header("Location", categoryHref(slug)).send();
+    reply.header("X-Accel-Redirect", "/__product_detail");
+    return reply.code(200).send();
+  });
+
+  app.get("/api/v1/storefront/category/:slug", async (request, reply) => {
+    const { slug } = z.object({
+      slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    }).parse(request.params);
+    const result = await pool.query(
+      "SELECT 1 FROM categories WHERE slug=$1 AND is_active=true LIMIT 1",
+      [slug]
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: "دسته‌بندی پیدا نشد." });
+    reply.header("Cache-Control", "no-store");
+    reply.header("X-Accel-Redirect", "/__category_detail");
     return reply.code(200).send();
   });
 
