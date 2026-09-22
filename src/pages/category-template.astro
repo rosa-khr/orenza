@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="دسته‌بندی محصولات اورنزا"
+  description="محصولات این دسته‌بندی را در فروشگاه اورنزا ببینید."
+  canonicalPath="/category-template/"
+  keywords={["محصولات اورنزا"]}
+>
+  <section class="category-hero" data-category-hero>
+    <img class="category-hero-banner" data-category-hero-banner hidden alt="" />
+    <div>
+      <p class="eyebrow">ORENZA COLLECTION</p>
+      <h1 data-category-title>در حال دریافت دسته‌بندی…</h1>
+      <p data-category-lead></p>
+      <a class="button button-primary" href="#category-products-title">مشاهده محصولات</a>
+    </div>
+  </section>
+
+  <section class="category-products" data-category-products data-dynamic-category aria-labelledby="category-products-title">
+    <header>
+      <span>AVAILABLE SELECTION</span>
+      <h2 id="category-products-title">انتخاب‌های این مجموعه</h2>
+    </header>
+    <div data-category-product-list><p>در حال دریافت محصولات…</p></div>
+  </section>
+
+  <section class="category-editorial" hidden>
+    <div class="category-admin-content" data-category-content hidden></div>
+  </section>
+  <section class="content-tags" data-category-tags hidden>
+    <header><span>RELATED TAGS</span><h2>برچسب‌های مرتبط این دسته‌بندی</h2></header>
+    <div data-category-tag-list></div>
+  </section>
+  <script>
+    import "../scripts/category-products.ts";
+  </script>
+</BaseLayout>

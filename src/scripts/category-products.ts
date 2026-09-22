@@ -54,7 +54,12 @@ if (root && list) {
   const money = new Intl.NumberFormat("fa-IR");
   const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
   const directCartCategories = new Set(["cafe-drinks", "herbal-tea"]);
-  const categorySlug = root.dataset.category || "";
+  const categorySlug = root.hasAttribute("data-dynamic-category")
+    ? decodeURIComponent(location.pathname.split("/").filter(Boolean).at(-1) || "")
+    : root.dataset.category || "";
+  root.dataset.category = categorySlug;
+  const hero = document.querySelector<HTMLElement>("[data-category-hero]");
+  if (hero && root.hasAttribute("data-dynamic-category")) hero.dataset.categorySlug = categorySlug;
   if (categorySlug) {
     fetch(`/api/v1/categories/${encodeURIComponent(categorySlug)}`)
       .then(async (response) => {
@@ -62,12 +67,17 @@ if (root && list) {
         return response.json() as Promise<{ item: CategoryInfo }>;
       })
       .then(({ item }) => {
+        const dynamicTitle = document.querySelector<HTMLElement>("[data-category-title]");
+        if (dynamicTitle) dynamicTitle.textContent = item.title;
+        const dynamicLead = document.querySelector<HTMLElement>("[data-category-lead]");
+        if (dynamicLead) dynamicLead.textContent = item.seoDescription || `محصولات دسته‌بندی ${item.title} در اورنزا`;
         const canonicalUrl = new URL(item.canonicalUrl || `/products/${encodeURIComponent(item.slug)}/`, location.origin).toString();
         const robots = `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}${item.robotsIndex === false ? "" : ", max-image-preview:large"}`;
-        if (item.seoTitle) {
-          document.title = `${item.seoTitle} | اورنزا`;
-          document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", `${item.seoTitle} | اورنزا`);
-          document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${item.seoTitle} | اورنزا`);
+        if (item.seoTitle || dynamicTitle) {
+          const pageTitle = `${item.seoTitle || item.title} | اورنزا`;
+          document.title = pageTitle;
+          document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", pageTitle);
+          document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", pageTitle);
         }
         if (item.seoDescription) {
           document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", item.seoDescription);
@@ -81,19 +91,21 @@ if (root && list) {
         if (content && item.description?.trim()) {
           content.innerHTML = item.description.trim();
           content.hidden = false;
+          content.closest<HTMLElement>(".category-editorial")?.removeAttribute("hidden");
         }
         renderTags(document.querySelector<HTMLElement>("[data-category-tag-list]"), item.tags || []);
         if (!item.imageUrl) return;
-        const hero = document.querySelector<HTMLElement>(`[data-category-hero][data-category-slug="${item.slug}"]`);
-        const banner = hero?.querySelector<HTMLImageElement>("[data-category-hero-banner]");
-        if (!hero || !banner) return;
+        const categoryHero = document.querySelector<HTMLElement>(`[data-category-hero][data-category-slug="${item.slug}"]`);
+        const banner = categoryHero?.querySelector<HTMLImageElement>("[data-category-hero-banner]");
+        if (!categoryHero || !banner) return;
         banner.src = item.imageUrl;
         banner.alt = `بنر ${item.title}`;
         banner.hidden = false;
-        hero.classList.add("has-category-banner");
+        categoryHero.classList.add("has-category-banner");
       })
       .catch(() => {
-        // The category keeps its default editorial background when no banner is available.
+        const dynamicTitle = document.querySelector<HTMLElement>("[data-category-title]");
+        if (dynamicTitle) dynamicTitle.textContent = "دسته‌بندی پیدا نشد";
       });
   }
   fetch(`/api/v1/products?category=${encodeURIComponent(root.dataset.category || "")}`)

@@ -349,6 +349,19 @@ export const registerStoreRoutes = (
     return { items: result.rows.map(toPublicRecord) };
   });
 
+  app.get("/api/v1/storefront/resolve/:slug", async (request, reply) => {
+    const { slug } = z.object({
+      slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    }).parse(request.params);
+    const result = await pool.query(
+      "SELECT 1 FROM categories WHERE slug=$1 AND is_active=true LIMIT 1",
+      [slug]
+    );
+    reply.header("Cache-Control", "no-store");
+    reply.header("X-Accel-Redirect", result.rowCount ? "/__category_detail" : "/__product_detail");
+    return reply.code(200).send();
+  });
+
   app.get("/api/v1/categories/:slug", async (request, reply) => {
     const { slug } = z.object({
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
@@ -520,7 +533,16 @@ export const registerStoreRoutes = (
   app.get("/api/v1/products", async (request) => {
     const { category } = z.object({ category: z.string().trim().max(180).optional() }).parse(request.query);
     const values: unknown[] = [];
-    const categoryFilter = category ? " AND c.slug = $1" : "";
+    const categoryFilter = category ? ` AND c.id IN (
+      WITH RECURSIVE category_tree AS (
+        SELECT id FROM categories WHERE slug = $1 AND is_active = true
+        UNION
+        SELECT child.id FROM categories child
+        JOIN category_tree parent ON child.parent_category_id = parent.id
+        WHERE child.is_active = true
+      )
+      SELECT id FROM category_tree
+    )` : "";
     if (category) values.push(category);
     const result = await pool.query<Record<string, unknown>>(
       `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
