@@ -149,28 +149,41 @@ body:has(.mobile-home-top) .support-chat-toggle {
     direction: rtl;
     overflow-x: auto;
     overflow-y: hidden;
+    padding: 1px 0 5px 18px;
     overscroll-behavior-inline: contain;
     scroll-snap-type: inline proximity;
+    scroll-padding-inline: 8px;
+    scroll-behavior: smooth;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 18px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 18px), transparent 100%);
   }
 
   .mobile-quick-links::-webkit-scrollbar { display: none; }
 
   .mobile-quick-links a {
     display: grid;
-    min-width: 0;
-    flex: 0 0 calc((100% - 21px) / 4);
+    min-width: 96px;
+    flex: 0 0 clamp(96px, 27vw, 116px);
     min-height: 68px;
     place-content: center;
     justify-items: center;
     gap: 4px;
     border: 1px solid #d8e2dc;
     border-radius: 12px;
-    background: #f2f7f4;
+    background-color: #f2f7f4;
+    background-image: linear-gradient(110deg, #fbfdfc 0%, #eef6f2 52%, #dcebe4 100%);
     color: #24272c;
-    box-shadow: 0 1px 3px rgba(23, 63, 48, .06);
+    box-shadow: 0 3px 9px rgba(23, 63, 48, .075);
     scroll-snap-align: start;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  }
+
+  .mobile-quick-links a:active {
+    border-color: rgba(23,63,48,.25);
+    box-shadow: 0 5px 13px rgba(23,63,48,.11);
+    transform: translateY(-1px);
   }
 
   .mobile-quick-links a span {
@@ -196,7 +209,8 @@ body:has(.mobile-home-top) .support-chat-toggle {
 
   .mobile-quick-links a.is-featured {
     border-color: #173f30;
-    background: #173f30;
+    background-color: #173f30;
+    background-image: linear-gradient(110deg, #2f614d 0%, #173f30 58%, #0b281d 100%);
     color: #fff;
   }
 
