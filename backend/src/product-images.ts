@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 const productImageDirectory =
   process.env.PRODUCT_IMAGE_DIR || path.resolve(process.cwd(), "data/product-images");
@@ -34,9 +35,23 @@ export const saveProductImage = async (buffer: Buffer) => {
       statusCode: 422
     });
   }
+  const optimized = await sharp(buffer)
+    .rotate()
+    .resize(1200, 1200, {
+      fit: "contain",
+      position: "centre",
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+      withoutEnlargement: false
+    })
+    .webp({ quality: 88, effort: 5 })
+    .toBuffer()
+    .catch(() => {
+      throw Object.assign(new Error("پردازش تصویر محصول ناموفق بود."), { statusCode: 422 });
+    });
+
   await mkdir(productImageDirectory, { recursive: true });
-  const fileName = `${crypto.randomUUID()}.${format.extension}`;
-  await writeFile(path.join(productImageDirectory, fileName), buffer, { flag: "wx", mode: 0o600 });
+  const fileName = `${crypto.randomUUID()}.webp`;
+  await writeFile(path.join(productImageDirectory, fileName), optimized, { flag: "wx", mode: 0o600 });
   return { url: `/api/v1/product-images/${fileName}` };
 };
 

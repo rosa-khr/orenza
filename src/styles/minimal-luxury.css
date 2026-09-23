@@ -6785,8 +6785,8 @@ body.mobile-nav-is-open {
 .product-rail-discount .rail-product-card { border-color: transparent; background: #fff; color: #25211c; }
 .rail-product-media { position: relative; display: grid; height: 142px; place-items: center; overflow: hidden; background: #fff; }
 .product-rail-discount .rail-product-media { background: #fff; }
-.rail-product-media img { width: 72%; height: 78%; object-fit: contain; transition: transform .7s var(--ease-luxury); }
-.rail-product-card:hover .rail-product-media img { transform: scale(1.035); }
+.rail-product-media img { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; box-sizing: border-box; object-fit: contain; object-position: center; padding: 17px 20px 10px; transform: none; }
+.rail-product-card:hover .rail-product-media img { transform: none; }
 .rail-product-media > span { color: #9a6b32; font: 22px Georgia, serif; letter-spacing: .22em; }
 .rail-product-media i { position: absolute; z-index: 1; top: 0; right: 12px; padding: 5px 9px 6px; border-radius: 0 0 8px 8px; background: var(--product-rail-color, var(--green)); color: var(--product-rail-text-color, #fff); font-size: 8px; font-style: normal; font-weight: 800; line-height: 1; box-shadow: 0 4px 12px rgba(24,35,29,.12); }
 .product-rail-discount .rail-product-media i { background: var(--product-rail-color, var(--red)); color: var(--product-rail-text-color, #fff); }
@@ -6798,19 +6798,19 @@ body.mobile-nav-is-open {
 .product-rail-discount .rail-product-copy > p { color: #7d7162; }
 .rail-product-copy footer { margin-top: auto; background: #fff; color: #25211c; }
 .product-rail-discount .rail-product-copy footer { border-color: transparent; }
-.rail-product-copy footer > .rail-product-price { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 5px; }
-.rail-product-copy footer b { color: #76501f; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.rail-product-copy footer > .rail-product-price { display: grid; width: 100%; min-width: 0; justify-items: start; gap: 5px; }
+.rail-product-copy footer b { color: #76501f; font-size: 12px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
 .product-rail-discount .rail-product-copy footer b { color: var(--red); }
 .rail-discount-line {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-style: normal;
   line-height: 1;
 }
 .rail-discount-line del {
   color: #9b9185;
-  font-size: 8px;
+  font-size: 8.5px;
   text-decoration-thickness: 1px;
 }
 .rail-discount-line strong {

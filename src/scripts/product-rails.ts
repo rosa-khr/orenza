@@ -55,8 +55,8 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
       <h3><a href="${url}">${product.titleFa}</a></h3>
       <footer>
         <div class="rail-product-price">
-          <b>${money.format(price)} تومان</b>
           ${hasDiscount ? `<em class="rail-discount-line"><del>${money.format(regularPrice)}</del><strong>${percentFormat.format(discountPercent)}٪</strong></em>` : ""}
+          <b>${money.format(price)} تومان</b>
         </div>
       </footer>
     </div>`;
