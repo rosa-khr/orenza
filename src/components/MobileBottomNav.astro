@@ -7,14 +7,14 @@ const active = path.startsWith("/account/") || path === "/login/"
   ? "account"
   : path.startsWith("/order/") || path === "/order"
     ? "order"
-    : path.startsWith("/products/") || path.startsWith("/category/")
+    : path.startsWith("/products/") || path.startsWith("/category/") || path.startsWith("/categories/")
       ? "products"
       : "home";
 ---
 
 <nav class="mobile-bottom-nav" aria-label="منوی سریع موبایل">
   <a class:list={{ "is-current": active === "home" }} href="/"><Icon name="home" size={23} /><span>خانه</span></a>
-  <a class:list={{ "is-current": active === "products" }} href="/products/"><Icon name="grid" size={23} /><span>دسته‌بندی</span></a>
+  <a class:list={{ "is-current": active === "products" }} href="/categories/"><Icon name="grid" size={23} /><span>دسته‌بندی</span></a>
   <button type="button" data-cart-open><Icon name="cart" size={24} /><span>سبد خرید</span><b data-cart-count>۰</b></button>
   <a class:list={{ "is-current": active === "order" }} href="/order/"><CoffeeBeanIcon size={24} /><span>سفارش</span></a>
   <a class:list={{ "is-current": active === "account" }} href="/account/profile/"><Icon name="user" size={23} /><span>حساب من</span></a>

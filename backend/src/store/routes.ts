@@ -364,8 +364,7 @@ export const registerStoreRoutes = (
        FROM categories c
        WHERE c.is_active = true
          AND c.parent_category_id IS NULL
-       ORDER BY c.sort_order ASC, c.created_at ASC
-       LIMIT 12`
+       ORDER BY c.sort_order ASC, c.created_at ASC`
     );
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     return { items: result.rows.map(toPublicRecord) };

@@ -1,0 +1,25 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="دسته‌بندی محصولات اورنزا"
+  description="همه دسته‌بندی‌های فعال محصولات اورنزا را به‌صورت یکجا ببینید و سریع‌تر به محصول مناسب برسید."
+  canonicalPath="/categories/"
+  keywords={["دسته‌بندی قهوه", "محصولات اورنزا", "انواع قهوه و نوشیدنی"]}
+>
+  <section class="categories-index-page">
+    <header>
+      <span>ORENZA COLLECTIONS</span>
+      <h1>دسته‌بندی محصولات</h1>
+      <p>مسیر موردنظرت را انتخاب کن؛ همه مجموعه‌ها و زیرشاخه‌های فعال اینجا کنار هم هستند.</p>
+    </header>
+    <div class="categories-tile-grid" data-categories-tile-grid>
+      <p>در حال دریافت دسته‌بندی‌ها…</p>
+    </div>
+  </section>
+
+  <script>
+    import "../../scripts/categories-index.ts";
+  </script>
+</BaseLayout>

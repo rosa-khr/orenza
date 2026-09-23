@@ -1,3 +1,4 @@
+import { ADD_TO_CART_EVENT, type CartItemInput } from "./order-types";
 import { productDetailUrl } from "./product-url";
 
 type RailProduct = {
@@ -23,6 +24,9 @@ type RailProduct = {
 
 const money = new Intl.NumberFormat("fa-IR");
 const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
+const weightLabels = { 250: "۲۵۰ گرم", 500: "۵۰۰ گرم", 1000: "۱ کیلوگرم" } as const;
+const roastLabels = { light: "روشن", medium: "متوسط", mediumDark: "متوسط رو به تیره", dark: "تیره" };
+const cartIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 10.2a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 1.9-1.4L21 7H6.2M10 19.5h.01M18 19.5h.01" /></svg>`;
 const card = (product: RailProduct, kind: "best" | "discount") => {
   const article = document.createElement("article");
   article.className = "rail-product-card";
@@ -43,6 +47,7 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
       : 0;
   const hasDiscount = product.showInDiscounts && regularPrice > discountedPrice && discountPercent > 0;
   const price = hasDiscount ? discountedPrice : regularPrice;
+  const weight = product.saleType === "packaged" ? product.packageWeightGrams : 250;
   const url = productDetailUrl(product);
   article.innerHTML = `
     <a class="rail-product-media" href="${url}" aria-label="مشاهده ${product.titleFa}">
@@ -58,8 +63,38 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
           ${hasDiscount ? `<em class="rail-discount-line"><del>${money.format(regularPrice)}</del><strong>${percentFormat.format(discountPercent)}٪</strong></em>` : ""}
           <b>${money.format(price)} تومان</b>
         </div>
+        <button class="rail-cart-button" type="button"
+          aria-label="${product.stockStatus === "outOfStock" ? "محصول ناموجود است" : `افزودن ${product.titleFa} به سبد خرید`}"
+          title="${product.stockStatus === "outOfStock" ? "ناموجود" : "افزودن به سبد خرید"}"
+          ${product.stockStatus === "outOfStock" ? "disabled" : ""}>
+          ${product.stockStatus === "outOfStock" ? '<span class="rail-cart-unavailable">ناموجود</span>' : cartIcon}
+        </button>
       </footer>
     </div>`;
+  article.querySelector<HTMLButtonElement>(".rail-cart-button")?.addEventListener("click", (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    const item: CartItemInput = {
+      productId: product.id,
+      productTitle: product.titleFa,
+      blend: product.blendType,
+      roast: roastLabels[product.roastType],
+      grind: product.coffeeType === "ground" ? "پودر آماده" : "دان کامل",
+      weight: weightLabels[weight],
+      weightGrams: weight,
+      quantity: 1,
+      unitPrice: price,
+      totalPrice: price
+    };
+    document.dispatchEvent(new CustomEvent(ADD_TO_CART_EVENT, { detail: item }));
+    button.classList.add("is-added");
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>';
+    button.setAttribute("aria-label", `${product.titleFa} به سبد خرید اضافه شد`);
+    window.setTimeout(() => {
+      button.classList.remove("is-added");
+      button.innerHTML = cartIcon;
+      button.setAttribute("aria-label", `افزودن ${product.titleFa} به سبد خرید`);
+    }, 1400);
+  });
   return article;
 };
 
