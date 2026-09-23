@@ -684,6 +684,47 @@ body:has(.mobile-home-top) .support-chat-toggle {
   color: var(--text-dark);
 }
 
+@media (max-width: 699px) {
+  .site-header {
+    transition:
+      background 320ms ease,
+      border-color 320ms ease,
+      box-shadow 320ms ease;
+  }
+
+  .site-header::after {
+    position: absolute;
+    right: 12%;
+    bottom: -1px;
+    left: 12%;
+    display: block;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(166, 120, 56, .55), rgba(45, 86, 68, .48), transparent);
+    content: "";
+    opacity: 0;
+    pointer-events: none;
+    transform: scaleX(.65);
+    transition: opacity 320ms ease, transform 320ms ease;
+  }
+
+  .site-header.is-page-scrolled {
+    background:
+      linear-gradient(118deg, rgba(255, 255, 255, .97) 0%, rgba(239, 247, 243, .97) 56%, rgba(250, 242, 226, .96) 100%);
+    border-bottom-color: rgba(45, 86, 68, .18);
+    box-shadow: 0 12px 30px rgba(29, 55, 44, .12);
+  }
+
+  .site-header.is-page-scrolled::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-header,
+    .site-header::after { transition: none; }
+  }
+}
+
 .site-header .primary-nav a,
 .nav-products-link,
 .nav-products-toggle,
