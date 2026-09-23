@@ -53,6 +53,11 @@ export const initAccountHeader = () => {
       closeDrawer();
       return;
     }
+    const cartButton = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-cart-open]");
+    if (cartButton) {
+      closeDrawer();
+      return;
+    }
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-mobile-accordion]");
     if (button) {
       const panel = button.nextElementSibling;

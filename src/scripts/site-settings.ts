@@ -443,14 +443,48 @@ const createMobileCategoryItem = (item: PublicNavCategory) => {
   return section;
 };
 
+const quickIconKind = (item: PublicNavCategory) => {
+  const value = `${item.title} ${item.slug}`.toLowerCase();
+  if (value.includes("دمنوش") || value.includes("herbal") || value.includes("tea")) return "herbal";
+  if (value.includes("نوشیدنی") || value.includes("drink") || value.includes("cafe")) return "drink";
+  if (value.includes("قهوه") || value.includes("coffee")) return "bean";
+  return "store";
+};
+
+const applyMobileQuickLinks = (items: PublicNavCategory[]) => {
+  document.querySelectorAll<HTMLElement>("[data-mobile-quick-links]").forEach((root) => {
+    const iconTemplates = new Map<string, HTMLElement>();
+    root.querySelectorAll<HTMLElement>("[data-quick-icon]").forEach((link) => {
+      const icon = link.querySelector<HTMLElement>("span");
+      if (icon) iconTemplates.set(link.dataset.quickIcon || "store", icon);
+    });
+    const staticLinks = [...root.querySelectorAll<HTMLAnchorElement>("[data-quick-static]")]
+      .map((link) => link.cloneNode(true) as HTMLAnchorElement);
+    const categoryLinks = items.map((item) => {
+      const link = document.createElement("a");
+      const kind = quickIconKind(item);
+      link.href = categoryHref(item.slug);
+      link.dataset.quickIcon = kind;
+      const icon = (iconTemplates.get(kind) || iconTemplates.get("store"))?.cloneNode(true);
+      const title = document.createElement("b");
+      title.textContent = item.title;
+      if (icon) link.append(icon);
+      link.append(title);
+      return link;
+    });
+    root.replaceChildren(...categoryLinks, ...staticLinks);
+  });
+};
+
 const applyCategoryNavigation = (items: PublicNavCategory[]) => {
   if (!items.length) return;
   document.querySelectorAll<HTMLElement>("[data-category-nav]").forEach((root) => {
     root.replaceChildren(...items.slice(0, 8).map(createDesktopCategoryItem));
   });
   document.querySelectorAll<HTMLElement>("[data-mobile-category-nav]").forEach((root) => {
-    root.replaceChildren(...items.slice(0, 8).map(createMobileCategoryItem));
+    root.replaceChildren(...items.map(createMobileCategoryItem));
   });
+  applyMobileQuickLinks(items);
 };
 
 const applyPopularFooterLinks = (items: PopularFooterCategory[]) => {

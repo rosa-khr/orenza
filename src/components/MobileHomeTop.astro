@@ -4,11 +4,11 @@ import CoffeeBeanIcon from "./CoffeeBeanIcon.astro";
 ---
 
 <section class="mobile-home-top" aria-label="دسترسی سریع فروشگاه">
-  <nav class="mobile-quick-links" aria-label="دسته‌های اصلی">
-    <a href="/category/coffee-blends/"><span><CoffeeBeanIcon size={27} /></span><b>قهوه</b></a>
-    <a href="/category/cafe-drinks/"><span><Icon name="coffee" size={25} /></span><b>نوشیدنی پودری</b></a>
-    <a href="/category/herbal-tea/"><span><Icon name="coffee" size={25} /></span><b>دمنوش</b></a>
-    <a href="/wholesale/"><span><Icon name="store" size={25} /></span><b>خرید عمده</b></a>
+  <nav class="mobile-quick-links" aria-label="دسته‌های اصلی" data-mobile-quick-links>
+    <a href="/category/coffee-blends/" data-quick-icon="bean"><span><CoffeeBeanIcon size={27} /></span><b>قهوه</b></a>
+    <a href="/category/cafe-drinks/" data-quick-icon="drink"><span><Icon name="coffee" size={25} /></span><b>نوشیدنی پودری</b></a>
+    <a href="/category/herbal-tea/" data-quick-icon="herbal"><span><Icon name="coffee" size={25} /></span><b>دمنوش</b></a>
+    <a href="/wholesale/" data-quick-icon="store" data-quick-static><span><Icon name="store" size={25} /></span><b>خرید عمده</b></a>
   </nav>
 
   <div class="mobile-store-tools">
