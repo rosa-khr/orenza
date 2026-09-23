@@ -6760,13 +6760,19 @@ body.mobile-nav-is-open {
   font-weight: 800;
 }
 .rail-product-copy footer span { display: none; }
-.rail-product-copy button { display: grid; flex: 0 0 28px; width: 28px; height: 28px; min-height: 0; place-items: center; border: 1px solid var(--product-cart-icon-color, var(--green)); border-radius: 50%; background: var(--product-cart-icon-color, var(--green)); padding: 0; color: #fff; cursor: pointer; font: inherit; font-size: 7px; transition: transform .2s ease, background .2s ease; }
-.rail-product-copy button:hover { transform: scale(1.06); }
-.rail-product-copy button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.rail-product-copy button.is-added { background: #2f7b57; border-color: #2f7b57; }
+.rail-cart-control { display: flex; flex: 0 0 auto; min-height: 28px; align-items: center; }
+.rail-product-copy .rail-cart-button { display: grid; flex: 0 0 28px; width: 28px; height: 28px; min-height: 0; place-items: center; border: 1px solid var(--red); border-radius: 50%; background: transparent; padding: 0; color: var(--red); cursor: pointer; font: inherit; font-size: 7px; transition: transform .2s ease, border-color .2s ease, color .2s ease; }
+.rail-product-copy .rail-cart-button:hover { transform: scale(1.06); }
+.rail-product-copy .rail-cart-button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .rail-cart-unavailable { line-height: 1.15; }
-.product-rail-discount .rail-product-copy button { border-color: var(--product-cart-icon-color, var(--red)); background: var(--product-cart-icon-color, var(--red)); color: #fff; }
-.rail-product-copy button:disabled { opacity: .45; cursor: not-allowed; }
+.product-rail-discount .rail-product-copy .rail-cart-button { border-color: var(--red); background: transparent; color: var(--red); }
+.rail-product-copy .rail-cart-button:disabled { opacity: .45; cursor: not-allowed; }
+.rail-cart-button[hidden],
+.rail-cart-stepper[hidden] { display: none; }
+.rail-cart-stepper { display: grid; width: 68px; height: 28px; grid-template-columns: 23px 22px 23px; align-items: center; overflow: hidden; border: 1px solid var(--red); border-radius: 999px; background: transparent; color: var(--red); }
+.rail-product-copy .rail-cart-stepper button { display: grid; width: 23px; height: 27px; min-height: 0; place-items: center; border: 0; background: transparent; padding: 0; color: inherit; cursor: pointer; font: 800 15px/1 Arial, sans-serif; }
+.rail-product-copy .rail-cart-stepper button:hover { background: color-mix(in srgb, var(--red) 8%, transparent); }
+.rail-cart-stepper output { color: #352f29; font-size: 9px; font-weight: 800; text-align: center; }
 
 /* Category directory */
 .categories-index-page {
@@ -6859,6 +6865,7 @@ body.mobile-nav-is-open {
   box-shadow: 0 8px 24px rgba(42,35,28,.055);
   color: #2f332f;
   direction: rtl;
+  cursor: pointer;
 }
 .rail-view-all-card > span {
   display: grid;

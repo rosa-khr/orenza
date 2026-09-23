@@ -1,4 +1,12 @@
-import { ADD_TO_CART_EVENT, type CartItem, type CartItemInput } from "./order-types";
+import {
+  ADD_TO_CART_EVENT,
+  CART_UPDATED_EVENT,
+  CHANGE_CART_QUANTITY_EVENT,
+  cartSelectionKey,
+  type CartItem,
+  type CartItemInput,
+  type CartQuantityChange
+} from "./order-types";
 import { enablePersianValidation, validateControlFa } from "./persian-validation";
 
 type AccountUser = {
@@ -711,14 +719,16 @@ export const initCart = () => {
   };
 
   const render = () => {
+    const itemCount = cart.reduce((sum, item) => sum + Math.max(0, Number(item.quantity || 0)), 0);
     cartCountElements.forEach((element) => {
-      element.textContent = numberFormatter.format(cart.length);
+      element.textContent = numberFormatter.format(itemCount);
     });
     cartItems?.replaceChildren(...cart.map(createCartItem));
     if (cartEmpty) cartEmpty.hidden = cart.length > 0;
     if (cartCheckout) cartCheckout.hidden = cart.length === 0;
     updateTotals();
     updateOrderLinks();
+    document.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT, { detail: { items: cart } }));
   };
 
   const open = () => {
@@ -1031,7 +1041,14 @@ export const initCart = () => {
 
   document.addEventListener(ADD_TO_CART_EVENT, (event) => {
     const item = (event as CustomEvent<CartItemInput>).detail;
-    cart.push({ ...item, id: Date.now() });
+    const existing = cart.find((cartItem) => cartSelectionKey(cartItem) === cartSelectionKey(item));
+    if (existing) {
+      existing.quantity += item.quantity;
+      existing.unitPrice = item.unitPrice;
+      existing.totalPrice = existing.unitPrice * existing.quantity;
+    } else {
+      cart.push({ ...item, totalPrice: item.unitPrice * item.quantity, id: Date.now() });
+    }
     submittedOrder = null;
     discountAmount = 0;
     updateSubmittedState();
@@ -1043,6 +1060,21 @@ export const initCart = () => {
       window.setTimeout(() => trigger.classList.remove("has-new-item"), 900);
     });
     showAddedChoice(item);
+  });
+
+  document.addEventListener(CHANGE_CART_QUANTITY_EVENT, (event) => {
+    const change = (event as CustomEvent<CartQuantityChange>).detail;
+    const index = cart.findIndex((item) => cartSelectionKey(item) === cartSelectionKey(change));
+    if (index < 0) return;
+    const item = cart[index];
+    item.quantity += change.delta;
+    if (item.quantity <= 0) cart.splice(index, 1);
+    else item.totalPrice = item.unitPrice * item.quantity;
+    submittedOrder = null;
+    discountAmount = 0;
+    updateSubmittedState();
+    saveCart();
+    render();
   });
 
   refreshShippingInputs();

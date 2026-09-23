@@ -1,4 +1,12 @@
-import { ADD_TO_CART_EVENT, type CartItemInput } from "./order-types";
+import {
+  ADD_TO_CART_EVENT,
+  CART_UPDATED_EVENT,
+  CHANGE_CART_QUANTITY_EVENT,
+  cartSelectionKey,
+  type CartItem,
+  type CartItemInput,
+  type CartQuantityChange
+} from "./order-types";
 import { productDetailUrl } from "./product-url";
 
 type RailProduct = {
@@ -27,6 +35,29 @@ const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 
 const weightLabels = { 250: "۲۵۰ گرم", 500: "۵۰۰ گرم", 1000: "۱ کیلوگرم" } as const;
 const roastLabels = { light: "روشن", medium: "متوسط", mediumDark: "متوسط رو به تیره", dark: "تیره" };
 const cartIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 10.2a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 1.9-1.4L21 7H6.2M10 19.5h.01M18 19.5h.01" /></svg>`;
+const readCart = (): CartItem[] => {
+  try {
+    const items = JSON.parse(localStorage.getItem("orenza-cart") || "[]");
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+};
+
+const syncRailCartControls = (items: CartItem[] = readCart()) => {
+  document.querySelectorAll<HTMLElement>(".rail-cart-control").forEach((control) => {
+    const quantity = items
+      .filter((item) => encodeURIComponent(cartSelectionKey(item)) === control.dataset.cartKey)
+      .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const add = control.querySelector<HTMLButtonElement>(".rail-cart-button");
+    const stepper = control.querySelector<HTMLElement>(".rail-cart-stepper");
+    const output = control.querySelector<HTMLOutputElement>("output");
+    if (add) add.hidden = quantity > 0;
+    if (stepper) stepper.hidden = quantity <= 0;
+    if (output) output.value = money.format(quantity);
+  });
+};
+
 const card = (product: RailProduct, kind: "best" | "discount") => {
   const article = document.createElement("article");
   article.className = "rail-product-card";
@@ -48,6 +79,15 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
   const hasDiscount = product.showInDiscounts && regularPrice > discountedPrice && discountPercent > 0;
   const price = hasDiscount ? discountedPrice : regularPrice;
   const weight = product.saleType === "packaged" ? product.packageWeightGrams : 250;
+  const grind = product.coffeeType === "ground" ? "پودر آماده" : "دان کامل";
+  const selection = {
+    productId: product.id,
+    blend: product.blendType,
+    roast: roastLabels[product.roastType],
+    grind,
+    weightGrams: weight
+  };
+  const cartKey = encodeURIComponent(cartSelectionKey({ ...selection, delta: 1 }));
   const url = productDetailUrl(product);
   article.innerHTML = `
     <a class="rail-product-media" href="${url}" aria-label="مشاهده ${product.titleFa}">
@@ -63,38 +103,41 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
           ${hasDiscount ? `<em class="rail-discount-line"><del>${money.format(regularPrice)}</del><strong>${percentFormat.format(discountPercent)}٪</strong></em>` : ""}
           <b>${money.format(price)} تومان</b>
         </div>
-        <button class="rail-cart-button" type="button"
-          aria-label="${product.stockStatus === "outOfStock" ? "محصول ناموجود است" : `افزودن ${product.titleFa} به سبد خرید`}"
-          title="${product.stockStatus === "outOfStock" ? "ناموجود" : "افزودن به سبد خرید"}"
-          ${product.stockStatus === "outOfStock" ? "disabled" : ""}>
-          ${product.stockStatus === "outOfStock" ? '<span class="rail-cart-unavailable">ناموجود</span>' : cartIcon}
-        </button>
+        <div class="rail-cart-control" data-cart-key="${cartKey}">
+          <button class="rail-cart-button" type="button"
+            aria-label="${product.stockStatus === "outOfStock" ? "محصول ناموجود است" : `افزودن ${product.titleFa} به سبد خرید`}"
+            title="${product.stockStatus === "outOfStock" ? "ناموجود" : "افزودن به سبد خرید"}"
+            ${product.stockStatus === "outOfStock" ? "disabled" : ""}>
+            ${product.stockStatus === "outOfStock" ? '<span class="rail-cart-unavailable">ناموجود</span>' : cartIcon}
+          </button>
+          <div class="rail-cart-stepper" aria-label="تعداد ${product.titleFa}" hidden>
+            <button type="button" data-rail-increase aria-label="افزایش تعداد ${product.titleFa}">+</button>
+            <output aria-live="polite">۱</output>
+            <button type="button" data-rail-decrease aria-label="کاهش تعداد ${product.titleFa}">−</button>
+          </div>
+        </div>
       </footer>
     </div>`;
-  article.querySelector<HTMLButtonElement>(".rail-cart-button")?.addEventListener("click", (event) => {
-    const button = event.currentTarget as HTMLButtonElement;
+  article.querySelector<HTMLButtonElement>(".rail-cart-button")?.addEventListener("click", () => {
     const item: CartItemInput = {
-      productId: product.id,
+      ...selection,
       productTitle: product.titleFa,
-      blend: product.blendType,
-      roast: roastLabels[product.roastType],
-      grind: product.coffeeType === "ground" ? "پودر آماده" : "دان کامل",
       weight: weightLabels[weight],
-      weightGrams: weight,
       quantity: 1,
       unitPrice: price,
       totalPrice: price
     };
     document.dispatchEvent(new CustomEvent(ADD_TO_CART_EVENT, { detail: item }));
-    button.classList.add("is-added");
-    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>';
-    button.setAttribute("aria-label", `${product.titleFa} به سبد خرید اضافه شد`);
-    window.setTimeout(() => {
-      button.classList.remove("is-added");
-      button.innerHTML = cartIcon;
-      button.setAttribute("aria-label", `افزودن ${product.titleFa} به سبد خرید`);
-    }, 1400);
   });
+  const dispatchQuantityChange = (delta: CartQuantityChange["delta"]) => {
+    const detail: CartQuantityChange = {
+      ...selection,
+      delta
+    };
+    document.dispatchEvent(new CustomEvent(CHANGE_CART_QUANTITY_EVENT, { detail }));
+  };
+  article.querySelector<HTMLButtonElement>("[data-rail-increase]")?.addEventListener("click", () => dispatchQuantityChange(1));
+  article.querySelector<HTMLButtonElement>("[data-rail-decrease]")?.addEventListener("click", () => dispatchQuantityChange(-1));
   return article;
 };
 
@@ -195,11 +238,13 @@ const renderRail = (kind: "best" | "discount", products: RailProduct[]) => {
     const viewAll = document.createElement("a");
     viewAll.className = "rail-view-all-card";
     viewAll.href = allProductsUrl;
+    viewAll.setAttribute("aria-label", kind === "best" ? "مشاهده همه محصولات پرفروش" : "مشاهده همه محصولات شگفت‌انگیز");
     viewAll.innerHTML = '<span aria-hidden="true">←</span><strong>مشاهده همه</strong>';
     group.append(viewAll);
     return group;
   };
   track.replaceChildren(makeGroup());
+  syncRailCartControls();
   enableRailDrag(viewport);
   root.hidden = false;
 };
@@ -214,3 +259,7 @@ void fetch("/api/v1/products")
     renderRail("discount", items.filter((item) => item.showInDiscounts));
   })
   .catch(() => undefined);
+
+document.addEventListener(CART_UPDATED_EVENT, (event) => {
+  syncRailCartControls((event as CustomEvent<{ items: CartItem[] }>).detail.items);
+});
