@@ -485,9 +485,12 @@ body:has(.mobile-home-top) .support-chat-toggle {
     min-height: 66px;
     grid-template-columns: repeat(5, 1fr);
     padding: 7px 4px max(5px, env(safe-area-inset-bottom));
-    border-top: 1px solid #dedfe2;
+    overflow: visible;
+    border: 1px solid rgba(210,214,218,.9);
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
     background: rgba(255,255,255,.97);
-    box-shadow: 0 -8px 24px rgba(31,36,45,.09);
+    box-shadow: 0 -10px 30px rgba(31,36,45,.12);
     backdrop-filter: blur(14px);
   }
   .mobile-bottom-nav a,
@@ -495,7 +498,8 @@ body:has(.mobile-home-top) .support-chat-toggle {
   .mobile-bottom-nav .is-current { color: #293038; }
   .mobile-bottom-nav [data-cart-count] { position: absolute; top: 0; right: calc(50% - 20px); display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; background: #e53154; color: #fff; font-size: 7px; }
 
-  body:has(.mobile-home-top) .support-chat { bottom: max(80px, calc(env(safe-area-inset-bottom) + 72px)); }
+  body:has(.mobile-bottom-nav) { padding-bottom: max(72px, calc(env(safe-area-inset-bottom) + 70px)); }
+  body:has(.mobile-bottom-nav) .support-chat { bottom: max(80px, calc(env(safe-area-inset-bottom) + 72px)); }
   body:has(.mobile-home-top) .support-chat-toggle { background: var(--site-support-color, #173f33); }
 }
 
