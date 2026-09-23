@@ -123,7 +123,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "articles",
     columns: {
       title: "title", slug: "slug", summary: "summary", content: "content", imageUrl: "image_url",
-      ...seoColumns, tags: "tags", isPublished: "is_published", ...audit
+      ...seoColumns, tags: "tags", showInLatest: "show_in_latest", isPublished: "is_published", publishedAt: "published_at", ...audit
     },
     search: ["title", "slug", "summary"],
     schema: articleSchema
@@ -131,7 +131,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
   tags: {
     table: "tags",
     columns: {
-      title: "title", slug: "slug", ...seoColumns,
+      title: "title", slug: "slug", imageUrl: "image_url", ...seoColumns,
       content: "content", showInPopularSearches: "show_in_popular_searches", ...audit
     },
     search: ["title", "slug"],

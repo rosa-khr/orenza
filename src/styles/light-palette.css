@@ -326,7 +326,7 @@ body:has(.mobile-home-top) .support-chat-toggle {
   body:has(.mobile-home-top) .home-product-rails { padding: 12px 0; background: transparent; }
   body:has(.mobile-home-top) .home-product-rails:has(.product-rail-discount) { order: 4; }
   body:has(.mobile-home-top) .home-order-cta { order: 5; }
-  body:has(.mobile-home-top) .espresso-banner { order: 6; }
+  body:has(.mobile-home-top) .coffee-magazine { order: 6; }
   body:has(.mobile-home-top) .home-banner-row[data-home-banner-row="aboveBest"] { order: 7; }
   body:has(.mobile-home-top) .home-product-rails:has(.product-rail-best) { order: 8; }
 
@@ -335,8 +335,26 @@ body:has(.mobile-home-top) .support-chat-toggle {
     padding: 8px 7px 8px;
     border-radius: 0;
   }
-  body:has(.mobile-home-top) .product-rail-best { margin-top: 6px; border-radius: 16px 16px 0 0; background: var(--product-rail-color, #173f30); }
-  body:has(.mobile-home-top) .product-rail-discount { background: var(--product-rail-color, #e53154); }
+  body:has(.mobile-home-top) .product-rail-best {
+    margin-top: 6px;
+    border-radius: 0;
+    background-color: var(--product-rail-color, #173f30);
+    background-image: linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--product-rail-color, #173f30) 84%, #fff) 0%,
+      var(--product-rail-color, #173f30) 52%,
+      color-mix(in srgb, var(--product-rail-color, #173f30) 68%, #071b13) 100%
+    );
+  }
+  body:has(.mobile-home-top) .product-rail-discount {
+    background-color: var(--product-rail-color, #e53154);
+    background-image: linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--product-rail-color, #e53154) 84%, #fff) 0%,
+      var(--product-rail-color, #e53154) 52%,
+      color-mix(in srgb, var(--product-rail-color, #e53154) 68%, #321019) 100%
+    );
+  }
   body:has(.mobile-home-top) .product-rail > header {
     display: flex;
     min-height: 0;
@@ -361,26 +379,26 @@ body:has(.mobile-home-top) .support-chat-toggle {
   body:has(.mobile-home-top) .product-rail > header span { display: none; }
   body:has(.mobile-home-top) .product-rail > header > a {
     display: flex;
-    min-height: 26px;
+    width: 104px;
+    min-height: 32px;
     margin: 0;
-    padding: 6px 8px;
-    border-radius: 7px;
-    background: #fff;
-    color: #3f4541;
+    padding: 6px 9px;
+    border: 1px solid color-mix(in srgb, currentColor 58%, transparent);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--product-rail-text-color, #fff);
     font-size: 9px;
     font-weight: 800;
-    gap: 5px;
+    gap: 8px;
     text-decoration: none;
     white-space: nowrap;
   }
-  body:has(.mobile-home-top) .product-rail > header > a b {
-    width: auto;
-    height: auto;
-    border-radius: 0;
-    background: transparent;
+  body:has(.mobile-home-top) .product-rail > header > a i {
     color: currentColor;
-    font-size: 15px;
-    font-weight: 400;
+    flex: 0 0 auto;
+    direction: ltr;
+    font: normal 700 16px/1 Arial, sans-serif;
+    unicode-bidi: isolate;
   }
   body:has(.mobile-home-top) .product-rail > header > a span {
     display: block;
@@ -416,49 +434,46 @@ body:has(.mobile-home-top) .support-chat-toggle {
   body:has(.mobile-home-top) .product-rail-group { gap: 8px; padding: 0 2px; }
   body:has(.mobile-home-top) .product-rail-group + .product-rail-group { display: none; }
   body:has(.mobile-home-top) .rail-product-card {
-    width: clamp(104px, calc((100vw - 44px) / 3), 124px);
-    height: 124px;
-    flex: 0 0 clamp(104px, calc((100vw - 44px) / 3), 124px);
-    border-radius: 11px;
+    width: 148px;
+    height: 202px;
+    flex: 0 0 148px;
+    border-radius: 13px;
     scroll-snap-align: none;
   }
-  body:has(.mobile-home-top) .rail-product-media { height: 70px; }
+  body:has(.mobile-home-top) .rail-product-media { height: 106px; }
   body:has(.mobile-home-top) .rail-product-media img {
-    width: auto;
-    height: auto;
-    max-width: 68%;
-    max-height: 76%;
+    width: 72%;
+    height: 78%;
+    max-width: none;
+    max-height: none;
     object-fit: contain;
-    transform: translate(-4px, 7px);
+    transform: none;
   }
   body:has(.mobile-home-top) .rail-product-media i {
     z-index: 1;
-    top: 5px;
-    right: 5px;
-    padding: 3px 5px;
-    border-radius: 9px;
+    top: 0;
+    right: 9px;
+    padding: 4px 7px 5px;
+    border-radius: 0 0 7px 7px;
     font-size: 6.5px;
     line-height: 1.2;
   }
   body:has(.mobile-home-top) .rail-product-copy {
-    display: grid;
-    min-height: 0;
-    grid-template-rows: auto auto;
-    padding: 3px 7px 4px;
+    display: flex;
+    min-height: 96px;
+    padding: 8px 10px;
   }
   body:has(.mobile-home-top) .rail-product-copy h3 {
-    margin-bottom: 0;
-    font-size: 9px;
+    margin-bottom: 6px;
+    font-size: 10px;
     line-height: 1.4;
   }
   body:has(.mobile-home-top) .rail-product-copy footer {
-    align-self: end;
-    margin-top: 1px;
-    padding-top: 3px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 0;
   }
-  body:has(.mobile-home-top) .rail-product-copy footer b { font-size: 7px; line-height: 1.2; }
-  body:has(.mobile-home-top) .rail-product-copy button { width: 20px; height: 20px; flex-basis: 20px; }
-  body:has(.mobile-home-top) .rail-product-copy button svg { width: 11px; height: 11px; }
+  body:has(.mobile-home-top) .rail-product-copy footer b { font-size: 8px; line-height: 1.2; }
 
   .mobile-bottom-nav {
     position: fixed;
@@ -4356,7 +4371,7 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 
   .product-detail-back {
     gap: 5px;
-    margin-bottom: 10px;
+    margin-bottom: 18px;
     font-size: 10px;
   }
 
@@ -4607,8 +4622,8 @@ main:has(> .route-spacer) .weight-options button.is-selected {
   }
 
   .related-products article > a {
-    height: 110px;
-    min-height: 110px;
+    height: 106px;
+    min-height: 106px;
   }
 
   .related-products article > div {
@@ -5082,4 +5097,86 @@ main:has(> .route-spacer) .blend-slider-steps {
     font-size: 7px;
   }
 
+}
+
+/* Shared editorial CTA — mirrors the pre-footer link across storefront pages. */
+.site-outline-cta,
+.home-order-cta .button.site-outline-cta,
+.category-hero .button-primary.site-outline-cta,
+.coffee-magazine__footer > .site-outline-cta,
+.articles-page__content > header > .site-outline-cta,
+.related-articles > .site-outline-cta,
+.product-detail-internal-links > .site-outline-cta {
+  display: inline-flex;
+  width: auto;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid rgba(36, 75, 59, .46);
+  border-radius: 5px;
+  background: transparent;
+  padding: 7px 15px;
+  color: #244b3b;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.site-outline-cta:hover,
+.site-outline-cta:focus-visible,
+.category-hero .button-primary.site-outline-cta:hover,
+.category-hero .button-primary.site-outline-cta:focus-visible,
+.coffee-magazine__footer > .site-outline-cta:hover,
+.articles-page__content > header > .site-outline-cta:hover,
+.related-articles > .site-outline-cta:hover,
+.product-detail-internal-links > .site-outline-cta:hover {
+  border-color: #244b3b;
+  background: #244b3b;
+  color: #fff;
+  transform: none;
+}
+
+.home-order-cta .button.site-outline-cta {
+  position: static;
+  min-height: 36px;
+  overflow: visible;
+  border: 1px solid rgba(36, 75, 59, .46);
+  border-radius: 5px;
+  background: transparent;
+  padding: 7px 15px;
+  color: #244b3b;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.home-order-cta .button.site-outline-cta::before { display: none; }
+
+.home-order-cta .button.site-outline-cta svg {
+  width: 15px;
+  height: 15px;
+  color: currentColor;
+}
+
+.home-order-cta .button.site-outline-cta:hover,
+.home-order-cta .button.site-outline-cta:focus-visible {
+  border-color: #244b3b;
+  background: #244b3b;
+  color: #fff;
+  box-shadow: none;
+}
+
+@media (max-width: 699px) {
+  body:has(.mobile-home-top) .home-order-cta .button.site-outline-cta {
+    width: auto;
+    min-height: 36px;
+    justify-self: start;
+    border-radius: 5px;
+    padding: 7px 15px;
+    font-size: 10px;
+  }
 }

@@ -105,6 +105,7 @@ export interface Tag {
   id: string;
   title: string;
   slug: string;
+  imageUrl: string | null;
   content: string | null;
 }
 

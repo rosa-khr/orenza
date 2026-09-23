@@ -168,6 +168,9 @@ export class AdminRepository {
         [(data as { type: string }).type]
       );
     }
+    if (resource === "articles" && data.isPublished === true && !data.publishedAt) {
+      data.publishedAt = new Date();
+    }
     if (resource === "categories") {
       await this.validateCategoryParent(null, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
       return withTransaction(this.pool, async (client) => {
@@ -259,6 +262,9 @@ export class AdminRepository {
     }
     if (["products", "categories", "tags", "articles"].includes(resource) && existing.robotsIndex === true) {
       data.robotsIndex = true;
+    }
+    if (resource === "articles" && data.isPublished === true && existing.isPublished !== true) {
+      data.publishedAt = new Date();
     }
     if (resource === "roles" && existing.slug === "admin") {
       data.slug = "admin";

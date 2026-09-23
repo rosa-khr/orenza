@@ -725,6 +725,7 @@ CREATE TABLE IF NOT EXISTS tags (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(120) NOT NULL,
   slug varchar(160) NOT NULL UNIQUE,
+  image_url text,
   seo_title varchar(60),
   seo_description varchar(150),
   canonical_url text,
@@ -736,6 +737,7 @@ CREATE TABLE IF NOT EXISTS tags (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE tags ADD COLUMN IF NOT EXISTS image_url text;
 
 CREATE TABLE IF NOT EXISTS product_tags (
   product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -769,7 +771,9 @@ CREATE TABLE IF NOT EXISTS articles (
   robots_follow boolean NOT NULL DEFAULT true,
   sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly',
   tags text[] NOT NULL DEFAULT '{}',
+  show_in_latest boolean NOT NULL DEFAULT false,
   is_published boolean NOT NULL DEFAULT false,
+  published_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -899,6 +903,9 @@ ALTER TABLE articles ADD COLUMN IF NOT EXISTS canonical_url text;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS robots_index boolean NOT NULL DEFAULT true;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS robots_follow boolean NOT NULL DEFAULT true;
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS sitemap_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS published_at timestamptz;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS show_in_latest boolean NOT NULL DEFAULT false;
+UPDATE articles SET published_at=created_at WHERE is_published=true AND published_at IS NULL;
 UPDATE articles SET seo_title = left(seo_title, 60) WHERE seo_title IS NOT NULL AND length(seo_title) > 60;
 UPDATE articles SET seo_description = left(seo_description, 150) WHERE seo_description IS NOT NULL AND length(seo_description) > 150;
 ALTER TABLE articles ALTER COLUMN seo_title TYPE varchar(60);
@@ -1008,6 +1015,10 @@ VALUES
    '<h2>خرید محصولات اورنزا</h2><p>مجموعه‌ای از قهوه‌های تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا برای انتخابی دقیق و خوش‌طعم.</p>',
    'خرید محصولات اورنزا؛ قهوه و نوشیدنی‌های کافه‌ای',
    'خرید قهوه تازه‌رست و پودرهای نوشیدنی کافه‌ای اورنزا با انتخاب وزن، رُست و آسیاب مناسب.', true, false),
+  ('مجله اورنزا', 'articles', 45,
+   '<h2>مجله اورنزا</h2><p>دانستنی‌ها و راهنماهای کاربردی برای انتخاب، نگهداری و دم‌آوری بهتر قهوه.</p>',
+   'مجله اورنزا؛ دانستنی‌ها و راهنمای قهوه',
+   'دانستنی‌ها و راهنماهای کاربردی اورنزا برای انتخاب، نگهداری و دم‌آوری بهتر قهوه.', true, false),
   ('خرید عمده', 'wholesale', 50,
    '<h2>خرید عمده قهوه برای کافه و سازمان</h2><p>تأمین منظم قهوه تازه‌رست اورنزا برای کافه‌ها، رستوران‌ها و مجموعه‌های سازمانی با ترکیب و آسیاب متناسب با نیاز شما.</p>',
    'خرید عمده قهوه برای کافه، رستوران و سازمان',
@@ -1189,6 +1200,38 @@ INSERT INTO tags (title,slug) VALUES
   ('نوشیدنی پودری','powdered-drink'),
   ('خرید آنلاین قهوه','buy-coffee-online')
 ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, updated_at=now();
+
+INSERT INTO articles
+  (title,slug,summary,content,image_url,tags,show_in_latest,is_published,published_at,created_at)
+VALUES
+  (
+    'چطور قهوه مناسب ذائقه‌مان را انتخاب کنیم؟',
+    'how-to-choose-coffee-for-your-taste',
+    'یک راهنمای ساده برای شناخت تفاوت عربیکا و روبوستا، انتخاب درجه رست و رسیدن به طعمی که واقعاً دوست دارید.',
+    '<h2>از طعمی که دوست دارید شروع کنید</h2><p>انتخاب قهوه فقط به درصد عربیکا یا روبوستا محدود نیست. میزان تلخی، عطر، اسیدیته و بافت فنجان کمک می‌کند ترکیب مناسب‌تری پیدا کنید.</p><h2>درجه رست را در نظر بگیرید</h2><p>رست روشن عطر و اسیدیته بیشتری دارد و رست تیره طعمی تلخ‌تر و بدنه‌ای سنگین‌تر ایجاد می‌کند. برای شروع، رست متوسط انتخابی متعادل است.</p>',
+    '/images/orenza-guided-coffee-hero-v1.png',
+    ARRAY['خرید قهوه','قهوه تازه رست'],
+    true,true,now() - interval '1 day',now() - interval '1 day'
+  ),
+  (
+    'راهنمای آسیاب قهوه برای روش‌های مختلف دم‌آوری',
+    'coffee-grind-size-guide',
+    'از اسپرسو تا فرنچ‌پرس؛ اندازه مناسب آسیاب را بشناسید تا عصاره‌گیری متعادل‌تر و فنجان خوش‌طعم‌تری داشته باشید.',
+    '<h2>چرا اندازه آسیاب مهم است؟</h2><p>اندازه ذرات قهوه سرعت عبور آب و میزان عصاره‌گیری را تغییر می‌دهد. آسیاب خیلی ریز می‌تواند طعم تلخ و آسیاب خیلی درشت طعم رقیق ایجاد کند.</p><h2>یک نقطه شروع کاربردی</h2><p>برای اسپرسو آسیاب ریز، برای قهوه دمی آسیاب متوسط و برای فرنچ‌پرس آسیاب درشت را انتخاب کنید و سپس براساس طعم فنجان تنظیمات را اصلاح کنید.</p>',
+    '/images/espresso-extraction-editorial-v2.webp',
+    ARRAY['قهوه آسیاب شده','قهوه اسپرسو'],
+    true,true,now() - interval '2 days',now() - interval '2 days'
+  ),
+  (
+    '۵ نکته برای نگهداری عطر و تازگی قهوه',
+    'keep-coffee-fresh-longer',
+    'با انتخاب ظرف مناسب و دور نگه‌داشتن قهوه از نور، گرما و رطوبت، عطر دانه‌ها را برای مدت بیشتری حفظ کنید.',
+    '<h2>دشمنان اصلی تازگی قهوه</h2><p>هوا، نور، گرما و رطوبت مهم‌ترین عوامل افت کیفیت قهوه هستند. بسته را پس از هر بار مصرف کاملاً ببندید و در کابینتی خشک و خنک قرار دهید.</p><h2>قهوه را به‌اندازه نیاز بخرید</h2><p>خرید مقدار مناسب و آسیاب‌کردن درست پیش از دم‌آوری کمک می‌کند رایحه و طعم قهوه تا آخرین فنجان بهتر حفظ شود.</p>',
+    '/images/orenza-crema-macro-hero-v3.webp',
+    ARRAY['قهوه تازه رست','دان قهوه'],
+    true,true,now() - interval '3 days',now() - interval '3 days'
+  )
+ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO payment_methods
   (title,type,card_number,account_owner,bank_name,merchant_id,is_active)

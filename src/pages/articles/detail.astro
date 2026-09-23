@@ -1,0 +1,65 @@
+---
+import { CalendarDays, Clock3 } from "@lucide/astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="مقاله مجله قهوه اورنزا"
+  description="دانستنی‌ها و راهنماهای تخصصی قهوه در مجله اورنزا"
+  canonicalPath="/articles/detail/"
+  keywords={["مجله قهوه", "دانستنی‌های قهوه", "راهنمای قهوه", "قهوه اورنزا"]}
+  pageType="article"
+>
+  <main class="article-detail-page" data-article-detail>
+    <nav class="article-breadcrumb" aria-label="مسیر صفحه">
+      <a href="/">خانه</a><span aria-hidden="true">/</span>
+      <a href="/articles/">مجله قهوه</a><span aria-hidden="true">/</span>
+      <span aria-current="page" data-article-breadcrumb>مقاله</span>
+    </nav>
+
+    <article class="article-detail" itemscope itemtype="https://schema.org/BlogPosting">
+      <header class="article-detail__header">
+        <span class="article-detail__category" data-article-category>دانستنی‌های قهوه</span>
+        <h1 itemprop="headline" data-article-title>در حال دریافت مقاله…</h1>
+        <p itemprop="description" data-article-summary>لطفاً چند لحظه صبر کنید.</p>
+        <div class="article-detail__meta">
+          <span><CalendarDays size={16} aria-hidden="true" /><time itemprop="datePublished" data-article-date></time></span>
+          <span><Clock3 size={16} aria-hidden="true" /><b data-article-reading>—</b></span>
+          <span>نویسنده: <b itemprop="author">تحریریه اورنزا</b></span>
+        </div>
+      </header>
+
+      <figure class="article-detail__media" data-article-media hidden>
+        <img itemprop="image" data-article-image alt="" width="1280" height="720" />
+      </figure>
+
+      <div class="article-detail__content-grid">
+        <nav class="article-detail__toc" data-article-toc hidden aria-labelledby="article-toc-title">
+          <strong id="article-toc-title">در این مقاله می‌خوانید</strong>
+          <ol data-article-toc-list></ol>
+        </nav>
+        <div class="article-detail__body" itemprop="articleBody" data-article-content></div>
+      </div>
+
+      <div class="article-detail__footer">
+        <div class="article-detail__tags" data-article-tags hidden aria-label="موضوعات مقاله"></div>
+        <a class="site-outline-cta" href="/articles/"><span>بازگشت به مجله قهوه</span><span aria-hidden="true">←</span></a>
+      </div>
+    </article>
+
+    <section class="related-articles" data-related-articles hidden aria-labelledby="related-articles-title">
+      <header>
+        <span>READ NEXT</span>
+        <h2 id="related-articles-title">مطالب مرتبط</h2>
+      </header>
+      <div data-related-articles-list></div>
+      <a class="related-articles__all site-outline-cta" href="/articles/"><span>مشاهده همه مطالب</span><span aria-hidden="true">←</span></a>
+    </section>
+
+    <p class="article-detail__error" data-article-error hidden></p>
+  </main>
+
+  <script>
+    import "../../scripts/article-detail.ts";
+  </script>
+</BaseLayout>

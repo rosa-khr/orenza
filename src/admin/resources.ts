@@ -301,7 +301,7 @@ export const adminResources: AdminResource[] = [
     key: "categories",
     title: "دسته‌بندی‌ها",
     singular: "دسته‌بندی",
-    description: "ساختار مرتب محصولات فروشگاه",
+    description: "مدیریت ساختار منوی سایت، صفحات اصلی و دسته‌بندی محصولات",
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "recordStatus", label: "وضعیت", type: "select", options: recordStatusOptions, list: true, listOnly: true },
@@ -310,8 +310,8 @@ export const adminResources: AdminResource[] = [
       { key: "parentCategoryId", label: "دسته‌بندی پدر", type: "select" },
       { key: "description", label: "محتوای دسته‌بندی", type: "richtext" },
       { key: "imageUrl", label: "بنر دسته‌بندی", type: "image", dir: "ltr" },
-      { key: "seoTitle", label: "عنوان سئو", type: "text", required: true, maxLength: 60 },
-      { key: "seoDescription", label: "توضیحات متا", type: "textarea", required: true, maxLength: 150 },
+      { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
+      { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
       { key: "showInPopularFooter", label: "نمایش در دسترسی سریع فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
@@ -468,7 +468,8 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
-      { key: "tags", label: "تگ‌ها (با ویرگول جدا شوند)", type: "text" },
+      { key: "tags", label: "تگ‌های مقاله", type: "multiselect" },
+      { key: "showInLatest", label: "نمایش در آخرین مقاله‌ها", type: "select", options: yesNo, list: true },
       { key: "isPublished", label: "انتشار", type: "select", options: yesNo, list: true }
     ]
   },
@@ -480,6 +481,7 @@ export const adminResources: AdminResource[] = [
     fields: [
       { key: "title", label: "عنوان", type: "text", required: true, list: true },
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
+      { key: "imageUrl", label: "تصویر تگ", type: "image", dir: "ltr" },
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },

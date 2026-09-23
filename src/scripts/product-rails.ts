@@ -1,4 +1,3 @@
-import { ADD_TO_CART_EVENT, type CartItemInput } from "./order-types";
 import { productDetailUrl } from "./product-url";
 
 type RailProduct = {
@@ -24,17 +23,9 @@ type RailProduct = {
 
 const money = new Intl.NumberFormat("fa-IR");
 const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
-const weights = { 250: "۲۵۰ گرم", 500: "۵۰۰ گرم", 1000: "۱ کیلوگرم" } as const;
-const roastLabels = { light: "روشن", medium: "متوسط", mediumDark: "متوسط رو به تیره", dark: "تیره" };
-const cartIcon = `
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M3 3h2l2.4 10.2a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 1.9-1.4L21 7H6.2M10 19.5h.01M18 19.5h.01" />
-  </svg>`;
-
-const card = (product: RailProduct, badgeLabel: string) => {
+const card = (product: RailProduct, kind: "best" | "discount") => {
   const article = document.createElement("article");
   article.className = "rail-product-card";
-  const weight = product.saleType === "packaged" ? product.packageWeightGrams : 250;
   const regularPrice = product.saleType === "packaged"
     ? Number(product.packagePrice || product.salePricePerKg || 0)
     : Number(product.pricePer250g || 0);
@@ -55,53 +46,20 @@ const card = (product: RailProduct, badgeLabel: string) => {
   const url = productDetailUrl(product);
   article.innerHTML = `
     <a class="rail-product-media" href="${url}" aria-label="مشاهده ${product.titleFa}">
+      <i class="rail-product-highlight">${kind === "best" ? "پرفروش" : "شگفت‌انگیز"}</i>
       ${product.imageUrl
         ? `<img src="${product.imageUrl}" alt="${product.titleFa}" loading="lazy">`
         : `<img src="/images/orenza-bag-mockup-v3.webp" alt="بسته‌بندی ${product.titleFa}" loading="lazy">`}
-      <i>${badgeLabel}</i>
     </a>
     <div class="rail-product-copy">
-      <small>${product.titleEn}</small>
       <h3><a href="${url}">${product.titleFa}</a></h3>
-      <p>${product.blendType}</p>
       <footer>
-        <div>
-          ${hasDiscount ? `<em class="rail-discount-line"><del>${money.format(regularPrice)} تومان</del><strong>${percentFormat.format(discountPercent)}٪</strong></em>` : ""}
+        <div class="rail-product-price">
           <b>${money.format(price)} تومان</b>
-          <span>${weights[weight]}</span>
+          ${hasDiscount ? `<em class="rail-discount-line"><del>${money.format(regularPrice)}</del><strong>${percentFormat.format(discountPercent)}٪</strong></em>` : ""}
         </div>
-        <button class="rail-cart-button" type="button"
-          aria-label="${product.stockStatus === "outOfStock" ? "محصول ناموجود است" : `افزودن ${product.titleFa} به سبد خرید`}"
-          title="${product.stockStatus === "outOfStock" ? "ناموجود" : "افزودن به سبد خرید"}"
-          ${product.stockStatus === "outOfStock" ? "disabled" : ""}>
-          ${product.stockStatus === "outOfStock" ? '<span class="rail-cart-unavailable">ناموجود</span>' : cartIcon}
-        </button>
       </footer>
     </div>`;
-  article.querySelector("button")?.addEventListener("click", (event) => {
-    const button = event.currentTarget as HTMLButtonElement;
-    const item: CartItemInput = {
-      productId: product.id,
-      productTitle: product.titleFa,
-      blend: product.blendType,
-      roast: roastLabels[product.roastType],
-      grind: product.coffeeType === "ground" ? "پودر آماده" : "دان کامل",
-      weight: weights[weight],
-      weightGrams: weight,
-      quantity: 1,
-      unitPrice: price,
-      totalPrice: price
-    };
-    document.dispatchEvent(new CustomEvent(ADD_TO_CART_EVENT, { detail: item }));
-    button.classList.add("is-added");
-    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>';
-    button.setAttribute("aria-label", `${product.titleFa} به سبد خرید اضافه شد`);
-    window.setTimeout(() => {
-      button.classList.remove("is-added");
-      button.innerHTML = cartIcon;
-      button.setAttribute("aria-label", `افزودن ${product.titleFa} به سبد خرید`);
-    }, 1600);
-  });
   return article;
 };
 
@@ -113,22 +71,45 @@ const enableRailDrag = (viewport: HTMLElement) => {
   let startX = 0;
   let scrollStart = 0;
   let resumeTimer = 0;
+  let glideFrame = 0;
+  let lastX = 0;
+  let lastMoveAt = 0;
+  let velocity = 0;
+  const stopGlide = () => {
+    window.cancelAnimationFrame(glideFrame);
+    glideFrame = 0;
+    viewport.classList.remove("is-gliding");
+  };
   viewport.addEventListener("pointerdown", (event) => {
+    if (event.pointerType !== "mouse") return;
+    if (event.button !== 0) return;
     if ((event.target as HTMLElement).closest("button")) return;
     window.clearTimeout(resumeTimer);
+    stopGlide();
     isDown = true;
     didMove = false;
     viewport.dataset.userDragging = "true";
     startX = event.clientX;
     scrollStart = viewport.scrollLeft;
+    lastX = event.clientX;
+    lastMoveAt = performance.now();
+    velocity = 0;
     viewport.classList.add("is-dragging");
     viewport.setPointerCapture(event.pointerId);
   });
   viewport.addEventListener("pointermove", (event) => {
     if (!isDown) return;
     const delta = event.clientX - startX;
-    if (Math.abs(delta) > 4) didMove = true;
-    viewport.scrollLeft = scrollStart - delta;
+    if (Math.abs(delta) > 4) {
+      didMove = true;
+      event.preventDefault();
+    }
+    viewport.scrollLeft = scrollStart + delta;
+    const now = performance.now();
+    const elapsed = Math.max(1, now - lastMoveAt);
+    velocity = ((event.clientX - lastX) / elapsed) * 16;
+    lastX = event.clientX;
+    lastMoveAt = now;
   });
   const endDrag = (event: PointerEvent) => {
     if (!isDown) return;
@@ -138,6 +119,19 @@ const enableRailDrag = (viewport: HTMLElement) => {
     }, 1200);
     viewport.classList.remove("is-dragging");
     if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+    if (!didMove || matchMedia("(prefers-reduced-motion: reduce)").matches || Math.abs(velocity) < .35) return;
+    viewport.classList.add("is-gliding");
+    const glide = () => {
+      const previous = viewport.scrollLeft;
+      viewport.scrollLeft += velocity;
+      velocity *= .92;
+      if (Math.abs(velocity) < .2 || viewport.scrollLeft === previous) {
+        stopGlide();
+        return;
+      }
+      glideFrame = window.requestAnimationFrame(glide);
+    };
+    glideFrame = window.requestAnimationFrame(glide);
   };
   viewport.addEventListener("pointerup", endDrag);
   viewport.addEventListener("pointercancel", endDrag);
@@ -156,13 +150,18 @@ const renderRail = (kind: "best" | "discount", products: RailProduct[]) => {
   const track = root?.querySelector<HTMLElement>("[data-product-rail-track]");
   const viewport = root?.querySelector<HTMLElement>(".product-rail-viewport");
   if (!root || !track || !viewport || !products.length) return;
-  const minCards = Math.max(10, Math.ceil((viewport.clientWidth || window.innerWidth) / 160) + 4);
-  const badgeLabel = root.dataset.productBadgeLabel || (kind === "discount" ? "پیشنهاد ویژه" : "پرفروش");
-  const loopProducts = Array.from({ length: Math.max(products.length, minCards) }, (_, index) => products[index % products.length]);
+  const allProductsUrl = kind === "best"
+    ? "/products/?collection=best#all-products"
+    : "/products/?collection=discount#all-products";
   const makeGroup = () => {
     const group = document.createElement("div");
     group.className = "product-rail-group";
-    loopProducts.forEach((product) => group.append(card(product, badgeLabel)));
+    products.forEach((product) => group.append(card(product, kind)));
+    const viewAll = document.createElement("a");
+    viewAll.className = "rail-view-all-card";
+    viewAll.href = allProductsUrl;
+    viewAll.innerHTML = '<span aria-hidden="true">←</span><strong>مشاهده همه</strong>';
+    group.append(viewAll);
     return group;
   };
   track.replaceChildren(makeGroup());

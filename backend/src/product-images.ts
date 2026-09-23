@@ -30,7 +30,7 @@ const formats = [
 export const saveProductImage = async (buffer: Buffer) => {
   const format = formats.find((item) => item.matches(buffer));
   if (!format) {
-    throw Object.assign(new Error("تصویر محصول باید JPG، PNG یا WebP معتبر باشد."), {
+    throw Object.assign(new Error("فایل تصویر باید JPG، PNG یا WebP معتبر باشد."), {
       statusCode: 422
     });
   }

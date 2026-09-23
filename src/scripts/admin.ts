@@ -731,6 +731,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
   const storageKey = `orenza.admin.grid.${config.key}`;
   let gridApi: GridApi<Record<string, unknown>>;
   const isCategoryList = config.key === "categories";
+  const isScrollableCatalogList = ["categories", "products", "tags", "articles"].includes(config.key);
 
   const refreshCount = () => {
     if (!countElement || !gridApi) return;
@@ -883,10 +884,12 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     if (!isDeleted) actions.append(link(`/admin/${config.key}/edit/?id=${id}`, "ویرایش", gridIcons.pencil));
     const publicUrl = (() => {
       if (config.key === "products" && row.titleEn) return `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.titleEn))))}/`;
+      if (config.key === "articles" && row.slug) return `/articles/${encodeURIComponent(String(row.slug))}/`;
       if (config.key === "tags" && row.slug) return `/tags/${encodeURIComponent(String(row.slug))}/`;
       if (config.key === "categories" && row.slug) {
         const slug = String(row.slug);
         if (slug === "products") return "/products/";
+        if (slug === "articles") return "/articles/";
         if (slug === "wholesale") return "/wholesale/";
         if (slug === "order") return "/order/";
         if (slug === "about-orenza") return "/about/";
@@ -947,7 +950,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     },
     ...config.fields.map((field): ColDef<Record<string, unknown>> => {
       const isStatus = [
-        "isActive", "isPublished", "recordStatus", "orderStatus", "paymentStatus", "saleType", "stockStatus",
+        "isActive", "isPublished", "showInLatest", "recordStatus", "orderStatus", "paymentStatus", "saleType", "stockStatus",
         "role", "hasPassword", "isSystem"
       ].includes(field.key);
       return {
@@ -995,9 +998,9 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     localeText: persianGridLocale,
     rowHeight: 56,
     headerHeight: 52,
-    pagination: !isCategoryList,
-    paginationPageSize: 15,
-    paginationPageSizeSelector: [15, 25, 50, 100],
+    pagination: true,
+    paginationPageSize: isScrollableCatalogList ? 10 : 15,
+    paginationPageSizeSelector: isScrollableCatalogList ? [10, 25, 50, 100] : [15, 25, 50, 100],
     suppressCellFocus: true,
     defaultColDef: {
       resizable: true,
@@ -1477,7 +1480,8 @@ export const initRichTextEditors = (form: HTMLFormElement) => {
 const loadLookups = async (form: HTMLFormElement) => {
   const category = form.querySelector<HTMLSelectElement>('[data-dynamic-options="categoryId"]');
   const parentCategory = form.querySelector<HTMLSelectElement>('[data-dynamic-options="parentCategoryId"]');
-  const tags = form.querySelector<HTMLSelectElement>('[data-dynamic-options="tagIds"]');
+  const productTags = form.querySelector<HTMLSelectElement>('[data-dynamic-options="tagIds"]');
+  const articleTags = form.querySelector<HTMLSelectElement>('[data-dynamic-options="tags"]');
   const relatedProducts = form.querySelector<HTMLSelectElement>('[data-dynamic-options="relatedProductIds"]');
   const currentId = new URLSearchParams(location.search).get("id");
   const loadCategories = category || parentCategory
@@ -1496,8 +1500,13 @@ const loadLookups = async (form: HTMLFormElement) => {
     : Promise.resolve();
   await Promise.all([
     loadCategories,
-    tags ? api<{ items: { id: string; title: string }[] }>("/api/v1/admin/tags?pageSize=100")
-      .then((payload) => payload.items.forEach((item) => tags.add(new Option(item.title, item.id)))) : Promise.resolve(),
+    productTags || articleTags
+      ? api<{ items: { id: string; title: string }[] }>("/api/v1/admin/tags?pageSize=100")
+        .then((payload) => payload.items.forEach((item) => {
+          if (productTags) productTags.add(new Option(item.title, item.id));
+          if (articleTags) articleTags.add(new Option(item.title, item.title));
+        }))
+      : Promise.resolve(),
     relatedProducts ? api<{ items: { id: string; titleFa: string; titleEn: string; isDeleted?: boolean }[] }>("/api/v1/admin/products?pageSize=100")
       .then((payload) => payload.items.filter((item) => item.id !== currentId && item.isDeleted !== true).forEach((item) => {
         relatedProducts.add(new Option(`${item.titleFa} — ${item.titleEn}`, item.id));
@@ -1661,7 +1670,7 @@ const initPaymentCards = (form: HTMLFormElement, paymentMethodId: string, readon
   void load();
 };
 
-const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "categories") => {
+const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "categories" | "articles" | "tags") => {
   const root = form.querySelector<HTMLElement>("[data-catalog-image-upload]");
   const urlInput = form.elements.namedItem("imageUrl") as HTMLInputElement | null;
   const galleryInput = form.elements.namedItem("productImageUrls") as HTMLInputElement | null;
@@ -1670,7 +1679,13 @@ const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "c
   const placeholder = root?.querySelector<HTMLElement>("[data-catalog-image-placeholder]");
   const removeButton = root?.querySelector<HTMLButtonElement>("[data-catalog-image-remove]");
   const galleryRoot = root?.querySelector<HTMLElement>("[data-product-gallery]");
-  const imageLabel = resource === "categories" ? "بنر دسته‌بندی" : "تصویر محصول";
+  const imageLabel = resource === "categories"
+    ? "بنر دسته‌بندی"
+    : resource === "articles"
+      ? "بنر مقاله"
+      : resource === "tags"
+        ? "تصویر تگ"
+        : "تصویر محصول";
   let shouldHydrateLegacyImage = true;
   const readGallery = () => {
     if (!galleryInput) return [];
@@ -1688,7 +1703,7 @@ const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "c
   };
   const removeImage = async (imageUrl: string) => {
     if (!imageUrl) return;
-    const confirmed = await askConfirm("حذف تصویر محصول", "این تصویر از محصول حذف شود؟", "حذف تصویر");
+    const confirmed = await askConfirm(`حذف ${imageLabel}`, `این ${imageLabel} حذف شود؟`, "حذف تصویر");
     if (!confirmed) return;
     shouldHydrateLegacyImage = false;
     const next = readGallery().filter((candidate) => candidate !== imageUrl);
@@ -1783,7 +1798,13 @@ const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "c
     fileInput.disabled = true;
     root?.classList.add("is-uploading");
     try {
-      const endpoint = resource === "categories" ? "category-images" : "product-images";
+      const endpoint = resource === "categories"
+        ? "category-images"
+        : resource === "articles"
+          ? "article-images"
+          : resource === "tags"
+            ? "tag-images"
+            : "product-images";
       const uploaded: string[] = [];
       for (const file of files) {
         const body = new FormData();
@@ -1854,7 +1875,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   enhanceDropdowns(form);
   enhancePersianDates(form);
   initSeoCounters(form);
-  const refreshCatalogImage = config.key === "products" || config.key === "categories"
+  const refreshCatalogImage = config.key === "products" || config.key === "categories" || config.key === "articles" || config.key === "tags"
     ? initCatalogImageUpload(form, config.key)
     : undefined;
   const updateProductProfit = (source: "purchase" | "sale" | "markup" | "discount" | "refresh" = "refresh") => {
@@ -2004,10 +2025,9 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       }
       else if (field.type === "number" || field.key === "packageWeightGrams") body[field.key] = raw === "" ? null : parseNumericInput(raw);
       else if ([
-        "isActive", "isPublished", "showInBestSellers", "showInDiscounts",
+        "isActive", "isPublished", "showInLatest", "showInBestSellers", "showInDiscounts",
         "showInPopularFooter", "showInPopularSearches", "robotsIndex", "robotsFollow"
       ].includes(field.key)) body[field.key] = raw === "true";
-      else if (field.key === "tags") body[field.key] = String(raw || "").split(",").map((tag) => tag.trim()).filter(Boolean);
       else body[field.key] = raw === "" ? null : raw;
     });
     if (config.key === "roles" && !(body.permissions as string[] | undefined)?.length) {

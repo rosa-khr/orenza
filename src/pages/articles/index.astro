@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="مجله قهوه؛ راهنمای خرید و دم‌آوری قهوه"
+  description="مقاله‌ها و راهنماهای تخصصی اورنزا درباره انتخاب دانه، درجه رست، آسیاب، نگهداری و روش‌های دم‌آوری قهوه."
+  canonicalPath="/articles/"
+  keywords={["مجله قهوه", "دانستنی‌های قهوه", "آموزش دم آوری قهوه", "راهنمای خرید قهوه", "قهوه اورنزا"]}
+>
+  <main class="articles-page" data-articles-page>
+    <header class="articles-page__hero">
+      <span>ORENZA COFFEE JOURNAL</span>
+      <h1>مجله قهوه اورنزا</h1>
+      <p>پاسخ‌های روشن و کاربردی برای انتخاب دانه، آسیاب، نگهداری و رسیدن به فنجان بهتر.</p>
+    </header>
+
+    <section class="articles-page__content" aria-labelledby="latest-articles-title">
+      <header>
+        <div>
+          <span>COFFEE KNOWLEDGE</span>
+          <h2 id="latest-articles-title">تازه‌ترین دانستنی‌های قهوه</h2>
+        </div>
+        <a class="site-outline-cta" href="/products/"><span>مشاهده محصولات</span><span aria-hidden="true">←</span></a>
+      </header>
+      <div class="articles-page__grid" data-articles-list aria-live="polite">
+        <p data-articles-status>در حال دریافت مقاله‌ها…</p>
+      </div>
+      <button class="articles-page__more site-outline-cta" type="button" data-articles-more hidden>نمایش مطالب بیشتر</button>
+    </section>
+  </main>
+
+  <script>
+    import "../../scripts/articles-list.ts";
+  </script>
+</BaseLayout>

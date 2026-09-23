@@ -1,0 +1,33 @@
+---
+---
+
+<section class="coffee-magazine" aria-labelledby="coffee-magazine-title" data-coffee-magazine>
+  <header class="coffee-magazine__header">
+    <div>
+      <span>جدیدترین مقاله‌ها</span>
+      <h2 id="coffee-magazine-title" data-coffee-magazine-title>مجله اورنزا</h2>
+      <p data-coffee-magazine-description>دانستنی‌ها و راهنماهای کاربردی برای انتخاب، نگهداری و دم‌آوری بهتر قهوه.</p>
+    </div>
+  </header>
+
+  <div class="coffee-magazine__grid" data-coffee-magazine-list aria-live="polite">
+    <p class="coffee-magazine__status">در حال دریافت تازه‌ترین مطالب…</p>
+  </div>
+
+  <div class="coffee-magazine__footer">
+    <a class="site-outline-cta" href="/articles/" aria-label="مشاهده همه مقالات مجله اورنزا">
+      <span>همه مقالات</span>
+      <span aria-hidden="true">←</span>
+    </a>
+  </div>
+
+  <noscript>
+    <p class="coffee-magazine__noscript">
+      برای مطالعه راهنماهای قهوه، به <a href="/articles/">مجله قهوه اورنزا</a> بروید.
+    </p>
+  </noscript>
+</section>
+
+<script>
+  import "../scripts/coffee-magazine.ts";
+</script>

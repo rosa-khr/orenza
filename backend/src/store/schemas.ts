@@ -23,6 +23,7 @@ const hexColor = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/);
 const productImageUrl = z.union([
   z.string().url(),
   z.string().regex(/^\/api\/v1\/product-images\/[0-9a-f-]+\.(?:jpg|png|webp)$/),
+  z.string().regex(/^\/images\/[a-zA-Z0-9/_-]+\.(?:jpg|jpeg|png|webp|svg)$/),
   z.literal(""),
   z.null()
 ]).transform((value) => value || null);
@@ -93,8 +94,8 @@ export const categorySchema = z.object({
   parentCategoryId: z.string().uuid().nullable().optional(),
   description: optionalRichText.optional(),
   imageUrl: productImageUrl.optional(),
-  seoTitle: z.string().trim().min(10).max(60),
-  seoDescription: z.string().trim().min(30).max(150),
+  seoTitle: z.string().trim().max(60).nullable().optional(),
+  seoDescription: z.string().trim().max(150).nullable().optional(),
   ...seoFields,
   showInPopularFooter: z.boolean().default(false),
   showInPopularSearches: z.boolean().default(false),
@@ -238,17 +239,20 @@ export const articleSchema = z.object({
   slug,
   summary: z.string().trim().min(20).max(1000),
   content: z.string().trim().min(50).max(100_000).transform((value) => sanitizeRichText(value) || ""),
-  imageUrl: optionalUrl.optional(),
+  imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().max(60).nullable().optional(),
   seoDescription: z.string().trim().max(150).nullable().optional(),
   ...seoFields,
   tags: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
-  isPublished: z.boolean().default(false)
+  showInLatest: z.boolean().default(false),
+  isPublished: z.boolean().default(false),
+  publishedAt: z.coerce.date().nullable().optional()
 });
 
 export const tagSchema = z.object({
   title: z.string().trim().min(2).max(120),
   slug,
+  imageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().max(60).nullable().optional(),
   seoDescription: z.string().trim().max(150).nullable().optional(),
   ...seoFields,

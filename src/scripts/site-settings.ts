@@ -363,6 +363,7 @@ const applyHomepageHero = (settings: PublicSiteSettings) => {
 
 const categoryHref = (slug: string) => {
   if (slug === "products") return "/products/";
+  if (slug === "articles") return "/articles/";
   if (slug === "wholesale") return "/wholesale/";
   if (slug === "order") return "/order/";
   if (slug === "about-orenza") return "/about/";

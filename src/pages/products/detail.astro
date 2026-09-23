@@ -1,5 +1,5 @@
 ---
-import { ArrowLeft, ArrowRight, Check, Link2, PackageOpen, Scale, ShoppingBag } from "@lucide/astro";
+import { ArrowRight, Check, Link2, PackageOpen, Scale, ShoppingBag } from "@lucide/astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
@@ -73,9 +73,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         </div>
       </header>
       <div class="product-detail-link-grid" data-product-detail-link-grid></div>
-      <a class="product-detail-all-link" href="/products/">
-        مشاهده همه محصولات اورنزا
-        <ArrowLeft size={16} stroke-width={1.5} aria-hidden="true" />
+      <a class="product-detail-all-link site-outline-cta" href="/products/">
+        <span>مشاهده همه محصولات اورنزا</span>
+        <span aria-hidden="true">←</span>
       </a>
     </nav>
 

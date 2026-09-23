@@ -17,6 +17,7 @@ export const productSlug = (titleEn: string) =>
 
 export const categoryHref = (slug: string) => {
   if (slug === "products") return "/products/";
+  if (slug === "articles") return "/articles/";
   if (slug === "wholesale") return "/wholesale/";
   if (slug === "order") return "/order/";
   if (slug === "about-orenza") return "/about/";

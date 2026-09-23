@@ -15,8 +15,14 @@ const labels = { add: "افزودن", edit: "ویرایش", view: "مشاهده"
 const isView = action === "view";
 const structuredResources = new Set(["products", "categories", "articles", "tags"]);
 const isStructuredForm = structuredResources.has(resource.key);
-const supportsCatalogImage = resource.key === "products" || resource.key === "categories";
-const catalogImageLabel = resource.key === "categories" ? "بنر دسته‌بندی" : "تصویر محصول";
+const supportsCatalogImage = resource.key === "products" || resource.key === "categories" || resource.key === "articles" || resource.key === "tags";
+const catalogImageLabel = resource.key === "categories"
+  ? "بنر دسته‌بندی"
+  : resource.key === "articles"
+    ? "بنر مقاله"
+    : resource.key === "tags"
+      ? "تصویر تگ"
+      : "تصویر محصول";
 const productPrimaryKeys = ["titleFa", "titleEn", "slug", "sortOrder", "categoryId"];
 const productFeatureKeys = new Set(["roastType", "coffeeType", "grindType", "blendType", "saleType", "packageWeightGrams"]);
 const productPriceKeys = new Set(["purchasePricePerKg", "markupPercent", "salePricePerKg", "profitPerKg", "discountPercent", "discountSalePricePerKg"]);
@@ -31,11 +37,11 @@ const categorySidebarKeys = new Set(["imageUrl", "showInPopularFooter", "showInP
 const articlePrimaryKeys = new Set(["title", "slug"]);
 const articleDetailKeys = new Set(["summary", "content", "tags"]);
 const articleSeoKeys = new Set(sharedSeoKeys);
-const articleSidebarKeys = new Set(["imageUrl", "isPublished"]);
+const articleSidebarKeys = new Set(["imageUrl", "showInLatest", "isPublished"]);
 const tagPrimaryKeys = new Set(["title", "slug"]);
 const tagDetailKeys = new Set(["content"]);
 const tagSeoKeys = new Set(sharedSeoKeys);
-const tagSidebarKeys = new Set(["showInPopularSearches"]);
+const tagSidebarKeys = new Set(["imageUrl", "showInPopularSearches"]);
 const pickFields = (keys: Set<string>) => resource.fields.filter((field) => keys.has(field.key));
 const pickOrderedFields = (keys: string[]) =>
   keys.map((key) => resource.fields.find((field) => field.key === key)).filter(Boolean) as typeof resource.fields;
@@ -129,7 +135,7 @@ const sidebarGalleryField = sidebarFields.find((field) => field.key === "product
               </section>
             </details>
           )}
-          <details class="admin-form-accordion">
+          <details class="admin-form-accordion" open={resource.key === "articles"}>
             <summary>محتوا</summary>
             <div class="admin-form-grid">
               {detailFields.map((field) => <AdminFieldControl field={field} resourceKey={resource.key} isView={isView} />)}
@@ -148,13 +154,13 @@ const sidebarGalleryField = sidebarFields.find((field) => field.key === "product
               <div class="admin-product-image-preview">
                 <img data-catalog-image-preview hidden alt={`پیش‌نمایش ${catalogImageLabel}`} />
                 <span data-catalog-image-placeholder>{catalogImageLabel} هنوز بارگذاری نشده است.</span>
-                {!isView && resource.key === "products" && (
+                {!isView && (
                   <button type="button" data-catalog-image-remove hidden>حذف تصویر</button>
                 )}
               </div>
               <div>
                 <strong>بارگذاری {catalogImageLabel}</strong>
-                <small>{resource.key === "categories" ? "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر افقی و عریض نتیجه بهتری دارد." : "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر مربع یا عمودی نتیجه بهتری دارد."}</small>
+                <small>{resource.key === "products" ? "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر مربع یا عمودی نتیجه بهتری دارد." : "JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر افقی و عریض نتیجه بهتری دارد."}</small>
                 {!isView && (
                   <label>
                     انتخاب و بارگذاری {catalogImageLabel}

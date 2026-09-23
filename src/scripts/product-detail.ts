@@ -34,6 +34,7 @@ type ProductDetail = {
 
 type RelatedProduct = {
   id: string;
+  slug?: string | null;
   titleFa: string;
   titleEn: string;
   description: string;
@@ -76,7 +77,9 @@ const loadProduct = async () => {
   if (!response.ok) throw new Error(payload.error || "محصول پیدا نشد.");
   const item = (payload.items || []).find((product) => (product.slug || productSlug(product.titleEn)) === pathSlug);
   if (!item) throw new Error("محصول پیدا نشد.");
-  return { item };
+  const detailResponse = await fetch(`/api/v1/products/${encodeURIComponent(item.id)}`);
+  if (!detailResponse.ok) return { item };
+  return detailResponse.json() as Promise<{ item: ProductDetail }>;
 };
 
 if (root && (id || (pathSlug && pathSlug !== "detail"))) {
@@ -255,24 +258,25 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       if (relatedSection && relatedRoot && item.relatedProducts?.length) {
         item.relatedProducts.forEach((product) => {
           const article = document.createElement("article");
+          article.className = "related-product-card";
           const link = document.createElement("a");
+          link.className = "related-product-thumbnail";
           link.href = productDetailUrl(product);
-          if (product.imageUrl) {
-            const image = document.createElement("img");
-            image.src = product.imageUrl;
-            image.alt = product.titleFa;
-            image.loading = "lazy";
-            link.append(image);
-          } else {
-            const placeholder = document.createElement("span");
-            placeholder.textContent = "ORENZA";
-            link.append(placeholder);
-          }
+          link.setAttribute("aria-label", `مشاهده ${product.titleFa}`);
+          const image = document.createElement("img");
+          image.src = product.imageUrl || "/images/orenza-bag-mockup-v3.webp";
+          image.alt = product.imageUrl ? product.titleFa : `بسته‌بندی ${product.titleFa}`;
+          image.loading = "lazy";
+          link.append(image);
           const copy = document.createElement("div");
+          copy.className = "related-product-copy";
           const eyebrow = document.createElement("small");
           eyebrow.textContent = product.titleEn;
           const title = document.createElement("h3");
-          title.textContent = product.titleFa;
+          const titleLink = document.createElement("a");
+          titleLink.href = productDetailUrl(product);
+          titleLink.textContent = product.titleFa;
+          title.append(titleLink);
           const description = document.createElement("p");
           description.textContent = product.description;
           copy.append(eyebrow, title, description);

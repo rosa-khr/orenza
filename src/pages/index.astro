@@ -4,7 +4,7 @@ import Hero from "../components/Hero.astro";
 import HomeBannerRow from "../components/HomeBannerRow.astro";
 import Manifesto from "../components/Manifesto.astro";
 import ProductRails from "../components/ProductRails.astro";
-import AnimatedBanner from "../components/AnimatedBanner.astro";
+import CoffeeMagazine from "../components/CoffeeMagazine.astro";
 import MobileHomeTop from "../components/MobileHomeTop.astro";
 import MobileBottomNav from "../components/MobileBottomNav.astro";
 import { ArrowLeft } from "@lucide/astro";
@@ -31,12 +31,12 @@ import { ArrowLeft } from "@lucide/astro";
       <h2 id="home-order-title">سفارش اختصاصی قهوه</h2>
       <p>ترکیب، رُست، وزن و آسیاب را در صفحه اختصاصی انتخاب کن؛ همه چیز همان‌جا مرحله‌به‌مرحله تنظیم می‌شود.</p>
     </div>
-    <a class="button button-primary" href="/order/">
+    <a class="button site-outline-cta" href="/order/">
       <span>شروع سفارش اختصاصی</span>
       <ArrowLeft size={18} stroke-width={1.7} aria-hidden="true" />
     </a>
   </section>
-  <AnimatedBanner />
+  <CoffeeMagazine />
   <HomeBannerRow slotId="aboveBest" />
   <ProductRails kind="best" />
   <MobileBottomNav />

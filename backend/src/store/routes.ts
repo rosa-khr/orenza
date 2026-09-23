@@ -70,6 +70,21 @@ const normalizeSitemapPriority = (value: unknown, fallback: number) => {
   return Number.isFinite(candidate) && candidate >= 0 && candidate <= 1 ? candidate : fallback;
 };
 
+const articleReadingMinutes = (html: unknown) => {
+  const words = String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 180));
+};
+
+const toPublicArticle = (row: Record<string, unknown>): Record<string, unknown> => ({
+  ...toPublicRecord(row),
+  readingMinutes: articleReadingMinutes(row.content)
+});
+
 const sitemapXml = (entries: { loc: string; lastmod?: string | null; changefreq: string; priority: number }[]) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
@@ -179,7 +194,7 @@ export const registerStoreRoutes = (
          LIMIT 8`
       ),
       pool.query<Record<string, unknown>>(
-        `SELECT title, slug, seo_description
+        `SELECT title, slug, seo_description, image_url
          FROM tags
          WHERE show_in_popular_searches = true
          ORDER BY title ASC
@@ -209,7 +224,7 @@ export const registerStoreRoutes = (
         title: row.title,
         subtitle: row.seo_description || "مشاهده تگ",
         href: `/tags/${encodeURIComponent(String(row.slug || ""))}/`,
-        imageUrl: null
+        imageUrl: row.image_url
       }))
     ].slice(0, 8);
     reply.header("Cache-Control", "no-store");
@@ -233,7 +248,7 @@ export const registerStoreRoutes = (
         [pattern, `${q}%`]
       ),
       pool.query<Record<string, unknown>>(
-        `SELECT title, slug, seo_description
+        `SELECT title, slug, seo_description, image_url
          FROM categories
          WHERE is_active = true
            AND (title ILIKE $1 OR slug ILIKE $1 OR COALESCE(seo_description, '') ILIKE $1)
@@ -242,7 +257,7 @@ export const registerStoreRoutes = (
         [pattern, `${q}%`]
       ),
       pool.query<Record<string, unknown>>(
-        `SELECT title, slug, seo_description
+        `SELECT title, slug, seo_description, image_url
          FROM tags
          WHERE title ILIKE $1 OR slug ILIKE $1 OR COALESCE(seo_description, '') ILIKE $1
          ORDER BY CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END, title ASC
@@ -274,7 +289,7 @@ export const registerStoreRoutes = (
         title: row.title,
         subtitle: row.seo_description || "مشاهده دسته‌بندی",
         href: categoryHref(String(row.slug || "")),
-        imageUrl: null
+        imageUrl: row.image_url
       })),
       ...tags.rows.map((row) => ({
         type: "tag",
@@ -282,7 +297,7 @@ export const registerStoreRoutes = (
         title: row.title,
         subtitle: row.seo_description || "مشاهده تگ",
         href: `/tags/${encodeURIComponent(String(row.slug || ""))}/`,
-        imageUrl: null
+        imageUrl: row.image_url
       })),
       ...articles.rows.map((row) => ({
         type: "article",
@@ -384,6 +399,22 @@ export const registerStoreRoutes = (
     return reply.code(200).send();
   });
 
+  app.get("/api/v1/storefront/article/:slug", async (request, reply) => {
+    const { slug } = z.object({
+      slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    }).parse(request.params);
+    const result = await pool.query<{ robots_index: boolean; robots_follow: boolean }>(
+      "SELECT robots_index,robots_follow FROM articles WHERE slug=$1 AND is_published=true LIMIT 1",
+      [slug]
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: "مقاله پیدا نشد." });
+    const article = result.rows[0]!;
+    reply.header("Cache-Control", "no-store");
+    reply.header("X-Robots-Tag", `${article.robots_index ? "index" : "noindex"}, ${article.robots_follow ? "follow" : "nofollow"}`);
+    reply.header("X-Accel-Redirect", "/__article_detail");
+    return reply.code(200).send();
+  });
+
   app.get("/api/v1/categories/:slug", async (request, reply) => {
     const { slug } = z.object({
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
@@ -411,14 +442,14 @@ export const registerStoreRoutes = (
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT id,title,slug,content,seo_title,seo_description,canonical_url,robots_index,robots_follow FROM tags WHERE slug=$1`,
+      `SELECT id,title,slug,image_url,content,seo_title,seo_description,canonical_url,robots_index,robots_follow FROM tags WHERE slug=$1`,
       [slug]
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "تگ پیدا نشد." });
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     const item = toPublicRecord(result.rows[0]);
     item.content = sanitizeRichText(String(item.content || ""));
-    const [products, relatedTags] = await Promise.all([
+    const [products, articles, relatedTags] = await Promise.all([
       pool.query<Record<string, unknown>>(
         `SELECT p.id,p.title_fa,p.title_en,p.slug,p.description,p.image_url,p.blend_type,
                 c.slug AS category_slug,c.title AS category_title
@@ -428,6 +459,15 @@ export const registerStoreRoutes = (
          WHERE pt.tag_id=$1 AND p.is_active=true AND c.is_active=true
          ORDER BY p.sort_order,p.created_at`,
         [item.id]
+      ),
+      pool.query<Record<string, unknown>>(
+        `SELECT a.id,a.title,a.slug,a.summary,a.image_url,a.tags,
+                COALESCE(a.published_at,a.created_at) AS created_at,a.updated_at,a.content
+         FROM articles a
+         WHERE a.is_published=true AND $1=ANY(a.tags)
+         ORDER BY COALESCE(a.published_at,a.created_at) DESC
+         LIMIT 12`,
+        [item.title]
       ),
       pool.query<Record<string, unknown>>(
         `SELECT DISTINCT t.id,t.title,t.slug
@@ -441,6 +481,10 @@ export const registerStoreRoutes = (
       )
     ]);
     item.products = products.rows.map(toPublicRecord);
+    item.articles = articles.rows.map((row) => {
+      const { content: _content, ...article } = toPublicArticle(row);
+      return article;
+    });
     item.relatedTags = relatedTags.rows.map(toPublicRecord);
     return { item };
   });
@@ -472,7 +516,7 @@ export const registerStoreRoutes = (
         `SELECT count(*)::text AS total,max(updated_at)::text AS lastmod
            FROM categories
           WHERE is_active=true AND deleted_at IS NULL AND robots_index=true
-            AND slug NOT IN ('products','wholesale','order','about-orenza')`
+            AND slug NOT IN ('products','articles','wholesale','order','about-orenza')`
       ),
       pool.query<{ total: string; lastmod: string | null }>(
         "SELECT count(*)::text AS total,max(updated_at)::text AS lastmod FROM tags WHERE robots_index=true"
@@ -523,7 +567,7 @@ export const registerStoreRoutes = (
         settings.sitemapTermsEnabled !== false
           ? { loc: sitemapUrl(origin, "/terms/"), lastmod: String(settings.updatedAt || ""), changefreq: termsChangefreq, priority: termsPriority }
           : null,
-        ...(settings.sitemapStaticEnabled !== false ? ["/products/", "/order/", "/about/", "/contact/", "/wholesale/"].map((path) => ({
+        ...(settings.sitemapStaticEnabled !== false ? ["/products/", "/articles/", "/order/", "/about/", "/contact/", "/wholesale/"].map((path) => ({
           loc: sitemapUrl(origin, path),
           lastmod: String(settings.updatedAt || ""),
           changefreq: staticChangefreq,
@@ -553,7 +597,7 @@ export const registerStoreRoutes = (
         `SELECT slug,updated_at
          FROM categories
          WHERE is_active=true AND deleted_at IS NULL AND robots_index=true
-           AND slug NOT IN ('products','wholesale','order','about-orenza')
+           AND slug NOT IN ('products','articles','wholesale','order','about-orenza')
          ORDER BY sort_order ASC,created_at ASC`
       );
       return sitemapXml(result.rows.map((row) => ({
@@ -591,6 +635,77 @@ export const registerStoreRoutes = (
       changefreq: normalizeSitemapChangefreq(settings.sitemapArticlesChangefreq, "monthly"),
       priority: normalizeSitemapPriority(settings.sitemapArticlesPriority, 0.7)
     })));
+  });
+
+  app.get("/api/v1/articles", async (request, reply) => {
+    const { limit, page, latest } = z.object({
+      limit: z.coerce.number().int().min(1).max(24).default(12),
+      page: z.coerce.number().int().min(1).default(1),
+      latest: z.string().optional().transform((value) => value === "true")
+    }).parse(request.query);
+    const latestFilter = latest ? " AND a.show_in_latest=true" : "";
+    const [items, count] = await Promise.all([
+      pool.query<Record<string, unknown>>(
+        `SELECT a.id,a.title,a.slug,a.summary,a.image_url,a.tags,
+                COALESCE(a.published_at,a.created_at) AS created_at,a.updated_at,a.content,
+                COALESCE((SELECT json_agg(json_build_object('title',t.title,'slug',t.slug) ORDER BY t.title)
+                          FROM tags t WHERE t.title=ANY(a.tags)), '[]'::json) AS tag_links
+           FROM articles a
+          WHERE a.is_published=true${latestFilter}
+          ORDER BY COALESCE(a.published_at,a.created_at) DESC
+          LIMIT $1 OFFSET $2`,
+        [limit, (page - 1) * limit]
+      ),
+      pool.query<{ total: string }>(`SELECT count(*)::text AS total FROM articles a WHERE a.is_published=true${latestFilter}`)
+    ]);
+    reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return {
+      items: items.rows.map((row) => {
+        const { content: _content, ...article } = toPublicArticle(row);
+        return article;
+      }),
+      total: Number(count.rows[0]?.total || 0),
+      page,
+      pageSize: limit
+    };
+  });
+
+  app.get("/api/v1/articles/:slug", async (request, reply) => {
+    const { slug } = z.object({
+      slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    }).parse(request.params);
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT a.id,a.title,a.slug,a.summary,a.content,a.image_url,a.seo_title,a.seo_description,
+              a.canonical_url,a.robots_index,a.robots_follow,a.tags,
+              COALESCE(a.published_at,a.created_at) AS created_at,a.updated_at,
+              COALESCE((SELECT json_agg(json_build_object('title',t.title,'slug',t.slug) ORDER BY t.title)
+                        FROM tags t WHERE t.title=ANY(a.tags)), '[]'::json) AS tag_links
+         FROM articles a
+        WHERE a.slug=$1 AND a.is_published=true
+        LIMIT 1`,
+      [slug]
+    );
+    if (!result.rows[0]) return reply.code(404).send({ error: "مقاله پیدا نشد." });
+    const related = await pool.query<Record<string, unknown>>(
+      `SELECT a.id,a.title,a.slug,a.summary,a.image_url,a.tags,
+              COALESCE(a.published_at,a.created_at) AS created_at,a.updated_at,a.content,
+              COALESCE((SELECT json_agg(json_build_object('title',t.title,'slug',t.slug) ORDER BY t.title)
+                        FROM tags t WHERE t.title=ANY(a.tags)), '[]'::json) AS tag_links
+         FROM articles a
+        WHERE a.is_published=true AND a.id<>$1
+          AND (a.tags && $2::text[] OR cardinality($2::text[])=0)
+        ORDER BY a.updated_at DESC
+        LIMIT 3`,
+      [result.rows[0].id, result.rows[0].tags || []]
+    );
+    const item = toPublicArticle(result.rows[0]);
+    item.content = sanitizeRichText(String(item.content || ""));
+    item.relatedArticles = related.rows.map((row) => {
+      const { content: _content, ...article } = toPublicArticle(row);
+      return article;
+    });
+    reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return { item };
   });
 
   app.get("/api/v1/products", async (request) => {

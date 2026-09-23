@@ -958,6 +958,28 @@ ${ai.instructions}
     return saveProductImage(await part.toBuffer());
   });
 
+  app.post("/api/v1/admin/article-images", {
+    bodyLimit: 6 * 1024 * 1024
+  }, async (request, reply) => {
+    if (!(await requirePermission(request, reply, "articles"))) return;
+    const part = await request.file();
+    if (!part || part.fieldname !== "image") {
+      return reply.code(422).send({ error: "بنر مقاله را انتخاب کنید." });
+    }
+    return saveProductImage(await part.toBuffer());
+  });
+
+  app.post("/api/v1/admin/tag-images", {
+    bodyLimit: 6 * 1024 * 1024
+  }, async (request, reply) => {
+    if (!(await requirePermission(request, reply, "tags"))) return;
+    const part = await request.file();
+    if (!part || part.fieldname !== "image") {
+      return reply.code(422).send({ error: "تصویر تگ را انتخاب کنید." });
+    }
+    return saveProductImage(await part.toBuffer());
+  });
+
   app.get("/api/v1/admin/payment-receipts/:fileName", async (request, reply) => {
     if (!(await requirePermission(request, reply, "orders"))) return;
     const { fileName } = z.object({

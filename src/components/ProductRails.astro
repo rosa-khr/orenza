@@ -12,7 +12,7 @@ const showDiscount = kind === "discount" || kind === "all";
   {showBest && <section class="product-rail product-rail-best" data-product-rail="best" hidden>
     <header>
       <div><strong class="product-rail-mark">★</strong><span>ORENZA BEST SELLERS</span><h2 data-product-rail-title>پرفروش‌ترین‌ها</h2></div>
-      <a href="/products/">همه <b>←</b></a>
+      <a href="/products/?collection=best#all-products"><span>مشاهده همه</span><i aria-hidden="true" dir="ltr">←</i></a>
     </header>
     <div class="product-rail-viewport"><div class="product-rail-track" data-product-rail-track></div></div>
   </section>}
@@ -21,7 +21,7 @@ const showDiscount = kind === "discount" || kind === "all";
     <header>
       <div><strong class="product-rail-mark">٪</strong><span>SELECTED OFFERS</span><h2 data-product-rail-title>شگفت‌انگیزها</h2></div>
       <div class="product-rail-countdown" data-product-rail-countdown hidden aria-label="زمان باقی‌مانده"><b>۰۰</b><i>:</i><b>۰۰</b><i>:</i><b>۰۰</b></div>
-      <a href="/products/">همه <b>←</b></a>
+      <a href="/products/?collection=discount#all-products"><span>مشاهده همه</span><i aria-hidden="true" dir="ltr">←</i></a>
     </header>
     <div class="product-rail-viewport"><div class="product-rail-track" data-product-rail-track></div></div>
   </section>}

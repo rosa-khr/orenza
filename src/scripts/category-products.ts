@@ -21,6 +21,7 @@ type CategoryProduct = {
   pricePer500g: number | string;
   pricePer1000g: number | string;
   imageUrl: string | null;
+  showInBestSellers: boolean;
   showInDiscounts: boolean;
 };
 
@@ -57,6 +58,37 @@ if (root && list) {
   const categorySlug = root.hasAttribute("data-dynamic-category")
     ? decodeURIComponent(location.pathname.split("/").filter(Boolean).at(-1) || "")
     : root.dataset.category || "";
+  const requestedCollection = categorySlug ? null : new URLSearchParams(location.search).get("collection");
+  const collection = requestedCollection === "best" || requestedCollection === "discount"
+    ? requestedCollection
+    : null;
+  const collectionMeta = collection === "best"
+    ? {
+        eyebrow: "BEST SELLERS",
+        title: "محصولات پرفروش اورنزا",
+        sectionTitle: "پرفروش‌ترین محصولات",
+        lead: "محصولاتی که بیشتر از همه انتخاب شده‌اند؛ برای یک انتخاب سریع و مطمئن."
+      }
+    : collection === "discount"
+      ? {
+          eyebrow: "SPECIAL OFFERS",
+          title: "محصولات شگفت‌انگیز اورنزا",
+          sectionTitle: "محصولات شگفت‌انگیز",
+          lead: "پیشنهادهای تخفیف‌دار فعال اورنزا را یک‌جا ببینید."
+        }
+      : null;
+  if (collectionMeta) {
+    document.title = `${collectionMeta.title} | اورنزا`;
+    const productsHero = document.querySelector<HTMLElement>(".products-parent-hero");
+    const heroEyebrow = productsHero?.querySelector<HTMLElement>(".eyebrow");
+    const heroTitle = productsHero?.querySelector<HTMLElement>("h1");
+    const heroLead = productsHero?.querySelector<HTMLElement>("h1 + p");
+    const sectionTitle = root.querySelector<HTMLElement>("#all-products");
+    if (heroEyebrow) heroEyebrow.textContent = collectionMeta.eyebrow;
+    if (heroTitle) heroTitle.textContent = collectionMeta.title;
+    if (heroLead) heroLead.textContent = collectionMeta.lead;
+    if (sectionTitle) sectionTitle.textContent = collectionMeta.sectionTitle;
+  }
   root.dataset.category = categorySlug;
   const hero = document.querySelector<HTMLElement>("[data-category-hero]");
   if (hero && root.hasAttribute("data-dynamic-category")) hero.dataset.categorySlug = categorySlug;
@@ -115,7 +147,12 @@ if (root && list) {
     })
     .then(({ items }) => {
       list.replaceChildren();
-      items.forEach((product) => {
+      const visibleItems = collection === "best"
+        ? items.filter((product) => product.showInBestSellers)
+        : collection === "discount"
+          ? items.filter((product) => product.showInDiscounts)
+          : items;
+      visibleItems.forEach((product) => {
         const isPowderCategory =
           directCartCategories.has(root.dataset.category || "") || directCartCategories.has(product.categorySlug);
         const article = document.createElement("article");
@@ -292,7 +329,7 @@ if (root && list) {
         article.append(media, eyebrow, title, description, footer);
         list.append(article);
       });
-      if (!items.length) list.innerHTML = "<p>محصول فعالی در این مجموعه وجود ندارد.</p>";
+      if (!visibleItems.length) list.innerHTML = "<p>محصول فعالی در این مجموعه وجود ندارد.</p>";
     })
     .catch(() => { list.innerHTML = "<p>دریافت محصولات ممکن نشد؛ کمی بعد دوباره تلاش کنید.</p>"; });
 }

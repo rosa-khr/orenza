@@ -9,7 +9,16 @@ type TaggedProduct = {
   imageUrl: string | null;
   categorySlug: string;
 };
+type TaggedArticle = {
+  title: string;
+  slug: string;
+  summary: string;
+  imageUrl: string | null;
+  createdAt: string;
+  readingMinutes: number;
+};
 type TagDetail = TagLink & {
+  imageUrl?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   canonicalUrl?: string | null;
@@ -17,6 +26,7 @@ type TagDetail = TagLink & {
   robotsFollow?: boolean;
   content: string | null;
   products: TaggedProduct[];
+  articles: TaggedArticle[];
   relatedTags: TagLink[];
 };
 
@@ -53,11 +63,39 @@ if (root && slug && slug !== "detail") {
       document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", canonicalUrl);
       document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${pageTitle} | اورنزا`);
       document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", summary);
+      if (item.imageUrl) {
+        const socialImage = new URL(item.imageUrl, location.origin).toString();
+        document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.setAttribute("content", socialImage);
+        document.querySelector<HTMLMetaElement>('meta[name="twitter:image"]')?.setAttribute("content", socialImage);
+      }
       root.querySelector<HTMLElement>("[data-tag-title]")!.textContent = item.title;
       const content = root.querySelector<HTMLElement>("[data-tag-content]");
       if (content && item.content?.trim()) {
         content.innerHTML = item.content;
         content.hidden = false;
+      }
+      const articlesSection = root.querySelector<HTMLElement>("[data-tag-articles]");
+      const articlesRoot = root.querySelector<HTMLElement>("[data-tag-article-list]");
+      if (articlesSection && articlesRoot && item.articles.length) {
+        item.articles.forEach((relatedArticle) => {
+          const article = document.createElement("article");
+          const link = document.createElement("a");
+          link.href = `/articles/${encodeURIComponent(relatedArticle.slug)}/`;
+          const image = document.createElement("img");
+          image.src = relatedArticle.imageUrl || "/images/espresso-extraction-editorial-v2.webp";
+          image.alt = `تصویر مقاله ${relatedArticle.title}`;
+          image.loading = "lazy";
+          const copy = document.createElement("div");
+          const title = document.createElement("h3");
+          title.textContent = relatedArticle.title;
+          const summary = document.createElement("p");
+          summary.textContent = relatedArticle.summary;
+          copy.append(title, summary);
+          link.append(image, copy);
+          article.append(link);
+          articlesRoot.append(article);
+        });
+        articlesSection.hidden = false;
       }
       const productsSection = root.querySelector<HTMLElement>("[data-tag-products]");
       const productsRoot = root.querySelector<HTMLElement>("[data-tag-product-list]");
