@@ -3936,9 +3936,8 @@ body.mobile-nav-is-open {
 .footer-layer-transition > .site-footer {
   position: relative;
   z-index: 1;
-  opacity: calc(.88 + (var(--footer-layer-progress, 0) * .12));
-  transform: translate3d(0, calc((1 - var(--footer-layer-progress, 0)) * 18px), 0);
-  will-change: transform, opacity;
+  opacity: 1;
+  transform: none;
 }
 
 .footer-layer-transition.is-transition-complete > .pre-footer { pointer-events: none; }

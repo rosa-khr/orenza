@@ -1360,8 +1360,8 @@ footer {
 .site-footer__bottom {
   position: relative;
   z-index: 1;
-  border-top: 1px solid #d9cec1;
-  background: rgba(246, 240, 232, .82);
+  border-top: 0;
+  background: transparent;
 }
 
 .site-footer__bottom-inner {
