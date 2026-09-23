@@ -52,16 +52,6 @@ import Icon from "./Icon.astro";
         <img class="mobile-brand-wordmark" src="/images/orenza-wordmark-gold-v2.png" alt="ORENZA Coffee Specialty Roasters" width="1352" height="488" />
         <button type="button" data-mobile-nav-close aria-label="بستن منو"><Icon name="close" size={19} /></button>
       </header>
-      <section class="mobile-nav-tools" aria-label="ابزارهای سریع">
-        <form action="/products/" method="get" role="search">
-          <Icon name="search" size={18} />
-          <input name="q" type="search" placeholder="جست‌وجوی محصول یا مقاله" aria-label="جست‌وجو" />
-        </form>
-        <div>
-          <a href="/account/profile/"><Icon name="user" size={18} /><span>حساب من</span></a>
-          <button type="button" data-cart-open><Icon name="cart" size={18} /><span>سبد خرید</span><b data-cart-count>۰</b></button>
-        </div>
-      </section>
       <nav>
         <a href="/"><span>خانه</span><small>بازگشت به صفحه اصلی</small></a>
         <div class="mobile-category-nav" data-mobile-category-nav></div>

@@ -1519,10 +1519,6 @@ body.mobile-nav-is-open {
   color: #ead5ad;
 }
 
-.mobile-nav-tools {
-  display: none;
-}
-
 .mobile-nav-panel nav {
   display: grid;
   flex: 0 0 auto;
@@ -6283,69 +6279,6 @@ body.mobile-nav-is-open {
     width: min(34vw, 126px);
   }
 
-  .mobile-nav-tools {
-    display: grid;
-    gap: 9px;
-  }
-
-  .mobile-nav-tools form {
-    display: flex;
-    min-height: 44px;
-    align-items: center;
-    gap: 9px;
-    border: 1px solid rgba(206, 176, 120, .2);
-    border-radius: 14px;
-    background: rgba(255,255,255,.045);
-    padding: 0 13px;
-    color: #d9bd83;
-  }
-
-  .mobile-nav-tools form input {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: #fff8ea;
-    font: 10px Dana, Tahoma, sans-serif;
-  }
-
-  .mobile-nav-tools form input::placeholder { color: rgba(241,232,215,.46); }
-
-  .mobile-nav-tools > div {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .mobile-nav-tools > div > a,
-  .mobile-nav-tools > div > button {
-    position: relative;
-    display: flex;
-    min-height: 42px;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    border: 1px solid rgba(241,232,215,.1);
-    border-radius: 13px;
-    background: transparent;
-    padding: 8px 10px;
-    color: #fff8ea;
-    font: 700 10px Dana, Tahoma, sans-serif;
-  }
-
-  .mobile-nav-tools > div svg { color: #d9bd83; }
-  .mobile-nav-tools [data-cart-count] {
-    display: grid;
-    min-width: 16px;
-    height: 16px;
-    place-items: center;
-    border-radius: 50%;
-    background: #bd2e3e;
-    color: #fff;
-    font-size: 7px;
-  }
-
   .mobile-nav-panel nav a,
   .mobile-nav-group > button {
     padding: 11px 13px;
@@ -6356,7 +6289,7 @@ body.mobile-nav-is-open {
   }
 
   .site-header .header-actions {
-    display: none;
+    display: flex;
     align-items: center;
     gap: 6px;
     padding: 4px;
@@ -6365,6 +6298,8 @@ body.mobile-nav-is-open {
     background: rgba(255, 255, 255, 0.68);
     box-shadow: 0 12px 28px rgba(30, 43, 36, 0.07);
   }
+  .site-header .header-actions > a[href="/contact/"] { display: none; }
+  .site-header .header-actions > .cart-trigger { display: none; }
   .site-header .account-trigger {
     width: 44px;
     height: 44px;
