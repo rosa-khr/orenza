@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="surface" cx="38%" cy="28%" r="82%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#edf3ef"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#efd49a"/>
+      <stop offset=".55" stop-color="#bd812e"/>
+      <stop offset="1" stop-color="#8b581d"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="170%" height="180%">
+      <feDropShadow dx="0" dy="26" stdDeviation="25" flood-color="#15362b" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#surface)"/>
+  <g filter="url(#shadow)">
+    <circle cx="470" cy="472" r="278" fill="#080907" stroke="url(#gold)" stroke-width="12"/>
+    <text x="470" y="590" fill="url(#gold)" font-family="Georgia, 'Times New Roman', serif" font-size="360" text-anchor="middle">O</text>
+    <g transform="rotate(30 737 732)">
+      <ellipse cx="737" cy="732" rx="94" ry="145" fill="#080907" stroke="url(#gold)" stroke-width="13"/>
+      <path d="M723 620c34 65 37 140 9 224" fill="none" stroke="url(#gold)" stroke-width="11" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

@@ -7,6 +7,7 @@ import "../styles/light-palette.css";
 import CartDrawer from "../components/CartDrawer.astro";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import IosInstallPrompt from "../components/IosInstallPrompt.astro";
 import MobileBottomNav from "../components/MobileBottomNav.astro";
 import PreFooter from "../components/PreFooter.astro";
 import SupportChat from "../components/SupportChat.astro";
@@ -47,7 +48,7 @@ const normalizeCanonical = (value: string | null | undefined) => {
 };
 const canonical = normalizeCanonical(canonicalUrl);
 const robotsContent = `${robotsIndex ? "index" : "noindex"}, ${robotsFollow ? "follow" : "nofollow"}${robotsIndex ? ", max-image-preview:large" : ""}`;
-const socialImage = new URL("/images/orenza-leopard-label.png", siteUrl);
+const socialImage = new URL("/images/orenza-social-preview.png", siteUrl);
 const fullTitle = `${title} | اورنزا`;
 
 const schema = {
@@ -110,9 +111,10 @@ const schema = {
     <meta property="og:description" content={description} data-site-meta="og:description" />
     <meta property="og:url" content={canonical.toString()} />
     <meta property="og:image" content={socialImage.toString()} data-site-meta="og:image" />
-    <meta property="og:image:alt" content="نشان تصویری پلنگ ایرانی اورنزا" />
-    <meta property="og:image:width" content="620" />
-    <meta property="og:image:height" content="895" />
+    <meta property="og:image:alt" content="نشان و تایپوگرافی قهوه اورنزا" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} data-site-meta="twitter:title" />
     <meta name="twitter:description" content={description} data-site-meta="twitter:description" />
@@ -121,6 +123,12 @@ const schema = {
     <link rel="alternate" hreflang="fa-IR" href={canonical.toString()} />
     <link rel="alternate" hreflang="x-default" href={canonical.toString()} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" data-site-favicon />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/orenza-app-icon-180.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="اورنزا" />
     {robotsIndex && <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)}></script>}
     <title>{fullTitle}</title>
   </head>
@@ -129,6 +137,7 @@ const schema = {
     <main id="top"><slot /></main>
     <div class="footer-layer-transition" data-footer-transition>
       <PreFooter />
+      <IosInstallPrompt />
       <Footer />
     </div>
     <CartDrawer />

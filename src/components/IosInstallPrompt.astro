@@ -1,0 +1,123 @@
+---
+import { Download, Share, SquarePlus, X } from "@lucide/astro";
+---
+
+<section class="ios-install" data-ios-install aria-labelledby="ios-install-title">
+  <div class="ios-install__inner">
+    <img src="/images/orenza-app-icon-192.png" width="92" height="92" alt="آیکون اپلیکیشن اورنزا" loading="lazy" />
+    <div class="ios-install__copy">
+      <span>ORENZA WEB APP · iOS</span>
+      <h2 id="ios-install-title">دانلود اپلیکیشن اورنزا</h2>
+      <p>فروشگاه اورنزا را مثل یک اپلیکیشن، مستقیم از صفحه اصلی iPhone یا iPad باز کنید.</p>
+    </div>
+    <button class="ios-install__button" type="button" data-ios-install-open>
+      <Download size={18} stroke-width={1.6} aria-hidden="true" />
+      <span>راهنمای نصب روی iOS</span>
+    </button>
+  </div>
+</section>
+
+<div class="ios-install-modal" data-ios-install-modal hidden>
+  <button class="ios-install-modal__backdrop" type="button" data-ios-install-close aria-label="بستن راهنمای نصب"></button>
+  <section class="ios-install-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="ios-install-modal-title" tabindex="-1">
+    <header>
+      <img src="/images/orenza-app-icon-192.png" width="58" height="58" alt="" />
+      <div>
+        <small>نصب در کمتر از یک دقیقه</small>
+        <h2 id="ios-install-modal-title">افزودن اورنزا به Home Screen</h2>
+      </div>
+      <button type="button" data-ios-install-close aria-label="بستن"><X size={19} aria-hidden="true" /></button>
+    </header>
+    <ol>
+      <li><b>۱</b><div><strong>این صفحه را در Safari باز کنید</strong><span>نصب مستقیم وب‌اپ در مرورگر Safari انجام می‌شود.</span></div></li>
+      <li><b>۲</b><div><strong>دکمه Share را بزنید</strong><span>آیکون مربع و فلش رو به بالا را در نوار Safari انتخاب کنید.</span></div><Share size={22} aria-hidden="true" /></li>
+      <li><b>۳</b><div><strong>Add to Home Screen را انتخاب کنید</strong><span>اگر دیده نمی‌شود، فهرست گزینه‌ها را کمی به پایین اسکرول کنید.</span></div><SquarePlus size={22} aria-hidden="true" /></li>
+      <li><b>۴</b><div><strong>در پایان Add را بزنید</strong><span>آیکون اورنزا روی صفحه اصلی دستگاه شما قرار می‌گیرد.</span></div></li>
+    </ol>
+    <p class="ios-install-modal__note" data-ios-install-note>پس از نصب، اورنزا تمام‌صفحه و مانند یک اپلیکیشن مستقل باز می‌شود.</p>
+    <button class="ios-install-modal__done" type="button" data-ios-install-close>متوجه شدم</button>
+  </section>
+</div>
+
+<script is:inline>
+  (() => {
+    const root = document.querySelector("[data-ios-install]");
+    const modal = document.querySelector("[data-ios-install-modal]");
+    const sheet = modal?.querySelector(".ios-install-modal__sheet");
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    if (isStandalone) {
+      root?.setAttribute("hidden", "");
+      return;
+    }
+    const open = () => {
+      if (!modal) return;
+      modal.hidden = false;
+      document.body.classList.add("install-guide-is-open");
+      requestAnimationFrame(() => {
+        modal.classList.add("is-open");
+        sheet?.focus();
+      });
+    };
+    const close = () => {
+      if (!modal) return;
+      modal.classList.remove("is-open");
+      document.body.classList.remove("install-guide-is-open");
+      window.setTimeout(() => { modal.hidden = true; }, 240);
+    };
+    root?.querySelector("[data-ios-install-open]")?.addEventListener("click", open);
+    modal?.querySelectorAll("[data-ios-install-close]").forEach((button) => button.addEventListener("click", close));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal && !modal.hidden) close();
+    });
+  })();
+</script>
+
+<style>
+  .ios-install { border-bottom: 1px solid rgba(38,70,57,.12); background: linear-gradient(118deg, #eef5f1 0%, #faf8f1 52%, #f3e8d3 100%); color: #1d382d; }
+  .ios-install[hidden] { display: none; }
+  .ios-install__inner { display: grid; width: min(1120px, calc(100% - 48px)); min-height: 184px; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 24px; margin: auto; padding: 30px 0; }
+  .ios-install__inner > img { border-radius: 22px; box-shadow: 0 13px 34px rgba(29,56,45,.15); }
+  .ios-install__copy > span { color: #a26f30; font: 700 9px/1.4 Georgia, serif; letter-spacing: .14em; }
+  .ios-install__copy h2 { margin: 7px 0 6px; font-size: 25px; }
+  .ios-install__copy p { margin: 0; color: #686158; font-size: 12px; line-height: 1.9; }
+  .ios-install__button { display: inline-flex; min-height: 44px; align-items: center; gap: 9px; border: 1px solid #244b3b; border-radius: 13px; background: #244b3b; padding: 10px 17px; color: #fff; cursor: pointer; font: 700 11px Dana,Tahoma,sans-serif; }
+  .ios-install__button:hover { background: #183c2e; }
+  .ios-install-modal { position: fixed; z-index: 150; inset: 0; display: grid; place-items: center; padding: 18px; opacity: 0; transition: opacity 240ms ease; }
+  .ios-install-modal[hidden] { display: none; }
+  .ios-install-modal.is-open { opacity: 1; }
+  .ios-install-modal__backdrop { position: absolute; inset: 0; border: 0; background: rgba(10,20,16,.64); backdrop-filter: blur(8px); cursor: pointer; }
+  .ios-install-modal__sheet { position: relative; width: min(100%, 510px); overflow: hidden; border: 1px solid rgba(166,120,56,.22); border-radius: 25px; background: #fff; padding: 24px; box-shadow: 0 28px 80px rgba(8,24,18,.28); outline: none; transform: translateY(18px) scale(.98); transition: transform 240ms ease; }
+  .ios-install-modal.is-open .ios-install-modal__sheet { transform: translateY(0) scale(1); }
+  .ios-install-modal__sheet > header { display: grid; grid-template-columns: 58px minmax(0,1fr) 36px; align-items: center; gap: 13px; }
+  .ios-install-modal__sheet > header img { border-radius: 15px; }
+  .ios-install-modal__sheet > header small { color: #9a692f; font-size: 9px; }
+  .ios-install-modal__sheet > header h2 { margin: 4px 0 0; color: #1d382d; font-size: 19px; }
+  .ios-install-modal__sheet > header button { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid #dde5e0; border-radius: 12px; background: #f7faf8; color: #26493a; cursor: pointer; }
+  .ios-install-modal ol { display: grid; gap: 8px; margin: 20px 0 15px; padding: 0; list-style: none; }
+  .ios-install-modal li { display: grid; min-height: 66px; grid-template-columns: 31px minmax(0,1fr) auto; align-items: center; gap: 11px; border: 1px solid #e6e4de; border-radius: 15px; padding: 10px 12px; }
+  .ios-install-modal li > b { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 50%; background: #edf4f0; color: #24503d; font-size: 11px; }
+  .ios-install-modal li > div { display: grid; gap: 3px; }
+  .ios-install-modal li strong { color: #292d29; font-size: 11px; }
+  .ios-install-modal li span { color: #756e64; font-size: 9px; line-height: 1.7; }
+  .ios-install-modal li > svg { color: #a56f2e; }
+  .ios-install-modal__note { margin: 0 0 14px; color: #6b645b; font-size: 9px; line-height: 1.8; text-align: center; }
+  .ios-install-modal__done { width: 100%; min-height: 42px; border: 0; border-radius: 12px; background: #244b3b; color: #fff; cursor: pointer; font: 700 11px Dana,Tahoma,sans-serif; }
+  body.install-guide-is-open { overflow: hidden; }
+  @media (max-width: 699px) {
+    .ios-install__inner { width: min(100% - 30px, 560px); min-height: 0; grid-template-columns: 68px minmax(0,1fr); gap: 14px; padding: 24px 0 30px; }
+    .ios-install__inner > img { width: 68px; height: 68px; border-radius: 18px; }
+    .ios-install__copy > span { font-size: 7px; }
+    .ios-install__copy h2 { margin-top: 4px; font-size: 18px; }
+    .ios-install__copy p { font-size: 9px; line-height: 1.75; }
+    .ios-install__button { grid-column: 1 / -1; width: 100%; min-height: 42px; justify-content: center; }
+    .ios-install-modal { align-items: end; padding: 10px; }
+    .ios-install-modal__sheet { max-height: calc(100dvh - 20px); overflow-y: auto; border-radius: 24px 24px 17px 17px; padding: 18px; transform: translateY(28px); }
+    .ios-install-modal__sheet > header { grid-template-columns: 50px minmax(0,1fr) 34px; }
+    .ios-install-modal__sheet > header img { width: 50px; height: 50px; }
+    .ios-install-modal__sheet > header h2 { font-size: 15px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ios-install-modal,
+    .ios-install-modal__sheet { transition: none; }
+  }
+</style>

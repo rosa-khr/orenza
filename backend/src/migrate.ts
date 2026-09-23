@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   homepage_seo_title varchar(60) NOT NULL DEFAULT 'خرید قهوه تازه رست با آسیاب دلخواه',
   homepage_seo_description varchar(150) NOT NULL DEFAULT 'قهوه تازه رست اورنزا را با ترکیب عربیکا و روبوستا، درجه رست و آسیاب مناسب دستگاهتان سفارش دهید؛ آماده‌سازی تازه و ارسال سراسر ایران.',
   homepage_seo_keywords text[] NOT NULL DEFAULT ARRAY['خرید قهوه تازه رست','قهوه اسپرسو','قهوه عربیکا','قهوه روبوستا','آسیاب قهوه','قهوه اورنزا'],
-  homepage_og_image_url varchar(500) NOT NULL DEFAULT '/images/orenza-leopard-label.png',
+  homepage_og_image_url varchar(500) NOT NULL DEFAULT '/images/orenza-social-preview.png',
   homepage_hero_eyebrow varchar(180) NOT NULL DEFAULT 'ORENZA · دانه، دقت، فنجان',
   homepage_hero_title varchar(180) NOT NULL DEFAULT 'کیفیت،',
   homepage_hero_title_accent varchar(180) NOT NULL DEFAULT 'اتفاقی نیست.',
@@ -254,6 +254,11 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_desktop_url varchar(500);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS homepage_banner_mobile_url varchar(500);
+ALTER TABLE site_settings
+  ALTER COLUMN homepage_og_image_url SET DEFAULT '/images/orenza-social-preview.png';
+UPDATE site_settings
+SET homepage_og_image_url = '/images/orenza-social-preview.png'
+WHERE homepage_og_image_url = '/images/orenza-leopard-label.png';
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS robots_rules text NOT NULL DEFAULT 'User-agent: *
 Allow: /
