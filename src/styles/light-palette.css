@@ -131,7 +131,8 @@ body:has(.mobile-home-top) .support-chat-toggle {
     display: flex;
     min-width: 0;
     flex-direction: column;
-    overflow: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
     background: #f1f2f4;
   }
 
@@ -141,6 +142,7 @@ body:has(.mobile-home-top) .support-chat-toggle {
     gap: 10px;
     padding: 10px 12px 6px;
     background: #f1f2f4;
+    overflow-anchor: none;
   }
 
   .mobile-quick-links {
@@ -214,7 +216,7 @@ body:has(.mobile-home-top) .support-chat-toggle {
     height: var(--mobile-category-space, 74px);
   }
 
-  .mobile-home-top.is-category-compact .mobile-quick-links {
+  .mobile-quick-links.is-mobile-category-dock {
     position: fixed;
     z-index: 44;
     top: 0;
@@ -224,15 +226,15 @@ body:has(.mobile-home-top) .support-chat-toggle {
     gap: 6px;
     padding: max(7px, env(safe-area-inset-top)) 12px 7px;
     border-bottom: 1px solid rgba(36,75,59,.14);
-    background: rgba(248,250,249,.96);
+    background: #f8faf9;
     box-shadow: 0 8px 24px rgba(24,54,42,.12);
-    backdrop-filter: blur(14px);
     mask-image: none;
     -webkit-mask-image: none;
-    animation: mobile-category-dock-in 220ms ease both;
+    -webkit-overflow-scrolling: auto;
+    animation: mobile-category-dock-in 180ms ease both;
   }
 
-  .mobile-home-top.is-category-compact .mobile-quick-links a {
+  .mobile-quick-links.is-mobile-category-dock a {
     min-width: max-content;
     min-height: 34px;
     flex: 0 0 auto;
@@ -243,12 +245,12 @@ body:has(.mobile-home-top) .support-chat-toggle {
     box-shadow: none;
   }
 
-  .mobile-home-top.is-category-compact .mobile-quick-links a span { display: none; }
-  .mobile-home-top.is-category-compact .mobile-quick-links a b { font-size: 9px; }
+  .mobile-quick-links.is-mobile-category-dock a span { display: none; }
+  .mobile-quick-links.is-mobile-category-dock a b { font-size: 9px; }
 
   @keyframes mobile-category-dock-in {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   .mobile-quick-links a.is-featured {
