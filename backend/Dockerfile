@@ -19,4 +19,4 @@ COPY public/favicon.svg ./assets/favicon.svg
 COPY public/images/orenza-logo.png ./assets/orenza-logo.png
 COPY public/images ./public-images-default
 EXPOSE 8787
-CMD ["sh", "-c", "cp -R -n /app/public-images-default/. /app/public/images/ && node dist/migrate.js && node dist/server.js"]
+CMD ["sh", "-c", "cp -R /app/public-images-default/. /app/public/images/ && node dist/migrate.js && node dist/server.js"]
