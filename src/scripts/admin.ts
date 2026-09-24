@@ -980,9 +980,9 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       headerName: "عملیات",
       field: "id",
       pinned: "left",
-      width: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags"].includes(config.key) ? 165 : 132,
-      minWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags"].includes(config.key) ? 165 : 132,
-      maxWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags"].includes(config.key) ? 165 : 132,
+      width: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags", "articles"].includes(config.key) ? 165 : 132,
+      minWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags", "articles"].includes(config.key) ? 165 : 132,
+      maxWidth: config.key === "orders" ? 250 : config.key === "users" ? 205 : ["products", "categories", "tags", "articles"].includes(config.key) ? 165 : 132,
       filter: false,
       sortable: false,
       cellRenderer: actionRenderer
