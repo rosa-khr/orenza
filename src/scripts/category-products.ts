@@ -8,11 +8,12 @@ type CategoryProduct = {
   description: string;
   blendType: string;
   categorySlug: string;
-  roastType: "light" | "medium" | "mediumDark" | "dark";
-  coffeeType: "bean" | "ground";
+  productType?: "coffee" | "herbalTea" | "instantDrink" | "food" | "other";
+  roastType: "light" | "medium" | "mediumDark" | "dark" | null;
+  coffeeType: "bean" | "ground" | null;
   saleType: "weighted" | "packaged";
   stockStatus: "inStock" | "outOfStock";
-  packageWeightGrams: 250 | 500 | 1000;
+  packageWeightGrams: number;
   packagePrice: number | string;
   salePricePerKg: number | string;
   discountPercent?: number | string | null;
@@ -195,7 +196,7 @@ if (root && list) {
         titleLink.textContent = product.titleFa;
         title.append(titleLink);
         description.textContent = product.description;
-        blend.textContent = product.blendType;
+        blend.textContent = product.blendType || "محصول اورنزا";
         detailLink.className = "category-product-detail-link";
         detailLink.href = detailUrl;
         detailLink.textContent = "مشاهده جزئیات محصول";
@@ -211,7 +212,7 @@ if (root && list) {
           list.append(article);
           return;
         }
-        let selectedWeight: 250 | 500 | 1000 = product.saleType === "packaged"
+        let selectedWeight: number = product.saleType === "packaged"
           ? product.packageWeightGrams
           : 250;
         const weightLabels: Record<250 | 500 | 1000, string> = {
@@ -219,23 +220,24 @@ if (root && list) {
           500: "۵۰۰ گرم",
           1000: "۱ کیلوگرم"
         };
+        const weightLabel = (weight: number) => weightLabels[weight as 250 | 500 | 1000] || `${money.format(weight)} گرم`;
         const roastLabels = {
           light: "روشن",
           medium: "متوسط",
           mediumDark: "متوسط رو به تیره",
           dark: "تیره"
         };
-        const regularPrice = (weight: 250 | 500 | 1000) =>
+        const regularPrice = (weight: number) =>
           product.saleType === "packaged"
             ? Number(product.packagePrice || product.salePricePerKg || 0)
             : Math.round(Number(product.salePricePerKg || 0) * weight / 1000);
-        const discountPrice = (weight: 250 | 500 | 1000) => {
+        const discountPrice = (weight: number) => {
           const unitDiscount = Number(product.discountSalePricePerKg || 0);
           if (unitDiscount > 0) return product.saleType === "packaged" ? unitDiscount : Math.round(unitDiscount * weight / 1000);
           const percent = Number(product.discountPercent || 0);
           return percent > 0 && percent < 100 ? Math.round(regularPrice(weight) * (1 - percent / 100)) : regularPrice(weight);
         };
-        const priceInfo = (weight: 250 | 500 | 1000) => {
+        const priceInfo = (weight: number) => {
           const regular = regularPrice(weight);
           const discounted = discountPrice(weight);
           const savedPercent = Number(product.discountPercent || 0);
@@ -250,8 +252,8 @@ if (root && list) {
             percent
           };
         };
-        const productPrice = (weight: 250 | 500 | 1000) => priceInfo(weight).final;
-        const renderPrice = (weight: 250 | 500 | 1000, includeWeight: boolean) => {
+        const productPrice = (weight: number) => priceInfo(weight).final;
+        const renderPrice = (weight: number, includeWeight: boolean) => {
           const info = priceInfo(weight);
           const hasDiscount = product.showInDiscounts && info.final < info.regular && info.percent > 0;
           price.classList.toggle("has-category-discount", hasDiscount);
@@ -267,7 +269,7 @@ if (root && list) {
             price.append(line);
           }
           const current = document.createElement("b");
-          current.textContent = `${includeWeight ? `${weightLabels[weight]} · ` : ""}${money.format(info.final)} تومان`;
+          current.textContent = `${includeWeight ? `${weightLabel(weight)} · ` : ""}${money.format(info.final)} تومان`;
           price.append(current);
         };
         const controls = document.createElement("div");
@@ -284,10 +286,10 @@ if (root && list) {
           const item: CartItemInput = {
             productId: product.id,
             productTitle: product.titleFa,
-            blend: product.blendType,
-            roast: roastLabels[product.roastType] || "بدون رُست",
-            grind: product.coffeeType === "ground" ? "پودر آماده" : "دان کامل",
-            weight: weightLabels[selectedWeight],
+            blend: product.blendType || "محصول اورنزا",
+            roast: product.roastType ? roastLabels[product.roastType] : "بدون رُست",
+            grind: product.productType === "coffee" ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف",
+            weight: weightLabel(selectedWeight),
             weightGrams: selectedWeight,
             quantity: 1,
             unitPrice,
@@ -328,7 +330,7 @@ if (root && list) {
         } else {
           const packageLabel = document.createElement("span");
           packageLabel.className = "category-package-label";
-          packageLabel.textContent = `بسته ${weightLabels[selectedWeight]}`;
+          packageLabel.textContent = `بسته ${weightLabel(selectedWeight)}`;
           renderPrice(selectedWeight, false);
           actionButton.textContent = "افزودن بسته به سبد";
           actionButton.addEventListener("click", addPackagedToCart);

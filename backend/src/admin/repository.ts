@@ -189,6 +189,12 @@ export class AdminRepository {
         return toPublicRecord(result.rows[0]!);
       });
     }
+    if (resource === "products") {
+      const next = await this.pool.query<{ sort_order: number }>(
+        "SELECT COALESCE(MAX(sort_order), 0) + 1 AS sort_order FROM products WHERE deleted_at IS NULL"
+      );
+      data.sortOrder = next.rows[0]!.sort_order;
+    }
     if (resource === "redirects") {
       data.sourcePath = normalizeSitePath(String(data.sourcePath || ""));
       data.destination = normalizeDestination(String(data.destination || ""));

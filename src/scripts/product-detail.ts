@@ -10,13 +10,14 @@ type ProductDetail = {
   productContent: string | null;
   imageUrl: string | null;
   productImageUrls?: string[];
-  blendType: string;
+  blendType: string | null;
+  productType?: "coffee" | "herbalTea" | "instantDrink" | "food" | "other";
   categorySlug: string;
-  roastType: "light" | "medium" | "mediumDark" | "dark";
-  coffeeType: "bean" | "ground";
+  roastType: "light" | "medium" | "mediumDark" | "dark" | null;
+  coffeeType: "bean" | "ground" | null;
   saleType: "weighted" | "packaged";
   stockStatus: "inStock" | "outOfStock";
-  packageWeightGrams: 250 | 500 | 1000;
+  packageWeightGrams: number;
   packagePrice: number | string;
   salePricePerKg: number | string;
   discountPercent?: number | string | null;
@@ -52,6 +53,7 @@ const weightLabels: Record<250 | 500 | 1000, string> = {
   500: "۵۰۰ گرم",
   1000: "۱ کیلوگرم"
 };
+const weightLabel = (weight: number) => weightLabels[weight as 250 | 500 | 1000] || `${money.format(weight)} گرم`;
 const roastLabels = {
   light: "روشن",
   medium: "متوسط",
@@ -104,8 +106,8 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       setText("[data-product-detail-en]", item.titleEn);
       setText("[data-product-detail-title]", item.titleFa);
       setText("[data-product-detail-description]", item.description);
-      setText("[data-product-detail-blend]", item.blendType);
-      setText("[data-product-detail-roast]", roastLabels[item.roastType] || "—");
+      setText("[data-product-detail-blend]", item.blendType || "محصول اورنزا");
+      setText("[data-product-detail-roast]", item.roastType ? roastLabels[item.roastType] : "—");
       setText("[data-product-detail-stock]", item.stockStatus === "inStock" ? "موجود و قابل سفارش" : "ناموجود");
       const directCartCategories = new Set(["cafe-drinks", "herbal-tea"]);
       const isDirectCartCategory = directCartCategories.has(item.categorySlug);
@@ -341,21 +343,21 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       const actionLabel = action?.querySelector<HTMLElement>("span");
       if (!purchase || !weights || !action) return;
       purchase.hidden = false;
-      let selectedWeight: 250 | 500 | 1000 =
+      let selectedWeight: number =
         item.saleType === "packaged" ? item.packageWeightGrams : 250;
-      const productPrice = (weight: 250 | 500 | 1000) =>
+      const productPrice = (weight: number) =>
         priceInfo(weight).final;
-      const regularPrice = (weight: 250 | 500 | 1000) =>
+      const regularPrice = (weight: number) =>
         item.saleType === "packaged"
           ? Number(item.packagePrice || item.salePricePerKg || 0)
           : Math.round(Number(item.salePricePerKg || 0) * weight / 1000);
-      const discountPrice = (weight: 250 | 500 | 1000) => {
+      const discountPrice = (weight: number) => {
         const unitDiscount = Number(item.discountSalePricePerKg || 0);
         if (unitDiscount > 0) return item.saleType === "packaged" ? unitDiscount : Math.round(unitDiscount * weight / 1000);
         const percent = Number(item.discountPercent || 0);
         return percent > 0 && percent < 100 ? Math.round(regularPrice(weight) * (1 - percent / 100)) : regularPrice(weight);
       };
-      const priceInfo = (weight: 250 | 500 | 1000) => {
+      const priceInfo = (weight: number) => {
         const regular = regularPrice(weight);
         const discounted = discountPrice(weight);
         const savedPercent = Number(item.discountPercent || 0);
@@ -370,7 +372,7 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
           percent
         };
       };
-      const renderPrice = (weight: 250 | 500 | 1000) => {
+      const renderPrice = (weight: number) => {
         const priceRoot = root.querySelector<HTMLElement>("[data-product-detail-price]");
         if (!priceRoot) return;
         const info = priceInfo(weight);
@@ -388,7 +390,7 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
           priceRoot.append(line);
         }
         const current = document.createElement("b");
-        current.textContent = `${weightLabels[weight]} · ${money.format(info.final)} تومان`;
+        current.textContent = `${weightLabel(weight)} · ${money.format(info.final)} تومان`;
         priceRoot.append(current);
       };
       const update = () => {
@@ -399,12 +401,19 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
           button.setAttribute("aria-pressed", String(selected));
         });
       };
+      if (item.saleType === "packaged" && !weights.querySelector(`[data-weight="${selectedWeight}"]`)) {
+        const customWeight = document.createElement("button");
+        customWeight.type = "button";
+        customWeight.dataset.weight = String(selectedWeight);
+        customWeight.textContent = weightLabel(selectedWeight);
+        weights.append(customWeight);
+      }
       weights.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
         if (item.saleType === "packaged") {
           button.hidden = Number(button.dataset.weight) !== selectedWeight;
         }
         button.addEventListener("click", () => {
-          selectedWeight = Number(button.dataset.weight) as 250 | 500 | 1000;
+          selectedWeight = Number(button.dataset.weight);
           update();
         });
       });
@@ -424,10 +433,10 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
           const cartItem: CartItemInput = {
             productId: item.id,
             productTitle: item.titleFa,
-            blend: item.blendType,
-            roast: roastLabels[item.roastType],
-            grind: item.coffeeType === "ground" ? "پودر آماده" : "دان کامل",
-            weight: weightLabels[selectedWeight],
+            blend: item.blendType || "محصول اورنزا",
+            roast: item.roastType ? roastLabels[item.roastType] : "بدون رُست",
+            grind: item.productType === "coffee" ? (item.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف",
+            weight: weightLabel(selectedWeight),
             weightGrams: selectedWeight,
             quantity: 1,
             unitPrice,

@@ -14,11 +14,12 @@ type RailProduct = {
   titleFa: string;
   titleEn: string;
   description: string;
-  blendType: string;
-  roastType: "light" | "medium" | "mediumDark" | "dark";
-  coffeeType: "bean" | "ground";
+  blendType: string | null;
+  productType?: "coffee" | "herbalTea" | "instantDrink" | "food" | "other";
+  roastType: "light" | "medium" | "mediumDark" | "dark" | null;
+  coffeeType: "bean" | "ground" | null;
   saleType: "weighted" | "packaged";
-  packageWeightGrams: 250 | 500 | 1000;
+  packageWeightGrams: number;
   stockStatus: "inStock" | "outOfStock";
   packagePrice: number | string;
   salePricePerKg: number | string;
@@ -33,6 +34,7 @@ type RailProduct = {
 const money = new Intl.NumberFormat("fa-IR");
 const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
 const weightLabels = { 250: "۲۵۰ گرم", 500: "۵۰۰ گرم", 1000: "۱ کیلوگرم" } as const;
+const weightLabel = (weight: number) => weightLabels[weight as keyof typeof weightLabels] || `${money.format(weight)} گرم`;
 const roastLabels = { light: "روشن", medium: "متوسط", mediumDark: "متوسط رو به تیره", dark: "تیره" };
 const cartIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 10.2a2 2 0 0 0 2 1.5h7.8a2 2 0 0 0 1.9-1.4L21 7H6.2M10 19.5h.01M18 19.5h.01" /></svg>`;
 const readCart = (): CartItem[] => {
@@ -80,11 +82,11 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
   const hasDiscount = product.showInDiscounts && regularPrice > discountedPrice && discountPercent > 0;
   const price = hasDiscount ? discountedPrice : regularPrice;
   const weight = product.saleType === "packaged" ? product.packageWeightGrams : 250;
-  const grind = product.coffeeType === "ground" ? "پودر آماده" : "دان کامل";
+  const grind = product.productType === "coffee" ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف";
   const selection = {
     productId: product.id,
-    blend: product.blendType,
-    roast: roastLabels[product.roastType],
+    blend: product.blendType || "محصول اورنزا",
+    roast: product.roastType ? roastLabels[product.roastType] : "بدون رُست",
     grind,
     weightGrams: weight
   };
@@ -123,7 +125,7 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
     const item: CartItemInput = {
       ...selection,
       productTitle: product.titleFa,
-      weight: weightLabels[weight],
+      weight: weightLabel(weight),
       quantity: 1,
       unitPrice: price,
       totalPrice: price

@@ -137,20 +137,34 @@ export const productSchema = z.object({
   relatedProductIds: z.array(z.string().uuid({ message: "محصول مرتبط انتخاب‌شده معتبر نیست." }))
     .max(20, { message: "حداکثر ۲۰ محصول مرتبط قابل انتخاب است." })
     .default([]),
-  roastType: z.enum(["light", "medium", "mediumDark", "dark"]),
-  coffeeType: z.enum(["bean", "ground"]),
-  grindType: z.enum(["espresso", "mokaPot", "frenchPress", "turkish", "filter", "none"]).default("none"),
-  blendType: z.string()
-    .trim()
-    .min(2, { message: "ترکیب دانه باید حداقل ۲ کاراکتر باشد." })
-    .max(120, { message: "ترکیب دانه نمی‌تواند بیشتر از ۱۲۰ کاراکتر باشد." }),
+  productType: z.enum(["coffee", "herbalTea", "instantDrink", "food", "other"]).default("coffee"),
+  roastType: z.preprocess(
+    (value) => value === "" || value === undefined ? null : value,
+    z.enum(["light", "medium", "mediumDark", "dark"]).nullable()
+  ),
+  coffeeType: z.preprocess(
+    (value) => value === "" || value === undefined ? null : value,
+    z.enum(["bean", "ground"]).nullable()
+  ),
+  grindType: z.preprocess(
+    (value) => value === "" || value === undefined ? null : value,
+    z.enum(["espresso", "mokaPot", "frenchPress", "turkish", "filter", "none"]).nullable()
+  ),
+  blendType: z.preprocess(
+    (value) => value === "" || value === undefined ? null : value,
+    z.string().trim().min(2, { message: "مشخصات محصول باید حداقل ۲ کاراکتر باشد." }).max(120).nullable()
+  ),
   sortOrder: z.number()
     .int({ message: "ترتیب نمایش باید عدد صحیح باشد." })
     .min(1, { message: "ترتیب نمایش باید حداقل ۱ باشد." })
     .max(999, { message: "ترتیب نمایش نمی‌تواند بیشتر از ۹۹۹ باشد." })
     .default(100),
   saleType: z.enum(["weighted", "packaged"]).default("weighted"),
-  packageWeightGrams: z.union([z.literal(250), z.literal(500), z.literal(1000)]).default(250),
+  packageWeightGrams: z.number()
+    .int({ message: "وزن بسته باید عدد صحیح باشد." })
+    .min(1, { message: "وزن بسته باید حداقل یک گرم باشد." })
+    .max(100000, { message: "وزن بسته نمی‌تواند بیشتر از ۱۰۰ کیلوگرم باشد." })
+    .default(250),
   stockStatus: z.enum(["inStock", "outOfStock"]).default("inStock"),
   purchasePricePerKg: productMoney("قیمت خرید واحد"),
   salePricePerKg: productMoney("قیمت فروش واحد"),
@@ -168,6 +182,12 @@ export const productSchema = z.object({
   isActive: z.boolean().default(true),
   imageUrl: productImageUrl.optional(),
   productImageUrls: productImageGallery.default([])
+}).superRefine((product, context) => {
+  if (product.productType !== "coffee") return;
+  if (!product.roastType) context.addIssue({ code: "custom", message: "پروفایل رُست برای محصول قهوه الزامی است.", path: ["roastType"] });
+  if (!product.coffeeType) context.addIssue({ code: "custom", message: "فرم قهوه را انتخاب کنید.", path: ["coffeeType"] });
+  if (!product.grindType) context.addIssue({ code: "custom", message: "نوع آسیاب را انتخاب کنید.", path: ["grindType"] });
+  if (!product.blendType) context.addIssue({ code: "custom", message: "ترکیب دانه برای محصول قهوه الزامی است.", path: ["blendType"] });
 }).transform((product) => ({
   ...product,
   slug: product.slug || productSlug(product.titleEn),
@@ -407,7 +427,7 @@ export const serviceScriptSchema = z.object({
 
 export const orderItemInputSchema = z.object({
   productId: z.string().uuid(),
-  weight: z.union([z.literal(100), z.literal(250), z.literal(500), z.literal(1000)]),
+  weight: z.number().int().min(1).max(100000),
   quantity: z.number().int().min(1).max(50),
   grindType: z.string().trim().min(2).max(80),
   roastType: z.string().trim().min(2).max(80),

@@ -1957,10 +1957,23 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     ? initCatalogImageUpload(form, config.key)
     : undefined;
   const refreshCategoryMobileImage = config.key === "categories" ? initCategoryMobileImageUpload(form) : undefined;
+  const updateProductFeatureVisibility = () => {
+    if (config.key !== "products") return;
+    const productType = form.elements.namedItem("productType") as HTMLSelectElement | null;
+    const isCoffee = !productType?.value || productType.value === "coffee";
+    (["roastType", "coffeeType", "grindType"] as const).forEach((key) => {
+      const field = form.querySelector<HTMLElement>(`[data-admin-field="${key}"]`);
+      const control = form.elements.namedItem(key) as HTMLSelectElement | null;
+      if (field) field.hidden = !isCoffee;
+      if (!isCoffee && control) control.value = "";
+    });
+    const blendLabel = form.querySelector<HTMLElement>('[data-admin-field="blendType"] > span');
+    if (blendLabel) blendLabel.textContent = isCoffee ? "ترکیب دانه" : "ترکیب یا مشخصات محصول";
+  };
   const updateProductProfit = (source: "purchase" | "sale" | "markup" | "discount" | "refresh" = "refresh") => {
     if (config.key !== "products") return;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
-    const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLSelectElement | null;
+    const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLInputElement | null;
     const purchase = form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null;
     const markup = form.elements.namedItem("markupPercent") as HTMLInputElement | null;
     const sale = form.elements.namedItem("salePricePerKg") as HTMLInputElement | null;
@@ -2013,10 +2026,12 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     }
   };
   if (config.key === "products") {
+    const productType = form.elements.namedItem("productType") as HTMLSelectElement | null;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
-    const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLSelectElement | null;
+    const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLInputElement | null;
     const stockStatus = form.elements.namedItem("stockStatus") as HTMLSelectElement | null;
     if (mode === "add") {
+      if (productType && !productType.value) productType.value = "coffee";
       if (saleType && !saleType.value) {
         saleType.value = "weighted";
         saleType.dispatchEvent(new Event("change", { bubbles: true }));
@@ -2030,6 +2045,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
         stockStatus.dispatchEvent(new Event("change", { bubbles: true }));
       }
     }
+    productType?.addEventListener("change", updateProductFeatureVisibility);
     saleType?.addEventListener("change", () => updateProductProfit("refresh"));
     packageWeight?.addEventListener("change", () => updateProductProfit("refresh"));
     (form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("purchase"));
@@ -2037,6 +2053,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     (form.elements.namedItem("salePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("sale"));
     (form.elements.namedItem("discountPercent") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("discount"));
     updateProductProfit();
+    updateProductFeatureVisibility();
   }
   const id = new URLSearchParams(location.search).get("id");
   if (config.key === "users" && id) {
@@ -2061,6 +2078,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       refreshCatalogImage?.();
       refreshCategoryMobileImage?.();
       updateProductProfit();
+      updateProductFeatureVisibility();
       if (config.key === "orders") {
         renderOrderItems(form, item.items);
         initPaymentReview(form, id, item);

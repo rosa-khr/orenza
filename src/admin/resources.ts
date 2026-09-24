@@ -200,23 +200,37 @@ export const adminResources: AdminResource[] = [
     description: "قهوه‌ها، قیمت هر وزن و وضعیت عرضه",
     fields: [
       { key: "titleFa", label: "عنوان فارسی", type: "text", required: true, list: true },
+      { key: "productNumber", label: "شناسه محصول", type: "number", list: true, listOnly: true },
       { key: "recordStatus", label: "وضعیت", type: "select", options: recordStatusOptions, list: true, listOnly: true },
-      { key: "sortOrder", label: "ترتیب نمایش", type: "number", required: true, min: 1, list: true },
+      { key: "sortOrder", label: "ترتیب نمایش", type: "number", min: 1, list: true, listOnly: true },
       { key: "titleEn", label: "عنوان انگلیسی", type: "text", required: true, dir: "ltr" },
       { key: "slug", label: "نامک / آدرس محصول", type: "text", dir: "ltr", maxLength: 220 },
       { key: "categoryId", label: "دسته‌بندی", type: "select", required: true },
       { key: "description", label: "توضیحات و ویژگی‌های فنجان", type: "textarea", required: true },
-      { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
-      { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
+      { key: "seoTitle", label: "عنوان سئو (اختیاری)", type: "text", maxLength: 60 },
+      { key: "seoDescription", label: "توضیحات متا (اختیاری)", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
       { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
       { key: "tagIds", label: "برچسب‌های مرتبط", type: "multiselect" },
       { key: "relatedProductIds", label: "محصولات مرتبط", type: "multiselect" },
       {
+        key: "productType",
+        label: "نوع محصول",
+        type: "select",
+        required: true,
+        list: true,
+        options: [
+          { label: "قهوه", value: "coffee" },
+          { label: "دمنوش و چای", value: "herbalTea" },
+          { label: "نوشیدنی پودری (ماسالا، هات‌چاکلت و…)", value: "instantDrink" },
+          { label: "عسل و خوراکی", value: "food" },
+          { label: "سایر", value: "other" }
+        ]
+      },
+      {
         key: "roastType",
         label: "پروفایل رُست",
         type: "select",
-        required: true,
         list: true,
         options: [
           { label: "روشن", value: "light" },
@@ -229,7 +243,6 @@ export const adminResources: AdminResource[] = [
         key: "coffeeType",
         label: "فرم پیش‌فرض",
         type: "select",
-        required: true,
         options: [
           { label: "دان", value: "bean" },
           { label: "آسیاب‌شده", value: "ground" }
@@ -248,7 +261,7 @@ export const adminResources: AdminResource[] = [
           { label: "فیلتری", value: "filter" }
         ]
       },
-      { key: "blendType", label: "ترکیب دانه", type: "text", required: true, list: true },
+      { key: "blendType", label: "ترکیب یا مشخصات محصول", type: "text", list: true },
       {
         key: "saleType",
         label: "نوع فروش",
@@ -262,14 +275,10 @@ export const adminResources: AdminResource[] = [
       },
       {
         key: "packageWeightGrams",
-        label: "وزن ثابت بسته",
-        type: "select",
+        label: "وزن بسته (گرم)",
+        type: "number",
         required: true,
-        options: [
-          { label: "۲۵۰ گرم", value: "250" },
-          { label: "۵۰۰ گرم", value: "500" },
-          { label: "۱ کیلوگرم", value: "1000" }
-        ]
+        min: 1
       },
       {
         key: "stockStatus",

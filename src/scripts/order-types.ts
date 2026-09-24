@@ -9,7 +9,7 @@ export type CartItemInput = {
   device?: string;
   grindSize?: string;
   weight: string;
-  weightGrams: 100 | 250 | 500 | 1000;
+  weightGrams: number;
   quantity: number;
   unitPrice: number;
   totalPrice: number;

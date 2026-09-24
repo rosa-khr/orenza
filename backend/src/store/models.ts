@@ -3,12 +3,14 @@ export type CoffeeType = "bean" | "ground";
 export type GrindType = "espresso" | "mokaPot" | "frenchPress" | "turkish" | "filter" | "none";
 export type SaleType = "weighted" | "packaged";
 export type StockStatus = "inStock" | "outOfStock";
+export type ProductType = "coffee" | "herbalTea" | "instantDrink" | "food" | "other";
 export type DiscountType = "percent" | "fixed";
 export type PaymentStatus = "pending" | "paid" | "rejected";
 export type OrderStatus = "new" | "processing" | "ready" | "sent" | "completed" | "canceled";
 
 export interface Product {
   id: string;
+  productNumber: number;
   titleFa: string;
   titleEn: string;
   categoryId: string;
@@ -16,13 +18,14 @@ export interface Product {
   productContent: string | null;
   tagIds: string[];
   relatedProductIds: string[];
-  roastType: RoastType;
-  coffeeType: CoffeeType;
-  grindType: GrindType;
-  blendType: string;
+  productType: ProductType;
+  roastType: RoastType | null;
+  coffeeType: CoffeeType | null;
+  grindType: GrindType | null;
+  blendType: string | null;
   sortOrder: number;
   saleType: SaleType;
-  packageWeightGrams: 250 | 500 | 1000;
+  packageWeightGrams: number;
   stockStatus: StockStatus;
   purchasePricePerKg: number;
   salePricePerKg: number;
@@ -113,7 +116,7 @@ export interface Tag {
 export interface OrderItem {
   productId: string;
   productTitle: string;
-  weight: 100 | 250 | 500 | 1000;
+  weight: number;
   quantity: number;
   grindType: string;
   unitPrice: number;

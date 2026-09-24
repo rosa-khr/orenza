@@ -57,6 +57,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
       titleFa: "title_fa", titleEn: "title_en", slug: "slug", categoryId: "category_id", description: "description",
       ...seoColumns,
       productContent: "product_content",
+      productNumber: "product_number", productType: "product_type",
       roastType: "roast_type", coffeeType: "coffee_type", grindType: "grind_type", blendType: "blend_type",
       sortOrder: "sort_order",
       saleType: "sale_type", packageWeightGrams: "package_weight_grams",
@@ -69,7 +70,8 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
       isActive: "is_active", imageUrl: "image_url", productImageUrls: "product_image_urls", ...audit
     },
     search: ["title_fa", "title_en", "blend_type"],
-    schema: productSchema
+    schema: productSchema,
+    adminReadonly: ["productNumber"]
   },
   categories: {
     table: "categories",

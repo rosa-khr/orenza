@@ -166,6 +166,8 @@ app.setErrorHandler((error, request, reply) => {
       seoDescription: "توضیحات متا",
       description: "توضیحات",
       productContent: "محتوای محصول",
+      productType: "نوع محصول",
+      productNumber: "شناسه محصول",
       roastType: "پروفایل رُست",
       coffeeType: "فرم پیش‌فرض",
       grindType: "آسیاب پیش‌فرض",
