@@ -7,7 +7,6 @@ import "../styles/light-palette.css";
 import CartDrawer from "../components/CartDrawer.astro";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
-import IosInstallPrompt from "../components/IosInstallPrompt.astro";
 import MobileBottomNav from "../components/MobileBottomNav.astro";
 import PreFooter from "../components/PreFooter.astro";
 import SupportChat from "../components/SupportChat.astro";
@@ -137,7 +136,6 @@ const schema = {
     <main id="top"><slot /></main>
     <div class="footer-layer-transition" data-footer-transition>
       <PreFooter />
-      <IosInstallPrompt />
       <Footer />
     </div>
     <CartDrawer />

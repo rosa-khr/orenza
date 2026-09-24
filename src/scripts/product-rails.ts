@@ -55,6 +55,7 @@ const syncRailCartControls = (items: CartItem[] = readCart()) => {
     if (add) add.hidden = quantity > 0;
     if (stepper) stepper.hidden = quantity <= 0;
     if (output) output.value = money.format(quantity);
+    control.closest("footer")?.classList.toggle("has-cart-quantity", quantity > 0);
   });
 };
 

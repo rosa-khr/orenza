@@ -10,6 +10,7 @@ import CoffeeBeanIcon from "./CoffeeBeanIcon.astro";
     <a href="/category/herbal-tea/" data-quick-icon="herbal"><span><Icon name="coffee" size={25} /></span><b>دمنوش</b></a>
     <a href="/wholesale/" data-quick-icon="store" data-quick-static><span><Icon name="store" size={25} /></span><b>خرید عمده</b></a>
   </nav>
+  <div class="mobile-quick-links-spacer" aria-hidden="true"></div>
 
   <div class="mobile-store-tools">
     <a class="mobile-notification" href="/contact/" aria-label="ارتباط با پشتیبانی"><Icon name="bell" size={22} /></a>
@@ -28,5 +29,6 @@ import CoffeeBeanIcon from "./CoffeeBeanIcon.astro";
 </section>
 
 <script>
+  import "../scripts/mobile-category-dock.ts";
   import "../scripts/mobile-product-search.ts";
 </script>

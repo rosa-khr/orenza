@@ -1582,13 +1582,33 @@ footer {
   }
 
   .site-footer__bottom-inner {
+    width: calc(100% - 32px);
     justify-content: center;
     text-align: center;
   }
 
   .site-footer__legal {
+    width: auto;
+    max-width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
+    column-gap: 7px;
+    row-gap: 0;
     margin-inline-start: 0;
+    line-height: 1.7;
+    white-space: normal;
+  }
+
+  .site-footer__legal-copy {
+    max-width: none;
+    font-size: 10px;
+    text-align: center;
+  }
+
+  .site-footer__legal-mark {
+    font-size: 10px;
+    letter-spacing: 1px;
   }
 }
 
