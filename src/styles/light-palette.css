@@ -399,8 +399,9 @@ body:has(.mobile-home-top) .support-chat-toggle {
     background-color: var(--product-rail-color, #173f30);
     background-image: linear-gradient(
       110deg,
-      color-mix(in srgb, var(--product-rail-color, #173f30) 84%, #fff) 0%,
-      var(--product-rail-color, #173f30) 52%,
+      color-mix(in srgb, var(--product-rail-color, #173f30) 64%, #fff) 0%,
+      color-mix(in srgb, var(--product-rail-color, #173f30) 78%, #fff) 42%,
+      var(--product-rail-color, #173f30) 74%,
       color-mix(in srgb, var(--product-rail-color, #173f30) 68%, #071b13) 100%
     );
   }
@@ -408,8 +409,9 @@ body:has(.mobile-home-top) .support-chat-toggle {
     background-color: var(--product-rail-color, #e53154);
     background-image: linear-gradient(
       110deg,
-      color-mix(in srgb, var(--product-rail-color, #e53154) 84%, #fff) 0%,
-      var(--product-rail-color, #e53154) 52%,
+      color-mix(in srgb, var(--product-rail-color, #e53154) 64%, #fff) 0%,
+      color-mix(in srgb, var(--product-rail-color, #e53154) 78%, #fff) 42%,
+      var(--product-rail-color, #e53154) 74%,
       color-mix(in srgb, var(--product-rail-color, #e53154) 68%, #321019) 100%
     );
   }
@@ -4684,9 +4686,15 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 }
 
 /* Compact product detail page on mobile. */
+@media (min-width: 700px) {
+  .product-detail-specs {
+    margin-bottom: 14px;
+  }
+}
+
 @media (max-width: 699px) {
   .product-detail-page {
-    padding: 76px 8px 42px;
+    padding: 76px 16px 42px;
   }
 
   .product-detail-back {

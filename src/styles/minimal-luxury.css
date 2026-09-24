@@ -6627,8 +6627,9 @@ body.mobile-nav-is-open {
   background-color: var(--product-rail-color, var(--green));
   background-image: linear-gradient(
     110deg,
-    color-mix(in srgb, var(--product-rail-color, var(--green)) 84%, #fff) 0%,
-    var(--product-rail-color, var(--green)) 52%,
+    color-mix(in srgb, var(--product-rail-color, var(--green)) 64%, #fff) 0%,
+    color-mix(in srgb, var(--product-rail-color, var(--green)) 78%, #fff) 42%,
+    var(--product-rail-color, var(--green)) 74%,
     color-mix(in srgb, var(--product-rail-color, var(--green)) 68%, #071b13) 100%
   );
 }
@@ -6636,8 +6637,9 @@ body.mobile-nav-is-open {
   background-color: var(--product-rail-color, var(--red));
   background-image: linear-gradient(
     110deg,
-    color-mix(in srgb, var(--product-rail-color, var(--red)) 84%, #fff) 0%,
-    var(--product-rail-color, var(--red)) 52%,
+    color-mix(in srgb, var(--product-rail-color, var(--red)) 64%, #fff) 0%,
+    color-mix(in srgb, var(--product-rail-color, var(--red)) 78%, #fff) 42%,
+    var(--product-rail-color, var(--red)) 74%,
     color-mix(in srgb, var(--product-rail-color, var(--red)) 68%, #321019) 100%
   );
   color: #fff;
