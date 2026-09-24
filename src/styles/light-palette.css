@@ -514,9 +514,6 @@ body:has(.mobile-home-top) .support-chat-toggle {
     padding: 14px 17px 8px;
     transform: none;
   }
-  body:has(.mobile-home-top) .rail-product-media img.is-default-product-image {
-    padding: 21px 39px 13px;
-  }
   body:has(.mobile-home-top) .rail-product-media i {
     z-index: 1;
     top: 0;
