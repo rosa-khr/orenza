@@ -131,6 +131,22 @@ const fieldHelp = field.key === "canonicalUrl"
   </div>
 ) : field.type === "image-gallery" ? (
   <input type="hidden" name={field.key} value="[]" data-product-gallery-value />
+) : field.type === "number-list" ? (
+  <div class="admin-field wide admin-number-list-field" data-admin-field={field.key}>
+    <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>
+    <input type="hidden" name={field.key} value="[250,500,1000]" data-number-list-value disabled={isView} />
+    <div class="admin-number-list" data-number-list data-readonly={isView ? "true" : "false"}>
+      <div class="admin-number-list-items" data-number-list-items></div>
+      {!isView && (
+        <div class="admin-number-list-add">
+          <input type="number" min="1" max="100000" inputmode="numeric" placeholder="مثلاً ۳۵۰" data-number-list-input />
+          <button type="button" data-number-list-add>افزودن وزن</button>
+        </div>
+      )}
+    </div>
+    <em class="admin-field-help">هر تعداد وزن لازم است اضافه کنید؛ این گزینه‌ها عیناً در فروشگاه نمایش داده می‌شوند.</em>
+    <small data-field-error={field.key}></small>
+  </div>
 ) : isBooleanSelect || field.key === "stockStatus" ? (
   <label class="admin-field admin-boolean-field" data-admin-field={field.key} data-boolean-switch-field>
     <span>{field.label}{field.required && !isView ? <i>*</i> : null}</span>

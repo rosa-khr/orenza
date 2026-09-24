@@ -51,6 +51,16 @@ const selectFor = (resource: string) => {
 export class AdminRepository {
   constructor(private readonly pool: Pool) {}
 
+  private async resolveRecordId(resource: string, identifier: string) {
+    if (resource !== "products" || !/^\d+$/.test(identifier)) return identifier;
+    const result = await this.pool.query<{ id: string }>(
+      "SELECT id FROM products WHERE product_number=$1 LIMIT 1",
+      [identifier]
+    );
+    if (!result.rows[0]) throw Object.assign(new Error("محصول موردنظر پیدا نشد."), { statusCode: 404 });
+    return result.rows[0].id;
+  }
+
   async list(resource: string, input: {
     page: number;
     pageSize: number;
@@ -110,14 +120,15 @@ export class AdminRepository {
   async find(resource: string, id: string) {
     const config = configFor(resource);
     const select = selectFor(resource);
-    const result = await this.pool.query<Record<string, unknown>>(`SELECT ${select} FROM ${config.table} WHERE id = $1`, [id]);
+    const recordId = await this.resolveRecordId(resource, id);
+    const result = await this.pool.query<Record<string, unknown>>(`SELECT ${select} FROM ${config.table} WHERE id = $1`, [recordId]);
     const row = result.rows[0];
     if (!row) throw Object.assign(new Error("رکورد موردنظر پیدا نشد."), { statusCode: 404 });
     const item = toPublicRecord(row);
     if (resource === "orders") {
       const orderItems = await this.pool.query<Record<string, unknown>>(
         "SELECT * FROM order_items WHERE order_id = $1 ORDER BY created_at",
-        [id]
+        [recordId]
       );
       item.items = orderItems.rows.map(toPublicRecord);
     }
@@ -125,11 +136,11 @@ export class AdminRepository {
       const [tags, relatedProducts] = await Promise.all([
         this.pool.query<{ tag_id: string }>(
           "SELECT tag_id FROM product_tags WHERE product_id=$1 ORDER BY created_at",
-          [id]
+          [recordId]
         ),
         this.pool.query<{ related_product_id: string }>(
           "SELECT related_product_id FROM product_related_products WHERE product_id=$1 ORDER BY created_at",
-          [id]
+          [recordId]
         )
       ]);
       item.tagIds = tags.rows.map((row) => row.tag_id);
@@ -240,6 +251,7 @@ export class AdminRepository {
   async update(resource: string, id: string, input: unknown) {
     const config = configFor(resource);
     const existing = await this.find(resource, id);
+    const recordId = String(existing.id || id);
     if ((resource === "products" || resource === "categories") && existing.isDeleted === true) {
       throw Object.assign(new Error("رکورد حذف‌شده قابل ویرایش نیست."), { statusCode: 409 });
     }
@@ -280,17 +292,17 @@ export class AdminRepository {
     if (resource === "payment-methods" && (data as { isActive?: boolean }).isActive) {
       await this.pool.query(
         "UPDATE payment_methods SET is_active = false, updated_at = now() WHERE id <> $1 AND type = $2 AND is_active = true",
-        [id, (data as { type: string }).type]
+        [recordId, (data as { type: string }).type]
       );
     }
     if (resource === "categories") {
-      await this.validateCategoryParent(id, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
+      await this.validateCategoryParent(recordId, (data as { parentCategoryId?: string | null }).parentCategoryId || null);
     }
     if (resource === "redirects") {
       data.sourcePath = normalizeSitePath(String(data.sourcePath || ""));
       data.destination = normalizeDestination(String(data.destination || ""));
       const row = await withTransaction(this.pool, async (client) => {
-        await client.query("UPDATE redirects SET is_active=false,updated_at=now() WHERE id=$1", [id]);
+        await client.query("UPDATE redirects SET is_active=false,updated_at=now() WHERE id=$1", [recordId]);
         await upsertRedirect(client, {
           sourcePath: String(data.sourcePath),
           destination: String(data.destination),
@@ -314,20 +326,20 @@ export class AdminRepository {
     if (!entries.length) return existing;
     const values = entries.map(([, value]) => value);
     const set = entries.map(([column], index) => `${column} = $${index + 1}`);
-    values.push(id);
+    values.push(recordId);
     const result = await this.pool.query<Record<string, unknown>>(
       `UPDATE ${config.table} SET ${set.join(",")}, updated_at = now() WHERE id = $${values.length} RETURNING *`,
       values
     );
     if (!result.rows[0]) throw Object.assign(new Error("رکورد موردنظر پیدا نشد."), { statusCode: 404 });
     if (resource === "roles") {
-      await this.syncRolePermissions(id, (data.permissions as string[]) || []);
+      await this.syncRolePermissions(recordId, (data.permissions as string[]) || []);
     }
     if (resource === "products") {
       await this.syncProductRelations(
-        id,
+        recordId,
         (data.tagIds as string[]) || [],
-        ((data.relatedProductIds as string[]) || []).filter((relatedId) => relatedId !== id)
+        ((data.relatedProductIds as string[]) || []).filter((relatedId) => relatedId !== recordId)
       );
     }
     const newPublicPath = entityPublicPath(resource, data);
@@ -339,7 +351,7 @@ export class AdminRepository {
           destination: newPublicPath,
           statusCode: 301,
           entityType: resource,
-          entityId: id
+          entityId: recordId
         });
       } finally {
         client.release();
@@ -350,11 +362,12 @@ export class AdminRepository {
 
   async remove(resource: string, id: string) {
     const config = configFor(resource);
+    const recordId = await this.resolveRecordId(resource, id);
     if (resource === "users") {
       throw Object.assign(new Error("حذف حساب کاربری از پنل مجاز نیست."), { statusCode: 405 });
     }
     if (resource === "roles") {
-      const role = await this.pool.query<{ is_system: boolean }>("SELECT is_system FROM admin_roles WHERE id=$1", [id]);
+      const role = await this.pool.query<{ is_system: boolean }>("SELECT is_system FROM admin_roles WHERE id=$1", [recordId]);
       if (role.rows[0]?.is_system) {
         throw Object.assign(new Error("نقش‌های سیستمی قابل حذف نیستند."), { statusCode: 422 });
       }
@@ -364,7 +377,7 @@ export class AdminRepository {
         `UPDATE ${config.table}
             SET deleted_at=now(),is_active=false,updated_at=now()
           WHERE id=$1 AND deleted_at IS NULL`,
-        [id]
+        [recordId]
       );
       if (!result.rowCount) throw Object.assign(new Error("رکورد موردنظر پیدا نشد یا قبلاً حذف شده است."), { statusCode: 404 });
       return;
@@ -372,9 +385,9 @@ export class AdminRepository {
     const result = resource === "orders"
       ? await this.pool.query(
           "DELETE FROM orders WHERE id = $1 AND order_status = 'new' AND payment_status = 'pending'",
-          [id]
+          [recordId]
         )
-      : await this.pool.query(`DELETE FROM ${config.table} WHERE id = $1`, [id]);
+      : await this.pool.query(`DELETE FROM ${config.table} WHERE id = $1`, [recordId]);
     if (!result.rowCount) throw Object.assign(new Error("رکورد موردنظر پیدا نشد."), { statusCode: 404 });
   }
 

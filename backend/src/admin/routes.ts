@@ -1058,7 +1058,9 @@ ${ai.instructions}
   });
 
   app.get("/api/v1/admin/:resource/:id", async (request, reply) => {
-    const { resource, id } = z.object({ resource: z.string(), id: z.string().uuid() }).parse(request.params);
+    const { resource, id } = z.object({ resource: z.string(), id: z.string().trim().min(1).max(100) }).parse(request.params);
+    if (resource !== "products") z.string().uuid().parse(id);
+    else if (!/^\d+$/.test(id)) z.string().uuid().parse(id);
     if (!(await requirePermission(request, reply, permissionForResource(resource)))) return;
     return { item: await repository.find(resource, id) };
   });
@@ -1070,14 +1072,18 @@ ${ai.instructions}
   });
 
   app.put("/api/v1/admin/:resource/:id", async (request, reply) => {
-    const { resource, id } = z.object({ resource: z.string(), id: z.string().uuid() }).parse(request.params);
+    const { resource, id } = z.object({ resource: z.string(), id: z.string().trim().min(1).max(100) }).parse(request.params);
+    if (resource !== "products") z.string().uuid().parse(id);
+    else if (!/^\d+$/.test(id)) z.string().uuid().parse(id);
     const access = await requirePermission(request, reply, permissionForResource(resource));
     if (!access) return;
     return { item: await repository.update(resource, id, request.body) };
   });
 
   app.delete("/api/v1/admin/:resource/:id", async (request, reply) => {
-    const { resource, id } = z.object({ resource: z.string(), id: z.string().uuid() }).parse(request.params);
+    const { resource, id } = z.object({ resource: z.string(), id: z.string().trim().min(1).max(100) }).parse(request.params);
+    if (resource !== "products") z.string().uuid().parse(id);
+    else if (!/^\d+$/.test(id)) z.string().uuid().parse(id);
     if (!(await requirePermission(request, reply, permissionForResource(resource)))) return;
     await repository.remove(resource, id);
     return reply.code(204).send();

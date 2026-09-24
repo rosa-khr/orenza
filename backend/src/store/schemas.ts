@@ -160,6 +160,16 @@ export const productSchema = z.object({
     .max(999, { message: "ترتیب نمایش نمی‌تواند بیشتر از ۹۹۹ باشد." })
     .default(100),
   saleType: z.enum(["weighted", "packaged"]).default("weighted"),
+  availableWeightsGrams: z.array(
+    z.number()
+      .int({ message: "وزن‌ها باید عدد صحیح باشند." })
+      .min(1, { message: "هر وزن باید حداقل یک گرم باشد." })
+      .max(100000, { message: "هر وزن نمی‌تواند بیشتر از ۱۰۰ کیلوگرم باشد." })
+  )
+    .min(1, { message: "حداقل یک وزن قابل فروش وارد کنید." })
+    .max(20, { message: "حداکثر ۲۰ وزن برای هر محصول قابل ثبت است." })
+    .default([250, 500, 1000])
+    .transform((weights) => [...new Set(weights)].sort((a, b) => a - b)),
   packageWeightGrams: z.number()
     .int({ message: "وزن بسته باید عدد صحیح باشد." })
     .min(1, { message: "وزن بسته باید حداقل یک گرم باشد." })
@@ -190,6 +200,7 @@ export const productSchema = z.object({
   if (!product.blendType) context.addIssue({ code: "custom", message: "ترکیب دانه برای محصول قهوه الزامی است.", path: ["blendType"] });
 }).transform((product) => ({
   ...product,
+  availableWeightsGrams: product.saleType === "packaged" ? [product.packageWeightGrams] : product.availableWeightsGrams,
   slug: product.slug || productSlug(product.titleEn),
   imageUrl: product.productImageUrls[0] || product.imageUrl || null
 }));

@@ -24,7 +24,7 @@ const catalogImageLabel = resource.key === "categories"
       ? "تصویر تگ"
       : "تصویر محصول";
 const productPrimaryKeys = ["titleFa", "titleEn", "slug", "categoryId"];
-const productFeatureKeys = new Set(["productType", "roastType", "coffeeType", "grindType", "blendType", "saleType", "packageWeightGrams"]);
+const productFeatureKeys = new Set(["productType", "roastType", "coffeeType", "grindType", "blendType", "saleType", "availableWeightsGrams", "packageWeightGrams"]);
 const productPriceKeys = new Set(["purchasePricePerKg", "markupPercent", "salePricePerKg", "profitPerKg", "discountPercent", "discountSalePricePerKg"]);
 const productDetailKeys = new Set(["description", "productContent", "tagIds", "relatedProductIds"]);
 const sharedSeoKeys = ["seoTitle", "seoDescription", "canonicalUrl"];

@@ -25,6 +25,7 @@ export interface Product {
   blendType: string | null;
   sortOrder: number;
   saleType: SaleType;
+  availableWeightsGrams: number[];
   packageWeightGrams: number;
   stockStatus: StockStatus;
   purchasePricePerKg: number;

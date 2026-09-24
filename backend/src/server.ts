@@ -174,6 +174,7 @@ app.setErrorHandler((error, request, reply) => {
       blendType: "ترکیب دانه",
       sortOrder: "ترتیب نمایش",
       saleType: "نوع فروش",
+      availableWeightsGrams: "وزن‌های قابل فروش",
       packageWeightGrams: "وزن بسته",
       stockStatus: "وضعیت موجودی",
       purchasePricePerKg: "قیمت خرید واحد",

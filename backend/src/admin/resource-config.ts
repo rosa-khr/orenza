@@ -60,7 +60,7 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
       productNumber: "product_number", productType: "product_type",
       roastType: "roast_type", coffeeType: "coffee_type", grindType: "grind_type", blendType: "blend_type",
       sortOrder: "sort_order",
-      saleType: "sale_type", packageWeightGrams: "package_weight_grams",
+      saleType: "sale_type", availableWeightsGrams: "available_weights_grams", packageWeightGrams: "package_weight_grams",
       stockStatus: "stock_status",
       purchasePricePerKg: "purchase_price_per_kg", salePricePerKg: "sale_price_per_kg",
       discountPercent: "discount_percent", discountSalePricePerKg: "discount_sale_price_per_kg",

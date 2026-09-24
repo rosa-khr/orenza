@@ -11,6 +11,8 @@ type CatalogProduct = {
   pricePer250g: number;
   pricePer500g: number;
   pricePer1000g: number;
+  salePricePerKg: number;
+  availableWeightsGrams?: number[];
   stockStatus: "inStock" | "outOfStock";
 };
 
@@ -45,10 +47,9 @@ export const initAtelier = () => {
   const money = new Intl.NumberFormat("fa-IR");
   let selectedProduct: CatalogProduct | null = null;
   const requestedWeightValue = Number(new URLSearchParams(location.search).get("weight"));
-  let requestedWeight: 250 | 500 | 1000 | null =
-    [250, 500, 1000].includes(requestedWeightValue)
-      ? requestedWeightValue as 250 | 500 | 1000
-      : null;
+  let requestedWeight: number | null = Number.isInteger(requestedWeightValue) && requestedWeightValue > 0
+    ? requestedWeightValue
+    : null;
   let quantity = 1;
   let animationTimer = 0;
   let navigationTimer = 0;
@@ -81,7 +82,23 @@ export const initAtelier = () => {
   const grindSteps = [...builder.querySelectorAll<HTMLButtonElement>("[data-grind-slider-step]")];
 
   const productPrice = (product: CatalogProduct, grams: number) =>
-    Number(product[`pricePer${grams}g` as keyof CatalogProduct] || 0);
+    Math.round(Number(product.salePricePerKg || 0) * grams / 1000);
+
+  const renderProductWeights = (product: CatalogProduct | null) => {
+    const container = builder.querySelector<HTMLElement>(".weight-options");
+    if (!container || !product) return;
+    const values = [...new Set((product.availableWeightsGrams || [250, 500, 1000]).map(Number).filter((weight) => Number.isInteger(weight) && weight > 0))].sort((a, b) => a - b);
+    container.replaceChildren(...values.map((weight) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.choice = "weight";
+      button.dataset.grams = String(weight);
+      button.dataset.value = weight === 1000 ? "۱ کیلوگرم" : `${money.format(weight)} گرم`;
+      button.setAttribute("aria-pressed", "false");
+      button.innerHTML = `<span class="option-radio"></span><strong>${button.dataset.value}</strong><small data-weight-price>—</small>`;
+      return button;
+    }));
+  };
 
   const updateWeightPrices = () => {
     builder.querySelectorAll<HTMLButtonElement>('[data-choice="weight"]').forEach((button) => {
@@ -468,6 +485,7 @@ export const initAtelier = () => {
     if (key === "blend") {
       selectedProduct = choice.dataset.product ? JSON.parse(choice.dataset.product) as CatalogProduct : null;
       quantity = 1;
+      renderProductWeights(selectedProduct);
       updateWeightPrices();
       updatePrice();
       ["grind", "device", "weight", "summary"].forEach(lock);
@@ -674,7 +692,7 @@ export const initAtelier = () => {
 
   addCartButton.addEventListener("click", () => {
     const selectedWeight = builder.querySelector<HTMLButtonElement>('[data-choice="weight"].is-selected');
-    const weightGrams = Number(selectedWeight?.dataset.grams) as 100 | 250 | 500 | 1000;
+    const weightGrams = Number(selectedWeight?.dataset.grams);
     if (!state.blend || !state.roast || !state.grind || !state.weight || !selectedProduct || !weightGrams) {
       addCartButton.textContent = selectedProduct ? "انتخاب‌ها را کامل کن" : "ابتدا محصول را در پنل فعال کن";
       return;

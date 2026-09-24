@@ -9,6 +9,7 @@ export type AdminFieldType =
   | "date"
   | "image"
   | "image-gallery"
+  | "number-list"
   | "permissions";
 
 export type AdminField = {
@@ -272,6 +273,12 @@ export const adminResources: AdminResource[] = [
           { label: "فروش وزنی", value: "weighted" },
           { label: "فروش بسته‌ای", value: "packaged" }
         ]
+      },
+      {
+        key: "availableWeightsGrams",
+        label: "وزن‌های قابل فروش (گرم)",
+        type: "number-list",
+        required: true
       },
       {
         key: "packageWeightGrams",

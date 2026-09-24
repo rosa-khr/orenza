@@ -18,6 +18,7 @@ type ProductDetail = {
   saleType: "weighted" | "packaged";
   stockStatus: "inStock" | "outOfStock";
   packageWeightGrams: number;
+  availableWeightsGrams?: number[];
   packagePrice: number | string;
   salePricePerKg: number | string;
   discountPercent?: number | string | null;
@@ -343,8 +344,10 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       const actionLabel = action?.querySelector<HTMLElement>("span");
       if (!purchase || !weights || !action) return;
       purchase.hidden = false;
-      let selectedWeight: number =
-        item.saleType === "packaged" ? item.packageWeightGrams : 250;
+      const availableWeights = item.saleType === "packaged"
+        ? [item.packageWeightGrams]
+        : [...new Set((item.availableWeightsGrams || [250, 500, 1000]).map(Number).filter((weight) => Number.isInteger(weight) && weight > 0))].sort((a, b) => a - b);
+      let selectedWeight: number = availableWeights[0] || item.packageWeightGrams || 250;
       const productPrice = (weight: number) =>
         priceInfo(weight).final;
       const regularPrice = (weight: number) =>
@@ -401,17 +404,15 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
           button.setAttribute("aria-pressed", String(selected));
         });
       };
-      if (item.saleType === "packaged" && !weights.querySelector(`[data-weight="${selectedWeight}"]`)) {
-        const customWeight = document.createElement("button");
-        customWeight.type = "button";
-        customWeight.dataset.weight = String(selectedWeight);
-        customWeight.textContent = weightLabel(selectedWeight);
-        weights.append(customWeight);
-      }
+      weights.replaceChildren();
+      availableWeights.forEach((weight) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.dataset.weight = String(weight);
+        option.textContent = weightLabel(weight);
+        weights.append(option);
+      });
       weights.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
-        if (item.saleType === "packaged") {
-          button.hidden = Number(button.dataset.weight) !== selectedWeight;
-        }
         button.addEventListener("click", () => {
           selectedWeight = Number(button.dataset.weight);
           update();

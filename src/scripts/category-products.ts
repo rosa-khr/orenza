@@ -14,6 +14,7 @@ type CategoryProduct = {
   saleType: "weighted" | "packaged";
   stockStatus: "inStock" | "outOfStock";
   packageWeightGrams: number;
+  availableWeightsGrams?: number[];
   packagePrice: number | string;
   salePricePerKg: number | string;
   discountPercent?: number | string | null;
@@ -212,9 +213,10 @@ if (root && list) {
           list.append(article);
           return;
         }
-        let selectedWeight: number = product.saleType === "packaged"
-          ? product.packageWeightGrams
-          : 250;
+        const availableWeights = product.saleType === "packaged"
+          ? [product.packageWeightGrams]
+          : [...new Set((product.availableWeightsGrams || [250, 500, 1000]).map(Number).filter((weight) => Number.isInteger(weight) && weight > 0))].sort((a, b) => a - b);
+        let selectedWeight: number = availableWeights[0] || product.packageWeightGrams || 250;
         const weightLabels: Record<250 | 500 | 1000, string> = {
           250: "۲۵۰ گرم",
           500: "۵۰۰ گرم",
@@ -300,11 +302,11 @@ if (root && list) {
         };
 
         if (product.saleType === "weighted") {
-          ([250, 500, 1000] as const).forEach((weight) => {
+          availableWeights.forEach((weight) => {
             const button = document.createElement("button");
             button.type = "button";
             button.dataset.weight = String(weight);
-            button.textContent = weightLabels[weight];
+            button.textContent = weightLabel(weight);
             button.addEventListener("click", () => {
               selectedWeight = weight;
               actionButton.textContent = isPowderCategory ? "افزودن به سبد" : "ادامه و انتخاب رُست";

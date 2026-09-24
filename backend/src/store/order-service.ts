@@ -12,6 +12,7 @@ type ProductPriceRow = {
   show_in_discounts: boolean;
   purchase_price_per_kg: string;
   sale_type: "weighted" | "packaged";
+  available_weights_grams: number[];
   package_weight_grams: number;
   stock_status: "inStock" | "outOfStock";
 };
@@ -57,7 +58,7 @@ export class OrderService {
       const productIds = [...new Set(data.items.map((item) => item.productId))];
       const products = await client.query<ProductPriceRow>(
         `SELECT id, title_fa, is_active, sale_price_per_kg, discount_sale_price_per_kg, show_in_discounts,
-          purchase_price_per_kg, sale_type, package_weight_grams, stock_status
+          purchase_price_per_kg, sale_type, available_weights_grams, package_weight_grams, stock_status
          FROM products WHERE id = ANY($1::uuid[]) FOR SHARE`,
         [productIds]
       );
@@ -72,6 +73,9 @@ export class OrderService {
         }
         if (product.sale_type === "packaged" && item.weight !== product.package_weight_grams) {
           throw Object.assign(new Error("وزن بسته این محصول تغییر کرده است؛ لطفاً دوباره آن را انتخاب کنید."), { statusCode: 422 });
+        }
+        if (product.sale_type === "weighted" && !product.available_weights_grams.includes(item.weight)) {
+          throw Object.assign(new Error("وزن انتخابی این محصول تغییر کرده است؛ لطفاً دوباره آن را انتخاب کنید."), { statusCode: 422 });
         }
         const regularSalePrice = Number(product.sale_price_per_kg);
         const discountSalePrice = Number(product.discount_sale_price_per_kg || 0);

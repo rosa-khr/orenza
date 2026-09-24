@@ -860,6 +860,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     actions.className = "admin-row-actions";
     if (!row?.id) return actions;
     const id = String(row.id);
+    const pageId = config.key === "products" && row.productNumber ? String(row.productNumber) : id;
     const isDeleted = row.isDeleted === true;
     const link = (href: string, label: string, icon: string, newTab = false) => {
       const anchor = document.createElement("a");
@@ -880,8 +881,8 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       element.addEventListener("click", onClick);
       return element;
     };
-    actions.append(link(`/admin/${config.key}/view/?id=${id}`, "مشاهده", gridIcons.eye));
-    if (!isDeleted) actions.append(link(`/admin/${config.key}/edit/?id=${id}`, "ویرایش", gridIcons.pencil));
+    actions.append(link(`/admin/${config.key}/view/?id=${pageId}`, "مشاهده", gridIcons.eye));
+    if (!isDeleted) actions.append(link(`/admin/${config.key}/edit/?id=${pageId}`, "ویرایش", gridIcons.pencil));
     const publicUrl = (() => {
       if (config.key === "products" && row.titleEn) return `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.titleEn))))}/`;
       if (config.key === "articles" && row.slug) return `/articles/${encodeURIComponent(String(row.slug))}/`;
@@ -1114,6 +1115,11 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
     input.dispatchEvent(new Event("change", { bubbles: true }));
     return;
   }
+  if (key === "availableWeightsGrams" && input instanceof HTMLInputElement && input.dataset.numberListValue !== undefined) {
+    input.value = JSON.stringify(Array.isArray(value) ? value.map(Number).filter((item) => Number.isInteger(item) && item > 0) : []);
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return;
+  }
   if (input instanceof HTMLSelectElement && input.multiple) {
     const selected = new Set(Array.isArray(value) ? value.map(String) : []);
     [...input.options].forEach((option) => { option.selected = selected.has(option.value); });
@@ -1144,6 +1150,74 @@ const setFormValue = (form: HTMLFormElement, key: string, value: unknown) => {
   if (richEditor?._tiptap) richEditor._tiptap.commands.setContent(sanitizeEditorHtml(normalizedValue), { emitUpdate: true });
   else if (richEditor) richEditor.innerHTML = sanitizeEditorHtml(normalizedValue);
   input.dispatchEvent(new Event("change", { bubbles: true }));
+};
+
+const initNumberLists = (form: HTMLFormElement) => {
+  form.querySelectorAll<HTMLElement>("[data-number-list]").forEach((root) => {
+    const field = root.closest<HTMLElement>("[data-admin-field]");
+    const hidden = field?.querySelector<HTMLInputElement>("[data-number-list-value]");
+    const itemsRoot = root.querySelector<HTMLElement>("[data-number-list-items]");
+    const input = root.querySelector<HTMLInputElement>("[data-number-list-input]");
+    const addButton = root.querySelector<HTMLButtonElement>("[data-number-list-add]");
+    const readonly = root.dataset.readonly === "true";
+    if (!hidden || !itemsRoot) return;
+
+    const read = () => {
+      try {
+        const parsed = JSON.parse(hidden.value || "[]");
+        return Array.isArray(parsed)
+          ? [...new Set(parsed.map(Number).filter((value) => Number.isInteger(value) && value > 0 && value <= 100000))].sort((a, b) => a - b)
+          : [];
+      } catch {
+        return [];
+      }
+    };
+    const write = (values: number[]) => {
+      hidden.value = JSON.stringify([...new Set(values)].sort((a, b) => a - b));
+      hidden.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    const render = () => {
+      const values = read();
+      itemsRoot.replaceChildren();
+      values.forEach((value) => {
+        const chip = document.createElement("span");
+        chip.textContent = `${faNumber.format(value)} گرم`;
+        if (!readonly) {
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.setAttribute("aria-label", `حذف وزن ${faNumber.format(value)} گرم`);
+          remove.textContent = "×";
+          remove.addEventListener("click", () => write(values.filter((item) => item !== value)));
+          chip.append(remove);
+        }
+        itemsRoot.append(chip);
+      });
+      root.classList.toggle("is-empty", values.length === 0);
+    };
+    const add = () => {
+      const value = Number(input?.value || 0);
+      if (!Number.isInteger(value) || value < 1 || value > 100000) {
+        input?.setCustomValidity("وزن باید یک عدد صحیح بین ۱ تا ۱۰۰٬۰۰۰ گرم باشد.");
+        input?.reportValidity();
+        return;
+      }
+      input?.setCustomValidity("");
+      write([...read(), value]);
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+    };
+    addButton?.addEventListener("click", add);
+    input?.addEventListener("input", () => input.setCustomValidity(""));
+    input?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      add();
+    });
+    hidden.addEventListener("change", render);
+    render();
+  });
 };
 
 const richTextTags = new Set([
@@ -1507,8 +1581,10 @@ const loadLookups = async (form: HTMLFormElement) => {
           if (articleTags) articleTags.add(new Option(item.title, item.title));
         }))
       : Promise.resolve(),
-    relatedProducts ? api<{ items: { id: string; titleFa: string; titleEn: string; isDeleted?: boolean }[] }>("/api/v1/admin/products?pageSize=100")
-      .then((payload) => payload.items.filter((item) => item.id !== currentId && item.isDeleted !== true).forEach((item) => {
+    relatedProducts ? api<{ items: { id: string; productNumber?: number | string; titleFa: string; titleEn: string; isDeleted?: boolean }[] }>("/api/v1/admin/products?pageSize=100")
+      .then((payload) => payload.items.filter((item) =>
+        String(item.id) !== currentId && String(item.productNumber || "") !== currentId && item.isDeleted !== true
+      ).forEach((item) => {
         relatedProducts.add(new Option(`${item.titleFa} — ${item.titleEn}`, item.id));
       })) : Promise.resolve()
   ]).catch(() => undefined);
@@ -1947,6 +2023,7 @@ const initCategoryMobileImageUpload = (form: HTMLFormElement) => {
 const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: string) => {
   initRichTextEditors(form);
   initMoneyInputs(form);
+  initNumberLists(form);
   await loadLookups(form);
   initMultiSelects(form);
   enhanceBooleanSwitches(form);
@@ -1974,6 +2051,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     if (config.key !== "products") return;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
     const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLInputElement | null;
+    const availableWeights = form.elements.namedItem("availableWeightsGrams") as HTMLInputElement | null;
     const purchase = form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null;
     const markup = form.elements.namedItem("markupPercent") as HTMLInputElement | null;
     const sale = form.elements.namedItem("salePricePerKg") as HTMLInputElement | null;
@@ -2004,14 +2082,21 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     }
     const isPackaged = saleType?.value === "packaged";
     const packageField = form.querySelector<HTMLElement>('[data-admin-field="packageWeightGrams"]');
+    const availableWeightsField = form.querySelector<HTMLElement>('[data-admin-field="availableWeightsGrams"]');
     if (packageField) packageField.hidden = !isPackaged;
+    if (availableWeightsField) availableWeightsField.hidden = isPackaged;
     if (profit) {
       profit.value = String(currentSaleValue - purchaseValue);
       formatMoneyInput(profit);
     }
     const breakdown = form.querySelector<HTMLElement>("[data-price-breakdown] > div");
     if (breakdown) {
-      const weights = isPackaged ? [Number(packageWeight?.value || 250)] : [250, 500, 1000];
+      let managedWeights: number[] = [];
+      try {
+        const parsed = JSON.parse(availableWeights?.value || "[]");
+        if (Array.isArray(parsed)) managedWeights = parsed.map(Number).filter((value) => Number.isInteger(value) && value > 0);
+      } catch { /* keep an empty preview until a valid weight is added */ }
+      const weights = isPackaged ? [Number(packageWeight?.value || 250)] : managedWeights;
       breakdown.innerHTML = weights.map((grams) => {
         const ratio = grams / 1000;
         const purchaseAmount = isPackaged ? purchaseValue : Math.round(purchaseValue * ratio);
@@ -2029,6 +2114,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     const productType = form.elements.namedItem("productType") as HTMLSelectElement | null;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
     const packageWeight = form.elements.namedItem("packageWeightGrams") as HTMLInputElement | null;
+    const availableWeights = form.elements.namedItem("availableWeightsGrams") as HTMLInputElement | null;
     const stockStatus = form.elements.namedItem("stockStatus") as HTMLSelectElement | null;
     if (mode === "add") {
       if (productType && !productType.value) productType.value = "coffee";
@@ -2040,6 +2126,10 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
         packageWeight.value = "250";
         packageWeight.dispatchEvent(new Event("change", { bubbles: true }));
       }
+      if (availableWeights && !availableWeights.value) {
+        availableWeights.value = "[250,500,1000]";
+        availableWeights.dispatchEvent(new Event("change", { bubbles: true }));
+      }
       if (stockStatus && !stockStatus.value) {
         stockStatus.value = "inStock";
         stockStatus.dispatchEvent(new Event("change", { bubbles: true }));
@@ -2048,6 +2138,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     productType?.addEventListener("change", updateProductFeatureVisibility);
     saleType?.addEventListener("change", () => updateProductProfit("refresh"));
     packageWeight?.addEventListener("change", () => updateProductProfit("refresh"));
+    availableWeights?.addEventListener("change", () => updateProductProfit("refresh"));
     (form.elements.namedItem("purchasePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("purchase"));
     (form.elements.namedItem("markupPercent") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("markup"));
     (form.elements.namedItem("salePricePerKg") as HTMLInputElement | null)?.addEventListener("input", () => updateProductProfit("sale"));
@@ -2072,6 +2163,11 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     if (loading) loading.hidden = false;
     try {
       const { item } = await api<{ item: Record<string, unknown> }>(`/api/v1/admin/${config.key}/${id}`);
+      if (config.key === "products" && item.productNumber && String(item.productNumber) !== id) {
+        const url = new URL(location.href);
+        url.searchParams.set("id", String(item.productNumber));
+        history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+      }
       config.fields.forEach((field) => setFormValue(form, field.key, item[field.key]));
       if (config.key === "products" && !item.slug) setFormValue(form, "slug", productSlug(String(item.titleEn || "")));
       initSeoCounters(form);
@@ -2117,6 +2213,14 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
         try {
           const parsed = JSON.parse(String(raw || "[]"));
           body[field.key] = Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+        } catch {
+          body[field.key] = [];
+        }
+      }
+      else if (field.key === "availableWeightsGrams") {
+        try {
+          const parsed = JSON.parse(String(raw || "[]"));
+          body[field.key] = Array.isArray(parsed) ? parsed.map(Number).filter((value) => Number.isInteger(value) && value > 0) : [];
         } catch {
           body[field.key] = [];
         }

@@ -20,6 +20,7 @@ type RailProduct = {
   coffeeType: "bean" | "ground" | null;
   saleType: "weighted" | "packaged";
   packageWeightGrams: number;
+  availableWeightsGrams?: number[];
   stockStatus: "inStock" | "outOfStock";
   packagePrice: number | string;
   salePricePerKg: number | string;
@@ -64,13 +65,16 @@ const syncRailCartControls = (items: CartItem[] = readCart()) => {
 const card = (product: RailProduct, kind: "best" | "discount") => {
   const article = document.createElement("article");
   article.className = "rail-product-card";
+  const firstWeight = product.saleType === "packaged"
+    ? product.packageWeightGrams
+    : [...new Set((product.availableWeightsGrams || [250]).map(Number).filter((weight) => Number.isInteger(weight) && weight > 0))].sort((a, b) => a - b)[0] || 250;
   const regularPrice = product.saleType === "packaged"
     ? Number(product.packagePrice || product.salePricePerKg || 0)
-    : Number(product.pricePer250g || 0);
+    : Math.round(Number(product.salePricePerKg || 0) * firstWeight / 1000);
   const discountedUnitPrice = Number(product.discountSalePricePerKg || 0);
   const storedPercent = Number(product.discountPercent || 0);
   const discountedPrice = discountedUnitPrice > 0
-    ? (product.saleType === "packaged" ? discountedUnitPrice : Math.round(discountedUnitPrice * 0.25))
+    ? (product.saleType === "packaged" ? discountedUnitPrice : Math.round(discountedUnitPrice * firstWeight / 1000))
     : storedPercent > 0 && storedPercent < 100
       ? Math.round(regularPrice * (1 - storedPercent / 100))
       : regularPrice;
@@ -81,7 +85,7 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
       : 0;
   const hasDiscount = product.showInDiscounts && regularPrice > discountedPrice && discountPercent > 0;
   const price = hasDiscount ? discountedPrice : regularPrice;
-  const weight = product.saleType === "packaged" ? product.packageWeightGrams : 250;
+  const weight = firstWeight;
   const grind = product.productType === "coffee" ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف";
   const selection = {
     productId: product.id,
