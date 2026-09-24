@@ -521,6 +521,7 @@ CREATE TABLE IF NOT EXISTS categories (
   parent_category_id uuid REFERENCES categories(id) ON DELETE SET NULL,
   description text,
   image_url text,
+  mobile_image_url text,
   seo_title varchar(60),
   seo_description varchar(150),
   canonical_url text,
@@ -877,6 +878,7 @@ UPDATE categories SET seo_description = left(seo_description, 150) WHERE seo_des
 ALTER TABLE categories ALTER COLUMN seo_title TYPE varchar(60);
 ALTER TABLE categories ALTER COLUMN seo_description TYPE varchar(150);
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS mobile_image_url text;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_in_popular_footer boolean NOT NULL DEFAULT false;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_in_popular_searches boolean NOT NULL DEFAULT false;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_category_id uuid;

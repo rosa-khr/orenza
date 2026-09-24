@@ -33,7 +33,7 @@ const productSidebarKeys = new Set(["imageUrl", "productImageUrls", "stockStatus
 const categoryPrimaryKeys = new Set(["title", "slug", "parentCategoryId"]);
 const categoryDetailKeys = new Set(["description"]);
 const categorySeoKeys = new Set(sharedSeoKeys);
-const categorySidebarKeys = new Set(["imageUrl", "showInPopularFooter", "showInPopularSearches", "isActive"]);
+const categorySidebarKeys = new Set(["imageUrl", "mobileImageUrl", "showInPopularFooter", "showInPopularSearches", "isActive"]);
 const articlePrimaryKeys = new Set(["title", "slug"]);
 const articleDetailKeys = new Set(["summary", "content", "tags"]);
 const articleSeoKeys = new Set(sharedSeoKeys);
@@ -83,8 +83,9 @@ const sidebarFields = resource.key === "products"
       : resource.key === "tags"
         ? pickFields(tagSidebarKeys)
         : [];
-const sidebarToggleFields = sidebarFields.filter((field) => field.key !== "imageUrl" && field.key !== "productImageUrls");
+const sidebarToggleFields = sidebarFields.filter((field) => !["imageUrl", "mobileImageUrl", "productImageUrls"].includes(field.key));
 const sidebarImageField = sidebarFields.find((field) => field.key === "imageUrl");
+const categoryMobileImageField = sidebarFields.find((field) => field.key === "mobileImageUrl");
 const sidebarGalleryField = sidebarFields.find((field) => field.key === "productImageUrls");
 ---
 
@@ -179,6 +180,26 @@ const sidebarGalleryField = sidebarFields.find((field) => field.key === "product
             </section>
           ) : null}
           {supportsCatalogImage && sidebarImageField && <input type="hidden" name={sidebarImageField.key} />}
+          {resource.key === "categories" && categoryMobileImageField && (
+            <section class="admin-product-image-upload" data-category-mobile-image-upload>
+              <div class="admin-product-image-preview">
+                <img data-category-mobile-image-preview hidden alt="پیش‌نمایش بنر موبایل دسته‌بندی" />
+                <span data-category-mobile-image-placeholder>بنر موبایل هنوز بارگذاری نشده است.</span>
+                {!isView && <button type="button" data-category-mobile-image-remove hidden>حذف تصویر</button>}
+              </div>
+              <div>
+                <strong>بارگذاری بنر موبایل</strong>
+                <small>JPG، PNG یا WebP تا ۵ مگابایت؛ تصویر عمودی یا مربع نتیجهٔ بهتری دارد. اگر خالی باشد بنر دسکتاپ نمایش داده می‌شود.</small>
+                {!isView && (
+                  <label>
+                    انتخاب و بارگذاری بنر موبایل
+                    <input type="file" accept="image/jpeg,image/png,image/webp" data-category-mobile-image-input />
+                  </label>
+                )}
+              </div>
+            </section>
+          )}
+          {resource.key === "categories" && categoryMobileImageField && <input type="hidden" name={categoryMobileImageField.key} />}
           {sidebarGalleryField && <AdminFieldControl field={sidebarGalleryField} resourceKey={resource.key} isView={isView} />}
           {sidebarToggleFields.length > 0 && (
             <section class="admin-form-section admin-form-section-compact">

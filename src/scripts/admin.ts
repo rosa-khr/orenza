@@ -1866,6 +1866,84 @@ const initCatalogImageUpload = (form: HTMLFormElement, resource: "products" | "c
   return render;
 };
 
+const initCategoryMobileImageUpload = (form: HTMLFormElement) => {
+  const root = form.querySelector<HTMLElement>("[data-category-mobile-image-upload]");
+  const urlInput = form.elements.namedItem("mobileImageUrl") as HTMLInputElement | null;
+  const fileInput = root?.querySelector<HTMLInputElement>("[data-category-mobile-image-input]");
+  const preview = root?.querySelector<HTMLImageElement>("[data-category-mobile-image-preview]");
+  const placeholder = root?.querySelector<HTMLElement>("[data-category-mobile-image-placeholder]");
+  const removeButton = root?.querySelector<HTMLButtonElement>("[data-category-mobile-image-remove]");
+  if (!root || !urlInput) return undefined;
+
+  const render = () => {
+    const url = urlInput.value.trim();
+    if (preview) {
+      preview.hidden = !url;
+      if (url) preview.src = url;
+      else preview.removeAttribute("src");
+    }
+    if (placeholder) placeholder.hidden = Boolean(url);
+    if (removeButton) removeButton.hidden = !url;
+  };
+
+  const upload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast("حجم بنر موبایل نباید بیشتر از ۵ مگابایت باشد.", "error");
+      return;
+    }
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      toast("فقط فایل‌های JPG، PNG یا WebP قابل بارگذاری هستند.", "error");
+      return;
+    }
+    if (fileInput) fileInput.disabled = true;
+    root.classList.add("is-uploading");
+    try {
+      const body = new FormData();
+      body.append("image", file);
+      const result = await api<{ url: string }>("/api/v1/admin/category-images", { method: "POST", body });
+      urlInput.value = result.url;
+      render();
+      toast("بنر موبایل بارگذاری شد؛ برای ثبت نهایی، تغییرات را ذخیره کنید.");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "بارگذاری بنر موبایل انجام نشد.", "error");
+    } finally {
+      if (fileInput) {
+        fileInput.disabled = false;
+        fileInput.value = "";
+      }
+      root.classList.remove("is-uploading");
+    }
+  };
+
+  fileInput?.addEventListener("change", () => {
+    const file = fileInput.files?.[0];
+    if (file) void upload(file);
+  });
+  removeButton?.addEventListener("click", async () => {
+    if (!urlInput.value) return;
+    const confirmed = await askConfirm("حذف بنر موبایل", "بنر موبایل این دسته‌بندی حذف شود؟", "حذف تصویر");
+    if (!confirmed) return;
+    urlInput.value = "";
+    render();
+  });
+  root.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    if (!fileInput?.disabled) root.classList.add("is-dragging");
+  });
+  root.addEventListener("dragleave", (event) => {
+    if (!root.contains(event.relatedTarget as Node | null)) root.classList.remove("is-dragging");
+  });
+  root.addEventListener("drop", (event) => {
+    event.preventDefault();
+    root.classList.remove("is-dragging");
+    const file = event.dataTransfer?.files?.[0];
+    if (file && !fileInput?.disabled) void upload(file);
+  });
+  urlInput.addEventListener("input", render);
+  render();
+  return render;
+};
+
 const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: string) => {
   initRichTextEditors(form);
   initMoneyInputs(form);
@@ -1878,6 +1956,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
   const refreshCatalogImage = config.key === "products" || config.key === "categories" || config.key === "articles" || config.key === "tags"
     ? initCatalogImageUpload(form, config.key)
     : undefined;
+  const refreshCategoryMobileImage = config.key === "categories" ? initCategoryMobileImageUpload(form) : undefined;
   const updateProductProfit = (source: "purchase" | "sale" | "markup" | "discount" | "refresh" = "refresh") => {
     if (config.key !== "products") return;
     const saleType = form.elements.namedItem("saleType") as HTMLSelectElement | null;
@@ -1980,6 +2059,7 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       if (config.key === "products" && !item.slug) setFormValue(form, "slug", productSlug(String(item.titleEn || "")));
       initSeoCounters(form);
       refreshCatalogImage?.();
+      refreshCategoryMobileImage?.();
       updateProductProfit();
       if (config.key === "orders") {
         renderOrderItems(form, item.items);

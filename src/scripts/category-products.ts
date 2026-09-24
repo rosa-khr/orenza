@@ -35,6 +35,7 @@ type CategoryInfo = {
   robotsFollow?: boolean;
   description: string | null;
   imageUrl: string | null;
+  mobileImageUrl?: string | null;
   tags: { id: string; title: string; slug: string }[];
 };
 
@@ -126,14 +127,22 @@ if (root && list) {
           content.closest<HTMLElement>(".category-editorial")?.removeAttribute("hidden");
         }
         renderTags(document.querySelector<HTMLElement>("[data-category-tag-list]"), item.tags || []);
-        if (!item.imageUrl) return;
         const categoryHero = document.querySelector<HTMLElement>(`[data-category-hero][data-category-slug="${item.slug}"]`);
         const banner = categoryHero?.querySelector<HTMLImageElement>("[data-category-hero-banner]");
         if (!categoryHero || !banner) return;
-        banner.src = item.imageUrl;
-        banner.alt = `بنر ${item.title}`;
-        banner.hidden = false;
-        categoryHero.classList.add("has-category-banner");
+        const mobileQuery = window.matchMedia("(max-width: 699px)");
+        const applyBanner = () => {
+          const bannerUrl = mobileQuery.matches
+            ? item.mobileImageUrl || item.imageUrl
+            : item.imageUrl || item.mobileImageUrl;
+          if (!bannerUrl) return;
+          banner.src = bannerUrl;
+          banner.alt = `بنر ${item.title}`;
+          banner.hidden = false;
+          categoryHero.classList.add("has-category-banner");
+        };
+        applyBanner();
+        mobileQuery.addEventListener("change", applyBanner);
       })
       .catch(() => {
         const dynamicTitle = document.querySelector<HTMLElement>("[data-category-title]");

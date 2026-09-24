@@ -94,6 +94,7 @@ export const categorySchema = z.object({
   parentCategoryId: z.string().uuid().nullable().optional(),
   description: optionalRichText.optional(),
   imageUrl: productImageUrl.optional(),
+  mobileImageUrl: productImageUrl.optional(),
   seoTitle: z.string().trim().max(60).nullable().optional(),
   seoDescription: z.string().trim().max(150).nullable().optional(),
   ...seoFields,

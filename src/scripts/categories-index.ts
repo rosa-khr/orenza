@@ -2,6 +2,8 @@ type CategoryItem = {
   id?: string;
   title: string;
   slug: string;
+  imageUrl?: string | null;
+  mobileImageUrl?: string | null;
   children?: { id?: string; title: string; slug: string }[];
 };
 
@@ -23,9 +25,27 @@ if (root) {
         tile.href = categoryHref(item.slug);
         tile.style.setProperty("--category-tile-index", String(index));
 
-        const mark = document.createElement("span");
-        mark.className = "category-index-mark";
-        mark.textContent = item.title.trim().charAt(0) || "ا";
+        const desktopBanner = item.imageUrl || item.mobileImageUrl || "";
+        const mobileBanner = item.mobileImageUrl || item.imageUrl || "";
+        if (desktopBanner) {
+          const picture = document.createElement("picture");
+          picture.className = "category-index-media";
+          const source = document.createElement("source");
+          source.media = "(max-width: 699px)";
+          source.srcset = mobileBanner;
+          const image = document.createElement("img");
+          image.src = desktopBanner;
+          image.alt = "";
+          image.loading = "lazy";
+          picture.append(source, image);
+          tile.append(picture);
+          tile.classList.add("has-category-banner");
+        } else {
+          const mark = document.createElement("span");
+          mark.className = "category-index-mark";
+          mark.textContent = item.title.trim().charAt(0) || "ا";
+          tile.append(mark);
+        }
 
         const copy = document.createElement("div");
         const title = document.createElement("strong");
@@ -35,10 +55,7 @@ if (root) {
         description.textContent = childNames.length ? childNames.join("، ") : "مشاهده محصولات این دسته";
         copy.append(title, description);
 
-        const arrow = document.createElement("b");
-        arrow.setAttribute("aria-hidden", "true");
-        arrow.textContent = "←";
-        tile.append(mark, copy, arrow);
+        tile.append(copy);
         root.append(tile);
       });
       if (!items.length) root.innerHTML = "<p>دسته‌بندی فعالی برای نمایش وجود ندارد.</p>";

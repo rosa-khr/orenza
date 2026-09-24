@@ -352,7 +352,7 @@ export const registerStoreRoutes = (
 
   app.get("/api/v1/categories/navigation", async (_request, reply) => {
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT c.id, c.title, c.slug, c.sort_order, c.parent_category_id,
+      `SELECT c.id, c.title, c.slug, c.sort_order, c.parent_category_id, c.image_url, c.mobile_image_url,
         COALESCE((
           SELECT json_agg(json_build_object('id', child.id, 'title', child.title, 'slug', child.slug, 'sortOrder', child.sort_order) ORDER BY
             child.sort_order ASC,
@@ -419,7 +419,7 @@ export const registerStoreRoutes = (
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT c.id,c.title,c.slug,c.description,c.image_url,c.seo_title,c.seo_description,
+      `SELECT c.id,c.title,c.slug,c.description,c.image_url,c.mobile_image_url,c.seo_title,c.seo_description,
           c.canonical_url,c.robots_index,c.robots_follow,
         COALESCE((
           SELECT json_agg(DISTINCT jsonb_build_object('id',t.id,'title',t.title,'slug',t.slug))

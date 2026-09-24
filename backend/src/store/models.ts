@@ -49,6 +49,7 @@ export interface Category {
   parentCategoryId: string | null;
   description: string | null;
   imageUrl: string | null;
+  mobileImageUrl: string | null;
   seoTitle: string;
   seoDescription: string;
   showInPopularFooter: boolean;
