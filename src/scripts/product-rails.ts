@@ -101,7 +101,7 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
       <i class="rail-product-highlight">${kind === "best" ? "پرفروش" : "شگفت‌انگیز"}</i>
       ${product.imageUrl
         ? `<img src="${product.imageUrl}" alt="${product.titleFa}" loading="lazy">`
-        : `<img src="/images/orenza-bag-mockup-v3.webp" alt="بسته‌بندی ${product.titleFa}" loading="lazy">`}
+        : ""}
     </a>
     <div class="rail-product-copy">
       <h3><a href="${url}">${product.titleFa}</a></h3>
