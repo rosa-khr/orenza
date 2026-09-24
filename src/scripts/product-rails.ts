@@ -28,12 +28,14 @@ type RailProduct = {
   discountPercent?: number | string | null;
   discountSalePricePerKg?: number | string | null;
   imageUrl: string | null;
+  productImageUrls?: string[];
   showInBestSellers: boolean;
   showInDiscounts: boolean;
 };
 
 const money = new Intl.NumberFormat("fa-IR");
 const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
+const defaultProductImageUrl = "/images/orenza-app-icon.svg";
 const weightLabels = { 250: "۲۵۰ گرم", 500: "۵۰۰ گرم", 1000: "۱ کیلوگرم" } as const;
 const weightLabel = (weight: number) => weightLabels[weight as keyof typeof weightLabels] || `${money.format(weight)} گرم`;
 const roastLabels = { light: "روشن", medium: "متوسط", mediumDark: "متوسط رو به تیره", dark: "تیره" };
@@ -96,12 +98,17 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
   };
   const cartKey = encodeURIComponent(cartSelectionKey({ ...selection, delta: 1 }));
   const url = productDetailUrl(product);
+  const productImageUrl = product.imageUrl
+    || product.productImageUrls?.find((imageUrl) => Boolean(imageUrl?.trim()))
+    || defaultProductImageUrl;
+  const usesDefaultImage = productImageUrl === defaultProductImageUrl;
   article.innerHTML = `
     <a class="rail-product-media" href="${url}" aria-label="مشاهده ${product.titleFa}">
       <i class="rail-product-highlight">${kind === "best" ? "پرفروش" : "شگفت‌انگیز"}</i>
-      ${product.imageUrl
-        ? `<img src="${product.imageUrl}" alt="${product.titleFa}" loading="lazy">`
-        : ""}
+      <img src="${productImageUrl}"
+        alt="${usesDefaultImage ? `تصویر پیش‌فرض برند اورنزا برای ${product.titleFa}` : product.titleFa}"
+        class="${usesDefaultImage ? "is-default-product-image" : ""}"
+        loading="lazy">
     </a>
     <div class="rail-product-copy">
       <h3><a href="${url}">${product.titleFa}</a></h3>
@@ -125,6 +132,14 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
         </div>
       </footer>
     </div>`;
+  const image = article.querySelector<HTMLImageElement>(".rail-product-media img");
+  image?.addEventListener("error", () => {
+    if (image.dataset.defaultImageApplied === "true") return;
+    image.dataset.defaultImageApplied = "true";
+    image.src = defaultProductImageUrl;
+    image.alt = `تصویر پیش‌فرض برند اورنزا برای ${product.titleFa}`;
+    image.classList.add("is-default-product-image");
+  });
   article.querySelector<HTMLButtonElement>(".rail-cart-button")?.addEventListener("click", () => {
     const item: CartItemInput = {
       ...selection,
