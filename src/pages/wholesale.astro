@@ -1,7 +1,8 @@
 ---
+import { BadgeDollarSign, MessageCircle, PhoneCall } from "@lucide/astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-const whatsappText = encodeURIComponent("سلام، برای خرید عمده قهوه اورنزا و تأمین کافه نیاز به مشاوره دارم.");
+const whatsappText = encodeURIComponent("سلام، برای دریافت قیمت همکاری و تأمین عمده قهوه اورنزا نیاز به مشاوره دارم.");
 ---
 
 <BaseLayout
@@ -12,11 +13,24 @@ const whatsappText = encodeURIComponent("سلام، برای خرید عمده �
 >
   <section class="wholesale-hero">
     <p class="eyebrow">ORENZA FOR BUSINESS</p>
-    <h1>قهوه‌ای که در شلوغی کافه،<br />همان کیفیت همیشگی را دارد.</h1>
-    <p>ترکیب، رُست و آسیاب را با دستگاه و منوی شما هماهنگ می‌کنیم؛ بعد، تأمین منظم را طوری می‌چینیم که قهوه همیشه تازه برسد.</p>
-    <div>
-      <a class="button button-primary" href={`https://wa.me/989103060396?text=${whatsappText}`} target="_blank" rel="noreferrer">مشاوره خرید عمده</a>
-      <a class="wholesale-secondary" href="tel:+989103060396">تماس مستقیم</a>
+    <h1>کیفیت ثابت در هر فنجان،<br />تأمین مطمئن برای هر روز.</h1>
+    <p class="wholesale-lead">برای کافه، رستوران و مجموعه‌های پذیرایی؛ ترکیب، رُست و آسیاب را با دستگاه و منوی شما هماهنگ می‌کنیم و برنامه تأمین را بر اساس مصرف واقعی می‌چینیم.</p>
+    <div class="wholesale-actions">
+      <a class="wholesale-primary" href={`https://wa.me/989103060396?text=${whatsappText}`} target="_blank" rel="noreferrer">
+        <MessageCircle size={18} stroke-width={1.7} aria-hidden="true" />
+        <span>دریافت قیمت همکاری</span>
+      </a>
+      <a class="wholesale-secondary" href="tel:+989103060396">
+        <PhoneCall size={17} stroke-width={1.7} aria-hidden="true" />
+        <span>تماس با کارشناس فروش</span>
+      </a>
+    </div>
+    <div class="wholesale-price-note">
+      <BadgeDollarSign size={22} stroke-width={1.5} aria-hidden="true" />
+      <div>
+        <strong>قیمت همکاری، متناسب با مدل مصرف شما</strong>
+        <span>پیشنهاد قیمت بر اساس ترکیب انتخابی، حجم سفارش و برنامه ارسال محاسبه می‌شود؛ شفاف، دقیق و بدون هزینه مشاوره.</span>
+      </div>
     </div>
   </section>
 
