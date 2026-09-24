@@ -5468,6 +5468,19 @@ main:has(> .route-spacer) .blend-slider-steps {
   transform: none;
 }
 
+.category-hero.has-category-banner .button-primary.site-outline-cta {
+  border-color: #fff;
+  background: #fff;
+  color: #18392d;
+}
+
+.category-hero.has-category-banner .button-primary.site-outline-cta:hover,
+.category-hero.has-category-banner .button-primary.site-outline-cta:focus-visible {
+  border-color: #f3eadb;
+  background: #f3eadb;
+  color: #18392d;
+}
+
 .home-order-cta .button.site-outline-cta {
   position: static;
   min-height: 36px;
