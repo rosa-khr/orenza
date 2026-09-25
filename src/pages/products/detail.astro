@@ -1,5 +1,5 @@
 ---
-import { ArrowRight, Check, Link2, PackageOpen, Scale, ShoppingBag } from "@lucide/astro";
+import { ArrowRight, Check, Link2, PackageOpen, Scale, Search, ShoppingBag } from "@lucide/astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
@@ -56,7 +56,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     </section>
 
     <section class="related-products" data-related-products hidden>
-      <header><span>YOU MAY ALSO LIKE</span><h2>محصولات مرتبط</h2></header>
+      <header>
+        <div><Search class="related-products-icon" aria-hidden="true" /><h2>محصولات مرتبط</h2></div>
+        <a href="/products/#all-products" data-related-products-all><span>مشاهده همه</span><i aria-hidden="true" dir="ltr">←</i></a>
+      </header>
       <div data-related-product-list></div>
     </section>
 

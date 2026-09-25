@@ -401,20 +401,20 @@ body:has(.mobile-home-top) .support-chat-toggle {
     background-color: var(--product-rail-color, #173f30);
     background-image: linear-gradient(
       110deg,
-      color-mix(in srgb, var(--product-rail-color, #173f30) 64%, #fff) 0%,
-      color-mix(in srgb, var(--product-rail-color, #173f30) 78%, #fff) 42%,
+      color-mix(in srgb, var(--product-rail-color, #173f30) 78%, #fff) 0%,
+      color-mix(in srgb, var(--product-rail-color, #173f30) 88%, #fff) 42%,
       var(--product-rail-color, #173f30) 74%,
-      color-mix(in srgb, var(--product-rail-color, #173f30) 68%, #071b13) 100%
+      color-mix(in srgb, var(--product-rail-color, #173f30) 82%, #071b13) 100%
     );
   }
   body:has(.mobile-home-top) .product-rail-discount {
     background-color: var(--product-rail-color, #e53154);
     background-image: linear-gradient(
       110deg,
-      color-mix(in srgb, var(--product-rail-color, #e53154) 64%, #fff) 0%,
-      color-mix(in srgb, var(--product-rail-color, #e53154) 78%, #fff) 42%,
+      color-mix(in srgb, var(--product-rail-color, #e53154) 78%, #fff) 0%,
+      color-mix(in srgb, var(--product-rail-color, #e53154) 88%, #fff) 42%,
       var(--product-rail-color, #e53154) 74%,
-      color-mix(in srgb, var(--product-rail-color, #e53154) 68%, #321019) 100%
+      color-mix(in srgb, var(--product-rail-color, #e53154) 82%, #321019) 100%
     );
   }
   body:has(.mobile-home-top) .product-rail > header {
@@ -4906,10 +4906,13 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 
   .product-detail-content,
   .content-tags,
-  .related-products,
   .product-detail-internal-links {
     margin-top: 24px;
     padding-top: 16px;
+  }
+  .related-products {
+    margin-top: 24px;
+    padding: 10px;
   }
 
   .product-detail-content > header,
@@ -4920,7 +4923,6 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 
   .product-detail-content > header h2,
   .content-tags > header h2,
-  .related-products > header h2,
   .product-detail-internal-links > header h2 {
     font-size: 17px;
   }
@@ -4942,31 +4944,29 @@ main:has(> .route-spacer) .weight-options button.is-selected {
   }
 
   .related-products > div {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    grid-template-columns: none;
     gap: 7px;
+    padding: 0;
   }
 
-  .related-products article {
+  .related-products .rail-product-card {
     display: block;
-    border-radius: 10px;
+    border-radius: 13px;
   }
 
-  .related-products article > a {
+  .related-products .rail-product-media {
     height: 106px;
-    min-height: 106px;
+    min-height: 0;
   }
 
-  .related-products article > div {
-    padding: 8px;
+  .related-products .rail-product-copy {
+    padding: 8px 10px;
   }
 
-  .related-products h3 {
-    margin: 3px 0;
+  .related-products .rail-product-copy h3 {
+    margin: 0 0 6px;
     font-size: 10px;
-  }
-
-  .related-products p {
-    display: none;
   }
 
   .product-detail-link-grid {

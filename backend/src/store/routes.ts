@@ -708,19 +708,31 @@ export const registerStoreRoutes = (
   });
 
   app.get("/api/v1/products", async (request) => {
-    const { category } = z.object({ category: z.string().trim().max(180).optional() }).parse(request.query);
+    const { category, relatedTo } = z.object({
+      category: z.string().trim().max(180).optional(),
+      relatedTo: z.string().uuid().optional()
+    }).parse(request.query);
     const values: unknown[] = [];
-    const categoryFilter = category ? ` AND c.id IN (
+    let productFilters = "";
+    if (category) {
+      values.push(category);
+      productFilters += ` AND c.id IN (
       WITH RECURSIVE category_tree AS (
-        SELECT id FROM categories WHERE slug = $1 AND is_active = true
+        SELECT id FROM categories WHERE slug = $${values.length} AND is_active = true
         UNION
         SELECT child.id FROM categories child
         JOIN category_tree parent ON child.parent_category_id = parent.id
         WHERE child.is_active = true
       )
       SELECT id FROM category_tree
-    )` : "";
-    if (category) values.push(category);
+    )`;
+    }
+    if (relatedTo) {
+      values.push(relatedTo);
+      productFilters += ` AND p.id IN (
+        SELECT related_product_id FROM product_related_products WHERE product_id = $${values.length}
+      )`;
+    }
     const result = await pool.query<Record<string, unknown>>(
       `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
         COALESCE((SELECT json_agg(json_build_object('id',t.id,'title',t.title,'slug',t.slug) ORDER BY t.title)
@@ -732,7 +744,7 @@ export const registerStoreRoutes = (
         CASE WHEN p.sale_type = 'weighted' THEN p.sale_price_per_kg ELSE 0 END AS price_per_1000g,
         CASE WHEN p.sale_type = 'packaged' THEN p.sale_price_per_kg ELSE 0 END AS package_price
        FROM products p JOIN categories c ON c.id = p.category_id
-       WHERE p.is_active = true AND c.is_active = true${categoryFilter}
+       WHERE p.is_active = true AND c.is_active = true${productFilters}
        ORDER BY p.sort_order ASC, p.created_at ASC`,
       values
     );
@@ -753,7 +765,13 @@ export const registerStoreRoutes = (
           FROM product_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.product_id=p.id), '[]'::json) AS tags,
         COALESCE((SELECT json_agg(json_build_object(
           'id',rp.id,'titleFa',rp.title_fa,'titleEn',rp.title_en,'slug',rp.slug,'description',rp.description,
-          'imageUrl',rp.image_url,'categorySlug',rc.slug
+          'productType',rp.product_type,'blendType',rp.blend_type,'roastType',rp.roast_type,'coffeeType',rp.coffee_type,
+          'saleType',rp.sale_type,'stockStatus',rp.stock_status,'packageWeightGrams',rp.package_weight_grams,
+          'availableWeightsGrams',rp.available_weights_grams,'packagePrice',
+            CASE WHEN rp.sale_type = 'packaged' THEN rp.sale_price_per_kg ELSE 0 END,
+          'salePricePerKg',rp.sale_price_per_kg,'discountPercent',rp.discount_percent,
+          'discountSalePricePerKg',rp.discount_sale_price_per_kg,'productImageUrls',rp.product_image_urls,
+          'showInDiscounts',rp.show_in_discounts,'imageUrl',rp.image_url,'categorySlug',rc.slug
         ) ORDER BY prp.created_at)
           FROM product_related_products prp
           JOIN products rp ON rp.id=prp.related_product_id AND rp.is_active=true
