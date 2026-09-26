@@ -142,6 +142,12 @@ const writeSessionCache = <T>(key: string, value: T) => {
 };
 
 const isNonEmptyArray = (value: unknown): value is unknown[] => Array.isArray(value) && value.length > 0;
+const isPublicSiteSettings = (value: unknown): value is PublicSiteSettings => Boolean(
+  value
+  && typeof value === "object"
+  && "brandName" in value
+  && "homepageBannerDesktopUrl" in value
+);
 
 const sanitizePublicContent = (value: string) => {
   const template = document.createElement("template");
@@ -570,10 +576,28 @@ const applySettings = (settings: PublicSiteSettings) => {
   setHref("[data-site-instagram-link]", settings.instagramUrl);
   setHref("[data-site-telegram-link]", settings.telegramUrl);
   const desktopBanner = document.querySelector<HTMLImageElement>("[data-site-homepage-banner-desktop]");
-  if (desktopBanner && settings.homepageBannerDesktopUrl) desktopBanner.src = settings.homepageBannerDesktopUrl;
   const mobileBanner = document.querySelector<HTMLSourceElement>("[data-site-homepage-banner-mobile]");
-  const mobileBannerUrl = settings.homepageBannerMobileUrl || settings.homepageBannerDesktopUrl;
-  if (mobileBanner && mobileBannerUrl) mobileBanner.srcset = mobileBannerUrl;
+  const bannerMedia = desktopBanner?.closest<HTMLElement>("[data-homepage-banner-ready]");
+  if (desktopBanner) {
+    const defaultDesktopBannerUrl = desktopBanner.dataset.defaultSrc || "";
+    const defaultMobileBannerUrl = mobileBanner?.dataset.defaultSrcset || defaultDesktopBannerUrl;
+    const desktopBannerUrl = settings.homepageBannerDesktopUrl || defaultDesktopBannerUrl;
+    const mobileBannerUrl = settings.homepageBannerMobileUrl || settings.homepageBannerDesktopUrl || defaultMobileBannerUrl;
+    const bannerChanged = desktopBanner.getAttribute("src") !== desktopBannerUrl
+      || (mobileBanner?.getAttribute("srcset") || "") !== mobileBannerUrl;
+
+    if (bannerChanged) bannerMedia?.setAttribute("data-homepage-banner-ready", "false");
+    if (mobileBanner && mobileBanner.getAttribute("srcset") !== mobileBannerUrl) mobileBanner.srcset = mobileBannerUrl;
+    if (desktopBanner.getAttribute("src") !== desktopBannerUrl) desktopBanner.src = desktopBannerUrl;
+
+    const revealBanner = () => bannerMedia?.setAttribute("data-homepage-banner-ready", "true");
+    if (desktopBanner.complete && desktopBanner.naturalWidth > 0) {
+      revealBanner();
+    } else {
+      desktopBanner.addEventListener("load", revealBanner, { once: true });
+      desktopBanner.addEventListener("error", revealBanner, { once: true });
+    }
+  }
 
   document.querySelectorAll<HTMLElement>("[data-site-address]").forEach((element) => {
     element.textContent = settings.address || "";
@@ -607,10 +631,20 @@ const applySettings = (settings: PublicSiteSettings) => {
   applyServiceScripts(settings.scripts || []);
 };
 
+const siteSettingsCacheKey = "orenza:site-settings:v1";
+const cachedSiteSettings = readSessionCache<PublicSiteSettings>(siteSettingsCacheKey, isPublicSiteSettings);
+if (cachedSiteSettings) applySettings(cachedSiteSettings);
+
 void fetch("/api/v1/site-settings", { cache: "no-store", headers: { Accept: "application/json" } })
   .then((response) => response.ok ? response.json() : Promise.reject(new Error("site settings unavailable")))
-  .then((payload: { item: PublicSiteSettings }) => applySettings(payload.item))
-  .catch(() => undefined);
+  .then((payload: { item: PublicSiteSettings }) => {
+    writeSessionCache(siteSettingsCacheKey, payload.item);
+    applySettings(payload.item);
+  })
+  .catch(() => {
+    document.querySelector<HTMLElement>("[data-homepage-banner-ready]")
+      ?.setAttribute("data-homepage-banner-ready", "true");
+  });
 
 const loadMenuOnce = <T>(
   cacheKey: string,

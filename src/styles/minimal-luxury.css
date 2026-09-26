@@ -6458,7 +6458,27 @@ body.mobile-nav-is-open {
   content: "";
 }
 
-.hero-media img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+}
+
+.hero-media[data-homepage-banner-ready="true"] img { opacity: 1; }
+
+@media (min-width: 700px) {
+  .site-header .primary-nav {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max-content;
+    max-width: calc(100vw - 430px);
+    justify-content: center;
+    transform: translate(-50%, -50%);
+  }
+}
 
 .home-hero-transition {
   position: relative;

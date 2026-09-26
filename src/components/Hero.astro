@@ -3,15 +3,17 @@ import Icon from "./Icon.astro";
 ---
 
 <section class="hero" aria-labelledby="hero-title">
-  <div class="hero-media" aria-hidden="true">
+  <div class="hero-media" aria-hidden="true" data-homepage-banner-ready="false">
     <picture>
       <source
         srcset="/images/orenza-coffee-clean-hero-v1.png"
+        data-default-srcset="/images/orenza-coffee-clean-hero-v1.png"
         media="(max-width: 699px)"
         data-site-homepage-banner-mobile
       />
       <img
         src="/images/orenza-coffee-clean-hero-v1.png"
+        data-default-src="/images/orenza-coffee-clean-hero-v1.png"
         alt=""
         width="1488"
         height="1024"
