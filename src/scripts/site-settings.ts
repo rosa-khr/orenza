@@ -118,6 +118,31 @@ type HomepageHeroBenefitItem = {
   icon: HomepageHeroBenefitIcon;
 };
 
+type SessionCacheEntry<T> = {
+  value: T;
+};
+
+const readSessionCache = <T>(key: string, isValid: (value: unknown) => boolean): T | null => {
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SessionCacheEntry<unknown>;
+    return isValid(parsed?.value) ? parsed.value as T : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeSessionCache = <T>(key: string, value: T) => {
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify({ value } satisfies SessionCacheEntry<T>));
+  } catch {
+    // A disabled/full sessionStorage must not prevent the navigation from loading.
+  }
+};
+
+const isNonEmptyArray = (value: unknown): value is unknown[] => Array.isArray(value) && value.length > 0;
+
 const sanitizePublicContent = (value: string) => {
   const template = document.createElement("template");
   template.innerHTML = value || "";
@@ -587,17 +612,41 @@ void fetch("/api/v1/site-settings", { cache: "no-store", headers: { Accept: "app
   .then((payload: { item: PublicSiteSettings }) => applySettings(payload.item))
   .catch(() => undefined);
 
-void fetch("/api/v1/categories/popular-footer", { cache: "no-store", headers: { Accept: "application/json" } })
-  .then((response) => response.ok ? response.json() : Promise.reject(new Error("popular footer links unavailable")))
-  .then((payload: { items: PopularFooterCategory[] }) => applyPopularFooterLinks(payload.items || []))
-  .catch(() => undefined);
+const loadMenuOnce = <T>(
+  cacheKey: string,
+  endpoint: string,
+  apply: (items: T[]) => void
+) => {
+  const cachedItems = readSessionCache<T[]>(cacheKey, isNonEmptyArray);
+  if (cachedItems) {
+    apply(cachedItems);
+    return;
+  }
 
-void fetch("/api/v1/footer/quick-links", { cache: "no-store", headers: { Accept: "application/json" } })
-  .then((response) => response.ok ? response.json() : Promise.reject(new Error("footer quick links unavailable")))
-  .then((payload: { items: FooterQuickLink[] }) => applyFooterQuickLinks(payload.items || []))
-  .catch(() => undefined);
+  void fetch(endpoint, { headers: { Accept: "application/json" } })
+    .then((response) => response.ok ? response.json() : Promise.reject(new Error(`${endpoint} unavailable`)))
+    .then((payload: { items?: T[] }) => {
+      const items = Array.isArray(payload.items) ? payload.items : [];
+      if (items.length) writeSessionCache(cacheKey, items);
+      apply(items);
+    })
+    .catch(() => undefined);
+};
 
-void fetch("/api/v1/categories/navigation", { cache: "no-store", headers: { Accept: "application/json" } })
-  .then((response) => response.ok ? response.json() : Promise.reject(new Error("category navigation unavailable")))
-  .then((payload: { items: PublicNavCategory[] }) => applyCategoryNavigation(payload.items || []))
-  .catch(() => undefined);
+loadMenuOnce<PopularFooterCategory>(
+  "orenza:menu:popular-footer:v1",
+  "/api/v1/categories/popular-footer",
+  applyPopularFooterLinks
+);
+
+loadMenuOnce<FooterQuickLink>(
+  "orenza:menu:footer-quick-links:v1",
+  "/api/v1/footer/quick-links",
+  applyFooterQuickLinks
+);
+
+loadMenuOnce<PublicNavCategory>(
+  "orenza:menu:navigation:v1",
+  "/api/v1/categories/navigation",
+  applyCategoryNavigation
+);

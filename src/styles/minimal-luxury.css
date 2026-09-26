@@ -4020,6 +4020,18 @@ body.mobile-nav-is-open {
     display: flex;
     gap: 28px;
     justify-self: center;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    white-space: nowrap;
+  }
+
+  .site-header .primary-nav > a {
+    flex: 0 0 auto;
+  }
+
+  .site-header .category-nav {
+    min-width: 0;
   }
 
   .site-header .brand {
