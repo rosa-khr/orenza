@@ -6448,6 +6448,14 @@ body.mobile-nav-is-open {
 
 .hero-media { position: absolute; z-index: -2; inset: var(--header-height) 0 0; }
 .hero-media picture { display: block; width: 100%; height: 100%; }
+.hero-media-managed {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+.hero-media-managed[hidden] { display: none; }
+.hero-media-managed.is-visible { opacity: 1; }
 
 .hero-media::after {
   position: absolute;
@@ -6463,10 +6471,7 @@ body.mobile-nav-is-open {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  opacity: 0;
 }
-
-.hero-media[data-homepage-banner-ready="true"] img { opacity: 1; }
 
 @media (min-width: 700px) {
   .site-header .primary-nav {
