@@ -6,6 +6,9 @@ COPY package*.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
+# Pre-compress immutable text assets once during the build instead of spending
+# CPU on every first request in the small production container.
+RUN find dist/_assets -type f \( -name '*.css' -o -name '*.js' -o -name '*.svg' \) -exec gzip -9 -k {} \;
 
 FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
