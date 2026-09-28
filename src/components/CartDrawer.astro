@@ -8,7 +8,7 @@ import Icon from "./Icon.astro";
     <header class="cart-header">
       <div>
         <span>ORENZA PRIVATE ORDER</span>
-        <h2 id="cart-title">سبد سفارش شما</h2>
+        <h2 id="cart-title">سبد خرید تو</h2>
       </div>
       <button type="button" data-cart-close aria-label="بستن"><Icon name="close" size={20} /></button>
     </header>
@@ -16,8 +16,8 @@ import Icon from "./Icon.astro";
     <div class="cart-content">
       <div class="cart-empty" data-cart-empty>
         <span class="cart-empty-mark">O</span>
-        <h3>سبد شما هنوز خالی‌ست.</h3>
-        <p>قهوه دلخواهت را انتخاب کن و برای استعلام قیمت به سبد اضافه کن.</p>
+        <h3>سبد خریدت هنوز خالی‌ست.</h3>
+        <p>قهوه دلخواهت را انتخاب کن؛ جزئیات و مبلغ سفارش همین‌جا نمایش داده می‌شود.</p>
         <button type="button" data-cart-close data-scroll-builder>انتخاب قهوه</button>
       </div>
       <ol class="cart-items" data-cart-items></ol>
@@ -26,23 +26,23 @@ import Icon from "./Icon.astro";
     <div class="cart-checkout" data-cart-checkout hidden>
       <header class="cart-checkout-heading">
         <span>DELIVERY DETAILS</span>
-        <h3>اطلاعات تحویل سفارش</h3>
-        <p>نشانی تحویل و روش ارسال را انتخاب کن؛ خلاصه سفارش آماده می‌شود تا برای ما بفرستی.</p>
+        <h3>اطلاعات ارسال و پرداخت</h3>
+        <p>اطلاعات را کامل کن؛ پیش از ثبت نهایی، مبلغ و جزئیات سفارش را یک‌جا می‌بینی.</p>
       </header>
 
       <div class="checkout-account" data-checkout-account hidden>
         <Icon name="user" size={18} />
         <div>
           <strong data-checkout-profile>اطلاعات حساب کاربری</strong>
-          <small>نام و شماره تماس از حساب کاربری شما برداشته می‌شود.</small>
+          <small>نام و شماره تماس از حساب کاربری‌ات تکمیل شده است.</small>
         </div>
         <a href="/account/profile/?next=%2Forder%2F%3Fcart%3Dopen">ویرایش</a>
       </div>
 
       <div class="checkout-login" data-checkout-login hidden>
         <div>
-          <strong>نشانی‌هایت را یک‌بار ثبت کن.</strong>
-          <small>با ورود به حساب، اطلاعات تماس و نشانی تحویل خودکار تکمیل می‌شود.</small>
+          <strong>سفارش سریع‌تر با حساب کاربری</strong>
+          <small>با ورود به حساب، اطلاعات تماس و نشانی تحویل به‌صورت خودکار تکمیل می‌شود.</small>
         </div>
         <a href="/login/?next=%2Forder%2F%3Fcart%3Dopen">ورود به حساب</a>
       </div>
@@ -107,24 +107,24 @@ import Icon from "./Icon.astro";
       <section class="payment-proof" data-payment-proof hidden>
         <header>
           <strong>ثبت اطلاعات واریز</strong>
-          <small>پس از واریز مبلغ نهایی، کد پیگیری و تصویر فیش را وارد کن.</small>
+          <small>پس از واریز مبلغ نهایی، کد پیگیری و تصویر رسید را ثبت کن.</small>
         </header>
         <label>
           <span>کد پیگیری تراکنش</span>
           <input type="text" inputmode="numeric" pattern="[0-9]+" minlength="4" maxlength="80" data-payment-ref placeholder="کد درج‌شده روی رسید بانکی" required />
         </label>
         <label class="payment-receipt-picker">
-          <span>تصویر فیش واریزی</span>
+          <span>تصویر رسید واریز</span>
           <span class="payment-receipt-control">
-            <strong>انتخاب تصویر فیش</strong>
+            <strong>انتخاب تصویر رسید</strong>
             <em>JPG، PNG یا WebP · حداکثر ۲۰ مگابایت</em>
           </span>
-          <input type="file" accept="image/*,.heic,.heif" data-payment-receipt required aria-label="انتخاب تصویر فیش واریزی" />
-          <small data-payment-receipt-name>عکس دوربین یا گالری؛ حجم به‌صورت خودکار بهینه می‌شود</small>
+          <input type="file" accept="image/*,.heic,.heif" data-payment-receipt required aria-label="انتخاب تصویر رسید واریز" />
+          <small data-payment-receipt-name>از دوربین یا گالری انتخاب کن؛ حجم تصویر خودکار بهینه می‌شود.</small>
         </label>
       </section>
       <p class="checkout-payment-guide" data-payment-guide>
-        مبلغ نهایی را به یکی از کارت‌های بالا واریز کن. پس از ثبت کد پیگیری و فیش، سفارش برای تأیید مدیریت ارسال می‌شود و آماده‌سازی بعد از تأیید آغاز خواهد شد.
+        مبلغ نهایی را به کارت انتخاب‌شده واریز کن. پس از ثبت کد پیگیری و رسید، سفارش با یک شماره پیگیری ثبت می‌شود؛ تیم اورنزا پرداخت را بررسی می‌کند و آماده‌سازی پس از تأیید آغاز می‌شود.
       </p>
 
       <label class="checkout-terms-consent">
@@ -136,10 +136,10 @@ import Icon from "./Icon.astro";
       </label>
 
       <button class="checkout-register-order" type="button" data-register-order disabled aria-disabled="true">
-        ثبت سفارش و ارسال برای تأیید
+        ثبت نهایی سفارش
       </button>
       <div class="checkout-order-state" data-order-state hidden aria-live="polite"></div>
-      <small data-copy-status>پس از تکمیل اطلاعات، روی ثبت سفارش بزن؛ اگر موردی ناقص باشد همان‌جا مشخص می‌شود.</small>
+      <small data-copy-status>هر بخش ناقص را همان‌جا به تو نشان می‌دهیم؛ پس از تکمیل، سفارش آماده ثبت است.</small>
     </div>
   </aside>
   <div class="checkout-alert" data-checkout-alert hidden role="alertdialog" aria-modal="true" aria-labelledby="checkout-alert-title" aria-describedby="checkout-alert-message">
@@ -147,18 +147,18 @@ import Icon from "./Icon.astro";
     <section class="checkout-alert-card">
       <span class="checkout-alert-icon" data-checkout-alert-icon aria-hidden="true">!</span>
       <small>ORDER NOTICE</small>
-      <h3 id="checkout-alert-title" data-checkout-alert-title>امکان ثبت سفارش نیست</h3>
+      <h3 id="checkout-alert-title" data-checkout-alert-title>سفارش هنوز آماده ثبت نیست</h3>
       <p id="checkout-alert-message" data-checkout-alert-message></p>
-      <button type="button" data-checkout-alert-close data-checkout-alert-action>متوجه شدم</button>
+      <button type="button" data-checkout-alert-close data-checkout-alert-action>بررسی می‌کنم</button>
     </section>
   </div>
 </div>
 
 <div class="cart-added-choice" data-cart-added-choice hidden role="dialog" aria-label="محصول به سبد خرید اضافه شد" aria-live="polite">
   <div>
-    <span>به سبد اضافه شد</span>
+    <span>با موفقیت به سبد اضافه شد</span>
     <strong data-cart-added-title>انتخاب اورنزا</strong>
   </div>
   <button type="button" data-cart-continue>ادامه خرید</button>
-  <button type="button" data-cart-view>رفتن به سبد خرید</button>
+  <button type="button" data-cart-view>مشاهده سبد خرید</button>
 </div>

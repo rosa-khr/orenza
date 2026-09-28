@@ -283,14 +283,14 @@ export const initCart = () => {
       paymentMethod = response.ok ? payload.item as PaymentMethod | null : null;
       selectedPaymentCard = paymentMethod?.cards?.[0] || null;
       if (!paymentMethod || !selectedPaymentCard) {
-        if (copyStatus) copyStatus.textContent = "روش پرداخت فعال نیست؛ لطفاً با اورنزا تماس بگیر.";
+        if (copyStatus) copyStatus.textContent = "در حال حاضر روش پرداخت فعالی در دسترس نیست؛ برای راهنمایی با اورنزا تماس بگیر.";
         return;
       }
       if (paymentMethodList) {
         paymentMethodList.replaceChildren();
         const label = document.createElement("label");
         label.className = "choice-card";
-        label.innerHTML = `<input type="radio" name="payment-method" value="کارت‌به‌کارت" data-payment-kind="${paymentMethod.type}" checked required /><span><strong>${paymentMethod.title || "کارت‌به‌کارت"}</strong><small>بررسی فیش توسط مدیریت</small></span>`;
+        label.innerHTML = `<input type="radio" name="payment-method" value="کارت‌به‌کارت" data-payment-kind="${paymentMethod.type}" checked required /><span><strong>${paymentMethod.title || "کارت‌به‌کارت"}</strong><small>تأیید رسید توسط تیم اورنزا</small></span>`;
         paymentMethodList.append(label);
         paymentInputs.splice(0, paymentInputs.length, ...paymentMethodList.querySelectorAll<HTMLInputElement>('input[name="payment-method"]'));
         paymentInputs.forEach((input) => input.addEventListener("change", () => {
@@ -389,10 +389,10 @@ export const initCart = () => {
     checkoutAlert.classList.toggle("is-error", variant === "error");
     checkoutAlert.classList.toggle("is-success", variant === "success");
     if (checkoutAlertTitle) {
-      checkoutAlertTitle.textContent = variant === "success" ? "سفارش با موفقیت ثبت شد" : "امکان ثبت سفارش نیست";
+      checkoutAlertTitle.textContent = variant === "success" ? "سفارشت با موفقیت ثبت شد" : "سفارش هنوز آماده ثبت نیست";
     }
     if (checkoutAlertIcon) checkoutAlertIcon.textContent = variant === "success" ? "✓" : "!";
-    if (checkoutAlertAction) checkoutAlertAction.textContent = variant === "success" ? "مشاهده سفارش" : "متوجه شدم";
+    if (checkoutAlertAction) checkoutAlertAction.textContent = variant === "success" ? "مشاهده سفارش" : "بررسی می‌کنم";
     checkoutAlertMessage.textContent = message;
     checkoutAlert.hidden = false;
     requestAnimationFrame(() => checkoutAlert.classList.add("is-visible"));
@@ -405,7 +405,7 @@ export const initCart = () => {
       return;
     }
     showCheckoutAlert(
-      `سفارش ${orderNumber} ثبت شد و برای بررسی پرداخت به مدیریت ارسال گردید. تا چند لحظه دیگر به صفحه تأیید سفارش منتقل می‌شوی.`,
+      `سفارش ${orderNumber} را دریافت کردیم و رسید پرداخت برای بررسی به تیم اورنزا ارسال شد. تا چند لحظه دیگر جزئیات ثبت سفارش را می‌بینی.`,
       null,
       "success"
     );
@@ -476,7 +476,7 @@ export const initCart = () => {
         }
         if (checkoutProfile) {
           checkoutProfile.textContent =
-            [accountUser.displayName, accountUser.phone].filter(Boolean).join(" · ") || "حساب کاربری شما";
+            [accountUser.displayName, accountUser.phone].filter(Boolean).join(" · ") || "حساب کاربری تو";
         }
         if (checkoutAccount) checkoutAccount.hidden = false;
         if (checkoutLogin) checkoutLogin.hidden = true;
@@ -516,18 +516,18 @@ export const initCart = () => {
     if (firstInvalid) {
       validateControlFa(firstInvalid);
       firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
-      showCheckoutAlert(firstInvalid.validationMessage || "لطفاً اطلاعات کامل تحویل سفارش را وارد کن.", firstInvalid);
+      showCheckoutAlert(firstInvalid.validationMessage || "لطفاً اطلاعات ارسال را کامل کن تا سفارش آماده ثبت شود.", firstInvalid);
       return;
     }
     if (!shippingInputs.some((input) => input.checked)) {
       const shippingChoice = document.querySelector<HTMLElement>("[data-shipping-choice]");
       shippingChoice?.scrollIntoView({ behavior: "smooth", block: "center" });
-      showCheckoutAlert("لطفاً تیپاکس یا پست را برای ارسال انتخاب کن.", shippingInputs[0]);
+      showCheckoutAlert("لطفاً یکی از روش‌های ارسال را انتخاب کن.", shippingInputs[0]);
       return;
     }
     if (!paymentMethod || !selectedPaymentCard || !paymentInputs.some((input) => input.checked)) {
       paymentCard?.scrollIntoView({ behavior: "smooth", block: "center" });
-      showCheckoutAlert("لطفاً یکی از کارت‌های فعال را انتخاب کن.", paymentInputs[0]);
+      showCheckoutAlert("لطفاً کارت مقصد پرداخت را انتخاب کن.", paymentInputs[0]);
       return;
     }
     if (!paymentRef?.value.trim()) {
@@ -537,16 +537,16 @@ export const initCart = () => {
     }
     if (!selectedReceipt) {
       paymentReceipt?.scrollIntoView({ behavior: "smooth", block: "center" });
-      showCheckoutAlert("تصویر فیش واریزی را از دوربین یا گالری انتخاب کن.", paymentReceipt);
+      showCheckoutAlert("لطفاً تصویر رسید واریز را از دوربین یا گالری انتخاب کن.", paymentReceipt);
       return;
     }
     if (!termsAccepted?.checked) {
       termsAccepted?.closest(".checkout-terms-consent")?.classList.add("is-invalid");
       termsAccepted?.scrollIntoView({ behavior: "smooth", block: "center" });
-      showCheckoutAlert("برای ثبت سفارش، مطالعه و پذیرش قوانین سایت الزامی است.", termsAccepted);
+      showCheckoutAlert("لطفاً پس از مطالعه، قوانین و شرایط سایت را تأیید کن.", termsAccepted);
       return;
     }
-    if (!cart.length) showCheckoutAlert("سبد سفارش خالی است.");
+    if (!cart.length) showCheckoutAlert("سبد خریدت خالی است؛ ابتدا قهوه دلخواهت را اضافه کن.");
   };
 
   const updateOrderLinks = () => {
@@ -554,8 +554,8 @@ export const initCart = () => {
     if (copyStatus) {
       copyStatus.classList.toggle("is-ready", isComplete);
       copyStatus.textContent = isComplete
-        ? "اطلاعات کامل است؛ اکنون می‌توانی سفارش را ثبت کنی."
-        : "برای فعال‌شدن دکمه ثبت سفارش، همه فیلدهای اجباری و اطلاعات پرداخت را کامل کن.";
+        ? "همه‌چیز آماده است؛ می‌توانی سفارش را با خیال راحت ثبت کنی."
+        : "برای ثبت نهایی، اطلاعات ارسال، پرداخت و رسید واریز را کامل کن.";
     }
     if (registerOrderButton) {
       const disabled = Boolean(submittedOrder) || !isComplete;
@@ -573,15 +573,15 @@ export const initCart = () => {
     }
     orderState.hidden = false;
     orderState.innerHTML = `
-      <strong>سفارش ${submittedOrder.orderNumber} ثبت شد.</strong>
-      <span>فیش و کد پیگیری دریافت شد. سفارش در انتظار تأیید پرداخت توسط مدیریت است.</span>
+      <strong>سفارش ${submittedOrder.orderNumber} با موفقیت ثبت شد.</strong>
+      <span>رسید و کد پیگیری را دریافت کردیم. تیم اورنزا پرداخت را بررسی و وضعیت سفارش را به‌روزرسانی می‌کند.</span>
     `;
   };
 
   const registerOrder = async () => {
     if (submittedOrder) return submittedOrder;
     if (!paymentMethod) throw new Error("روش پرداخت فعال پیدا نشد.");
-    if (!selectedReceipt) throw new Error("تصویر فیش واریزی را انتخاب کن.");
+    if (!selectedReceipt) throw new Error("لطفاً تصویر رسید واریز را انتخاب کن.");
     const shipping = shippingInputs.find((input) => input.checked)?.value;
     const orderPayload = {
         customerName: customerName?.value.trim(),
@@ -624,11 +624,11 @@ export const initCart = () => {
     }
     if (!response.ok) {
       const fallback = response.status === 413
-        ? "حجم تصویر فیش از سقف مجاز بیشتر است؛ فایل باید حداکثر ۲۰ مگابایت باشد."
-        : "ثبت سفارش انجام نشد؛ اتصال اینترنت را بررسی و دوباره تلاش کن.";
+        ? "حجم تصویر رسید بیشتر از ۲۰ مگابایت است؛ لطفاً تصویر کوچک‌تری انتخاب کن."
+        : "سفارش ثبت نشد. اتصال اینترنت را بررسی کن؛ اطلاعات سبدت حفظ شده و می‌توانی دوباره تلاش کنی.";
       throw new Error(payload.error || fallback);
     }
-    if (!payload.order) throw new Error("پاسخ ثبت سفارش کامل نبود؛ دوباره تلاش کن.");
+    if (!payload.order) throw new Error("پاسخ ثبت سفارش کامل دریافت نشد؛ اطلاعات سبدت حفظ شده، لطفاً دوباره تلاش کن.");
     submittedOrder = payload.order as SubmittedOrder;
     discountAmount = submittedOrder.discountAmount;
     updateTotals();
@@ -643,19 +643,19 @@ export const initCart = () => {
       return;
     }
     if (registerOrderButton) registerOrderButton.disabled = true;
-    if (copyStatus) copyStatus.textContent = "در حال ثبت سفارش…";
+    if (copyStatus) copyStatus.textContent = "در حال ثبت سفارش؛ لطفاً این صفحه را نبند…";
     try {
       const order = await registerOrder();
       localStorage.removeItem("orenza-cart");
       cart = [];
-      if (copyStatus) copyStatus.textContent = `سفارش ${order.orderNumber} با موفقیت ثبت شد؛ در حال انتقال…`;
+      if (copyStatus) copyStatus.textContent = `سفارش ${order.orderNumber} ثبت شد؛ در حال نمایش تأیید سفارش…`;
       if (registerOrderButton) registerOrderButton.textContent = "سفارش ثبت شد ✓";
       await showOrderSuccessAlert(order.orderNumber);
       window.location.assign(`/order-success/?order=${encodeURIComponent(order.orderNumber)}`);
     } catch (error) {
       const message = error instanceof TypeError
-        ? "ارتباط با سرور برقرار نشد؛ اینترنت موبایل را بررسی و دوباره تلاش کن."
-        : error instanceof Error ? error.message : "ثبت سفارش انجام نشد.";
+        ? "ارتباط با سرور برقرار نشد. اینترنت را بررسی کن؛ اطلاعات سبدت حفظ شده و می‌توانی دوباره تلاش کنی."
+        : error instanceof Error ? error.message : "سفارش ثبت نشد؛ اطلاعات سبدت حفظ شده و می‌توانی دوباره تلاش کنی.";
       showCheckoutAlert(message, registerOrderButton);
     } finally {
       if (registerOrderButton) registerOrderButton.disabled = Boolean(submittedOrder);
@@ -860,11 +860,11 @@ export const initCart = () => {
   const prepareReceipt = async (file: File) => {
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
     if (file.size > maxReceiptUploadSize) {
-      throw new Error("حجم تصویر فیش نباید بیشتر از ۲۰ مگابایت باشد.");
+      throw new Error("حجم تصویر رسید نباید بیشتر از ۲۰ مگابایت باشد.");
     }
     if (allowedTypes.has(file.type)) return file;
     if (!file.type.startsWith("image/") && !/\.(?:heic|heif)$/i.test(file.name)) {
-      throw new Error("فیش باید یک فایل تصویری باشد.");
+      throw new Error("رسید باید یک فایل تصویری باشد.");
     }
 
     const source = await loadReceiptImage(file);
@@ -876,7 +876,7 @@ export const initCart = () => {
     canvas.width = width;
     canvas.height = height;
     const context = canvas.getContext("2d");
-    if (!context) throw new Error("مرورگر نتوانست تصویر فیش را آماده کند.");
+    if (!context) throw new Error("مرورگر نتوانست تصویر رسید را آماده کند.");
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, width, height);
     source.draw(context, width, height);
@@ -884,7 +884,7 @@ export const initCart = () => {
     canvas.width = 1;
     canvas.height = 1;
     if (!blob || blob.size > maxReceiptUploadSize) {
-      throw new Error("حجم تصویر فیش باید کمتر از ۲۰ مگابایت باشد؛ لطفاً فایل کوچک‌تری انتخاب کن.");
+      throw new Error("حجم تصویر رسید باید کمتر از ۲۰ مگابایت باشد؛ لطفاً فایل کوچک‌تری انتخاب کن.");
     }
     const baseName = file.name.replace(/\.[^.]+$/, "") || "payment-receipt";
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
@@ -898,10 +898,10 @@ export const initCart = () => {
     paymentReceipt.setAttribute("aria-invalid", "false");
     paymentReceipt.setCustomValidity("");
     if (!file) {
-      if (paymentReceiptName) paymentReceiptName.textContent = "عکس دوربین یا گالری؛ حجم به‌صورت خودکار بهینه می‌شود";
+      if (paymentReceiptName) paymentReceiptName.textContent = "از دوربین یا گالری انتخاب کن؛ حجم تصویر خودکار بهینه می‌شود.";
     } else {
       if (file.size > maxReceiptUploadSize) {
-        const message = "حجم تصویر فیش نباید بیشتر از ۲۰ مگابایت باشد.";
+        const message = "حجم تصویر رسید نباید بیشتر از ۲۰ مگابایت باشد.";
         paymentReceipt.value = "";
         paymentReceipt.closest("label")?.classList.add("is-invalid");
         paymentReceipt.setAttribute("aria-invalid", "true");
@@ -922,7 +922,7 @@ export const initCart = () => {
         paymentReceipt.closest("label")?.classList.remove("is-invalid");
         paymentReceipt.setAttribute("aria-invalid", "false");
         if (paymentReceiptName) {
-          paymentReceiptName.textContent = `${prepared.name} · ${formatUploadSize(prepared.size)} · آماده ارسال`;
+          paymentReceiptName.textContent = `${prepared.name} · ${formatUploadSize(prepared.size)} · آماده ثبت`;
         }
       } catch (error) {
         if (selectionId !== receiptSelectionId) return;
@@ -933,7 +933,7 @@ export const initCart = () => {
         if (paymentReceiptName) {
           const message = error instanceof Error
             ? error.message
-            : "تصویر فیش قابل پردازش نیست؛ تصویر دیگری انتخاب کن.";
+            : "تصویر رسید قابل پردازش نیست؛ لطفاً تصویر دیگری انتخاب کن.";
           paymentReceiptName.textContent = message;
           showCheckoutAlert(message, paymentReceipt);
         }
@@ -965,7 +965,7 @@ export const initCart = () => {
       discountAmount = Number(payload.discountAmount || 0);
       submittedOrder = null;
       updateSubmittedState();
-      if (discountStatus) discountStatus.textContent = "تخفیف روی سفارش اعمال شد.";
+      if (discountStatus) discountStatus.textContent = "کد تخفیف با موفقیت اعمال شد.";
       updateTotals();
       updateOrderLinks();
     } catch (error) {

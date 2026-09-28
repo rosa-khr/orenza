@@ -12,7 +12,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <section class="payment-result-card">
       <span data-payment-eyebrow>PAYMENT RESULT</span>
       <h1 data-payment-title>در حال بررسی نتیجه پرداخت...</h1>
-      <p data-payment-copy>چند لحظه صبر کن؛ نتیجه پرداخت سفارش در همین صفحه نمایش داده می‌شود.</p>
+      <p data-payment-copy>چند لحظه صبر کن؛ نتیجه پرداخت را همین‌جا با جزئیات به تو نشان می‌دهیم.</p>
       <dl class="payment-result-meta" hidden data-payment-meta>
         <div><dt>شماره سفارش</dt><dd data-payment-order>—</dd></div>
         <div><dt>کد پیگیری</dt><dd data-payment-ref>—</dd></div>
@@ -41,8 +41,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       if (status === "success") {
         root.classList.add("is-success");
         eyebrow.textContent = "PAYMENT CONFIRMED";
-        title.textContent = "پرداخت با موفقیت ثبت شد.";
-        copy.textContent = "سفارش تو در صف آماده‌سازی اورنزا قرار گرفت. اگر نکته‌ای درباره ارسال داری، از بخش سفارش‌ها یا پیام‌رسان با ما در تماس باش.";
+        title.textContent = "پرداختت با موفقیت تأیید شد.";
+        copy.textContent = "سفارشت وارد مرحله آماده‌سازی اورنزا شد. شماره سفارش و کد پیگیری را نگه دار؛ وضعیت سفارش از بخش سفارش‌ها در دسترس است.";
         if (meta) meta.hidden = false;
         if (orderNode) orderNode.textContent = order || "ثبت‌شده";
         if (refNode) refNode.textContent = ref || "—";
@@ -50,8 +50,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       }
       root.classList.add("is-failed");
       eyebrow.textContent = "PAYMENT NOT COMPLETED";
-      title.textContent = "پرداخت کامل نشد.";
-      copy.textContent = reason || "اگر مبلغی از حساب شما کم شده باشد، معمولاً طبق روال بانکی برگشت می‌خورد. می‌توانی دوباره از سبد سفارش اقدام کنی.";
+      title.textContent = "پرداخت کامل نشد";
+      copy.textContent = reason || "سفارش نهایی نشده است. اگر مبلغی از حسابت کم شده باشد، معمولاً طبق روال بانکی بازمی‌گردد؛ می‌توانی دوباره از سبد خرید اقدام کنی.";
     })();
   </script>
 </BaseLayout>
