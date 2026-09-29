@@ -46,6 +46,13 @@ type AddressRow = {
   is_default: boolean;
 };
 
+type GoogleIdentity = {
+  sub: string;
+  email: string;
+  emailVerified: boolean;
+  name?: string;
+};
+
 const app = Fastify({
   logger: loggerOptions,
   genReqId: createRequestId,
@@ -58,6 +65,16 @@ const cookieName = "orenza_session";
 const sessionDays = 30;
 const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
 const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
+let googleVerificationMode: "certs" | "tokeninfo" = "certs";
+const googleTokenInfoSchema = z.object({
+  aud: z.string(),
+  iss: z.string(),
+  exp: z.coerce.number(),
+  sub: z.string().min(1),
+  email: z.string().email(),
+  email_verified: z.union([z.boolean(), z.string()]),
+  name: z.string().optional()
+});
 const passwordResetSecret = process.env.PASSWORD_RESET_SECRET || "orenza-local-reset-secret";
 const allowedOrigins = (process.env.APP_ORIGIN || "http://127.0.0.1:4321,http://localhost:4321")
   .split(",")
@@ -73,6 +90,55 @@ await app.register(multipart, {
   limits: { files: 1, fileSize: 20 * 1024 * 1024, fields: 2, parts: 3 }
 });
 registerRedirects(app, pool);
+
+const verifyGoogleIdentity = async (credential: string): Promise<GoogleIdentity | null> => {
+  if (!googleClient) return null;
+
+  if (googleVerificationMode === "certs") {
+    try {
+      const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: googleClientId });
+      const payload = ticket.getPayload();
+      if (!payload?.sub || !payload.email || !payload.email_verified) return null;
+      return {
+        sub: payload.sub,
+        email: payload.email,
+        emailVerified: true,
+        ...(payload.name ? { name: payload.name } : {})
+      };
+    } catch {
+      googleVerificationMode = "tokeninfo";
+      app.log.warn({ event: "google_tokeninfo_fallback" }, "Google certificate endpoint unavailable; using tokeninfo fallback");
+    }
+  }
+
+  try {
+    const query = new URLSearchParams({ id_token: credential });
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?${query}`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(10_000)
+    });
+    if (!response.ok) return null;
+
+    const parsed = googleTokenInfoSchema.safeParse(await response.json());
+    if (!parsed.success) return null;
+    const payload = parsed.data;
+    const emailVerified = payload.email_verified === true || payload.email_verified === "true";
+    const validIssuer = payload.iss === "accounts.google.com" || payload.iss === "https://accounts.google.com";
+    if (payload.aud !== googleClientId || !validIssuer || payload.exp <= Date.now() / 1000 || !emailVerified) {
+      return null;
+    }
+
+    return {
+      sub: payload.sub,
+      email: payload.email,
+      emailVerified,
+      ...(payload.name ? { name: payload.name } : {})
+    };
+  } catch (error) {
+    app.log.error({ err: error, event: "google_tokeninfo_error" }, "Google tokeninfo verification failed");
+    return null;
+  }
+};
 
 const publicUser = (user: UserRow) => ({
   id: user.id,
@@ -337,9 +403,8 @@ app.post("/api/v1/auth/password-reset/confirm", { config: { rateLimit: { max: 8,
 app.post("/api/v1/auth/google", { config: { rateLimit: { max: 15, timeWindow: "15 minutes" } } }, async (request, reply) => {
   if (!googleClient) return reply.code(503).send({ error: "ورود گوگل هنوز پیکربندی نشده است." });
   const { credential } = z.object({ credential: z.string().min(20) }).parse(request.body);
-  const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: googleClientId });
-  const payload = ticket.getPayload();
-  if (!payload?.sub || !payload.email || !payload.email_verified) {
+  const payload = await verifyGoogleIdentity(credential);
+  if (!payload?.emailVerified) {
     return reply.code(401).send({ error: "حساب گوگل قابل تأیید نیست." });
   }
   const googleDisplayName = payload.name || payload.email.split("@")[0] || "کاربر اورنزا";
