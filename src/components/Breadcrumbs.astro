@@ -1,0 +1,38 @@
+---
+type BreadcrumbItem = {
+  label: string;
+  href: string;
+};
+
+interface Props {
+  items: BreadcrumbItem[];
+  id: string;
+  className?: string;
+  structuredData?: boolean;
+}
+
+const { items, id, className = "", structuredData = true } = Astro.props;
+const siteUrl = Astro.site ?? new URL(Astro.url.origin);
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: items.map((item, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: item.label,
+    item: new URL(item.href, siteUrl).toString()
+  }))
+};
+---
+
+<nav class:list={["site-breadcrumb", className]} aria-label="مسیر صفحه" data-breadcrumb={id}>
+  <ol>
+    {items.map((item, index) => (
+      <li>
+        <a href={item.href} aria-current={index === items.length - 1 ? "page" : undefined}>{item.label}</a>
+        {index < items.length - 1 && <span aria-hidden="true">/</span>}
+      </li>
+    ))}
+  </ol>
+</nav>
+{structuredData && <script type="application/ld+json" is:inline data-breadcrumb-schema={id} set:html={JSON.stringify(schema)}></script>}

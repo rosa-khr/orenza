@@ -8,6 +8,7 @@ import {
   type CartQuantityChange
 } from "./order-types";
 import { productDetailUrl, productSlug } from "./product-url";
+import { renderBreadcrumbs } from "./breadcrumbs";
 
 type ProductDetail = {
   id: string;
@@ -22,7 +23,9 @@ type ProductDetail = {
   productImageUrls?: string[];
   blendType: string | null;
   productType?: "coffee" | "herbalTea" | "instantDrink" | "food" | "other";
+  categoryTitle?: string;
   categorySlug: string;
+  categoryPath?: { title: string; slug: string }[];
   roastType: "light" | "medium" | "mediumDark" | "dark" | null;
   coffeeType: "bean" | "ground" | null;
   saleType: "weighted" | "packaged";
@@ -255,6 +258,18 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       document.title = `${seoTitle} | اورنزا`;
       const readablePath = productDetailUrl(item);
       const productUrl = new URL(readablePath, location.origin).toString();
+      const categoryPath = item.categoryPath?.length
+        ? item.categoryPath
+        : [{ title: item.categoryTitle || "دسته‌بندی محصول", slug: item.categorySlug }];
+      renderBreadcrumbs("product", [
+        { label: "خانه", href: "/" },
+        { label: "محصولات", href: "/products/" },
+        ...categoryPath.map((category) => ({
+          label: category.title,
+          href: `/category/${encodeURIComponent(category.slug)}/`
+        })),
+        { label: item.titleFa, href: readablePath }
+      ]);
       if (location.pathname !== readablePath) {
         history.replaceState(null, "", readablePath);
       }

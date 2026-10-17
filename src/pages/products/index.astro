@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 ---
 
 <BaseLayout
@@ -8,6 +9,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   canonicalPath="/products/"
   keywords={["خرید قهوه", "خرید قهوه ترکیبی", "قهوه تازه رست", "خرید چای ماسالا", "خرید ماچا", "خرید هات چاکلت"]}
 >
+  <Breadcrumbs
+    id="products"
+    className="category-page-breadcrumb"
+    items={[{ label: "خانه", href: "/" }, { label: "محصولات", href: "/products/" }]}
+  />
   <section class="category-hero products-parent-hero">
     <div>
       <p class="eyebrow">ORENZA COLLECTION</p>

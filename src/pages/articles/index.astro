@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 ---
 
 <BaseLayout
@@ -9,6 +10,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   keywords={["مجله قهوه", "دانستنی‌های قهوه", "آموزش دم آوری قهوه", "راهنمای خرید قهوه", "قهوه اورنزا"]}
 >
   <main class="articles-page" data-articles-page>
+    <Breadcrumbs
+      id="articles"
+      className="category-page-breadcrumb"
+      items={[{ label: "خانه", href: "/" }, { label: "مجله قهوه", href: "/articles/" }]}
+    />
     <header class="articles-page__hero">
       <span>ORENZA COFFEE JOURNAL</span>
       <h1>مجله قهوه اورنزا</h1>

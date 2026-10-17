@@ -13,6 +13,68 @@ body,
   background: var(--site-surface-color, #fff);
 }
 
+/* Linked page hierarchy for category, product, article and tag routes. */
+.site-breadcrumb {
+  width: min(100%, 1240px);
+  margin-inline: auto;
+  color: #7b7f87;
+  font-size: 12px;
+}
+
+.site-breadcrumb ol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.site-breadcrumb ol::-webkit-scrollbar { display: none; }
+
+.site-breadcrumb li {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.site-breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.site-breadcrumb a:hover,
+.site-breadcrumb a:focus-visible,
+.site-breadcrumb a[aria-current="page"] {
+  color: var(--site-support-color, #244035);
+}
+
+.site-breadcrumb a[aria-current="page"] { font-weight: 800; }
+.site-breadcrumb li > span { color: #a4a7ad; }
+
+.category-page-breadcrumb {
+  width: 100%;
+  max-width: none;
+  padding: calc(var(--header-height) + 16px) max(5vw, calc((100% - 1240px) / 2)) 14px;
+  background: #fff;
+}
+
+.category-page-breadcrumb ~ .category-subcategories:not([hidden]) {
+  padding-top: 10px;
+}
+
+.product-detail-page > .site-breadcrumb,
+.article-detail-page > .site-breadcrumb,
+.tag-detail-page > .site-breadcrumb,
+.categories-index-page > .site-breadcrumb {
+  margin-bottom: 22px;
+}
+
 /* Orenza-branded support launcher. */
 .support-chat-toggle,
 body:has(.mobile-home-top) .support-chat-toggle {
@@ -63,6 +125,19 @@ body:has(.mobile-home-top) .support-chat-toggle {
 .support-chat-options a:hover { background: #f6f2e9; }
 
 @media (max-width: 699px) {
+  .site-breadcrumb {
+    font-size: 10px;
+  }
+
+  .site-breadcrumb ol,
+  .site-breadcrumb li {
+    gap: 8px;
+  }
+
+  .category-page-breadcrumb {
+    padding: calc(var(--header-height) + 12px) 14px 11px;
+  }
+
   .support-chat {
     left: max(14px, env(safe-area-inset-left));
     bottom: max(14px, env(safe-area-inset-bottom));

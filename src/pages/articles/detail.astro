@@ -1,6 +1,7 @@
 ---
 import { CalendarDays, Clock3 } from "@lucide/astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 ---
 
 <BaseLayout
@@ -11,11 +12,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   pageType="article"
 >
   <main class="article-detail-page" data-article-detail>
-    <nav class="article-breadcrumb" aria-label="مسیر صفحه">
-      <a href="/">خانه</a><span aria-hidden="true">/</span>
-      <a href="/articles/">مجله قهوه</a><span aria-hidden="true">/</span>
-      <span aria-current="page" data-article-breadcrumb>مقاله</span>
-    </nav>
+    <Breadcrumbs
+      id="article"
+      structuredData={false}
+      items={[
+        { label: "خانه", href: "/" },
+        { label: "مجله قهوه", href: "/articles/" },
+        { label: "مقاله", href: "/articles/" }
+      ]}
+    />
 
     <article class="article-detail" itemscope itemtype="https://schema.org/BlogPosting">
       <header class="article-detail__header">

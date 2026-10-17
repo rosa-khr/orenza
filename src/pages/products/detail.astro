@@ -1,5 +1,5 @@
 ---
-import { ArrowRight, Check, Link2, PackageOpen, Scale, Search, ShoppingBag } from "@lucide/astro";
+import { Check, Link2, PackageOpen, Scale, Search, ShoppingBag } from "@lucide/astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
@@ -14,7 +14,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   keywords={["محصولات اورنزا", "خرید قهوه", "قهوه تازه رست", "خرید نوشیدنی کافه‌ای"]}
 >
   <main class="product-detail-page" data-product-detail>
-    <a class="product-detail-back" href="/products/"><ArrowRight size={17} /> بازگشت به محصولات</a>
+    <nav class="site-breadcrumb" aria-label="مسیر صفحه" data-breadcrumb="product">
+      <ol set:html={'__PRODUCT_BREADCRUMB_HTML__'}></ol>
+    </nav>
 
     <section class="product-detail-stage">
       <figure class="product-detail-media">

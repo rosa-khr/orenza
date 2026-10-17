@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
 ---
 
 <BaseLayout
@@ -8,6 +9,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   canonicalPath="/category-template/"
   keywords={["محصولات اورنزا"]}
 >
+  <Breadcrumbs
+    id="category"
+    className="category-page-breadcrumb"
+    items={[
+      { label: "خانه", href: "/" },
+      { label: "دسته‌بندی‌ها", href: "/categories/" },
+      { label: "دسته‌بندی", href: "/categories/" }
+    ]}
+  />
   <section class="category-products category-subcategories" data-category-children hidden aria-labelledby="category-children-title">
     <header>
       <span>SUBCATEGORIES</span>

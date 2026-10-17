@@ -2,6 +2,7 @@ import { ADD_TO_CART_EVENT, type CartItemInput } from "./order-types";
 import { productDetailUrl, productSlug } from "./product-url";
 import { renderCategoryTiles, type CategoryTileItem } from "./category-tiles";
 import { initCategorySubcategoryDock } from "./category-subcategory-dock";
+import { renderBreadcrumbs } from "./breadcrumbs";
 
 type CategoryProduct = {
   id: string;
@@ -41,6 +42,7 @@ type CategoryInfo = {
   imageUrl: string | null;
   mobileImageUrl?: string | null;
   tags: { id: string; title: string; slug: string }[];
+  ancestors?: { title: string; slug: string }[];
   children: CategoryTileItem[];
 };
 
@@ -116,6 +118,15 @@ if (root && list) {
         return response.json() as Promise<{ item: CategoryInfo }>;
       })
       .then(({ item }) => {
+        renderBreadcrumbs("category", [
+          { label: "خانه", href: "/" },
+          { label: "دسته‌بندی‌ها", href: "/categories/" },
+          ...(item.ancestors || []).map((category) => ({
+            label: category.title,
+            href: `/category/${encodeURIComponent(category.slug)}/`
+          })),
+          { label: item.title, href: `/category/${encodeURIComponent(item.slug)}/` }
+        ]);
         const dynamicTitle = document.querySelector<HTMLElement>("[data-category-title]");
         if (dynamicTitle) dynamicTitle.textContent = item.title;
         const dynamicLead = document.querySelector<HTMLElement>("[data-category-lead]");

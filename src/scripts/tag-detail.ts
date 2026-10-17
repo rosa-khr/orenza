@@ -1,4 +1,5 @@
 import { productDetailUrl } from "./product-url";
+import { renderBreadcrumbs } from "./breadcrumbs";
 
 type TagLink = { id: string; title: string; slug: string };
 type TaggedProduct = {
@@ -50,6 +51,11 @@ if (root && slug && slug !== "detail") {
       return payload.item;
     })
     .then((item) => {
+      renderBreadcrumbs("tag", [
+        { label: "خانه", href: "/" },
+        { label: "محصولات", href: "/products/" },
+        { label: item.title, href: `/tags/${encodeURIComponent(item.slug)}/` }
+      ]);
       const pageTitle = item.seoTitle || item.title;
       document.title = `${pageTitle} | اورنزا`;
       const canonicalUrl = new URL(item.canonicalUrl || `/tags/${encodeURIComponent(item.slug)}/`, location.origin).toString();

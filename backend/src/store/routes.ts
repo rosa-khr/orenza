@@ -145,6 +145,18 @@ const zarinpalStartUrl = (authority: string) => `https://www.zarinpal.com/pg/Sta
 const getPublicProductDetail = async (pool: Pool, field: "id" | "slug", value: string) => {
   const result = await pool.query<Record<string, unknown>>(
     `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
+      COALESCE((
+        WITH RECURSIVE category_path AS (
+          SELECT c.id,c.title,c.slug,c.parent_category_id,0 AS depth
+          UNION ALL
+          SELECT parent.id,parent.title,parent.slug,parent.parent_category_id,category_path.depth + 1
+          FROM categories parent
+          JOIN category_path ON category_path.parent_category_id=parent.id
+          WHERE parent.is_active=true AND parent.deleted_at IS NULL
+        )
+        SELECT json_agg(json_build_object('title',title,'slug',slug) ORDER BY depth DESC)
+        FROM category_path
+      ), '[]'::json) AS category_path,
       COALESCE((SELECT json_agg(json_build_object('id',t.id,'title',t.title,'slug',t.slug) ORDER BY t.title)
         FROM product_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.product_id=p.id), '[]'::json) AS tags,
       COALESCE((SELECT json_agg(json_build_object(
@@ -481,6 +493,20 @@ export const registerStoreRoutes = (
     const result = await pool.query<Record<string, unknown>>(
       `SELECT c.id,c.title,c.slug,c.description,c.image_url,c.mobile_image_url,c.icon_name,c.seo_title,c.seo_description,
           c.canonical_url,c.robots_index,c.robots_follow,
+        COALESCE((
+          WITH RECURSIVE ancestors AS (
+            SELECT parent.id,parent.title,parent.slug,parent.parent_category_id,1 AS depth
+            FROM categories parent
+            WHERE parent.id=c.parent_category_id AND parent.is_active=true AND parent.deleted_at IS NULL
+            UNION ALL
+            SELECT parent.id,parent.title,parent.slug,parent.parent_category_id,ancestors.depth + 1
+            FROM categories parent
+            JOIN ancestors ON ancestors.parent_category_id=parent.id
+            WHERE parent.is_active=true AND parent.deleted_at IS NULL
+          )
+          SELECT json_agg(json_build_object('title',title,'slug',slug) ORDER BY depth DESC)
+          FROM ancestors
+        ), '[]'::json) AS ancestors,
         COALESCE((
           SELECT json_agg(json_build_object(
             'id', child.id,

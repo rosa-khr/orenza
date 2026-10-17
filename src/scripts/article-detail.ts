@@ -1,3 +1,5 @@
+import { renderBreadcrumbs } from "./breadcrumbs";
+
 type ArticleSummary = {
   title: string;
   slug: string;
@@ -108,13 +110,16 @@ if (root && slug && slug !== "detail") {
 
       const pageTitle = root.querySelector<HTMLElement>("[data-article-title]");
       const summary = root.querySelector<HTMLElement>("[data-article-summary]");
-      const breadcrumb = root.querySelector<HTMLElement>("[data-article-breadcrumb]");
       const category = root.querySelector<HTMLElement>("[data-article-category]");
       const date = root.querySelector<HTMLTimeElement>("[data-article-date]");
       const reading = root.querySelector<HTMLElement>("[data-article-reading]");
       if (pageTitle) pageTitle.textContent = item.title;
       if (summary) summary.textContent = item.summary;
-      if (breadcrumb) breadcrumb.textContent = item.title;
+      renderBreadcrumbs("article", [
+        { label: "خانه", href: "/" },
+        { label: "مجله قهوه", href: "/articles/" },
+        { label: item.title, href: `/articles/${encodeURIComponent(item.slug)}/` }
+      ]);
       if (category) category.textContent = item.tags[0] || "دانستنی‌های قهوه";
       if (date) {
         date.dateTime = item.createdAt;

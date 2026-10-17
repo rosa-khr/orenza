@@ -1,6 +1,7 @@
 ---
-import { ArrowRight, Tag } from "@lucide/astro";
+import { Tag } from "@lucide/astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 ---
 
 <BaseLayout
@@ -10,7 +11,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   keywords={["برچسب محصولات اورنزا", "قهوه اورنزا"]}
 >
   <main class="tag-detail-page" data-tag-detail>
-    <a class="product-detail-back" href="/products/"><ArrowRight size={17} /> بازگشت به محصولات</a>
+    <Breadcrumbs
+      id="tag"
+      items={[
+        { label: "خانه", href: "/" },
+        { label: "محصولات", href: "/products/" },
+        { label: "برچسب", href: "/products/" }
+      ]}
+    />
     <header class="tag-detail-hero">
       <Tag size={28} stroke-width={1.3} />
       <span>ORENZA TAG</span>

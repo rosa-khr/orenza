@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import { productCategories } from "../../data/product-categories";
 
 export function getStaticPaths() {
@@ -19,6 +20,15 @@ const isDirectProductCategory = category.slug === "cafe-drinks" || category.slug
   canonicalPath={`/category/${category.slug}/`}
   keywords={[...category.keywords]}
 >
+  <Breadcrumbs
+    id="category"
+    className="category-page-breadcrumb"
+    items={[
+      { label: "خانه", href: "/" },
+      { label: "دسته‌بندی‌ها", href: "/categories/" },
+      { label: category.title, href: `/category/${category.slug}/` }
+    ]}
+  />
   <section class="category-products category-subcategories" data-category-children hidden aria-labelledby="category-children-title">
     <header>
       <span>SUBCATEGORIES</span>

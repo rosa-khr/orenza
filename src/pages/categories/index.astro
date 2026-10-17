@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 ---
 
 <BaseLayout
@@ -9,6 +10,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   keywords={["دسته‌بندی قهوه", "محصولات اورنزا", "انواع قهوه و نوشیدنی"]}
 >
   <section class="categories-index-page">
+    <Breadcrumbs id="categories" items={[{ label: "خانه", href: "/" }, { label: "دسته‌بندی‌ها", href: "/categories/" }]} />
     <header>
       <span>ORENZA COLLECTIONS</span>
       <h1>دسته‌بندی محصولات</h1>

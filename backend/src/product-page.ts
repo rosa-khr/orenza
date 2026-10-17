@@ -11,6 +11,7 @@ const placeholders = {
   titleFaHtml: "__PRODUCT_TITLE_FA_HTML__",
   titleEnHtml: "__PRODUCT_TITLE_EN_HTML__",
   descriptionHtml: "__PRODUCT_DESCRIPTION_HTML__",
+  breadcrumbHtml: "__PRODUCT_BREADCRUMB_HTML__",
   blendHtml: "__PRODUCT_BLEND_HTML__",
   roastHtml: "__PRODUCT_ROAST_HTML__",
   coffeeSpecStyleHtml: "__PRODUCT_COFFEE_SPEC_STYLE_HTML__",
@@ -82,6 +83,9 @@ type ProductPageData = Record<string, unknown> & {
   seoDescription?: string | null;
   blendType?: string | null;
   productType?: "coffee" | "herbalTea" | "instantDrink" | "food" | "other";
+  categoryTitle?: string;
+  categorySlug?: string;
+  categoryPath?: { title?: unknown; slug?: unknown }[];
   roastType?: "light" | "medium" | "mediumDark" | "dark" | null;
   stockStatus?: "inStock" | "outOfStock";
 };
@@ -95,7 +99,7 @@ const roastLabels = {
 
 const hydrationFields = [
   "id", "slug", "titleFa", "titleEn", "description", "seoTitle", "seoDescription",
-  "productContent", "imageUrl", "productImageUrls", "blendType", "productType", "categorySlug",
+  "productContent", "imageUrl", "productImageUrls", "blendType", "productType", "categoryTitle", "categorySlug", "categoryPath",
   "roastType", "coffeeType", "saleType", "stockStatus", "packageWeightGrams", "availableWeightsGrams",
   "packagePrice", "salePricePerKg", "discountPercent", "discountSalePricePerKg", "canonicalUrl",
   "robotsIndex", "robotsFollow", "pricePer250g", "pricePer500g", "pricePer1000g", "tags",
@@ -110,6 +114,26 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
   const seoTitle = String(product.seoTitle || product.titleFa);
   const fullSeoTitle = `${seoTitle} | اورنزا`;
   const seoDescription = String(product.seoDescription || product.description);
+  const origin = new URL(canonicalUrl).origin;
+  const categoryPath = Array.isArray(product.categoryPath) && product.categoryPath.length
+    ? product.categoryPath
+    : [{ title: product.categoryTitle || "دسته‌بندی محصول", slug: product.categorySlug || "" }];
+  const breadcrumbItems = [
+    { name: "خانه", item: `${origin}/` },
+    { name: "محصولات", item: `${origin}/products/` },
+    ...categoryPath
+      .filter((category) => String(category.slug || "").trim())
+      .map((category) => ({
+        name: String(category.title || "دسته‌بندی محصول"),
+        item: `${origin}/category/${encodeURIComponent(String(category.slug))}/`
+      })),
+    { name: product.titleFa, item: canonicalUrl }
+  ];
+  const breadcrumbHtml = breadcrumbItems.map((item, index) => {
+    const current = index === breadcrumbItems.length - 1 ? ' aria-current="page"' : "";
+    const separator = index < breadcrumbItems.length - 1 ? '<span aria-hidden="true">/</span>' : "";
+    return `<li><a href="${escapeHtmlAttribute(item.item)}"${current}>${escapeHtmlAttribute(item.name)}</a>${separator}</li>`;
+  }).join("");
   const values = new Map<string, string>([
     [htmlCanonicalPlaceholder, escapeHtmlAttribute(canonicalUrl)],
     [jsonCanonicalPlaceholder, escapeJsonStringContent(canonicalUrl)],
@@ -120,6 +144,7 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
     [placeholders.titleFaHtml, escapeHtmlAttribute(product.titleFa)],
     [placeholders.titleEnHtml, escapeHtmlAttribute(product.titleEn)],
     [placeholders.descriptionHtml, escapeHtmlAttribute(product.description)],
+    [placeholders.breadcrumbHtml, breadcrumbHtml],
     [placeholders.blendHtml, escapeHtmlAttribute(String(product.blendType || "محصول اورنزا"))],
     [placeholders.roastHtml, escapeHtmlAttribute(product.roastType ? roastLabels[product.roastType] : "—")],
     [placeholders.coffeeSpecStyleHtml, product.productType === "coffee" ? "" : "display:none"],
@@ -133,7 +158,18 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
       .join("|"),
     "g"
   );
-  return template.replace(pattern, (placeholder) => values.get(placeholder) ?? placeholder);
+  const rendered = template.replace(pattern, (placeholder) => values.get(placeholder) ?? placeholder);
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      ...item
+    }))
+  };
+  const script = `<script type="application/ld+json" data-breadcrumb-schema="product">${safeInlineJson(breadcrumbSchema)}</script>`;
+  return rendered.replace("</head>", `${script}</head>`);
 };
 
 export const productCanonicalUrl = (origin: string, slug: string, configuredCanonical?: string | null) => {
