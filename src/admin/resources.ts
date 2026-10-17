@@ -324,6 +324,25 @@ export const adminResources: AdminResource[] = [
       { key: "slug", label: "نامک", type: "text", required: true, dir: "ltr", list: true },
       { key: "sortOrder", label: "ترتیب منو", type: "number", list: true, listOnly: true },
       { key: "parentCategoryId", label: "دسته‌بندی پدر", type: "select" },
+      {
+        key: "iconName",
+        label: "آیکون دسته‌بندی",
+        type: "select",
+        options: [
+          { label: "دانه قهوه", value: "bean" },
+          { label: "فنجان نوشیدنی", value: "coffee" },
+          { label: "برگ و دمنوش", value: "leaf" },
+          { label: "بسته محصول", value: "package" },
+          { label: "فروشگاه", value: "store" },
+          { label: "سبد خرید", value: "shoppingBag" },
+          { label: "چند بسته / عمده", value: "boxes" },
+          { label: "مجله و مقاله", value: "bookOpen" },
+          { label: "خوراکی", value: "cookie" },
+          { label: "رُست و حرارت", value: "flame" },
+          { label: "هدیه", value: "gift" },
+          { label: "ویژه", value: "sparkles" }
+        ]
+      },
       { key: "description", label: "محتوای دسته‌بندی", type: "richtext" },
       { key: "imageUrl", label: "بنر دسکتاپ دسته‌بندی", type: "image", dir: "ltr" },
       { key: "mobileImageUrl", label: "بنر موبایل دسته‌بندی", type: "image", dir: "ltr" },

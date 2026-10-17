@@ -77,7 +77,7 @@ export const readEmailBrandLogo = async () => {
 
 const asDataUri = (data: Buffer, mime: string) => `data:${mime};base64,${data.toString("base64")}`;
 
-const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
+export const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
   const root = assetRoot();
   const [regularFont, demiBoldFont] = await Promise.all([
     readFile(path.join(root, "fonts/Dana-Regular.ttf")),
@@ -86,20 +86,26 @@ const invoiceHtml = async (order: NewOrder, branding: InvoiceBranding) => {
   const signature = branding.invoiceSignature
     ? `<img src="${asDataUri(branding.invoiceSignature.data, branding.invoiceSignature.mime)}" alt="امضای فروشنده">`
     : `<span>محل مهر و امضای فروشنده</span>`;
-  const rows = order.items.map((item, index) => `
+  const rows = order.items.map((item, index) => {
+    const isCoffee = item.productType === "coffee";
+    const productDetails = isCoffee
+      ? [
+          item.roastType ? `رُست ${item.roastType}` : "",
+          item.blendType,
+          item.brewMethod || ""
+        ].filter(Boolean).join(" · ")
+      : "";
+    return `
     <tr>
       <td>${money.format(index + 1)}</td>
-      <td class="product"><strong>${escapeHtml(item.productTitle)}</strong><small>${escapeHtml([
-        item.roastType ? `رُست ${item.roastType}` : "",
-        item.blendType,
-        item.brewMethod || ""
-      ].filter(Boolean).join(" · "))}</small></td>
+      <td class="product"><strong>${escapeHtml(item.productTitle)}</strong>${productDetails ? `<small>${escapeHtml(productDetails)}</small>` : ""}</td>
       <td>${money.format(item.weight)} گرم</td>
       <td>${money.format(item.quantity)}</td>
-      <td>${escapeHtml(item.grindType)}</td>
+      <td>${escapeHtml(isCoffee ? item.grindType || "دان" : "—")}</td>
       <td>${asMoney(item.unitPrice)}</td>
       <td>${asMoney(item.totalPrice)}</td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 
   return `<!doctype html>
   <html lang="fa" dir="rtl">

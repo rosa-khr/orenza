@@ -10,6 +10,7 @@ import { openHomepageBanner } from "../homepage-banners.js";
 import { sanitizeRichText } from "../rich-text.js";
 import { persistLog } from "../logger.js";
 import { categoryHref, productSlug } from "../seo.js";
+import { loadProductDetailTemplate, productCanonicalUrl, renderProductDetailPage } from "../product-page.js";
 
 type SessionUser = { id: string } | null;
 
@@ -140,6 +141,43 @@ const zarinpalAmount = (amountInToman: number) => {
 };
 
 const zarinpalStartUrl = (authority: string) => `https://www.zarinpal.com/pg/StartPay/${authority}`;
+
+const getPublicProductDetail = async (pool: Pool, field: "id" | "slug", value: string) => {
+  const result = await pool.query<Record<string, unknown>>(
+    `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
+      COALESCE((SELECT json_agg(json_build_object('id',t.id,'title',t.title,'slug',t.slug) ORDER BY t.title)
+        FROM product_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.product_id=p.id), '[]'::json) AS tags,
+      COALESCE((SELECT json_agg(json_build_object(
+        'id',rp.id,'titleFa',rp.title_fa,'titleEn',rp.title_en,'slug',rp.slug,'description',rp.description,
+        'productType',rp.product_type,'blendType',rp.blend_type,'roastType',rp.roast_type,'coffeeType',rp.coffee_type,
+        'saleType',rp.sale_type,'stockStatus',rp.stock_status,'packageWeightGrams',rp.package_weight_grams,
+        'availableWeightsGrams',rp.available_weights_grams,'packagePrice',
+          CASE WHEN rp.sale_type = 'packaged' THEN rp.sale_price_per_kg ELSE 0 END,
+        'salePricePerKg',rp.sale_price_per_kg,'discountPercent',rp.discount_percent,
+        'discountSalePricePerKg',rp.discount_sale_price_per_kg,'productImageUrls',rp.product_image_urls,
+        'showInDiscounts',rp.show_in_discounts,'imageUrl',rp.image_url,'categorySlug',rc.slug
+      ) ORDER BY prp.created_at)
+        FROM product_related_products prp
+        JOIN products rp ON rp.id=prp.related_product_id AND rp.is_active=true AND rp.deleted_at IS NULL
+        JOIN categories rc ON rc.id=rp.category_id AND rc.is_active=true AND rc.deleted_at IS NULL
+        WHERE prp.product_id=p.id), '[]'::json) AS related_products,
+      (p.sale_price_per_kg - p.purchase_price_per_kg) AS profit_per_kg,
+      CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.25)::bigint ELSE 0 END AS price_per_250g,
+      CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.50)::bigint ELSE 0 END AS price_per_500g,
+      CASE WHEN p.sale_type = 'weighted' THEN p.sale_price_per_kg ELSE 0 END AS price_per_1000g,
+      CASE WHEN p.sale_type = 'packaged' THEN p.sale_price_per_kg ELSE 0 END AS package_price
+     FROM products p JOIN categories c ON c.id=p.category_id
+     WHERE p.${field}=$1
+       AND p.is_active=true AND p.deleted_at IS NULL
+       AND c.is_active=true AND c.deleted_at IS NULL
+     LIMIT 1`,
+    [value]
+  );
+  if (!result.rows[0]) return null;
+  const item = toPublicRecord(result.rows[0]);
+  item.productContent = sanitizeRichText(String(item.productContent || ""));
+  return item;
+};
 
 export const registerStoreRoutes = (
   app: FastifyInstance,
@@ -352,9 +390,9 @@ export const registerStoreRoutes = (
 
   app.get("/api/v1/categories/navigation", async (_request, reply) => {
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT c.id, c.title, c.slug, c.sort_order, c.parent_category_id, c.image_url, c.mobile_image_url,
+      `SELECT c.id, c.title, c.slug, c.sort_order, c.parent_category_id, c.image_url, c.mobile_image_url, c.icon_name,
         COALESCE((
-          SELECT json_agg(json_build_object('id', child.id, 'title', child.title, 'slug', child.slug, 'sortOrder', child.sort_order) ORDER BY
+          SELECT json_agg(json_build_object('id', child.id, 'title', child.title, 'slug', child.slug, 'sortOrder', child.sort_order, 'iconName', child.icon_name) ORDER BY
             child.sort_order ASC,
             child.created_at ASC
           )
@@ -374,14 +412,36 @@ export const registerStoreRoutes = (
     const { slug } = z.object({
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
-    const result = await pool.query(
+    const publicProductPath = `/products/${encodeURIComponent(slug)}/`;
+    const redirectResult = await pool.query<{ destination: string; status_code: number }>(
+      "SELECT destination,status_code FROM redirects WHERE source_path=$1 AND is_active=true LIMIT 1",
+      [publicProductPath]
+    );
+    const redirect = redirectResult.rows[0];
+    if (redirect) return reply.code(redirect.status_code).header("Location", redirect.destination).send();
+
+    const categoryResult = await pool.query(
       "SELECT 1 FROM categories WHERE slug=$1 AND is_active=true LIMIT 1",
       [slug]
     );
     reply.header("Cache-Control", "no-store");
-    if (result.rowCount) return reply.code(301).header("Location", categoryHref(slug)).send();
-    reply.header("X-Accel-Redirect", "/__product_detail");
-    return reply.code(200).send();
+    if (categoryResult.rowCount) return reply.code(301).header("Location", categoryHref(slug)).send();
+
+    const product = await getPublicProductDetail(pool, "slug", slug);
+    if (!product) return reply.code(404).send({ error: "محصول پیدا نشد." });
+
+    const canonicalUrl = productCanonicalUrl(
+      getPublicOrigin(request),
+      String(product.slug),
+      product.canonicalUrl ? String(product.canonicalUrl) : null
+    );
+    const template = await loadProductDetailTemplate();
+    const html = renderProductDetailPage(template, canonicalUrl, product as Parameters<typeof renderProductDetailPage>[2]);
+    reply
+      .type("text/html; charset=utf-8")
+      .header("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
+      .header("X-Robots-Tag", `${product.robotsIndex ? "index" : "noindex"}, ${product.robotsFollow ? "follow" : "nofollow"}`);
+    return reply.send(html);
   });
 
   app.get("/api/v1/storefront/category/:slug", async (request, reply) => {
@@ -419,14 +479,32 @@ export const registerStoreRoutes = (
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT c.id,c.title,c.slug,c.description,c.image_url,c.mobile_image_url,c.seo_title,c.seo_description,
+      `SELECT c.id,c.title,c.slug,c.description,c.image_url,c.mobile_image_url,c.icon_name,c.seo_title,c.seo_description,
           c.canonical_url,c.robots_index,c.robots_follow,
+        COALESCE((
+          SELECT json_agg(json_build_object(
+            'id', child.id,
+            'title', child.title,
+            'slug', child.slug,
+            'iconName', child.icon_name,
+            'imageUrl', child.image_url,
+            'mobileImageUrl', child.mobile_image_url,
+            'children', COALESCE((
+              SELECT json_agg(json_build_object('id', grandchild.id, 'title', grandchild.title, 'slug', grandchild.slug)
+                ORDER BY grandchild.sort_order ASC, grandchild.created_at ASC)
+              FROM categories grandchild
+              WHERE grandchild.parent_category_id=child.id AND grandchild.is_active=true AND grandchild.deleted_at IS NULL
+            ), '[]'::json)
+          ) ORDER BY child.sort_order ASC, child.created_at ASC)
+          FROM categories child
+          WHERE child.parent_category_id=c.id AND child.is_active=true AND child.deleted_at IS NULL
+        ), '[]'::json) AS children,
         COALESCE((
           SELECT json_agg(DISTINCT jsonb_build_object('id',t.id,'title',t.title,'slug',t.slug))
           FROM products p JOIN product_tags pt ON pt.product_id=p.id JOIN tags t ON t.id=pt.tag_id
           WHERE p.category_id=c.id AND p.is_active=true
         ), '[]'::json) AS tags
-       FROM categories c WHERE c.slug=$1 AND c.is_active=true`,
+       FROM categories c WHERE c.slug=$1 AND c.is_active=true AND c.deleted_at IS NULL`,
       [slug]
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "دسته‌بندی پیدا نشد." });
@@ -759,37 +837,9 @@ export const registerStoreRoutes = (
 
   app.get("/api/v1/products/:id", async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
-    const result = await pool.query<Record<string, unknown>>(
-      `SELECT p.*, c.title AS category_title, c.slug AS category_slug,
-        COALESCE((SELECT json_agg(json_build_object('id',t.id,'title',t.title,'slug',t.slug) ORDER BY t.title)
-          FROM product_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.product_id=p.id), '[]'::json) AS tags,
-        COALESCE((SELECT json_agg(json_build_object(
-          'id',rp.id,'titleFa',rp.title_fa,'titleEn',rp.title_en,'slug',rp.slug,'description',rp.description,
-          'productType',rp.product_type,'blendType',rp.blend_type,'roastType',rp.roast_type,'coffeeType',rp.coffee_type,
-          'saleType',rp.sale_type,'stockStatus',rp.stock_status,'packageWeightGrams',rp.package_weight_grams,
-          'availableWeightsGrams',rp.available_weights_grams,'packagePrice',
-            CASE WHEN rp.sale_type = 'packaged' THEN rp.sale_price_per_kg ELSE 0 END,
-          'salePricePerKg',rp.sale_price_per_kg,'discountPercent',rp.discount_percent,
-          'discountSalePricePerKg',rp.discount_sale_price_per_kg,'productImageUrls',rp.product_image_urls,
-          'showInDiscounts',rp.show_in_discounts,'imageUrl',rp.image_url,'categorySlug',rc.slug
-        ) ORDER BY prp.created_at)
-          FROM product_related_products prp
-          JOIN products rp ON rp.id=prp.related_product_id AND rp.is_active=true
-          JOIN categories rc ON rc.id=rp.category_id AND rc.is_active=true
-          WHERE prp.product_id=p.id), '[]'::json) AS related_products,
-        (p.sale_price_per_kg - p.purchase_price_per_kg) AS profit_per_kg,
-        CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.25)::bigint ELSE 0 END AS price_per_250g,
-        CASE WHEN p.sale_type = 'weighted' THEN round(p.sale_price_per_kg * 0.50)::bigint ELSE 0 END AS price_per_500g,
-        CASE WHEN p.sale_type = 'weighted' THEN p.sale_price_per_kg ELSE 0 END AS price_per_1000g,
-        CASE WHEN p.sale_type = 'packaged' THEN p.sale_price_per_kg ELSE 0 END AS package_price
-       FROM products p JOIN categories c ON c.id=p.category_id
-       WHERE p.id=$1 AND p.is_active=true AND c.is_active=true`,
-      [id]
-    );
-    if (!result.rows[0]) return reply.code(404).send({ error: "محصول پیدا نشد." });
+    const item = await getPublicProductDetail(pool, "id", id);
+    if (!item) return reply.code(404).send({ error: "محصول پیدا نشد." });
     reply.header("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-    const item = toPublicRecord(result.rows[0]);
-    item.productContent = sanitizeRichText(String(item.productContent || ""));
     return { item };
   });
 

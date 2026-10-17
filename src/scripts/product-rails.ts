@@ -87,11 +87,12 @@ const card = (product: RailProduct, kind: "best" | "discount") => {
   const hasDiscount = product.showInDiscounts && regularPrice > discountedPrice && discountPercent > 0;
   const price = hasDiscount ? discountedPrice : regularPrice;
   const weight = firstWeight;
-  const grind = product.productType === "coffee" ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف";
+  const isCoffee = product.productType === "coffee";
+  const grind = isCoffee ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "";
   const selection = {
     productId: product.id,
-    blend: product.blendType || "محصول اورنزا",
-    roast: product.roastType ? roastLabels[product.roastType] : "بدون رُست",
+    blend: isCoffee ? product.blendType || "" : "",
+    roast: isCoffee && product.roastType ? roastLabels[product.roastType] : "",
     grind,
     weightGrams: weight
   };

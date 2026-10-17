@@ -1,5 +1,7 @@
 import { ADD_TO_CART_EVENT, type CartItemInput } from "./order-types";
 import { productDetailUrl, productSlug } from "./product-url";
+import { renderCategoryTiles, type CategoryTileItem } from "./category-tiles";
+import { initCategorySubcategoryDock } from "./category-subcategory-dock";
 
 type CategoryProduct = {
   id: string;
@@ -39,6 +41,7 @@ type CategoryInfo = {
   imageUrl: string | null;
   mobileImageUrl?: string | null;
   tags: { id: string; title: string; slug: string }[];
+  children: CategoryTileItem[];
 };
 
 const renderTags = (container: HTMLElement | null, tags: CategoryInfo["tags"]) => {
@@ -140,6 +143,34 @@ if (root && list) {
           content.closest<HTMLElement>(".category-editorial")?.removeAttribute("hidden");
         }
         renderTags(document.querySelector<HTMLElement>("[data-category-tag-list]"), item.tags || []);
+        const childrenSection = document.querySelector<HTMLElement>("[data-category-children]");
+        const childrenList = childrenSection?.querySelector<HTMLElement>("[data-category-child-list]");
+        const primaryCta = document.querySelector<HTMLAnchorElement>("[data-category-primary-cta]");
+        if (item.children?.length && childrenSection && childrenList) {
+          renderCategoryTiles(childrenList, item.children);
+          childrenSection.hidden = false;
+          root.hidden = false;
+          initCategorySubcategoryDock();
+          if (primaryCta) {
+            const mobileViewport = window.matchMedia("(max-width: 699px)");
+            const syncPrimaryCta = () => {
+              const isMobile = mobileViewport.matches;
+              primaryCta.href = isMobile ? "#category-children-title" : "#category-products-title";
+              primaryCta.querySelector<HTMLElement>("span")!.textContent = isMobile
+                ? "مشاهده زیردسته‌ها"
+                : "مشاهده محصولات";
+            };
+            syncPrimaryCta();
+            mobileViewport.addEventListener("change", syncPrimaryCta);
+          }
+        } else {
+          childrenSection?.setAttribute("hidden", "");
+          root.hidden = false;
+          if (primaryCta) {
+            primaryCta.href = "#category-products-title";
+            primaryCta.querySelector<HTMLElement>("span")!.textContent = "مشاهده محصولات";
+          }
+        }
         const categoryHero = document.querySelector<HTMLElement>(`[data-category-hero][data-category-slug="${item.slug}"]`);
         const banner = categoryHero?.querySelector<HTMLImageElement>("[data-category-hero-banner]");
         if (!categoryHero || !banner) return;
@@ -211,7 +242,8 @@ if (root && list) {
         titleLink.textContent = product.titleFa;
         title.append(titleLink);
         description.textContent = product.description;
-        blend.textContent = product.blendType || "محصول اورنزا";
+        blend.textContent = product.productType === "coffee" ? product.blendType || "" : "";
+        blend.hidden = product.productType !== "coffee";
         detailLink.className = "category-product-detail-link";
         detailLink.href = detailUrl;
         detailLink.textContent = "مشاهده جزئیات محصول";
@@ -299,12 +331,13 @@ if (root && list) {
 
         const addPackagedToCart = () => {
           const unitPrice = productPrice(selectedWeight);
+          const isCoffee = product.productType === "coffee";
           const item: CartItemInput = {
             productId: product.id,
             productTitle: product.titleFa,
-            blend: product.blendType || "محصول اورنزا",
-            roast: product.roastType ? roastLabels[product.roastType] : "بدون رُست",
-            grind: product.productType === "coffee" ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف",
+            blend: isCoffee ? product.blendType || "" : "",
+            roast: isCoffee && product.roastType ? roastLabels[product.roastType] : "",
+            grind: isCoffee ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "",
             weight: weightLabel(selectedWeight),
             weightGrams: selectedWeight,
             quantity: 1,

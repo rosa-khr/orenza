@@ -15,6 +15,7 @@ type ProductPriceRow = {
   available_weights_grams: number[];
   package_weight_grams: number;
   stock_status: "inStock" | "outOfStock";
+  product_type: "coffee" | "herbalTea" | "instantDrink" | "food" | "other";
 };
 
 const nextOrderNumber = () => {
@@ -58,7 +59,7 @@ export class OrderService {
       const productIds = [...new Set(data.items.map((item) => item.productId))];
       const products = await client.query<ProductPriceRow>(
         `SELECT id, title_fa, is_active, sale_price_per_kg, discount_sale_price_per_kg, show_in_discounts,
-          purchase_price_per_kg, sale_type, available_weights_grams, package_weight_grams, stock_status
+          purchase_price_per_kg, sale_type, available_weights_grams, package_weight_grams, stock_status, product_type
          FROM products WHERE id = ANY($1::uuid[]) FOR SHARE`,
         [productIds]
       );
@@ -88,9 +89,18 @@ export class OrderService {
         const unitCost = product.sale_type === "packaged"
           ? Number(product.purchase_price_per_kg)
           : Math.round(Number(product.purchase_price_per_kg) * item.weight / 1000);
+        const isCoffee = product.product_type === "coffee";
+        if (isCoffee && (!item.grindType || !item.roastType || !item.blendType)) {
+          throw Object.assign(new Error(`مشخصات رُست، ترکیب و آسیاب ${product.title_fa} کامل نیست.`), { statusCode: 422 });
+        }
         return {
           ...item,
           productTitle: product.title_fa,
+          productType: product.product_type,
+          grindType: isCoffee ? item.grindType : "",
+          roastType: isCoffee ? item.roastType : "",
+          blendType: isCoffee ? item.blendType : "",
+          brewMethod: isCoffee ? item.brewMethod ?? null : null,
           unitPrice,
           totalPrice: unitPrice * item.quantity,
           unitCost,

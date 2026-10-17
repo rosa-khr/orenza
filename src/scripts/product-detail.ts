@@ -15,6 +15,8 @@ type ProductDetail = {
   titleFa: string;
   titleEn: string;
   description: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   productContent: string | null;
   imageUrl: string | null;
   productImageUrls?: string[];
@@ -69,6 +71,16 @@ type RelatedProduct = {
 const root = document.querySelector<HTMLElement>("[data-product-detail]");
 const id = new URLSearchParams(location.search).get("id");
 const pathSlug = decodeURIComponent(location.pathname.split("/").filter(Boolean).at(-1) || "");
+const initialProduct = (() => {
+  const script = document.querySelector<HTMLScriptElement>("script[data-product-initial]");
+  if (!script?.textContent) return null;
+  try {
+    const payload = JSON.parse(script.textContent) as { item?: ProductDetail };
+    return payload.item || null;
+  } catch {
+    return null;
+  }
+})();
 const money = new Intl.NumberFormat("fa-IR");
 const percentFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
 const weightLabels: Record<250 | 500 | 1000, string> = {
@@ -132,11 +144,12 @@ const renderRelatedProductCard = (product: RelatedProduct) => {
       : 0;
   const hasDiscount = product.showInDiscounts && regularPrice > discountedPrice && discountPercent > 0;
   const price = hasDiscount ? discountedPrice : regularPrice;
-  const grind = product.productType === "coffee" ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف";
+  const isCoffee = product.productType === "coffee";
+  const grind = isCoffee ? (product.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "";
   const selection = {
     productId: product.id,
-    blend: product.blendType || "محصول اورنزا",
-    roast: product.roastType ? roastLabels[product.roastType] : "بدون رُست",
+    blend: isCoffee ? product.blendType || "" : "",
+    roast: isCoffee && product.roastType ? roastLabels[product.roastType] : "",
     grind,
     weightGrams: firstWeight
   };
@@ -213,42 +226,65 @@ const setText = (selector: string, value: string) => {
 };
 
 const loadProduct = async () => {
+  if (initialProduct && (!id || initialProduct.id === id)) return { item: initialProduct };
   if (id) {
     const response = await fetch(`/api/v1/products/${encodeURIComponent(id)}`);
-    const payload = await response.json();
+    const payload = await response.json().catch(() => null);
     if (!response.ok) throw new Error(payload?.error || "محصول پیدا نشد.");
+    if (!payload?.item) throw new Error("پاسخ محصول معتبر نیست.");
     return payload as { item: ProductDetail };
   }
   if (!pathSlug || pathSlug === "detail") throw new Error("محصول مشخص نشده است.");
   const response = await fetch("/api/v1/products");
-  const payload = await response.json() as { items?: ProductDetail[]; error?: string };
+  const payload = await response.json().catch(() => null) as { items?: ProductDetail[]; error?: string } | null;
+  if (!payload) throw new Error("پاسخ فهرست محصولات معتبر نیست.");
   if (!response.ok) throw new Error(payload.error || "محصول پیدا نشد.");
   const item = (payload.items || []).find((product) => (product.slug || productSlug(product.titleEn)) === pathSlug);
   if (!item) throw new Error("محصول پیدا نشد.");
   const detailResponse = await fetch(`/api/v1/products/${encodeURIComponent(item.id)}`);
   if (!detailResponse.ok) return { item };
-  return detailResponse.json() as Promise<{ item: ProductDetail }>;
+  const detailPayload = await detailResponse.json().catch(() => null) as { item?: ProductDetail } | null;
+  return detailPayload?.item ? { item: detailPayload.item } : { item };
 };
 
 if (root && (id || (pathSlug && pathSlug !== "detail"))) {
   loadProduct()
     .then(({ item }) => {
-      document.title = `${item.titleFa} | اورنزا`;
+      const seoTitle = item.seoTitle || item.titleFa;
+      const seoDescription = item.seoDescription || item.description;
+      document.title = `${seoTitle} | اورنزا`;
       const readablePath = productDetailUrl(item);
       const productUrl = new URL(readablePath, location.origin).toString();
       if (location.pathname !== readablePath) {
         history.replaceState(null, "", readablePath);
       }
-      document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", item.description);
-      document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", `${item.titleFa} | اورنزا`);
-      document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", item.description);
-      document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", productUrl);
-      const canonicalUrl = item.canonicalUrl ? new URL(item.canonicalUrl, location.origin).toString() : productUrl;
+      document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", seoDescription);
+      document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", `${seoTitle} | اورنزا`);
+      document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", seoDescription);
+      const canonicalUrl = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
+        || (item.canonicalUrl ? new URL(item.canonicalUrl, location.origin).toString() : productUrl);
       const robots = `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}${item.robotsIndex === false ? "" : ", max-image-preview:large"}`;
       document.querySelector<HTMLMetaElement>('meta[name="robots"]')?.setAttribute("content", robots);
-      document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${item.titleFa} | اورنزا`);
-      document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", item.description);
+      document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", `${seoTitle} | اورنزا`);
+      document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", seoDescription);
+      document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", canonicalUrl);
       document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", canonicalUrl);
+      document.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]').forEach((link) => {
+        link.href = canonicalUrl;
+      });
+      document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]').forEach((script) => {
+        try {
+          const data = JSON.parse(script.textContent || "{}");
+          const graph = Array.isArray(data?.["@graph"]) ? data["@graph"] : [];
+          const webPage = graph.find((node: { "@type"?: string }) => node?.["@type"] === "WebPage");
+          if (!webPage) return;
+          webPage["@id"] = `${canonicalUrl}#webpage`;
+          webPage.url = canonicalUrl;
+          script.textContent = JSON.stringify(data);
+        } catch {
+          // Keep unrelated structured-data blocks untouched.
+        }
+      });
       setText("[data-product-detail-en]", item.titleEn);
       setText("[data-product-detail-title]", item.titleFa);
       setText("[data-product-detail-description]", item.description);
@@ -257,10 +293,13 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
       setText("[data-product-detail-stock]", item.stockStatus === "inStock" ? "موجود و قابل سفارش" : "ناموجود");
       const directCartCategories = new Set(["cafe-drinks", "herbal-tea"]);
       const isDirectCartCategory = directCartCategories.has(item.categorySlug);
+      const isCoffee = item.productType === "coffee";
+      const blendSpec = root.querySelector<HTMLElement>("[data-product-detail-blend-spec]");
       const roastSpec = root.querySelector<HTMLElement>("[data-product-detail-roast-spec]");
       const preparation = root.querySelector<HTMLElement>("[data-product-detail-preparation]");
-      if (roastSpec) roastSpec.hidden = isDirectCartCategory;
-      if (preparation && isDirectCartCategory) preparation.lastChild!.textContent = " آماده‌سازی سریع و بسته‌بندی‌شده";
+      if (blendSpec) blendSpec.hidden = !isCoffee;
+      if (roastSpec) roastSpec.hidden = !isCoffee;
+      if (preparation && !isCoffee) preparation.lastChild!.textContent = " آماده‌سازی سریع و بسته‌بندی‌شده";
 
       const image = root.querySelector<HTMLImageElement>("[data-product-detail-image]");
       const imagePlaceholder = root.querySelector<HTMLElement>("[data-product-detail-image-placeholder]");
@@ -562,9 +601,9 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
           const cartItem: CartItemInput = {
             productId: item.id,
             productTitle: item.titleFa,
-            blend: item.blendType || "محصول اورنزا",
-            roast: item.roastType ? roastLabels[item.roastType] : "بدون رُست",
-            grind: item.productType === "coffee" ? (item.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "آماده مصرف",
+            blend: isCoffee ? item.blendType || "" : "",
+            roast: isCoffee && item.roastType ? roastLabels[item.roastType] : "",
+            grind: isCoffee ? (item.coffeeType === "ground" ? "پودر آماده" : "دان کامل") : "",
             weight: weightLabel(selectedWeight),
             weightGrams: selectedWeight,
             quantity: 1,

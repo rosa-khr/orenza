@@ -4,9 +4,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="جزئیات محصول اورنزا"
-  description="مشخصات، قیمت و توضیحات کامل محصولات اورنزا"
+  title="__PRODUCT_SEO_TITLE_HTML__"
+  description="__PRODUCT_SEO_DESCRIPTION_HTML__"
   canonicalPath="/products/detail/"
+  canonicalUrl="https://product-seo.invalid/__PRODUCT_CANONICAL_HTML__/"
+  structuredDataCanonicalUrl="__PRODUCT_CANONICAL_JSON__"
+  structuredDataTitle="__PRODUCT_SEO_TITLE_JSON__"
+  structuredDataDescription="__PRODUCT_SEO_DESCRIPTION_JSON__"
   keywords={["محصولات اورنزا", "خرید قهوه", "قهوه تازه رست", "خرید نوشیدنی کافه‌ای"]}
 >
   <main class="product-detail-page" data-product-detail>
@@ -22,13 +26,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       </figure>
 
       <div class="product-detail-copy">
-        <span class="eyebrow" data-product-detail-en>ORENZA PRODUCT</span>
-        <h1 data-product-detail-title>در حال دریافت محصول…</h1>
-        <p data-product-detail-description>لطفاً چند لحظه صبر کنید.</p>
+        <span class="eyebrow" data-product-detail-en>__PRODUCT_TITLE_EN_HTML__</span>
+        <h1 data-product-detail-title>__PRODUCT_TITLE_FA_HTML__</h1>
+        <p data-product-detail-description>__PRODUCT_DESCRIPTION_HTML__</p>
         <div class="product-detail-specs">
-          <div><span>ترکیب</span><strong data-product-detail-blend>—</strong></div>
-          <div data-product-detail-roast-spec><span>پروفایل رُست</span><strong data-product-detail-roast>—</strong></div>
-          <div><span>وضعیت</span><strong data-product-detail-stock>—</strong></div>
+          <div style="__PRODUCT_COFFEE_SPEC_STYLE_HTML__" data-product-detail-blend-spec><span>ترکیب</span><strong data-product-detail-blend>__PRODUCT_BLEND_HTML__</strong></div>
+          <div style="__PRODUCT_COFFEE_SPEC_STYLE_HTML__" data-product-detail-roast-spec><span>پروفایل رُست</span><strong data-product-detail-roast>__PRODUCT_ROAST_HTML__</strong></div>
+          <div><span>وضعیت</span><strong data-product-detail-stock>__PRODUCT_STOCK_HTML__</strong></div>
         </div>
         <div class="product-detail-purchase" data-product-detail-purchase hidden>
           <div class="product-detail-price"><span>قیمت انتخاب شما</span><strong data-product-detail-price>—</strong></div>
@@ -88,6 +92,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <div class="product-image-lightbox-thumbs" data-product-lightbox-thumbs></div>
     </div>
   </main>
+
+  <script type="application/json" data-product-initial is:inline set:html={'__PRODUCT_DATA_JSON__'}></script>
 
   <script>
     import "../../scripts/product-detail.ts";

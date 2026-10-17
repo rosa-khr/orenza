@@ -19,6 +19,9 @@ interface Props {
   pageType?: "website" | "article";
   noindex?: boolean;
   canonicalUrl?: string | null;
+  structuredDataCanonicalUrl?: string | null;
+  structuredDataTitle?: string | null;
+  structuredDataDescription?: string | null;
   robotsIndex?: boolean;
   robotsFollow?: boolean;
 }
@@ -31,6 +34,9 @@ const {
   pageType = "website",
   noindex = false,
   canonicalUrl = null,
+  structuredDataCanonicalUrl = null,
+  structuredDataTitle = null,
+  structuredDataDescription = null,
   robotsIndex = !noindex,
   robotsFollow = !noindex
 } = Astro.props;
@@ -46,6 +52,7 @@ const normalizeCanonical = (value: string | null | undefined) => {
   return url;
 };
 const canonical = normalizeCanonical(canonicalUrl);
+const structuredCanonical = structuredDataCanonicalUrl || canonical.toString();
 const robotsContent = `${robotsIndex ? "index" : "noindex"}, ${robotsFollow ? "follow" : "nofollow"}${robotsIndex ? ", max-image-preview:large" : ""}`;
 const socialImage = new URL("/images/orenza-social-preview.png", siteUrl);
 const fullTitle = `${title} | اورنزا`;
@@ -81,10 +88,10 @@ const schema = {
     },
     {
       "@type": "WebPage",
-      "@id": `${canonical}#webpage`,
-      name: fullTitle,
-      description,
-      url: canonical.toString(),
+      "@id": `${structuredCanonical}#webpage`,
+      name: structuredDataTitle || fullTitle,
+      description: structuredDataDescription || description,
+      url: structuredCanonical,
       inLanguage: "fa-IR",
       isPartOf: { "@id": `${siteUrl}#website` },
       about: { "@id": `${siteUrl}#organization` }

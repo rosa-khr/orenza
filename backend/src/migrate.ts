@@ -519,6 +519,7 @@ CREATE TABLE IF NOT EXISTS categories (
   slug varchar(180) NOT NULL UNIQUE,
   sort_order smallint NOT NULL DEFAULT 100,
   parent_category_id uuid REFERENCES categories(id) ON DELETE SET NULL,
+  icon_name varchar(40),
   description text,
   image_url text,
   mobile_image_url text,
@@ -912,6 +913,19 @@ ALTER TABLE categories ADD COLUMN IF NOT EXISTS mobile_image_url text;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_in_popular_footer boolean NOT NULL DEFAULT false;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS show_in_popular_searches boolean NOT NULL DEFAULT false;
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_category_id uuid;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS icon_name varchar(40);
+UPDATE categories SET icon_name = CASE slug
+  WHEN 'coffee' THEN 'bean'
+  WHEN 'coffee-blends' THEN 'bean'
+  WHEN 'instant-coffee' THEN 'coffee'
+  WHEN 'cafe-drinks' THEN 'coffee'
+  WHEN 'herbal-tea' THEN 'leaf'
+  WHEN 'order' THEN 'store'
+  WHEN 'wholesale' THEN 'boxes'
+  WHEN 'articles' THEN 'bookOpen'
+  ELSE icon_name
+END
+WHERE icon_name IS NULL;
 DO $$
 BEGIN
   IF NOT EXISTS (

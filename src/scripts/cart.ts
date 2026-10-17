@@ -674,7 +674,7 @@ export const initCart = () => {
     const title = document.createElement("strong");
     title.textContent = item.productTitle;
     const details = document.createElement("small");
-    details.textContent = [`رست ${item.roast}`, item.grind, item.device, item.grindSize, item.weight, `${numberFormatter.format(item.quantity)} عدد`].filter(Boolean).join(" · ");
+    details.textContent = [item.roast ? `رست ${item.roast}` : "", item.grind, item.device, item.grindSize, item.weight, `${numberFormatter.format(item.quantity)} عدد`].filter(Boolean).join(" · ");
     const itemPrice = document.createElement("b");
     itemPrice.textContent = `${numberFormatter.format(item.totalPrice)} تومان`;
     copy.append(title, details, itemPrice);

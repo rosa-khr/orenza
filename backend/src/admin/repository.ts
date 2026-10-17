@@ -127,7 +127,11 @@ export class AdminRepository {
     const item = toPublicRecord(row);
     if (resource === "orders") {
       const orderItems = await this.pool.query<Record<string, unknown>>(
-        "SELECT * FROM order_items WHERE order_id = $1 ORDER BY created_at",
+        `SELECT oi.*,p.product_type
+           FROM order_items oi
+           LEFT JOIN products p ON p.id=oi.product_id
+          WHERE oi.order_id=$1
+          ORDER BY oi.created_at`,
         [recordId]
       );
       item.items = orderItems.rows.map(toPublicRecord);

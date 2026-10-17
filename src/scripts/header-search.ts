@@ -20,7 +20,7 @@ const defaultItems: HeaderSearchItem[] = [
     label: "دسته‌بندی",
     title: "قهوه‌های اورنزا",
     subtitle: "عربیکا، روبوستا و ترکیب‌های پیشنهادی",
-    href: "/category/coffee-blends/",
+    href: "/category/coffee/",
     imageUrl: null
   },
   {

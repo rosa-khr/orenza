@@ -1292,6 +1292,11 @@ body:has(.mobile-home-top) .support-chat-toggle {
   transform: translateX(50%);
 }
 
+.category-subcategories {
+  display: none;
+  padding-top: calc(var(--header-height) + 32px);
+}
+
 .category-index-tile {
   min-height: 164px;
   grid-template-columns: 58px minmax(0, 1fr);
@@ -1376,6 +1381,11 @@ body:has(.mobile-home-top) .support-chat-toggle {
   background: #faf7f1;
 }
 
+.category-index-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
 @media (max-width: 699px) {
   .categories-index-page > header {
     margin-bottom: 22px;
@@ -1405,6 +1415,184 @@ body:has(.mobile-home-top) .support-chat-toggle {
 
   .category-index-tile.has-category-banner small {
     font-size: 8px;
+  }
+
+  .category-subcategories:not([hidden]) {
+    display: block;
+    overflow: hidden;
+    padding: calc(var(--header-height) + 10px) 12px 6px;
+    background: #f1f2f4;
+  }
+
+  .category-subcategories > header {
+    display: none;
+  }
+
+  .category-subcategories .categories-tile-grid {
+    display: flex;
+    width: 100%;
+    gap: 7px;
+    direction: rtl;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 1px 0 5px 18px;
+    scroll-padding-inline: 8px;
+    scroll-snap-type: inline proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 18px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 18px), transparent 100%);
+  }
+
+  .category-subcategories .categories-tile-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-subcategories .category-index-tile,
+  .category-subcategories .category-index-tile.has-category-banner {
+    display: grid;
+    min-width: 96px;
+    min-height: 68px;
+    flex: 0 0 clamp(96px, 27vw, 116px);
+    grid-template-columns: 1fr;
+    place-content: center;
+    justify-items: center;
+    gap: 4px;
+    overflow: hidden;
+    border: 1px solid #d8e2dc;
+    border-radius: 12px;
+    background: #f2f7f4;
+    padding: 7px;
+    color: #24272c;
+    box-shadow: 0 3px 9px rgba(23, 63, 48, .075);
+    scroll-snap-align: start;
+    isolation: auto;
+  }
+
+  .category-subcategories .category-index-tile::after,
+  .category-subcategories .category-index-tile.has-category-banner::after {
+    display: none;
+  }
+
+  .category-subcategories .category-index-mark,
+  .category-subcategories .category-index-media {
+    position: static;
+    z-index: auto;
+    display: grid;
+    width: 25px;
+    height: 25px;
+    place-items: center;
+    overflow: hidden;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #95622f;
+    font-size: 16px;
+  }
+
+  .category-subcategories .category-index-media img {
+    width: 25px;
+    height: 25px;
+    object-fit: cover;
+  }
+
+  .category-subcategories .category-index-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .category-subcategories .category-index-tile > div,
+  .category-subcategories .category-index-tile.has-category-banner > div {
+    position: static;
+    z-index: auto;
+    display: block;
+    width: auto;
+    padding: 0;
+    border: 0;
+    text-align: center;
+  }
+
+  .category-subcategories .category-index-tile strong,
+  .category-subcategories .category-index-tile.has-category-banner strong {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+    color: #24272c;
+    font-size: clamp(8px, 2.5vw, 10px);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .category-subcategories .category-index-tile small {
+    display: none;
+  }
+
+  .category-subcategories.is-subcategory-compact .category-subcategory-spacer {
+    display: block;
+    height: var(--category-subcategory-space, 74px);
+  }
+
+  .categories-tile-grid.is-category-subcategory-dock {
+    position: fixed;
+    z-index: 49;
+    top: calc(var(--header-height) + 3px);
+    right: 0;
+    left: 0;
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    gap: 6px;
+    direction: rtl;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(36, 75, 59, .14);
+    background: #f8faf9;
+    box-shadow: 0 8px 24px rgba(24, 54, 42, .12);
+    scrollbar-width: none;
+    mask-image: none;
+    -webkit-mask-image: none;
+    animation: mobile-category-dock-in 180ms ease both;
+  }
+
+  .categories-tile-grid.is-category-subcategory-dock::-webkit-scrollbar {
+    display: none;
+  }
+
+  .categories-tile-grid.is-category-subcategory-dock .category-index-tile,
+  .categories-tile-grid.is-category-subcategory-dock .category-index-tile.has-category-banner {
+    display: grid;
+    min-width: max-content;
+    min-height: 34px;
+    flex: 0 0 auto;
+    grid-template-columns: 1fr;
+    place-content: center;
+    border: 1px solid rgba(36, 75, 59, .16);
+    border-radius: 10px;
+    background: #f2f7f4;
+    padding: 6px 14px;
+    color: #24272c;
+    box-shadow: none;
+  }
+
+  .categories-tile-grid.is-category-subcategory-dock .category-index-media,
+  .categories-tile-grid.is-category-subcategory-dock .category-index-mark,
+  .categories-tile-grid.is-category-subcategory-dock .category-index-tile small {
+    display: none;
+  }
+
+  .categories-tile-grid.is-category-subcategory-dock .category-index-tile > div,
+  .categories-tile-grid.is-category-subcategory-dock .category-index-tile.has-category-banner > div {
+    position: static;
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .categories-tile-grid.is-category-subcategory-dock .category-index-tile strong,
+  .categories-tile-grid.is-category-subcategory-dock .category-index-tile.has-category-banner strong {
+    color: #24272c;
+    font-size: 9px;
   }
 }
 
@@ -1487,6 +1675,13 @@ body:has(.mobile-home-top) .support-chat-toggle {
   border-color: rgba(255, 255, 255, .34);
   background: rgba(244, 239, 229, .92);
   color: #244035;
+}
+
+@media (max-width: 699px) {
+  .category-hero {
+    min-height: clamp(300px, 72vw, 340px);
+    padding: 42px 18px 38px;
+  }
 }
 
 /* Keep the campaign hero dark inside the light storefront palette. */
@@ -2180,7 +2375,7 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 }
 
 /* Compact product selection cards across all product and category lists. */
-.category-products {
+.category-products:not(.category-subcategories) {
   padding: clamp(42px, 6vw, 72px) clamp(18px, 4vw, 56px);
 }
 
@@ -4551,7 +4746,7 @@ main:has(> .route-spacer) .weight-options button.is-selected {
 
 /* Dense two-column product catalogue on mobile. */
 @media (max-width: 699px) {
-  .category-products {
+  .category-products:not(.category-subcategories) {
     padding: 24px 8px 30px;
   }
 

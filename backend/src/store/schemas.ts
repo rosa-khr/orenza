@@ -92,6 +92,7 @@ export const categorySchema = z.object({
     .max(32767)
     .default(100),
   parentCategoryId: z.string().uuid().nullable().optional(),
+  iconName: z.enum(["bean", "coffee", "leaf", "package", "store", "shoppingBag", "boxes", "bookOpen", "cookie", "flame", "gift", "sparkles"]).nullable().optional(),
   description: optionalRichText.optional(),
   imageUrl: productImageUrl.optional(),
   mobileImageUrl: productImageUrl.optional(),
@@ -200,6 +201,10 @@ export const productSchema = z.object({
   if (!product.blendType) context.addIssue({ code: "custom", message: "ترکیب دانه برای محصول قهوه الزامی است.", path: ["blendType"] });
 }).transform((product) => ({
   ...product,
+  roastType: product.productType === "coffee" ? product.roastType : null,
+  coffeeType: product.productType === "coffee" ? product.coffeeType : null,
+  grindType: product.productType === "coffee" ? product.grindType : null,
+  blendType: product.productType === "coffee" ? product.blendType : null,
   availableWeightsGrams: product.saleType === "packaged" ? [product.packageWeightGrams] : product.availableWeightsGrams,
   slug: product.slug || productSlug(product.titleEn),
   imageUrl: product.productImageUrls[0] || product.imageUrl || null
@@ -440,9 +445,9 @@ export const orderItemInputSchema = z.object({
   productId: z.string().uuid(),
   weight: z.number().int().min(1).max(100000),
   quantity: z.number().int().min(1).max(50),
-  grindType: z.string().trim().min(2).max(80),
-  roastType: z.string().trim().min(2).max(80),
-  blendType: z.string().trim().min(2).max(120),
+  grindType: z.string().trim().max(80).default(""),
+  roastType: z.string().trim().max(80).default(""),
+  blendType: z.string().trim().max(120).default(""),
   brewMethod: z.string().trim().max(100).nullable().optional()
 });
 

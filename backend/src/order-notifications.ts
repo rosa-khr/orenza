@@ -6,6 +6,7 @@ import { readPaymentReceipt } from "./payment-receipts.js";
 
 type OrderItem = {
   productTitle: string;
+  productType?: "coffee" | "herbalTea" | "instantDrink" | "food" | "other" | null;
   weight: number;
   quantity: number;
   grindType: string;
@@ -77,9 +78,9 @@ const itemLabel = (item: OrderItem) =>
     item.productTitle,
     `${money.format(item.weight)} گرم`,
     `${money.format(item.quantity)} عدد`,
-    item.roastType ? `رُست ${item.roastType}` : "",
-    item.grindType,
-    item.brewMethod || ""
+    item.productType === "coffee" && item.roastType ? `رُست ${item.roastType}` : "",
+    item.productType === "coffee" ? item.grindType : "",
+    item.productType === "coffee" ? item.brewMethod || "" : ""
   ].filter(Boolean).join(" · ");
 
 const orderAdminUrl = (order: NewOrder) => {

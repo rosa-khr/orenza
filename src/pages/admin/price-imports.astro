@@ -8,10 +8,12 @@ import AdminShell from "../../components/admin/AdminShell.astro";
     <div class="admin-price-import-help">
       <strong>راهنمای تکمیل فایل</strong>
       <ol>
-        <li>شناسه و نام محصول از قبل در فایل قرار دارد؛ این دو ستون را تغییر نده.</li>
+        <li>محصولات در Sheetهای جداگانه و بر اساس دسته‌بندی مرتب شده‌اند؛ شناسه، دسته‌بندی و نام محصول را تغییر نده.</li>
         <li>قیمت خرید را به تومان در ستون <code>purchase_price_per_kg_toman</code> وارد یا اصلاح کن.</li>
         <li>در ستون <code>increase_type</code> یکی از این دو مقدار را بنویس: <code>percent</code> برای درصد یا <code>fixed</code> برای مبلغ ثابت.</li>
         <li>مقدار افزایش را در ستون <code>increase_value</code> وارد کن. اگر این دو ستون خالی باشند، فقط قیمت خرید به‌روزرسانی می‌شود و قیمت فروش قبلی حفظ می‌شود.</li>
+        <li>ستون‌های وضعیت با مقدار <code>TRUE</code> یا <code>FALSE</code> قابل مدیریت‌اند: موجودی، پرفروش‌ها، تخفیف‌ها، فوتر، جستجوهای پرطرفدار و انتشار.</li>
+        <li>فایل نمونه با فونت <strong>Vazirmatn</strong> و چیدمان راست‌به‌چپ ساخته می‌شود.</li>
       </ol>
       <a class="admin-secondary-action" href="/api/v1/admin/price-imports/sample" download>دانلود فایل نمونه Excel</a>
     </div>

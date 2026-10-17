@@ -8,13 +8,21 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   canonicalPath="/category-template/"
   keywords={["محصولات اورنزا"]}
 >
+  <section class="category-products category-subcategories" data-category-children hidden aria-labelledby="category-children-title">
+    <header>
+      <span>SUBCATEGORIES</span>
+      <h2 id="category-children-title">زیردسته‌های این مجموعه</h2>
+    </header>
+    <div class="categories-tile-grid" data-category-child-list></div>
+  </section>
+
   <section class="category-hero" data-category-hero>
     <img class="category-hero-banner" data-category-hero-banner hidden alt="" />
     <div>
       <p class="eyebrow">ORENZA COLLECTION</p>
       <h1 data-category-title>در حال دریافت دسته‌بندی…</h1>
       <p data-category-lead></p>
-      <a class="button button-primary site-outline-cta" href="#category-products-title"><span>مشاهده محصولات</span><span aria-hidden="true">←</span></a>
+      <a class="button button-primary site-outline-cta" data-category-primary-cta href="#category-products-title"><span>مشاهده محصولات</span><span aria-hidden="true">←</span></a>
     </div>
   </section>
 

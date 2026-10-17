@@ -16,6 +16,7 @@ import type { NewOrder } from "../order-notifications.js";
 import { saveProductImage } from "../product-images.js";
 import { removeHomepageBanner, saveHomepageBanner } from "../homepage-banners.js";
 import { persistLog } from "../logger.js";
+import { createPriceImportWorkbook, type PriceImportSampleProduct } from "./price-import-workbook.js";
 import * as XLSX from "xlsx";
 
 type AdminUser = { id: string; role: "customer" | "admin"; admin_role_id: string | null };
@@ -220,20 +221,26 @@ export const registerAdminRoutes = (
     if (["fixed", "amount", "مبلغ", "مبلغ ثابت", "ثابت"].includes(normalized)) return "fixed" as const;
     return null;
   };
-
+  const parseImportBoolean = (value: unknown): boolean | null | "invalid" => {
+    if (value === true || value === false) return value;
+    const normalized = normalizeImportText(value);
+    if (!normalized) return null;
+    if (["true", "1", "yes", "بله", "فعال", "موجود"].includes(normalized)) return true;
+    if (["false", "0", "no", "خیر", "غیرفعال", "ناموجود"].includes(normalized)) return false;
+    return "invalid";
+  };
   app.get("/api/v1/admin/price-imports/sample", async (request, reply) => {
     if (!(await requirePermission(request, reply, "price-imports"))) return;
-    const products = await pool.query<{ id: string; title_fa: string; purchase_price_per_kg: number }>(
-      "SELECT id,title_fa,purchase_price_per_kg FROM products WHERE deleted_at IS NULL ORDER BY sort_order ASC, title_fa ASC"
+    const products = await pool.query<PriceImportSampleProduct>(
+      `SELECT p.id,p.title_fa,p.purchase_price_per_kg,p.stock_status,
+              p.show_in_best_sellers,p.show_in_discounts,p.show_in_popular_footer,
+              p.show_in_popular_searches,p.is_active,c.title AS category_title,c.slug AS category_slug
+         FROM products p
+         LEFT JOIN categories c ON c.id=p.category_id
+        WHERE p.deleted_at IS NULL
+        ORDER BY c.sort_order ASC NULLS LAST,c.title ASC NULLS LAST,p.sort_order ASC,p.title_fa ASC`
     );
-    const sheet = XLSX.utils.aoa_to_sheet([
-      ["product_id", "product", "purchase_price_per_kg_toman", "increase_type", "increase_value"],
-      ...products.rows.map((product) => [product.id, product.title_fa, Number(product.purchase_price_per_kg), "", ""])
-    ]);
-    sheet["!cols"] = [{ wch: 38 }, { wch: 28 }, { wch: 25 }, { wch: 18 }, { wch: 18 }];
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, sheet, "قیمت خرید");
-    const file = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const file = createPriceImportWorkbook(products.rows);
     return reply
       .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .header("Content-Disposition", 'attachment; filename="orenza-price-accounting-sample.xlsx"')
@@ -289,25 +296,61 @@ export const registerAdminRoutes = (
     const buffer = await file.toBuffer();
     if (buffer.length > 5 * 1024 * 1024) return reply.code(413).send({ error: "حجم فایل نباید بیشتر از ۵ مگابایت باشد." });
 
-    let rows: unknown[][];
+    type ImportColumnIndexes = {
+      productId: number;
+      product: number;
+      price: number;
+      increaseType: number;
+      increaseValue: number;
+      isInStock: number;
+      showInBestSellers: number;
+      showInDiscounts: number;
+      showInPopularFooter: number;
+      showInPopularSearches: number;
+      isActive: number;
+    };
+    type ImportedPriceRow = {
+      cells: unknown[];
+      sheetName: string;
+      sourceRowNumber: number;
+      columns: ImportColumnIndexes;
+    };
+    let dataRows: ImportedPriceRow[] = [];
     try {
       const workbook = XLSX.read(buffer, { type: "buffer" });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]!];
-      if (!firstSheet) throw new Error();
-      rows = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, raw: true, defval: "" });
+      for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) continue;
+        const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: true, defval: "" });
+        if (!rows.length || !rows.some((row) => row.some((cell) => String(cell ?? "").trim()))) continue;
+        const headers = (rows[0] || []).map(normalizeImportText);
+        const columns: ImportColumnIndexes = {
+          productId: headers.findIndex((header) => ["product_id", "شناسه محصول", "id"].includes(header)),
+          product: headers.findIndex((header) => ["product", "محصول", "نام محصول", "عنوان محصول"].includes(header)),
+          price: headers.findIndex((header) => ["purchase_price_per_kg", "purchase_price_per_kg_toman", "purchase price per kg", "قیمت خرید", "قیمت خرید هر کیلو", "قیمت"].includes(header)),
+          increaseType: headers.findIndex((header) => ["increase_type", "increase mode", "نوع افزایش", "نوع سود"].includes(header)),
+          increaseValue: headers.findIndex((header) => ["increase_value", "increase amount", "markup_percent", "fixed_increase_toman", "درصد سود", "مبلغ افزایش", "مقدار افزایش"].includes(header)),
+          isInStock: headers.findIndex((header) => ["is_in_stock", "in_stock", "موجود", "امکان تأمین"].includes(header)),
+          showInBestSellers: headers.findIndex((header) => ["show_in_best_sellers", "پرفروش", "نمایش در پرفروش‌ترین‌ها"].includes(header)),
+          showInDiscounts: headers.findIndex((header) => ["show_in_discounts", "تخفیف‌دار", "نمایش در محصولات تخفیف‌دار"].includes(header)),
+          showInPopularFooter: headers.findIndex((header) => ["show_in_popular_footer", "نمایش در فوتر", "نمایش در دسترسی سریع فوتر"].includes(header)),
+          showInPopularSearches: headers.findIndex((header) => ["show_in_popular_searches", "نمایش در جستجوهای پرطرفدار"].includes(header)),
+          isActive: headers.findIndex((header) => ["is_active", "فعال", "وضعیت انتشار"].includes(header))
+        };
+        const populatedRows = rows.slice(1)
+          .map((cells, index) => ({ cells, sheetName, sourceRowNumber: index + 2, columns }))
+          .filter(({ cells }) => cells.some((cell) => String(cell ?? "").trim()));
+        if (!populatedRows.length) continue;
+        if ((columns.productId < 0 && columns.product < 0) || columns.price < 0) {
+          return reply.code(422).send({
+            error: `سرستون‌های Sheet «${sheetName}» باید product یا product_id و قیمت خرید را داشته باشند. فایل نمونه را دانلود کنید.`
+          });
+        }
+        dataRows.push(...populatedRows);
+      }
     } catch {
       return reply.code(422).send({ error: "خواندن فایل Excel انجام نشد." });
     }
-    const headers = (rows[0] || []).map(normalizeImportText);
-    const productIdIndex = headers.findIndex((header) => ["product_id", "شناسه محصول", "id"].includes(header));
-    const productIndex = headers.findIndex((header) => ["product", "محصول", "نام محصول", "عنوان محصول"].includes(header));
-    const priceIndex = headers.findIndex((header) => ["purchase_price_per_kg", "purchase_price_per_kg_toman", "purchase price per kg", "قیمت خرید", "قیمت خرید هر کیلو", "قیمت"].includes(header));
-    const increaseTypeIndex = headers.findIndex((header) => ["increase_type", "increase mode", "نوع افزایش", "نوع سود"].includes(header));
-    const increaseValueIndex = headers.findIndex((header) => ["increase_value", "increase amount", "markup_percent", "fixed_increase_toman", "درصد سود", "مبلغ افزایش", "مقدار افزایش"].includes(header));
-    if ((productIdIndex < 0 && productIndex < 0) || priceIndex < 0) {
-      return reply.code(422).send({ error: "سرستون‌های فایل باید product یا product_id و قیمت خرید را داشته باشند. فایل نمونه را دانلود کنید." });
-    }
-    const dataRows = rows.slice(1).filter((row) => row.some((cell) => String(cell ?? "").trim()));
     if (!dataRows.length) return reply.code(422).send({ error: "فایل هیچ ردیف قیمتی ندارد." });
     if (dataRows.length > 1000) return reply.code(422).send({ error: "هر فایل حداکثر می‌تواند ۱۰۰۰ محصول داشته باشد." });
 
@@ -320,34 +363,66 @@ export const registerAdminRoutes = (
         [file.filename, dataRows.length, access.user.id, buffer, file.mimetype || "application/octet-stream", buffer.length]
       );
       const jobId = job.rows[0]!.id;
-      const updates: { rowNumber: number; identifier: string; productId: string; productTitle: string; previous: number; next: number; previousSale: number; sale: number; increaseType: "percent" | "fixed" | null; increaseValue: number | null }[] = [];
+      const updates: {
+        rowNumber: number;
+        identifier: string;
+        productId: string;
+        productTitle: string;
+        previous: number;
+        next: number;
+        previousSale: number;
+        sale: number;
+        increaseType: "percent" | "fixed" | null;
+        increaseValue: number | null;
+        isInStock: boolean | null;
+        showInBestSellers: boolean | null;
+        showInDiscounts: boolean | null;
+        showInPopularFooter: boolean | null;
+        showInPopularSearches: boolean | null;
+        isActive: boolean | null;
+      }[] = [];
       const failures: { rowNumber: number; identifier: string; error: string }[] = [];
       for (let index = 0; index < dataRows.length; index += 1) {
-        const row = dataRows[index]!;
-        const identifier = String((productIdIndex >= 0 ? row[productIdIndex] : "") || (productIndex >= 0 ? row[productIndex] : "") || "").trim();
-        const price = parseImportPrice(row[priceIndex]);
-        const increaseType = increaseTypeIndex >= 0 ? parseIncreaseType(row[increaseTypeIndex]) : null;
-        const increaseValue = increaseValueIndex >= 0 ? parseIncreaseValue(row[increaseValueIndex]) : null;
-        if (!identifier) { failures.push({ rowNumber: index + 2, identifier: "", error: "محصول مشخص نشده است." }); continue; }
-        if (price == null) { failures.push({ rowNumber: index + 2, identifier, error: "قیمت خرید باید یک عدد صحیح معتبر باشد." }); continue; }
+        const importedRow = dataRows[index]!;
+        const { cells: row, columns } = importedRow;
+        const rowNumber = index + 2;
+        const source = `Sheet «${importedRow.sheetName}»، ردیف ${importedRow.sourceRowNumber}`;
+        const identifier = String((columns.productId >= 0 ? row[columns.productId] : "") || (columns.product >= 0 ? row[columns.product] : "") || "").trim();
+        const price = parseImportPrice(row[columns.price]);
+        const increaseType = columns.increaseType >= 0 ? parseIncreaseType(row[columns.increaseType]) : null;
+        const increaseValue = columns.increaseValue >= 0 ? parseIncreaseValue(row[columns.increaseValue]) : null;
+        const flags = {
+          isInStock: columns.isInStock >= 0 ? parseImportBoolean(row[columns.isInStock]) : null,
+          showInBestSellers: columns.showInBestSellers >= 0 ? parseImportBoolean(row[columns.showInBestSellers]) : null,
+          showInDiscounts: columns.showInDiscounts >= 0 ? parseImportBoolean(row[columns.showInDiscounts]) : null,
+          showInPopularFooter: columns.showInPopularFooter >= 0 ? parseImportBoolean(row[columns.showInPopularFooter]) : null,
+          showInPopularSearches: columns.showInPopularSearches >= 0 ? parseImportBoolean(row[columns.showInPopularSearches]) : null,
+          isActive: columns.isActive >= 0 ? parseImportBoolean(row[columns.isActive]) : null
+        };
+        if (!identifier) { failures.push({ rowNumber, identifier: "", error: `${source}: محصول مشخص نشده است.` }); continue; }
+        if (price == null) { failures.push({ rowNumber, identifier, error: `${source}: قیمت خرید باید یک عدد صحیح معتبر باشد.` }); continue; }
+        if (Object.values(flags).includes("invalid")) {
+          failures.push({ rowNumber, identifier, error: `${source}: مقدار ستون‌های وضعیت فقط باید TRUE یا FALSE باشد.` });
+          continue;
+        }
         const product = await client.query<{ id: string; purchase_price_per_kg: number; sale_price_per_kg: number; title_fa: string }>(
           `SELECT id,purchase_price_per_kg,sale_price_per_kg,title_fa FROM products
            WHERE id::text=$1 OR lower(title_fa)=lower($1) OR lower(title_en)=lower($1) LIMIT 2`, [identifier]
         );
         if (product.rows.length !== 1) {
-          failures.push({ rowNumber: index + 2, identifier, error: product.rows.length ? "این نام محصول تکراری است." : "محصول پیدا نشد." });
+          failures.push({ rowNumber, identifier, error: `${source}: ${product.rows.length ? "این نام محصول تکراری است." : "محصول پیدا نشد."}` });
           continue;
         }
         const hasIncrease = increaseType !== null || increaseValue !== null;
         const safeIncreaseType = increaseType || "fixed";
         const safeIncreaseValue = increaseValue || 0;
-        if (hasIncrease && safeIncreaseType === "percent" && safeIncreaseValue > 1000) { failures.push({ rowNumber: index + 2, identifier, error: "مقدار درصد افزایش معتبر نیست." }); continue; }
+        if (hasIncrease && safeIncreaseType === "percent" && safeIncreaseValue > 1000) { failures.push({ rowNumber, identifier, error: `${source}: مقدار درصد افزایش معتبر نیست.` }); continue; }
         const sale = hasIncrease
           ? (safeIncreaseType === "percent" ? Math.round(price * (1 + safeIncreaseValue / 100)) : Math.round(price + safeIncreaseValue))
           : Number(product.rows[0]!.sale_price_per_kg);
-        if (!Number.isSafeInteger(sale) || sale > 10_000_000_000) { failures.push({ rowNumber: index + 2, identifier, error: "قیمت فروش نهایی معتبر نیست." }); continue; }
+        if (!Number.isSafeInteger(sale) || sale > 10_000_000_000) { failures.push({ rowNumber, identifier, error: `${source}: قیمت فروش نهایی معتبر نیست.` }); continue; }
         updates.push({
-          rowNumber: index + 2,
+          rowNumber,
           identifier,
           productId: product.rows[0]!.id,
           productTitle: product.rows[0]!.title_fa,
@@ -356,14 +431,43 @@ export const registerAdminRoutes = (
           previousSale: Number(product.rows[0]!.sale_price_per_kg),
           sale,
           increaseType: hasIncrease ? safeIncreaseType : null,
-          increaseValue: hasIncrease ? safeIncreaseValue : null
+          increaseValue: hasIncrease ? safeIncreaseValue : null,
+          isInStock: flags.isInStock as boolean | null,
+          showInBestSellers: flags.showInBestSellers as boolean | null,
+          showInDiscounts: flags.showInDiscounts as boolean | null,
+          showInPopularFooter: flags.showInPopularFooter as boolean | null,
+          showInPopularSearches: flags.showInPopularSearches as boolean | null,
+          isActive: flags.isActive as boolean | null
         });
       }
       for (const item of failures) {
         await client.query(`INSERT INTO price_import_items(job_id,row_number,product_identifier,status,error_message) VALUES($1,$2,$3,'failed',$4)`, [jobId, item.rowNumber, item.identifier, item.error]);
       }
       for (const item of updates) {
-        await client.query("UPDATE products SET purchase_price_per_kg=$1,sale_price_per_kg=$2,updated_at=now() WHERE id=$3", [item.next, item.sale, item.productId]);
+        await client.query(
+          `UPDATE products
+              SET purchase_price_per_kg=$1,
+                  sale_price_per_kg=$2,
+                  stock_status=COALESCE($3,stock_status),
+                  show_in_best_sellers=COALESCE($4,show_in_best_sellers),
+                  show_in_discounts=COALESCE($5,show_in_discounts),
+                  show_in_popular_footer=COALESCE($6,show_in_popular_footer),
+                  show_in_popular_searches=COALESCE($7,show_in_popular_searches),
+                  is_active=COALESCE($8,is_active),
+                  updated_at=now()
+            WHERE id=$9`,
+          [
+            item.next,
+            item.sale,
+            item.isInStock === null ? null : item.isInStock ? "inStock" : "outOfStock",
+            item.showInBestSellers,
+            item.showInDiscounts,
+            item.showInPopularFooter,
+            item.showInPopularSearches,
+            item.isActive,
+            item.productId
+          ]
+        );
         await client.query(
           `INSERT INTO price_import_items(
              job_id,row_number,product_identifier,product_id,product_title,previous_purchase_price,new_purchase_price,
@@ -858,9 +962,10 @@ ${ai.instructions}
       createdAt: item.createdAt instanceof Date ? item.createdAt : String(item.createdAt || new Date().toISOString()),
       items: (item.items || []).map((orderItem) => ({
         productTitle: String(orderItem.productTitle || "قهوه اورنزا"),
+        productType: orderItem.productType ? String(orderItem.productType) as "coffee" | "herbalTea" | "instantDrink" | "food" | "other" : null,
         weight: Number(orderItem.weight || 0),
         quantity: Number(orderItem.quantity || 0),
-        grindType: String(orderItem.grindType || "دان"),
+        grindType: String(orderItem.grindType || ""),
         roastType: String(orderItem.roastType || ""),
         blendType: String(orderItem.blendType || ""),
         brewMethod: orderItem.brewMethod ? String(orderItem.brewMethod) : null,

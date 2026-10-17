@@ -2038,14 +2038,12 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
     if (config.key !== "products") return;
     const productType = form.elements.namedItem("productType") as HTMLSelectElement | null;
     const isCoffee = !productType?.value || productType.value === "coffee";
-    (["roastType", "coffeeType", "grindType"] as const).forEach((key) => {
+    (["roastType", "coffeeType", "grindType", "blendType"] as const).forEach((key) => {
       const field = form.querySelector<HTMLElement>(`[data-admin-field="${key}"]`);
-      const control = form.elements.namedItem(key) as HTMLSelectElement | null;
+      const control = form.elements.namedItem(key) as HTMLInputElement | HTMLSelectElement | null;
       if (field) field.hidden = !isCoffee;
       if (!isCoffee && control) control.value = "";
     });
-    const blendLabel = form.querySelector<HTMLElement>('[data-admin-field="blendType"] > span');
-    if (blendLabel) blendLabel.textContent = isCoffee ? "ترکیب دانه" : "ترکیب یا مشخصات محصول";
   };
   const updateProductProfit = (source: "purchase" | "sale" | "markup" | "discount" | "refresh" = "refresh") => {
     if (config.key !== "products") return;
@@ -2263,7 +2261,7 @@ const renderOrderItems = (form: HTMLFormElement, items: unknown) => {
   root.innerHTML = `<h2>اقلام سفارش</h2>${items.map((item: Record<string, unknown>) => `
     <article>
       <strong>${item.productTitle || "قهوه اورنزا"}</strong>
-      <span>${item.weight} · ${item.quantity} عدد · ${item.grindType || "دان"}</span>
+      <span>${[`${item.weight} گرم`, `${item.quantity} عدد`, item.productType === "coffee" ? item.grindType || "دان" : ""].filter(Boolean).join(" · ")}</span>
       <b>${money.format(Number(item.totalPrice || 0))} تومان</b>
     </article>`).join("")}`;
 };
@@ -3328,7 +3326,7 @@ const initInvoice = async () => {
         <td>${orderItem.productTitle || "قهوه اورنزا"}</td>
         <td>${faNumber.format(Number(orderItem.weight || 0))} گرم</td>
         <td>${faNumber.format(Number(orderItem.quantity || 0))}</td>
-        <td>${orderItem.grindType || "دان"}</td>
+        <td>${orderItem.productType === "coffee" ? orderItem.grindType || "دان" : "—"}</td>
         <td>${money.format(Number(orderItem.unitPrice || 0))}</td>
         <td>${money.format(Number(orderItem.totalPrice || 0))}</td>
       </tr>`).join("");

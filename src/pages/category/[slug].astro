@@ -19,13 +19,21 @@ const isDirectProductCategory = category.slug === "cafe-drinks" || category.slug
   canonicalPath={`/category/${category.slug}/`}
   keywords={[...category.keywords]}
 >
+  <section class="category-products category-subcategories" data-category-children hidden aria-labelledby="category-children-title">
+    <header>
+      <span>SUBCATEGORIES</span>
+      <h2 id="category-children-title">زیردسته‌های این مجموعه</h2>
+    </header>
+    <div class="categories-tile-grid" data-category-child-list></div>
+  </section>
+
   <section class="category-hero" data-category-hero data-category-slug={category.slug}>
     <img class="category-hero-banner" data-category-hero-banner hidden alt={`بنر ${category.title}`} />
     <div>
       <p class="eyebrow">{category.eyebrow}</p>
       <h1 data-category-title>{category.title}</h1>
       <p data-category-lead>{category.lead}</p>
-      <a class="button button-primary site-outline-cta" href={isDirectProductCategory ? "#category-products-title" : "/order/"}>
+      <a class="button button-primary site-outline-cta" data-category-primary-cta href={isDirectProductCategory ? "#category-products-title" : "#category-children-title"}>
         <span>{isDirectProductCategory ? "انتخاب محصول" : "انتخاب و سفارش"}</span><span aria-hidden="true">←</span>
       </a>
     </div>
