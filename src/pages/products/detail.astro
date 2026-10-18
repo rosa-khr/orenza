@@ -16,6 +16,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <main class="product-detail-page" data-product-detail>
     <nav class="site-breadcrumb" aria-label="مسیر صفحه" data-breadcrumb="product">
       <ol set:html={'__PRODUCT_BREADCRUMB_HTML__'}></ol>
+      <Fragment set:html={'__PRODUCT_BREADCRUMB_BACK_HTML__'} />
     </nav>
 
     <section class="product-detail-stage">

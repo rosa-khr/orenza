@@ -63,6 +63,26 @@ const settingsLinks = [
   { key: "site-settings-invoice", group: "invoice", href: "/admin/site-settings/#settings-invoice", label: "فاکتور" }
 ];
 const resourceByKey = new Map(adminResources.filter((resource) => !resource.navHidden).map((resource) => [resource.key, resource]));
+const currentAdminHref = `${Astro.url.pathname}${Astro.url.search}`;
+const currentResource = resourceByKey.get(active);
+const isResourceAction = /^\/admin\/[^/]+\/(?:add|edit|view)\/?$/.test(Astro.url.pathname);
+const adminParentHref = active === "dashboard"
+  ? "/"
+  : isResourceAction && currentResource
+    ? `/admin/${active}/list/`
+    : "/admin/";
+const adminParentLabel = active === "dashboard"
+  ? "فروشگاه"
+  : isResourceAction && currentResource
+    ? currentResource.title
+    : "داشبورد";
+const adminBreadcrumbs = active === "dashboard"
+  ? [{ label: "فروشگاه", href: "/" }, { label: "داشبورد مدیریت", href: "/admin/" }]
+  : [
+      { label: "داشبورد مدیریت", href: "/admin/" },
+      ...(isResourceAction && currentResource ? [{ label: currentResource.title, href: adminParentHref }] : []),
+      { label: actionLabel ?? title, href: currentAdminHref }
+    ];
 ---
 
 <!doctype html>
@@ -167,6 +187,20 @@ const resourceByKey = new Map(adminResources.filter((resource) => !resource.navH
           </div>
         </header>
         <section class="admin-content">
+          <nav class="admin-breadcrumb" aria-label="مسیر صفحه مدیریت">
+            <ol>
+              {adminBreadcrumbs.map((item, index) => (
+                <li>
+                  <a href={item.href} aria-current={index === adminBreadcrumbs.length - 1 ? "page" : undefined}>{item.label}</a>
+                  {index < adminBreadcrumbs.length - 1 && <span aria-hidden="true">/</span>}
+                </li>
+              ))}
+            </ol>
+            <a class="admin-breadcrumb-back" href={adminParentHref}>
+              <span aria-hidden="true">→</span>
+              بازگشت به {adminParentLabel}
+            </a>
+          </nav>
           <header class="admin-page-heading">
             <div>
               <span>ORENZA MANAGEMENT</span>

@@ -15,7 +15,11 @@ body,
 
 /* Linked page hierarchy for category, product, article and tag routes. */
 .site-breadcrumb {
+  display: flex;
   width: min(100%, 1240px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   margin-inline: auto;
   color: #7b7f87;
   font-size: 12px;
@@ -31,6 +35,28 @@ body,
   list-style: none;
   scrollbar-width: none;
   white-space: nowrap;
+}
+
+.site-breadcrumb__back {
+  display: inline-flex;
+  min-height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(45, 86, 68, .2);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, .72);
+  color: var(--site-support-color, #244035);
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.site-breadcrumb__back:hover,
+.site-breadcrumb__back:focus-visible {
+  border-color: rgba(45, 86, 68, .45);
+  background: #f2f6f3;
 }
 
 .site-breadcrumb ol::-webkit-scrollbar { display: none; }
@@ -62,6 +88,30 @@ body,
   max-width: none;
   padding: calc(var(--header-height) + 16px) max(5vw, calc((100% - 1240px) / 2)) 14px;
   background: #fff;
+}
+
+/* Pages that previously reserved their own fixed-header space now follow the
+   shared breadcrumb row, so that space must only be applied once. */
+.layout-page-breadcrumb + .route-spacer { display: none; }
+.layout-page-breadcrumb + .inner-hero {
+  min-height: 520px;
+  padding-top: 58px;
+}
+.layout-page-breadcrumb + .wholesale-hero {
+  min-height: 600px;
+  padding-top: 54px;
+}
+.layout-page-breadcrumb + .auth-page { padding-top: 42px; }
+.layout-page-breadcrumb + .account-page { padding-top: 32px; }
+.layout-page-breadcrumb + .terms-page { padding-top: 42px; }
+.layout-page-breadcrumb + .not-found { padding-top: 48px; }
+.layout-page-breadcrumb + .order-success-page {
+  min-height: calc(100svh - var(--header-height) - 54px);
+  padding-top: 44px;
+}
+.layout-page-breadcrumb + .payment-result-page {
+  min-height: calc(100svh - var(--header-height) - 54px);
+  padding: 44px 20px 70px;
 }
 
 .category-page-breadcrumb ~ .category-subcategories:not([hidden]) {
@@ -129,6 +179,12 @@ body:has(.mobile-home-top) .support-chat-toggle {
     font-size: 10px;
   }
 
+  .site-breadcrumb__back {
+    min-height: 30px;
+    padding: 5px 9px;
+    font-size: 9px;
+  }
+
   .site-breadcrumb ol,
   .site-breadcrumb li {
     gap: 8px;
@@ -136,6 +192,25 @@ body:has(.mobile-home-top) .support-chat-toggle {
 
   .category-page-breadcrumb {
     padding: calc(var(--header-height) + 12px) 14px 11px;
+  }
+
+  .layout-page-breadcrumb + .inner-hero {
+    min-height: 430px;
+    padding-top: 42px;
+  }
+
+  .layout-page-breadcrumb + .wholesale-hero {
+    min-height: auto;
+    padding-top: 38px;
+  }
+
+  .layout-page-breadcrumb + .auth-page,
+  .layout-page-breadcrumb + .account-page,
+  .layout-page-breadcrumb + .terms-page,
+  .layout-page-breadcrumb + .not-found,
+  .layout-page-breadcrumb + .order-success-page,
+  .layout-page-breadcrumb + .payment-result-page {
+    padding-top: 30px;
   }
 
   .support-chat {

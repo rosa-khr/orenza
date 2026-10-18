@@ -9,6 +9,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   canonicalPath="/order-success/"
   keywords={["ثبت سفارش اورنزا", "پیگیری سفارش قهوه"]}
   noindex
+  breadcrumbItems={[
+    { label: "خانه", href: "/" },
+    { label: "سفارش اختصاصی", href: "/order/" },
+    { label: "ثبت سفارش", href: "/order-success/" }
+  ]}
 >
   <div class="order-success-page">
     <section class="order-success-card" aria-labelledby="order-success-title">

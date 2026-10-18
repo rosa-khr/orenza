@@ -7,6 +7,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   description="نتیجه پرداخت سفارش قهوه اورنزا و ادامه پیگیری آماده‌سازی سفارش."
   canonicalPath="/payment-result/"
   keywords={["نتیجه پرداخت اورنزا", "پرداخت سفارش قهوه", "زرین پال اورنزا"]}
+  breadcrumbItems={[
+    { label: "خانه", href: "/" },
+    { label: "سفارش اختصاصی", href: "/order/" },
+    { label: "نتیجه پرداخت", href: "/payment-result/" }
+  ]}
 >
   <main class="payment-result-page" data-payment-result>
     <section class="payment-result-card">

@@ -10,6 +10,7 @@ import Header from "../components/Header.astro";
 import MobileBottomNav from "../components/MobileBottomNav.astro";
 import PreFooter from "../components/PreFooter.astro";
 import SupportChat from "../components/SupportChat.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
 
 interface Props {
   title: string;
@@ -24,6 +25,7 @@ interface Props {
   structuredDataDescription?: string | null;
   robotsIndex?: boolean;
   robotsFollow?: boolean;
+  breadcrumbItems?: { label: string; href: string }[];
 }
 
 const {
@@ -38,7 +40,8 @@ const {
   structuredDataTitle = null,
   structuredDataDescription = null,
   robotsIndex = !noindex,
-  robotsFollow = !noindex
+  robotsFollow = !noindex,
+  breadcrumbItems = []
 } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL(Astro.url.origin);
@@ -140,7 +143,17 @@ const schema = {
   </head>
   <body>
     <Header />
-    <main id="top"><slot /></main>
+    <main id="top">
+      {breadcrumbItems.length > 0 && (
+        <Breadcrumbs
+          id="page"
+          className="category-page-breadcrumb layout-page-breadcrumb"
+          items={breadcrumbItems}
+          structuredData={robotsIndex}
+        />
+      )}
+      <slot />
+    </main>
     <div class="footer-layer-transition" data-footer-transition>
       <PreFooter />
       <Footer />

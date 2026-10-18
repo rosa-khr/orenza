@@ -13,6 +13,7 @@ interface Props {
 
 const { items, id, className = "", structuredData = true } = Astro.props;
 const siteUrl = Astro.site ?? new URL(Astro.url.origin);
+const parentItem = items.length > 1 ? items[items.length - 2] : items[0];
 const schema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -34,5 +35,11 @@ const schema = {
       </li>
     ))}
   </ol>
+  {parentItem && (
+    <a class="site-breadcrumb__back" href={parentItem.href} data-breadcrumb-back>
+      <span aria-hidden="true">→</span>
+      <span data-breadcrumb-back-label>بازگشت به {parentItem.label}</span>
+    </a>
+  )}
 </nav>
 {structuredData && <script type="application/ld+json" is:inline data-breadcrumb-schema={id} set:html={JSON.stringify(schema)}></script>}

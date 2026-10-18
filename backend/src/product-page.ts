@@ -12,6 +12,7 @@ const placeholders = {
   titleEnHtml: "__PRODUCT_TITLE_EN_HTML__",
   descriptionHtml: "__PRODUCT_DESCRIPTION_HTML__",
   breadcrumbHtml: "__PRODUCT_BREADCRUMB_HTML__",
+  breadcrumbBackHtml: "__PRODUCT_BREADCRUMB_BACK_HTML__",
   blendHtml: "__PRODUCT_BLEND_HTML__",
   roastHtml: "__PRODUCT_ROAST_HTML__",
   coffeeSpecStyleHtml: "__PRODUCT_COFFEE_SPEC_STYLE_HTML__",
@@ -134,6 +135,10 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
     const separator = index < breadcrumbItems.length - 1 ? '<span aria-hidden="true">/</span>' : "";
     return `<li><a href="${escapeHtmlAttribute(item.item)}"${current}>${escapeHtmlAttribute(item.name)}</a>${separator}</li>`;
   }).join("");
+  const breadcrumbParent = breadcrumbItems[breadcrumbItems.length - 2] || breadcrumbItems[0];
+  const breadcrumbBackHtml = breadcrumbParent
+    ? `<a class="site-breadcrumb__back" href="${escapeHtmlAttribute(breadcrumbParent.item)}" data-breadcrumb-back><span aria-hidden="true">→</span><span data-breadcrumb-back-label>بازگشت به ${escapeHtmlAttribute(breadcrumbParent.name)}</span></a>`
+    : "";
   const values = new Map<string, string>([
     [htmlCanonicalPlaceholder, escapeHtmlAttribute(canonicalUrl)],
     [jsonCanonicalPlaceholder, escapeJsonStringContent(canonicalUrl)],
@@ -145,6 +150,7 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
     [placeholders.titleEnHtml, escapeHtmlAttribute(product.titleEn)],
     [placeholders.descriptionHtml, escapeHtmlAttribute(product.description)],
     [placeholders.breadcrumbHtml, breadcrumbHtml],
+    [placeholders.breadcrumbBackHtml, breadcrumbBackHtml],
     [placeholders.blendHtml, escapeHtmlAttribute(String(product.blendType || "محصول اورنزا"))],
     [placeholders.roastHtml, escapeHtmlAttribute(product.roastType ? roastLabels[product.roastType] : "—")],
     [placeholders.coffeeSpecStyleHtml, product.productType === "coffee" ? "" : "display:none"],

@@ -168,6 +168,14 @@ a { color: inherit; text-decoration: none; }
 .admin-profile-menu > div > :last-child { border-bottom: 0; color: var(--admin-red); }
 .admin-menu-button { display: none; border: 1px solid var(--admin-line); background: var(--admin-paper); padding: 7px; }
 .admin-content { display: grid; gap: 20px; padding: 25px; }
+.admin-breadcrumb { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--admin-line); padding-bottom: 12px; color: var(--admin-muted); font-size: 10px; }
+.admin-breadcrumb ol { display: flex; min-width: 0; align-items: center; gap: 8px; overflow-x: auto; margin: 0; padding: 0; list-style: none; white-space: nowrap; scrollbar-width: none; }
+.admin-breadcrumb ol::-webkit-scrollbar { display: none; }
+.admin-breadcrumb li { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.admin-breadcrumb a { color: inherit; text-decoration: none; }
+.admin-breadcrumb a[aria-current="page"] { color: var(--admin-green); font-weight: 800; }
+.admin-breadcrumb-back { display: inline-flex; min-height: 32px; flex: 0 0 auto; align-items: center; gap: 6px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fff; padding: 6px 10px; color: var(--admin-green) !important; font-weight: 800; }
+.admin-breadcrumb-back:hover { border-color: #af9b7c; background: #faf6ef; }
 .admin-content:has(.admin-catalog-form-layout) { max-width: none; }
 .admin-page-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .admin-page-heading span { color: #87632f; font-family: Dana, Tahoma, sans-serif; font-size: 10px; letter-spacing: 1.4px; }
@@ -1530,6 +1538,12 @@ a { color: inherit; text-decoration: none; }
 .admin-login-body { min-height: 100vh; background: radial-gradient(circle at 14% 22%, rgba(201,155,83,.13), transparent 30%), #0e1713; color: var(--admin-ink); }
 .admin-login { position: relative; display: grid; min-height: 100vh; place-items: center; padding: 80px 20px 30px; }
 .admin-login-brand { position: absolute; top: 28px; right: 30px; display: flex; align-items: center; gap: 10px; color: #e2c58d; font-family: Dana,Tahoma,sans-serif; letter-spacing: 2px; }
+.admin-login-breadcrumb { position: absolute; top: 25px; left: 30px; display: flex; align-items: center; gap: 18px; color: #bcb1a0; font-size: 9px; }
+.admin-login-breadcrumb ol { display: flex; align-items: center; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.admin-login-breadcrumb li { display: inline-flex; align-items: center; gap: 7px; }
+.admin-login-breadcrumb a { color: inherit; text-decoration: none; }
+.admin-login-breadcrumb a[aria-current="page"] { color: #e2c58d; font-weight: 800; }
+.admin-login-breadcrumb > a { border: 1px solid rgba(226,197,141,.28); border-radius: 999px; padding: 6px 10px; color: #e2c58d; }
 .admin-login-atmosphere { position: absolute; top: 50%; left: clamp(30px, 11vw, 180px); display: grid; gap: 12px; max-width: 300px; transform: translateY(-50%); color: #eee4d2; direction: rtl; }
 .admin-login-atmosphere span { color: #c99b53; font-size: 10px; letter-spacing: 2px; }
 .admin-login-atmosphere strong { font-size: clamp(25px, 3vw, 42px); font-weight: 500; line-height: 1.5; }
@@ -1546,7 +1560,8 @@ a { color: inherit; text-decoration: none; }
 .admin-login form > button:hover:not(:disabled) { background: #355343; transform: translateY(-1px); }
 
 @media (max-width: 760px) {
-  .admin-login { grid-template-rows: auto auto; align-content: center; padding-top: 92px; }
+  .admin-login { grid-template-rows: auto auto; align-content: center; padding-top: 124px; }
+  .admin-login-breadcrumb { top: 72px; right: 20px; left: 20px; justify-content: space-between; }
   .admin-login-atmosphere { position: static; width: min(100%, 420px); margin-bottom: 22px; transform: none; text-align: center; justify-items: center; }
   .admin-login-atmosphere strong { font-size: 26px; }
   .admin-login form { width: min(100%, 420px); }
@@ -1568,6 +1583,8 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 620px) {
   .admin-content { padding: 18px 12px; }
+  .admin-breadcrumb { align-items: stretch; flex-direction: column; gap: 9px; }
+  .admin-breadcrumb-back { width: max-content; }
   .admin-topbar { padding-inline: 12px; }
   .admin-store-link { display: none; }
   .admin-profile-menu summary { min-width: 0; grid-template-columns: 34px 16px; }

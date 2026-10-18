@@ -24,6 +24,14 @@ export const renderBreadcrumbs = (id: string, items: BreadcrumbItem[]) => {
     return row;
   }));
 
+  const parentItem = items.length > 1 ? items[items.length - 2] : items[0];
+  const backLink = nav.querySelector<HTMLAnchorElement>("[data-breadcrumb-back]");
+  const backLabel = backLink?.querySelector<HTMLElement>("[data-breadcrumb-back-label]");
+  if (backLink && parentItem) {
+    backLink.href = parentItem.href;
+    if (backLabel) backLabel.textContent = `بازگشت به ${parentItem.label}`;
+  }
+
   const schema = document.querySelector<HTMLScriptElement>(`script[data-breadcrumb-schema="${id}"]`);
   if (schema) {
     schema.textContent = JSON.stringify({

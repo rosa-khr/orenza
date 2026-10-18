@@ -26,6 +26,11 @@ const menu = [
   canonicalPath={`/account/${current}/`}
   keywords={[]}
   noindex
+  breadcrumbItems={[
+    { label: "خانه", href: "/" },
+    { label: "حساب کاربری", href: "/account/profile/" },
+    { label: title, href: `/account/${current}/` }
+  ]}
 >
   <section class="account-page" data-account-page>
     <header class="account-heading">
