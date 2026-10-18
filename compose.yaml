@@ -24,6 +24,9 @@ services:
       APP_ORIGIN: ${APP_ORIGIN:-http://127.0.0.1:8080}
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://orenza.ir}
       PRODUCT_DETAIL_TEMPLATE_URL: http://web/_product-template
+      ARTICLE_DETAIL_TEMPLATE_URL: http://web/_article-template
+      CATEGORY_DETAIL_TEMPLATE_URL: http://web/_category-template
+      TAG_DETAIL_TEMPLATE_URL: http://web/_tag-template
       ZARINPAL_MERCHANT_ID: ${ZARINPAL_MERCHANT_ID:-ce8cd299-d1e0-4a87-a168-43b36bc8a624}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}

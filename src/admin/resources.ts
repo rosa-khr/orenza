@@ -211,6 +211,8 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو (اختیاری)", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا (اختیاری)", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "productContent", label: "محتوای کامل صفحه محصول", type: "richtext" },
       { key: "tagIds", label: "برچسب‌های مرتبط", type: "multiselect" },
       { key: "relatedProductIds", label: "محصولات مرتبط", type: "multiselect" },
@@ -349,6 +351,8 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "showInPopularFooter", label: "نمایش در دسترسی سریع فوتر", type: "select", options: yesNo, list: true },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true },
       { key: "isActive", label: "وضعیت انتشار", type: "select", options: yesNo }
@@ -504,6 +508,8 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "tags", label: "تگ‌های مقاله", type: "multiselect" },
       { key: "showInLatest", label: "نمایش در آخرین مقاله‌ها", type: "select", options: yesNo, list: true },
       { key: "isPublished", label: "انتشار", type: "select", options: yesNo, list: true }
@@ -521,6 +527,8 @@ export const adminResources: AdminResource[] = [
       { key: "seoTitle", label: "عنوان سئو", type: "text", maxLength: 60 },
       { key: "seoDescription", label: "توضیحات متا", type: "textarea", maxLength: 150 },
       { key: "canonicalUrl", label: "آدرس کنونیکال", type: "text", dir: "ltr" },
+      { key: "robotsIndex", label: "اجازه ایندکس", type: "select", options: yesNo },
+      { key: "robotsFollow", label: "دنبال‌کردن لینک‌ها", type: "select", options: yesNo },
       { key: "content", label: "محتوای تگ", type: "richtext" },
       { key: "showInPopularSearches", label: "نمایش در جستجوهای پرطرفدار", type: "select", options: yesNo, list: true }
     ]

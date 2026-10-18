@@ -2234,6 +2234,9 @@ const initForm = async (form: HTMLFormElement, config: ResourceConfig, mode: str
       toast("حداقل یک دسترسی برای نقش انتخاب کنید.", "error");
       return;
     }
+    const isPublicContent = ["products", "categories", "tags", "articles"].includes(config.key);
+    const willBePublic = config.key === "articles" ? body.isPublished === true : config.key === "tags" || body.isActive === true;
+    if (isPublicContent && willBePublic && body.robotsIndex === false && !window.confirm("این محتوای عمومی با noindex ذخیره می‌شود و در سایت‌مپ نخواهد بود. ادامه می‌دهید؟")) return;
     const button = form.querySelector<HTMLButtonElement>("[data-admin-submit]")!;
     button.disabled = true;
     button.textContent = "در حال ذخیره…";

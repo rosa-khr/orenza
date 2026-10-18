@@ -11,6 +11,8 @@ import { sanitizeRichText } from "../rich-text.js";
 import { persistLog } from "../logger.js";
 import { categoryHref, productSlug } from "../seo.js";
 import { loadProductDetailTemplate, productCanonicalUrl, renderProductDetailPage } from "../product-page.js";
+import { articleCanonicalUrl, loadArticleDetailTemplate, renderArticleDetailPage } from "../article-page.js";
+import { contentCanonicalUrl, loadContentTemplate, renderContentPage } from "../content-page.js";
 
 type SessionUser = { id: string } | null;
 
@@ -125,6 +127,16 @@ const normalizeRobotsRules = (value: unknown) =>
     .filter((line) => !/^sitemap:/i.test(line.trim()))
     .join("\n")
     .trim();
+
+export const canonicalMatchesPath = (origin: string, path: string, configured: unknown) => {
+  if (!configured || !String(configured).trim()) return true;
+  try {
+    const expected = new URL(path, `${origin}/`);
+    const canonical = new URL(String(configured), `${origin}/`);
+    const normalizePath = (value: string) => value === "/" ? value : `${value.replace(/\/+$/, "")}/`;
+    return canonical.origin === expected.origin && !canonical.search && !canonical.hash && normalizePath(canonical.pathname) === normalizePath(expected.pathname);
+  } catch { return false; }
+};
 
 const zarinpalErrorMessage = (payload: { data?: { message?: string }; errors?: unknown }) => {
   const errors = payload.errors as { message?: string; code?: number } | undefined;
@@ -460,30 +472,68 @@ export const registerStoreRoutes = (
     const { slug } = z.object({
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
-    const result = await pool.query(
-      "SELECT 1 FROM categories WHERE slug=$1 AND is_active=true LIMIT 1",
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT title,slug,description,image_url,seo_title,seo_description,canonical_url,robots_index,robots_follow
+         FROM categories WHERE slug=$1 AND is_active=true AND deleted_at IS NULL LIMIT 1`,
       [slug]
     );
-    if (!result.rowCount) return reply.code(404).send({ error: "دسته‌بندی پیدا نشد." });
-    reply.header("Cache-Control", "no-store");
-    reply.header("X-Accel-Redirect", "/__category_detail");
-    return reply.code(200).send();
+    if (!result.rows[0]) return reply.code(404).send({ error: "دسته‌بندی پیدا نشد." });
+    const item = toPublicRecord(result.rows[0]);
+    item.description = sanitizeRichText(String(item.description || ""));
+    const canonicalUrl = contentCanonicalUrl(getPublicOrigin(request), "category", String(item.slug), item.canonicalUrl ? String(item.canonicalUrl) : null);
+    const html = renderContentPage(await loadContentTemplate("category"), "category", canonicalUrl, item as Parameters<typeof renderContentPage>[3]);
+    return reply.type("text/html; charset=utf-8").header("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
+      .header("X-Robots-Tag", `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}`).send(html);
+  });
+
+  app.get("/api/v1/storefront/tag/:slug", async (request, reply) => {
+    const { slug } = z.object({ slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) }).parse(request.params);
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT title,slug,image_url,content,seo_title,seo_description,canonical_url,robots_index,robots_follow
+         FROM tags WHERE slug=$1 LIMIT 1`, [slug]
+    );
+    if (!result.rows[0]) return reply.code(404).send({ error: "تگ پیدا نشد." });
+    const item = toPublicRecord(result.rows[0]);
+    item.content = sanitizeRichText(String(item.content || ""));
+    const canonicalUrl = contentCanonicalUrl(getPublicOrigin(request), "tag", String(item.slug), item.canonicalUrl ? String(item.canonicalUrl) : null);
+    const html = renderContentPage(await loadContentTemplate("tag"), "tag", canonicalUrl, item as Parameters<typeof renderContentPage>[3]);
+    return reply.type("text/html; charset=utf-8").header("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
+      .header("X-Robots-Tag", `${item.robotsIndex === false ? "noindex" : "index"}, ${item.robotsFollow === false ? "nofollow" : "follow"}`).send(html);
   });
 
   app.get("/api/v1/storefront/article/:slug", async (request, reply) => {
     const { slug } = z.object({
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
-    const result = await pool.query<{ robots_index: boolean; robots_follow: boolean }>(
-      "SELECT robots_index,robots_follow FROM articles WHERE slug=$1 AND is_published=true LIMIT 1",
+    const result = await pool.query<Record<string, unknown>>(
+      `SELECT a.id,a.title,a.slug,a.summary,a.content,a.image_url,a.seo_title,a.seo_description,
+              a.canonical_url,a.robots_index,a.robots_follow,a.tags,
+              COALESCE(a.published_at,a.created_at) AS created_at,a.updated_at,
+              COALESCE((SELECT json_agg(json_build_object('title',t.title,'slug',t.slug) ORDER BY t.title)
+                        FROM tags t WHERE t.title=ANY(a.tags)), '[]'::json) AS tag_links
+         FROM articles a WHERE a.slug=$1 AND a.is_published=true LIMIT 1`,
       [slug]
     );
-    if (!result.rowCount) return reply.code(404).send({ error: "مقاله پیدا نشد." });
-    const article = result.rows[0]!;
-    reply.header("Cache-Control", "no-store");
-    reply.header("X-Robots-Tag", `${article.robots_index ? "index" : "noindex"}, ${article.robots_follow ? "follow" : "nofollow"}`);
-    reply.header("X-Accel-Redirect", "/__article_detail");
-    return reply.code(200).send();
+    if (!result.rows[0]) return reply.code(404).send({ error: "مقاله پیدا نشد." });
+    const related = await pool.query<Record<string, unknown>>(
+      `SELECT a.title,a.slug,a.summary,a.image_url,a.tags,COALESCE(a.published_at,a.created_at) AS created_at,a.updated_at,a.content
+         FROM articles a WHERE a.is_published=true AND a.id<>$1
+           AND (a.tags && $2::text[] OR cardinality($2::text[])=0)
+         ORDER BY a.updated_at DESC LIMIT 3`,
+      [result.rows[0].id, result.rows[0].tags || []]
+    );
+    const article = toPublicArticle(result.rows[0]);
+    article.content = sanitizeRichText(String(article.content || ""));
+    article.relatedArticles = related.rows.map((row) => {
+      const { content: _content, ...item } = toPublicArticle(row);
+      return item;
+    });
+    const canonicalUrl = articleCanonicalUrl(getPublicOrigin(request), String(article.slug), article.canonicalUrl ? String(article.canonicalUrl) : null);
+    const html = renderArticleDetailPage(await loadArticleDetailTemplate(), canonicalUrl, article as Parameters<typeof renderArticleDetailPage>[2]);
+    return reply.type("text/html; charset=utf-8")
+      .header("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
+      .header("X-Robots-Tag", `${article.robotsIndex === false ? "noindex" : "index"}, ${article.robotsFollow === false ? "nofollow" : "follow"}`)
+      .send(html);
   });
 
   app.get("/api/v1/categories/:slug", async (request, reply) => {
@@ -636,7 +686,7 @@ export const registerStoreRoutes = (
       settings.sitemapProductsEnabled !== false && hasRows(products) ? { path: "/sitemap/sitemap-products.xml", lastmod: products.rows[0]?.lastmod } : null,
       settings.sitemapCategoriesEnabled !== false && hasRows(categories) ? { path: "/sitemap/sitemap-categories.xml", lastmod: categories.rows[0]?.lastmod } : null,
       settings.sitemapTagsEnabled !== false && hasRows(tags) ? { path: "/sitemap/sitemap-tags.xml", lastmod: tags.rows[0]?.lastmod } : null,
-      settings.sitemapArticlesEnabled !== false && hasRows(articles) ? { path: "/sitemap/sitemap-blogs.xml", lastmod: articles.rows[0]?.lastmod } : null
+      settings.sitemapArticlesEnabled !== false && hasRows(articles) ? { path: "/sitemap/sitemap-articles.xml", lastmod: articles.rows[0]?.lastmod } : null
     ].filter(Boolean) as { path: string; lastmod?: unknown }[];
     return sitemapIndexXml(getPublicOrigin(request), entries);
   });
@@ -670,7 +720,7 @@ export const registerStoreRoutes = (
         settings.sitemapTermsEnabled !== false
           ? { loc: sitemapUrl(origin, "/terms/"), lastmod: String(settings.updatedAt || ""), changefreq: termsChangefreq, priority: termsPriority }
           : null,
-        ...(settings.sitemapStaticEnabled !== false ? ["/products/", "/articles/", "/order/", "/about/", "/contact/", "/wholesale/"].map((path) => ({
+        ...(settings.sitemapStaticEnabled !== false ? ["/products/", "/categories/", "/articles/", "/order/", "/about/", "/contact/", "/privacy/", "/wholesale/"].map((path) => ({
           loc: sitemapUrl(origin, path),
           lastmod: String(settings.updatedAt || ""),
           changefreq: staticChangefreq,
@@ -681,13 +731,13 @@ export const registerStoreRoutes = (
     if (sitemapKind === "products") {
       if (settings.sitemapProductsEnabled === false) return sitemapXml([]);
       const result = await pool.query<Record<string, unknown>>(
-        `SELECT p.title_en,p.title_fa,p.slug,p.updated_at
+        `SELECT p.title_en,p.title_fa,p.slug,p.updated_at,p.canonical_url
          FROM products p JOIN categories c ON c.id=p.category_id
          WHERE p.is_active=true AND p.deleted_at IS NULL AND p.robots_index=true
            AND c.is_active=true AND c.deleted_at IS NULL
          ORDER BY p.sort_order ASC,p.created_at ASC`
       );
-      return sitemapXml(result.rows.map((row) => ({
+      return sitemapXml(result.rows.filter((row) => canonicalMatchesPath(origin, `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.title_en || row.title_fa || ""))))}/`, row.canonical_url)).map((row) => ({
         loc: sitemapUrl(origin, `/products/${encodeURIComponent(String(row.slug || productSlug(String(row.title_en || row.title_fa || ""))))}/`),
         lastmod: String(row.updated_at || ""),
         changefreq: normalizeSitemapChangefreq(settings.sitemapProductsChangefreq, "monthly"),
@@ -697,13 +747,13 @@ export const registerStoreRoutes = (
     if (sitemapKind === "categories") {
       if (settings.sitemapCategoriesEnabled === false) return sitemapXml([]);
       const result = await pool.query<Record<string, unknown>>(
-        `SELECT slug,updated_at
+        `SELECT slug,updated_at,canonical_url
          FROM categories
          WHERE is_active=true AND deleted_at IS NULL AND robots_index=true
            AND slug NOT IN ('products','articles','wholesale','order','about-orenza')
          ORDER BY sort_order ASC,created_at ASC`
       );
-      return sitemapXml(result.rows.map((row) => ({
+      return sitemapXml(result.rows.filter((row) => canonicalMatchesPath(origin, categoryHref(String(row.slug || "")), row.canonical_url)).map((row) => ({
         loc: sitemapUrl(origin, categoryHref(String(row.slug || ""))),
         lastmod: String(row.updated_at || ""),
         changefreq: normalizeSitemapChangefreq(settings.sitemapCategoriesChangefreq, "monthly"),
@@ -713,12 +763,15 @@ export const registerStoreRoutes = (
     if (sitemapKind === "tags") {
       if (settings.sitemapTagsEnabled === false) return sitemapXml([]);
       const result = await pool.query<Record<string, unknown>>(
-        `SELECT slug,updated_at
-         FROM tags
-         WHERE robots_index=true
+        `SELECT t.slug,t.updated_at,t.canonical_url
+         FROM tags t
+         WHERE t.robots_index=true
+           AND (length(regexp_replace(COALESCE(t.content,''), '<[^>]*>', '', 'g')) >= 120
+             OR EXISTS (SELECT 1 FROM product_tags pt JOIN products p ON p.id=pt.product_id WHERE pt.tag_id=t.id AND p.is_active=true AND p.deleted_at IS NULL)
+             OR EXISTS (SELECT 1 FROM articles a WHERE a.is_published=true AND t.title=ANY(a.tags)))
          ORDER BY updated_at DESC`
       );
-      return sitemapXml(result.rows.map((row) => ({
+      return sitemapXml(result.rows.filter((row) => canonicalMatchesPath(origin, `/tags/${encodeURIComponent(String(row.slug || ""))}/`, row.canonical_url)).map((row) => ({
         loc: sitemapUrl(origin, `/tags/${encodeURIComponent(String(row.slug || ""))}/`),
         lastmod: String(row.updated_at || ""),
         changefreq: normalizeSitemapChangefreq(settings.sitemapTagsChangefreq, "monthly"),
@@ -727,12 +780,12 @@ export const registerStoreRoutes = (
     }
     if (settings.sitemapArticlesEnabled === false) return sitemapXml([]);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT slug,updated_at
+      `SELECT slug,updated_at,canonical_url
        FROM articles
        WHERE is_published=true AND robots_index=true
        ORDER BY updated_at DESC`
     );
-    return sitemapXml(result.rows.map((row) => ({
+    return sitemapXml(result.rows.filter((row) => canonicalMatchesPath(origin, `/articles/${encodeURIComponent(String(row.slug || ""))}/`, row.canonical_url)).map((row) => ({
       loc: sitemapUrl(origin, `/articles/${encodeURIComponent(String(row.slug || ""))}/`),
       lastmod: String(row.updated_at || ""),
       changefreq: normalizeSitemapChangefreq(settings.sitemapArticlesChangefreq, "monthly"),

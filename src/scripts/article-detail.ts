@@ -29,6 +29,12 @@ const slug = decodeURIComponent(location.pathname.split("/").filter(Boolean).at(
 const dateFormat = new Intl.DateTimeFormat("fa-IR", { day: "numeric", month: "long", year: "numeric" });
 const numberFormat = new Intl.NumberFormat("fa-IR");
 const fallbackArticleImage = "/images/espresso-extraction-editorial-v2.webp";
+const initialArticle = (() => {
+  const node = document.querySelector<HTMLScriptElement>("[data-article-initial]");
+  if (!node?.textContent) return null;
+  try { return (JSON.parse(node.textContent) as { item?: ArticleDetail }).item || null; }
+  catch { return null; }
+})();
 
 const addImageFallback = (image: HTMLImageElement, container?: HTMLElement | null) => {
   image.addEventListener("error", () => {
@@ -79,12 +85,12 @@ const renderRelatedCard = (item: ArticleSummary) => {
 };
 
 if (root && slug && slug !== "detail") {
-  fetch(`/api/v1/articles/${encodeURIComponent(slug)}`)
+  (initialArticle ? Promise.resolve(initialArticle) : fetch(`/api/v1/articles/${encodeURIComponent(slug)}`)
     .then(async (response) => {
       const payload = await response.json() as { item?: ArticleDetail; error?: string };
       if (!response.ok || !payload.item) throw new Error(payload.error || "مقاله پیدا نشد.");
       return payload.item;
-    })
+    }))
     .then((item) => {
       const pageUrl = new URL(`/articles/${encodeURIComponent(item.slug)}/`, location.origin);
       const canonicalUrl = item.canonicalUrl ? new URL(item.canonicalUrl, location.origin) : pageUrl;
@@ -99,7 +105,7 @@ if (root && slug && slug !== "detail") {
       setMeta('meta[name="robots"]', robots);
       setMeta('meta[property="og:title"]', fullTitle);
       setMeta('meta[property="og:description"]', description);
-      setMeta('meta[property="og:url"]', pageUrl.toString());
+      setMeta('meta[property="og:url"]', canonicalUrl.toString());
       setMeta('meta[property="og:image"]', imageUrl);
       setMeta('meta[property="og:image:alt"]', `تصویر شاخص مقاله ${item.title}`);
       setMeta('meta[name="twitter:title"]', fullTitle);
@@ -170,6 +176,7 @@ if (root && slug && slug !== "detail") {
 
       const tags = root.querySelector<HTMLElement>("[data-article-tags]");
       if (tags && item.tags.length) {
+        tags.replaceChildren();
         item.tags.forEach((tag) => {
           const tagLink = item.tagLinks?.find((candidate) => candidate.title === tag);
           const element = tagLink ? document.createElement("a") : document.createElement("span");
@@ -185,10 +192,12 @@ if (root && slug && slug !== "detail") {
       const related = root.querySelector<HTMLElement>("[data-related-articles]");
       const relatedList = root.querySelector<HTMLElement>("[data-related-articles-list]");
       if (related && relatedList && item.relatedArticles.length) {
+        relatedList.replaceChildren();
         relatedList.append(...item.relatedArticles.map(renderRelatedCard));
         related.hidden = false;
       }
 
+      document.querySelector("[data-article-schema]")?.remove();
       const schema = document.createElement("script");
       schema.type = "application/ld+json";
       schema.dataset.articleSchema = "";
@@ -197,14 +206,14 @@ if (root && slug && slug !== "detail") {
         "@graph": [
           {
             "@type": "BlogPosting",
-            "@id": `${pageUrl}#article`,
+            "@id": `${canonicalUrl}#article`,
             headline: item.title,
             description,
             image: [imageUrl],
             datePublished: item.createdAt,
             dateModified: item.updatedAt,
             inLanguage: "fa-IR",
-            mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl.toString() },
+            mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl.toString() },
             author: { "@type": "Organization", name: "تحریریه اورنزا", url: location.origin },
             publisher: {
               "@type": "Organization",
@@ -220,7 +229,7 @@ if (root && slug && slug !== "detail") {
             itemListElement: [
               { "@type": "ListItem", position: 1, name: "خانه", item: new URL("/", location.origin).toString() },
               { "@type": "ListItem", position: 2, name: "مجله قهوه", item: new URL("/articles/", location.origin).toString() },
-              { "@type": "ListItem", position: 3, name: item.title, item: pageUrl.toString() }
+              { "@type": "ListItem", position: 3, name: item.title, item: canonicalUrl.toString() }
             ]
           }
         ]

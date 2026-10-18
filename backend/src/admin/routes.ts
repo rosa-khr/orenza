@@ -1172,8 +1172,13 @@ ${ai.instructions}
 
   app.post("/api/v1/admin/:resource", async (request, reply) => {
     const { resource } = z.object({ resource: z.string() }).parse(request.params);
-    if (!(await requirePermission(request, reply, permissionForResource(resource)))) return;
-    return reply.code(201).send({ item: await repository.create(resource, request.body) });
+    const access = await requirePermission(request, reply, permissionForResource(resource));
+    if (!access) return;
+    const item = await repository.create(resource, request.body);
+    if (["products", "categories", "tags", "articles", "redirects"].includes(resource)) {
+      persistLog({ level: "info", event: "seo_configuration_created", message: "SEO configuration created", requestId: request.id, method: request.method, route: request.routeOptions.url, metadata: { resource, entityId: item.id, actorId: access.user.id, robotsIndex: item.robotsIndex, robotsFollow: item.robotsFollow, canonicalUrl: item.canonicalUrl } });
+    }
+    return reply.code(201).send({ item });
   });
 
   app.put("/api/v1/admin/:resource/:id", async (request, reply) => {
@@ -1182,7 +1187,16 @@ ${ai.instructions}
     else if (!/^\d+$/.test(id)) z.string().uuid().parse(id);
     const access = await requirePermission(request, reply, permissionForResource(resource));
     if (!access) return;
-    return { item: await repository.update(resource, id, request.body) };
+    const before = await repository.find(resource, id);
+    const item = await repository.update(resource, id, request.body);
+    const seoKeys = resource === "redirects"
+      ? ["sourcePath", "destination", "statusCode", "isActive"] as const
+      : ["robotsIndex", "robotsFollow", "canonicalUrl", "slug"] as const;
+    const changes = Object.fromEntries(seoKeys.filter((key) => before[key] !== item[key]).map((key) => [key, { before: before[key], after: item[key] }]));
+    if (Object.keys(changes).length) {
+      persistLog({ level: "info", event: "seo_configuration_changed", message: "SEO configuration changed", requestId: request.id, method: request.method, route: request.routeOptions.url, metadata: { resource, entityId: item.id, actorId: access.user.id, changes } });
+    }
+    return { item };
   });
 
   app.delete("/api/v1/admin/:resource/:id", async (request, reply) => {

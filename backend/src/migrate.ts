@@ -4,6 +4,11 @@ import { backfillProductSlugs } from "./product-slug-migration.js";
 const migration = `
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  key varchar(120) PRIMARY KEY,
+  applied_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   phone varchar(11) UNIQUE,
@@ -349,6 +354,12 @@ ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_tags_enabled boolean NOT NULL DEFAULT true;
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_articles_enabled boolean NOT NULL DEFAULT true;
+WITH applied AS (
+  INSERT INTO schema_migrations(key) VALUES ('2026-10-enable-published-article-sitemap')
+  ON CONFLICT DO NOTHING RETURNING key
+)
+UPDATE site_settings SET sitemap_articles_enabled=true,updated_at=now()
+WHERE EXISTS (SELECT 1 FROM applied);
 ALTER TABLE site_settings
   ADD COLUMN IF NOT EXISTS sitemap_homepage_changefreq varchar(20) NOT NULL DEFAULT 'monthly';
 ALTER TABLE site_settings

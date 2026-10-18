@@ -175,7 +175,10 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
     }))
   };
   const script = `<script type="application/ld+json" data-breadcrumb-schema="product">${safeInlineJson(breadcrumbSchema)}</script>`;
-  return rendered.replace("</head>", `${script}</head>`);
+  const robots = `${product.robotsIndex === false ? "noindex" : "index"}, ${product.robotsFollow === false ? "nofollow" : "follow"}${product.robotsIndex === false ? "" : ", max-image-preview:large"}`;
+  return rendered
+    .replace(/<meta name="robots" content="[^"]*"/, `<meta name="robots" content="${robots}"`)
+    .replace("</head>", `${script}</head>`);
 };
 
 export const productCanonicalUrl = (origin: string, slug: string, configuredCanonical?: string | null) => {

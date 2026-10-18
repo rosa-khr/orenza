@@ -282,9 +282,6 @@ export class AdminRepository {
     if (resource === "users") {
       data.displayName = [data.firstName, data.lastName].filter(Boolean).join(" ");
     }
-    if (["products", "categories", "tags", "articles"].includes(resource) && existing.robotsIndex === true) {
-      data.robotsIndex = true;
-    }
     if (resource === "articles" && data.isPublished === true && existing.isPublished !== true) {
       data.publishedAt = new Date();
     }

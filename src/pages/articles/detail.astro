@@ -5,9 +5,13 @@ import Breadcrumbs from "../../components/Breadcrumbs.astro";
 ---
 
 <BaseLayout
-  title="مقاله مجله قهوه اورنزا"
-  description="دانستنی‌ها و راهنماهای تخصصی قهوه در مجله اورنزا"
+  title="__ARTICLE_SEO_TITLE_HTML__"
+  description="__ARTICLE_SEO_DESCRIPTION_HTML__"
   canonicalPath="/articles/detail/"
+  canonicalUrl="https://article-seo.invalid/__ARTICLE_CANONICAL_HTML__/"
+  structuredDataCanonicalUrl="__ARTICLE_CANONICAL_JSON__"
+  structuredDataTitle="__ARTICLE_SEO_FULL_TITLE_JSON__"
+  structuredDataDescription="__ARTICLE_SEO_DESCRIPTION_JSON__"
   keywords={["مجله قهوه", "دانستنی‌های قهوه", "راهنمای قهوه", "قهوه اورنزا"]}
   pageType="article"
 >
@@ -24,18 +28,18 @@ import Breadcrumbs from "../../components/Breadcrumbs.astro";
 
     <article class="article-detail" itemscope itemtype="https://schema.org/BlogPosting">
       <header class="article-detail__header">
-        <span class="article-detail__category" data-article-category>دانستنی‌های قهوه</span>
-        <h1 itemprop="headline" data-article-title>در حال دریافت مقاله…</h1>
-        <p itemprop="description" data-article-summary>لطفاً چند لحظه صبر کنید.</p>
+        <span class="article-detail__category" data-article-category>__ARTICLE_CATEGORY_HTML__</span>
+        <h1 itemprop="headline" data-article-title>__ARTICLE_TITLE_HTML__</h1>
+        <p itemprop="description" data-article-summary>__ARTICLE_SUMMARY_HTML__</p>
         <div class="article-detail__meta">
-          <span><CalendarDays size={16} aria-hidden="true" /><time itemprop="datePublished" data-article-date></time></span>
-          <span><Clock3 size={16} aria-hidden="true" /><b data-article-reading>—</b></span>
+          <span><CalendarDays size={16} aria-hidden="true" /><time itemprop="datePublished" datetime="__ARTICLE_DATE_ISO_HTML__" data-article-date>__ARTICLE_DATE_HTML__</time></span>
+          <span><Clock3 size={16} aria-hidden="true" /><b data-article-reading>__ARTICLE_READING_HTML__</b></span>
           <span>نویسنده: <b itemprop="author">تحریریه اورنزا</b></span>
         </div>
       </header>
 
-      <figure class="article-detail__media" data-article-media hidden>
-        <img itemprop="image" data-article-image alt="" width="1280" height="720" />
+      <figure class="article-detail__media" data-article-media>
+        <img itemprop="image" data-article-image src="__ARTICLE_IMAGE_HTML__" alt="__ARTICLE_IMAGE_ALT_HTML__" width="1280" height="720" />
       </figure>
 
       <div class="article-detail__content-grid">
@@ -43,26 +47,28 @@ import Breadcrumbs from "../../components/Breadcrumbs.astro";
           <strong id="article-toc-title">در این مقاله می‌خوانید</strong>
           <ol data-article-toc-list></ol>
         </nav>
-        <div class="article-detail__body" itemprop="articleBody" data-article-content></div>
+        <div class="article-detail__body" itemprop="articleBody" data-article-content><Fragment set:html={'__ARTICLE_CONTENT_HTML__'} /></div>
       </div>
 
       <div class="article-detail__footer">
-        <div class="article-detail__tags" data-article-tags hidden aria-label="موضوعات مقاله"></div>
+        <div class="article-detail__tags" data-article-tags aria-label="موضوعات مقاله"><Fragment set:html={'__ARTICLE_TAGS_HTML__'} /></div>
         <a class="site-outline-cta" href="/articles/"><span>بازگشت به مجله قهوه</span><span aria-hidden="true">←</span></a>
       </div>
     </article>
 
-    <section class="related-articles" data-related-articles hidden aria-labelledby="related-articles-title">
+    <section class="related-articles" data-related-articles aria-labelledby="related-articles-title">
       <header>
         <span>READ NEXT</span>
         <h2 id="related-articles-title">مطالب مرتبط</h2>
       </header>
-      <div data-related-articles-list></div>
+      <div data-related-articles-list><Fragment set:html={'__ARTICLE_RELATED_HTML__'} /></div>
       <a class="related-articles__all site-outline-cta" href="/articles/"><span>مشاهده همه مطالب</span><span aria-hidden="true">←</span></a>
     </section>
 
     <p class="article-detail__error" data-article-error hidden></p>
   </main>
+
+  <script type="application/json" data-article-initial is:inline set:html={'__ARTICLE_DATA_JSON__'}></script>
 
   <script>
     import "../../scripts/article-detail.ts";
