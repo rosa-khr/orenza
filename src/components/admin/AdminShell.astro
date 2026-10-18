@@ -62,27 +62,83 @@ const settingsLinks = [
   { key: "site-settings-robots", group: "robots", href: "/admin/site-settings/#settings-robots", label: "ربات‌ها" },
   { key: "site-settings-invoice", group: "invoice", href: "/admin/site-settings/#settings-invoice", label: "فاکتور" }
 ];
-const resourceByKey = new Map(adminResources.filter((resource) => !resource.navHidden).map((resource) => [resource.key, resource]));
+const resourceByKey = new Map(adminResources.map((resource) => [resource.key, resource]));
 const currentAdminHref = `${Astro.url.pathname}${Astro.url.search}`;
 const currentResource = resourceByKey.get(active);
-const isResourceAction = /^\/admin\/[^/]+\/(?:add|edit|view)\/?$/.test(Astro.url.pathname);
-const adminParentHref = active === "dashboard"
-  ? "/"
-  : isResourceAction && currentResource
-    ? `/admin/${active}/list/`
-    : "/admin/";
-const adminParentLabel = active === "dashboard"
-  ? "فروشگاه"
-  : isResourceAction && currentResource
-    ? currentResource.title
-    : "داشبورد";
-const adminBreadcrumbs = active === "dashboard"
-  ? [{ label: "فروشگاه", href: "/" }, { label: "داشبورد مدیریت", href: "/admin/" }]
-  : [
-      { label: "داشبورد مدیریت", href: "/admin/" },
-      ...(isResourceAction && currentResource ? [{ label: currentResource.title, href: adminParentHref }] : []),
-      { label: actionLabel ?? title, href: currentAdminHref }
-    ];
+const resourceRoute = Astro.url.pathname.match(/^\/admin\/([^/]+)\/(list|add|edit|view)\/?$/);
+const resourceAction = resourceRoute?.[1] === active ? resourceRoute[2] : null;
+const resourceGroup = navGroups.find((group) => group.resources.includes(active));
+const actionLabels: Record<string, string> = { list: "فهرست", add: "افزودن", edit: "ویرایش", view: "مشاهده" };
+const settingsItem = settingsLinks.find((item) => item.key === active) ?? settingsLinks[0];
+const dashboardCrumb = { label: "داشبورد مدیریت", href: "/admin/" };
+const groupCrumb = resourceGroup && currentResource
+  ? { label: resourceGroup.title, href: `/admin/${currentResource.key}/list/` }
+  : active === "service-scripts"
+    ? { label: "تنظیمات سایت", href: "/admin/site-settings/" }
+    : null;
+
+let adminBreadcrumbs: Array<{ label: string; href: string }> = [];
+let adminParentHref = "/admin/";
+let adminParentLabel = "داشبورد";
+
+if (active === "dashboard") {
+  adminBreadcrumbs = [{ label: "فروشگاه", href: "/" }, dashboardCrumb];
+  adminParentHref = "/";
+  adminParentLabel = "فروشگاه";
+} else if (currentResource && resourceAction) {
+  const listHref = `/admin/${currentResource.key}/list/`;
+  adminBreadcrumbs = [
+    dashboardCrumb,
+    ...(groupCrumb ? [groupCrumb] : []),
+    { label: currentResource.title, href: listHref },
+    ...(resourceAction === "list" ? [] : [{ label: actionLabels[resourceAction] ?? actionLabel ?? title, href: currentAdminHref }])
+  ];
+  adminParentHref = resourceAction === "list"
+    ? active === "service-scripts" ? "/admin/site-settings/" : "/admin/"
+    : listHref;
+  adminParentLabel = resourceAction === "list"
+    ? active === "service-scripts" ? "تنظیمات سایت" : "داشبورد"
+    : currentResource.title;
+} else if (Astro.url.pathname.startsWith("/admin/orders/invoice")) {
+  adminBreadcrumbs = [
+    dashboardCrumb,
+    { label: "سفارش و پرداخت", href: "/admin/orders/list/" },
+    { label: "سفارش‌ها", href: "/admin/orders/list/" },
+    { label: "فاکتور", href: currentAdminHref }
+  ];
+  adminParentHref = "/admin/orders/list/";
+  adminParentLabel = "سفارش‌ها";
+} else if (Astro.url.pathname.startsWith("/admin/content-generator/edit")) {
+  adminBreadcrumbs = [
+    dashboardCrumb,
+    { label: "محتوا و سئو", href: "/admin/content-templates/" },
+    { label: "قالب‌های محتوا", href: "/admin/content-templates/" },
+    { label: "ویرایش", href: currentAdminHref }
+  ];
+  adminParentHref = "/admin/content-templates/";
+  adminParentLabel = "قالب‌های محتوا";
+} else if (active.startsWith("site-settings")) {
+  adminBreadcrumbs = [
+    dashboardCrumb,
+    { label: "تنظیمات سایت", href: "/admin/site-settings/" },
+    { label: settingsItem.label, href: settingsItem.href }
+  ];
+} else {
+  const customGroup = active === "price-imports"
+    ? { label: "حسابداری", href: "/admin/accounting/" }
+    : ["content-generator", "content-templates"].includes(active)
+      ? { label: "محتوا و سئو", href: active === "content-templates" ? "/admin/content-templates/" : "/admin/content-generator/use/" }
+      : null;
+  adminBreadcrumbs = [
+    dashboardCrumb,
+    ...(customGroup ? [customGroup] : []),
+    { label: actionLabel ?? title, href: currentAdminHref }
+  ];
+  if (active === "price-imports") {
+    adminParentHref = "/admin/accounting/";
+    adminParentLabel = "حسابداری";
+  }
+}
 ---
 
 <!doctype html>
@@ -191,7 +247,11 @@ const adminBreadcrumbs = active === "dashboard"
             <ol>
               {adminBreadcrumbs.map((item, index) => (
                 <li>
-                  <a href={item.href} aria-current={index === adminBreadcrumbs.length - 1 ? "page" : undefined}>{item.label}</a>
+                  <a
+                    href={item.href}
+                    aria-current={index === adminBreadcrumbs.length - 1 ? "page" : undefined}
+                    data-admin-breadcrumb-current={index === adminBreadcrumbs.length - 1 ? "true" : undefined}
+                  >{item.label}</a>
                   {index < adminBreadcrumbs.length - 1 && <span aria-hidden="true">/</span>}
                 </li>
               ))}

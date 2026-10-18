@@ -2727,6 +2727,7 @@ const initSiteSettings = async () => {
   const settingsButtons = Array.from(form.querySelectorAll<HTMLButtonElement>("[data-settings-group-target]"));
   const settingsSections = Array.from(form.querySelectorAll<HTMLElement>("[data-settings-group]"));
   const settingsNavLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-site-settings-nav]"));
+  const settingsBreadcrumb = document.querySelector<HTMLAnchorElement>("[data-admin-breadcrumb-current]");
   const defaultSettingsGroup = form.dataset.defaultSettingsGroup || "general";
   const groupFromUrl = () => {
     const fromHash = location.hash.replace("#settings-", "");
@@ -2750,6 +2751,11 @@ const initSiteSettings = async () => {
     settingsNavLinks.forEach((link) => {
       link.classList.toggle("active", link.dataset.siteSettingsNav === nextGroup);
     });
+    const activeSettingsLink = settingsNavLinks.find((link) => link.dataset.siteSettingsNav === nextGroup);
+    if (settingsBreadcrumb && activeSettingsLink) {
+      settingsBreadcrumb.textContent = activeSettingsLink.textContent?.trim() || "تنظیمات";
+      settingsBreadcrumb.href = activeSettingsLink.href;
+    }
     if (updateHash) {
       history.replaceState(null, "", `#settings-${nextGroup}`);
     }
