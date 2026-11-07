@@ -807,6 +807,100 @@ body:has(.mobile-home-top) .support-chat-toggle {
   body:has(.mobile-home-top):has(.order-summary.is-current) .support-chat { display: none; }
 }
 
+/* Product-guide WhatsApp card. The editor keeps semantic tags and the live
+   page applies the visual treatment without allowing arbitrary inline CSS. */
+.product-detail-content figure:has(> a[href*="wa.me/989103060396"] > img) {
+  width: min(100%, 620px);
+  margin: 24px auto 10px;
+}
+.product-detail-content figure > a[href*="wa.me/989103060396"]:has(> img) {
+  display: block;
+  border-radius: 18px;
+  text-decoration: none;
+  transition: transform .2s ease, filter .2s ease;
+}
+.product-detail-content figure > a[href*="wa.me/989103060396"] > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  border-radius: 18px;
+  object-fit: contain;
+}
+.product-detail-content figure > a[href*="wa.me/989103060396"]:hover {
+  filter: brightness(1.035);
+  transform: translateY(-2px);
+}
+.product-detail-content figure > a[href*="wa.me/989103060396"]:focus-visible {
+  outline: 3px solid #83b79b;
+  outline-offset: 4px;
+}
+.product-detail-content blockquote:has(a[href*="wa.me/989103060396"]) {
+  width: min(100%, 540px);
+  margin: 24px auto 8px;
+  border: 1px solid #e8ded0;
+  border-right-width: 1px;
+  border-radius: 18px;
+  background: #f5f0e8;
+  padding: 20px;
+  color: #382719;
+  box-shadow: 0 10px 26px rgba(56, 39, 25, .07);
+  text-align: right !important;
+}
+.product-detail-content blockquote:has(a[href*="wa.me/989103060396"]) > h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 7px;
+  color: #382719;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.product-detail-content blockquote:has(a[href*="wa.me/989103060396"]) > p {
+  margin: 0 0 16px;
+  color: #796b5d;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.product-detail-content blockquote a[href*="wa.me/989103060396"] {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 12px;
+  background: #287a50;
+  padding: 10px 16px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .2s ease, transform .2s ease;
+}
+.product-detail-content blockquote a[href*="wa.me/989103060396"]:hover {
+  background: #20633f;
+  color: #fff;
+  transform: translateY(-2px);
+}
+.product-detail-content blockquote a[href*="wa.me/989103060396"]:focus-visible {
+  outline: 3px solid #83b79b;
+  outline-offset: 3px;
+}
+.product-detail-content blockquote:has(a[href*="wa.me/989103060396"]) > p:last-child {
+  margin: 12px 0 0;
+  color: #796b5d;
+  font-size: 11px;
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .product-detail-content blockquote:has(a[href*="wa.me/989103060396"]) { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-detail-content figure > a[href*="wa.me/989103060396"]:has(> img),
+  .product-detail-content blockquote a[href*="wa.me/989103060396"] { transition: none; }
+}
+
 /* Keep roast intensity rings fully inside compact mobile cards. */
 .config-heading h3:focus,
 .summary-title h3:focus { outline: none; }

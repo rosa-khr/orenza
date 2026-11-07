@@ -28,13 +28,24 @@ const formats = [
   }
 ];
 
-export const saveProductImage = async (buffer: Buffer) => {
+const assertSupportedImage = (buffer: Buffer) => {
   const format = formats.find((item) => item.matches(buffer));
   if (!format) {
     throw Object.assign(new Error("فایل تصویر باید JPG، PNG یا WebP معتبر باشد."), {
       statusCode: 422
     });
   }
+};
+
+const storeOptimizedImage = async (optimized: Buffer) => {
+  await mkdir(productImageDirectory, { recursive: true });
+  const fileName = `${crypto.randomUUID()}.webp`;
+  await writeFile(path.join(productImageDirectory, fileName), optimized, { flag: "wx", mode: 0o600 });
+  return { url: `/api/v1/product-images/${fileName}` };
+};
+
+export const saveProductImage = async (buffer: Buffer) => {
+  assertSupportedImage(buffer);
   const optimized = await sharp(buffer)
     .rotate()
     .resize(1200, 1200, {
@@ -48,11 +59,25 @@ export const saveProductImage = async (buffer: Buffer) => {
     .catch(() => {
       throw Object.assign(new Error("پردازش تصویر محصول ناموفق بود."), { statusCode: 422 });
     });
+  return storeOptimizedImage(optimized);
+};
 
-  await mkdir(productImageDirectory, { recursive: true });
-  const fileName = `${crypto.randomUUID()}.webp`;
-  await writeFile(path.join(productImageDirectory, fileName), optimized, { flag: "wx", mode: 0o600 });
-  return { url: `/api/v1/product-images/${fileName}` };
+export const saveContentImage = async (buffer: Buffer) => {
+  assertSupportedImage(buffer);
+  const optimized = await sharp(buffer)
+    .rotate()
+    .resize({
+      width: 1200,
+      height: 1200,
+      fit: "inside",
+      withoutEnlargement: false
+    })
+    .webp({ quality: 88, effort: 5 })
+    .toBuffer()
+    .catch(() => {
+      throw Object.assign(new Error("پردازش تصویر محتوا ناموفق بود."), { statusCode: 422 });
+    });
+  return storeOptimizedImage(optimized);
 };
 
 export const openProductImage = (fileName: string) => {

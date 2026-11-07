@@ -13,7 +13,7 @@ import {
 } from "../invoice-signatures.js";
 import { createInvoicePdf, type InvoiceBranding } from "../invoice-pdf.js";
 import type { NewOrder } from "../order-notifications.js";
-import { saveProductImage } from "../product-images.js";
+import { saveContentImage, saveProductImage } from "../product-images.js";
 import { removeHomepageBanner, saveHomepageBanner } from "../homepage-banners.js";
 import { persistLog } from "../logger.js";
 import { createPriceImportWorkbook, type PriceImportSampleProduct } from "./price-import-workbook.js";
@@ -1049,7 +1049,7 @@ ${ai.instructions}
     if (!(await requireAdmin(request, reply))) return;
     const part = await request.file();
     if (!part || part.fieldname !== "image") return reply.code(422).send({ error: "تصویر محتوا را انتخاب کنید." });
-    return saveProductImage(await part.toBuffer());
+    return saveContentImage(await part.toBuffer());
   });
 
   app.post("/api/v1/admin/category-images", {
