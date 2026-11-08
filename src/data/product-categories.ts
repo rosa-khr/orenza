@@ -19,6 +19,10 @@ type ProductCategory = {
       label: string;
       href: string;
       kind: "primary" | "secondary";
+      imageSrc?: string;
+      imageAlt?: string;
+      imageWidth?: number;
+      imageHeight?: number;
     }[];
   };
   keywords: readonly string[];
@@ -68,12 +72,20 @@ export const productCategories: readonly ProductCategory[] = [
         {
           label: "خلاصه مطلب و راهنمای انتخاب",
           href: "https://chatgpt.com/?q=%D9%84%D8%B7%D9%81%D8%A7%D9%8B%20%D9%85%D8%AD%D8%AA%D9%88%D8%A7%DB%8C%20%D8%B5%D9%81%D8%AD%D9%87%20%D8%AF%D8%B3%D8%AA%D9%87%E2%80%8C%D8%A8%D9%86%D8%AF%DB%8C%20%D9%82%D9%87%D9%88%D9%87%20%D8%A7%D9%88%D8%B1%D9%86%D8%B2%D8%A7%20%D8%B1%D8%A7%20%D8%AF%D8%B1%20%DB%B5%20%D9%86%DA%A9%D8%AA%D9%87%20%DA%A9%D9%88%D8%AA%D8%A7%D9%87%20%D8%AE%D9%84%D8%A7%D8%B5%D9%87%20%DA%A9%D9%86%20%D9%88%20%D8%A8%D8%B1%20%D8%A7%D8%B3%D8%A7%D8%B3%20%D8%B1%D9%88%D8%B4%20%D9%85%D8%B5%D8%B1%D9%81%20%D9%85%D9%86%20%D8%A8%DA%AF%D9%88%20%D9%82%D9%87%D9%88%D9%87%20%D8%AA%D8%B1%DA%A9%DB%8C%D8%A8%DB%8C%D8%8C%20%D9%81%D9%88%D8%B1%DB%8C%D8%8C%20%D8%AF%D9%85%DB%8C%20%DB%8C%D8%A7%20%D9%86%D9%88%D8%B4%DB%8C%D8%AF%D9%86%DB%8C%20%D9%BE%D9%88%D8%AF%D8%B1%DB%8C%20%DA%A9%D8%AF%D8%A7%D9%85%20%D8%A7%D9%86%D8%AA%D8%AE%D8%A7%D8%A8%20%D9%85%D9%86%D8%A7%D8%B3%D8%A8%E2%80%8C%D8%AA%D8%B1%DB%8C%20%D8%A7%D8%B3%D8%AA%3A%20https%3A%2F%2Forenza.ir%2Fcategory%2Fcoffee%2F",
-          kind: "secondary"
+          kind: "secondary",
+          imageSrc: "/images/cta/دکمه خلاصه مطلب با نشان ChatGPT.png",
+          imageAlt: "خلاصه این مطلب در ChatGPT",
+          imageWidth: 2172,
+          imageHeight: 724
         },
         {
           label: "ارتباط و مشاوره خرید",
           href: "https://wa.me/989103060396?text=%D8%B3%D9%84%D8%A7%D9%85%D8%8C%20%D8%A8%D8%B1%D8%A7%DB%8C%20%D8%A7%D9%86%D8%AA%D8%AE%D8%A7%D8%A8%20%D9%88%20%D8%AE%D8%B1%DB%8C%D8%AF%20%D9%82%D9%87%D9%88%D9%87%20%D8%A7%D8%B2%20%D8%A7%D9%88%D8%B1%D9%86%D8%B2%D8%A7%20%D8%A8%D9%87%20%D9%85%D8%B4%D8%A7%D9%88%D8%B1%D9%87%20%D9%86%DB%8C%D8%A7%D8%B2%20%D8%AF%D8%A7%D8%B1%D9%85.%20%D9%84%D8%B7%D9%81%D8%A7%D9%8B%20%D8%A8%D8%B1%20%D8%A7%D8%B3%D8%A7%D8%B3%20%D8%B0%D8%A7%D8%A6%D9%82%D9%87%20%D9%88%20%D8%B1%D9%88%D8%B4%20%D9%85%D8%B5%D8%B1%D9%81%D9%85%20%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%DB%8C%E2%80%8C%D8%A7%D9%85%20%DA%A9%D9%86%DB%8C%D8%AF.%20%DA%A9%D8%AF%20%D9%BE%DB%8C%DA%AF%DB%8C%D8%B1%DB%8C%3A%20ORZ-CATEGORY-COFFEE",
-          kind: "primary"
+          kind: "primary",
+          imageSrc: "/images/cta/Persian Coffee Consultation Banner-1.png",
+          imageAlt: "راهنمایی رایگان برای انتخاب قهوه در واتساپ",
+          imageWidth: 2146,
+          imageHeight: 733
         }
       ]
     },

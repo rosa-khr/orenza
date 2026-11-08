@@ -151,6 +151,7 @@ if (root && list) {
         if (content && item.description?.trim()) {
           content.innerHTML = item.description.trim();
           content.hidden = false;
+          content.parentElement?.querySelector<HTMLElement>(".category-sales-content")?.setAttribute("hidden", "");
           content.closest<HTMLElement>(".category-editorial")?.removeAttribute("hidden");
         }
         renderTags(document.querySelector<HTMLElement>("[data-category-tag-list]"), item.tags || []);

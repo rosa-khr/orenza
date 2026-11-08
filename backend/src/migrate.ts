@@ -1095,6 +1095,26 @@ SET description = replace(
 WHERE slug = 'coffee'
   AND description LIKE '%<p><a href="#category-children-title">مشاهده دسته‌های قهوه</a></p>%';
 
+-- Replace the text-only coffee CTAs with the approved visual banners. Keeping
+-- the links intact means existing tracking prompts and WhatsApp copy remain.
+UPDATE categories
+SET description = replace(
+  replace(
+    replace(
+      description,
+      '<p><a href="https://chatgpt.com/',
+      '<div class="category-image-ctas"><a aria-label="خلاصه این مطلب در ChatGPT" href="https://chatgpt.com/'
+    ),
+    '">خلاصه مطلب و راهنمای انتخاب</a><a href="https://wa.me/',
+    '"><img src="/images/cta/دکمه خلاصه مطلب با نشان ChatGPT.png" alt="خلاصه این مطلب در ChatGPT" width="2172" height="724" loading="lazy"></a><a aria-label="راهنمایی رایگان برای انتخاب قهوه در واتساپ" href="https://wa.me/'
+  ),
+  '">ارتباط و مشاوره خرید</a></p>',
+  '"><img src="/images/cta/Persian Coffee Consultation Banner-1.png" alt="راهنمایی رایگان برای انتخاب قهوه در واتساپ" width="2146" height="733" loading="lazy"></a></div>'
+)
+WHERE slug = 'coffee'
+  AND description LIKE '%>خلاصه مطلب و راهنمای انتخاب</a><a href="https://wa.me/%'
+  AND description LIKE '%>ارتباط و مشاوره خرید</a></p>%';
+
 INSERT INTO categories (title, slug, sort_order, description, seo_title, seo_description, is_active, show_in_popular_footer)
 VALUES
   ('همه محصولات اورنزا', 'products', 10,
