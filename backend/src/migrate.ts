@@ -1071,6 +1071,30 @@ VALUES
    true, true)
 ON CONFLICT (slug) DO NOTHING;
 
+-- Upgrade the parent coffee category copy once. The description guard keeps
+-- later edits made in the admin panel from being overwritten on every startup.
+UPDATE categories
+SET title = 'قهوه',
+    description = '<h2>راهنمای خرید قهوه از اورنزا</h2><p>انتخاب قهوه از نوع مصرف شروع می‌شود. اگر اسپرسو یا موکاپات آماده می‌کنید، قهوه ترکیبی تازه‌رست انتخاب دقیق‌تری است؛ اگر سرعت مهم‌تر است، قهوه فوری را ببینید؛ برای فنجان‌های فیلتری و فرنچ‌پرس سراغ قهوه دمی بروید و برای نوشیدنی‌های ساده و کافه‌ای، پودرهای آماده را مقایسه کنید.</p><h2>کدام نوع قهوه برای شما مناسب‌تر است؟</h2><ul><li><strong><a href="/category/coffee-blends/">قهوه ترکیبی:</a></strong> برای اسپرسو، موکاپات و کسانی که می‌خواهند نسبت عربیکا و روبوستا، قدرت و عطر فنجان را انتخاب کنند.</li><li><strong><a href="/category/instant-coffee/">قهوه فوری:</a></strong> برای آماده‌سازی سریع در خانه، محل کار یا سفر، بدون نیاز به آسیاب و دستگاه دم‌آوری.</li><li><strong><a href="/category/brewed-coffee/">قهوه دمی:</a></strong> برای فرنچ‌پرس و روش‌های فیلتری؛ مناسب کسانی که فنجان شفاف‌تر و فرایند دم‌آوری را دوست دارند.</li><li><strong><a href="/category/cafe-drinks/">نوشیدنی‌های پودری:</a></strong> برای تهیه سریع چای ماسالا، ماچا لاته، هات چاکلت و کاپوچینو با آب یا شیر.</li></ul><h2>پیش از خرید چه چیزهایی را مقایسه کنید؟</h2><p>در قهوه‌های ترکیبی به نسبت عربیکا و روبوستا، میزان کافئین، درجه رُست و نوع آسیاب توجه کنید. در قهوه فوری و نوشیدنی‌های پودری، ترکیبات، روش آماده‌سازی و میزان شیرینی اهمیت بیشتری دارند. وزن بسته و قیمت را هم بر اساس مصرف واقعی خود بسنجید.</p><h3>دان قهوه یا آسیاب‌شده؟</h3><p>اگر آسیاب مناسب دارید، دان قهوه را نزدیک زمان مصرف آسیاب کنید. در غیر این صورت، هنگام سفارش ابزار دم‌آوری را مشخص کنید تا درجه آسیاب متناسب انتخاب شود. آسیاب اسپرسوساز، موکاپات، فرنچ‌پرس و ابزار فیلتری یکسان نیست.</p><h3>انتخاب وزن مناسب</h3><p>برای امتحان یک طعم تازه یا مصرف کم، وزن سبک‌تر انتخاب بهتری است. برای مصرف مداوم در خانه یا محل کار، وزن‌های بیشتر را از نظر قیمت و دفعات سفارش مقایسه کنید. در صفحه هر محصول می‌توانید ویژگی‌ها، وزن‌های موجود و قیمت نهایی را ببینید.</p><p><strong>از زیردسته مناسب شروع کنید، گزینه‌ها را مقایسه کنید و قهوه‌ای را سفارش دهید که با ذائقه، زمان و روش آماده‌سازی شما هماهنگ است.</strong></p><p><a href="#category-children-title">مشاهده دسته‌های قهوه</a></p>',
+    seo_title = 'خرید قهوه؛ ترکیبی، فوری، دمی و نوشیدنی پودری',
+    seo_description = 'خرید آنلاین قهوه از اورنزا؛ قهوه ترکیبی تازه‌رست، قهوه فوری، قهوه دمی و نوشیدنی‌های پودری را مقایسه کنید و متناسب با مصرفتان سفارش دهید.'
+WHERE slug = 'coffee'
+  AND (
+    description LIKE '<h2>خرید قهوه؛ بررسی قهوه ترکیبی، فوری و نوشیدنی‌های پودری</h2>%'
+    OR description LIKE '<h2>راهنمای خرید قهوه تازه‌رست</h2><p>برای خرید قهوه، فقط نام دانه یا درصد ترکیب مهم نیست.%'
+  );
+
+-- Add the summary and consultation CTAs independently so an already-upgraded
+-- coffee category receives them without replacing later editorial changes.
+UPDATE categories
+SET description = replace(
+  description,
+  '<p><a href="#category-children-title">مشاهده دسته‌های قهوه</a></p>',
+  '<p><a href="https://chatgpt.com/?q=%D8%A7%DB%8C%D9%86%20%D8%B5%D9%81%D8%AD%D9%87%20%D8%B1%D8%A7%20%D8%AF%D8%B1%20%DB%B5%20%D9%86%DA%A9%D8%AA%D9%87%20%D8%AE%D9%84%D8%A7%D8%B5%D9%87%20%DA%A9%D9%86%20%D9%88%20%D8%A8%D8%B1%D8%A7%DB%8C%20%D8%A7%D9%86%D8%AA%D8%AE%D8%A7%D8%A8%20%D9%86%D9%88%D8%B9%20%D9%82%D9%87%D9%88%D9%87%20%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%DB%8C%E2%80%8C%D8%A7%D9%85%20%DA%A9%D9%86%3A%20https%3A%2F%2Forenza.ir%2Fcategory%2Fcoffee%2F">خلاصه مطلب و راهنمای انتخاب</a><a href="https://wa.me/989103060396?text=%D8%B3%D9%84%D8%A7%D9%85%D8%8C%20%D8%A8%D8%B1%D8%A7%DB%8C%20%D8%A7%D9%86%D8%AA%D8%AE%D8%A7%D8%A8%20%D9%88%20%D8%AE%D8%B1%DB%8C%D8%AF%20%D9%82%D9%87%D9%88%D9%87%20%D8%A7%D8%B2%20%D8%A7%D9%88%D8%B1%D9%86%D8%B2%D8%A7%20%D8%A8%D9%87%20%D9%85%D8%B4%D8%A7%D9%88%D8%B1%D9%87%20%D9%86%DB%8C%D8%A7%D8%B2%20%D8%AF%D8%A7%D8%B1%D9%85.%20%D9%84%D8%B7%D9%81%D8%A7%D9%8B%20%D8%A8%D8%B1%20%D8%A7%D8%B3%D8%A7%D8%B3%20%D8%B0%D8%A7%D8%A6%D9%82%D9%87%20%D9%88%20%D8%B1%D9%88%D8%B4%20%D9%85%D8%B5%D8%B1%D9%81%D9%85%20%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%DB%8C%E2%80%8C%D8%A7%D9%85%20%DA%A9%D9%86%DB%8C%D8%AF.%20%DA%A9%D8%AF%20%D9%BE%DB%8C%DA%AF%DB%8C%D8%B1%DB%8C%3A%20ORZ-CATEGORY-COFFEE">ارتباط و مشاوره خرید</a></p>'
+)
+WHERE slug = 'coffee'
+  AND description LIKE '%<p><a href="#category-children-title">مشاهده دسته‌های قهوه</a></p>%';
+
 INSERT INTO categories (title, slug, sort_order, description, seo_title, seo_description, is_active, show_in_popular_footer)
 VALUES
   ('همه محصولات اورنزا', 'products', 10,
