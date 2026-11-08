@@ -347,6 +347,10 @@ export const registerAdminRoutes = (
           });
         }
         dataRows.push(...populatedRows);
+        // The accounting template is intentionally single-sheet. Processing
+        // later worksheets (for example a user's "backup" sheet) can silently
+        // overwrite the fresh prices imported from the primary worksheet.
+        break;
       }
     } catch {
       return reply.code(422).send({ error: "خواندن فایل Excel انجام نشد." });
@@ -382,6 +386,7 @@ export const registerAdminRoutes = (
         isActive: boolean | null;
       }[] = [];
       const failures: { rowNumber: number; identifier: string; error: string }[] = [];
+      const seenProductIds = new Set<string>();
       for (let index = 0; index < dataRows.length; index += 1) {
         const importedRow = dataRows[index]!;
         const { cells: row, columns } = importedRow;
@@ -413,6 +418,12 @@ export const registerAdminRoutes = (
           failures.push({ rowNumber, identifier, error: `${source}: ${product.rows.length ? "این نام محصول تکراری است." : "محصول پیدا نشد."}` });
           continue;
         }
+        const productId = product.rows[0]!.id;
+        if (seenProductIds.has(productId)) {
+          failures.push({ rowNumber, identifier, error: `${source}: این محصول قبلاً در همین فایل ثبت شده است؛ ردیف تکراری اعمال نشد.` });
+          continue;
+        }
+        seenProductIds.add(productId);
         const hasIncrease = increaseType !== null || increaseValue !== null;
         const safeIncreaseType = increaseType || "fixed";
         const safeIncreaseValue = increaseValue || 0;
@@ -424,7 +435,7 @@ export const registerAdminRoutes = (
         updates.push({
           rowNumber,
           identifier,
-          productId: product.rows[0]!.id,
+          productId,
           productTitle: product.rows[0]!.title_fa,
           previous: Number(product.rows[0]!.purchase_price_per_kg),
           next: price,
