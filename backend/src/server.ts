@@ -560,6 +560,62 @@ app.delete("/api/v1/me/addresses/:id", async (request, reply) => {
   return reply.code(204).send();
 });
 
+app.get("/api/v1/me/orders", async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return;
+  const result = await query<Record<string, unknown>>(
+    `SELECT o.id,
+            o.order_number AS "orderNumber",
+            o.customer_name AS "customerName",
+            o.customer_address AS "customerAddress",
+            o.customer_province AS "customerProvince",
+            o.customer_city AS "customerCity",
+            o.customer_postal_code AS "customerPostalCode",
+            o.shipping_method AS "shippingMethod",
+            o.total_amount AS "totalAmount",
+            o.discount_amount AS "discountAmount",
+            o.tax_amount AS "taxAmount",
+            o.final_amount AS "finalAmount",
+            o.payment_status AS "paymentStatus",
+            o.order_status AS "orderStatus",
+            o.tracking_code AS "trackingCode",
+            o.created_at AS "createdAt",
+            o.updated_at AS "updatedAt",
+            pm.title AS "paymentMethodTitle",
+            COALESCE((
+              SELECT json_agg(json_build_object(
+                'id',oi.id,
+                'productTitle',oi.product_title,
+                'weight',oi.weight,
+                'quantity',oi.quantity,
+                'grindType',oi.grind_type,
+                'roastType',oi.roast_type,
+                'blendType',oi.blend_type,
+                'brewMethod',oi.brew_method,
+                'unitPrice',oi.unit_price,
+                'totalPrice',oi.total_price
+              ) ORDER BY oi.created_at ASC)
+              FROM order_items oi WHERE oi.order_id=o.id
+            ), '[]'::json) AS items,
+            COALESCE((
+              SELECT json_agg(json_build_object(
+                'id',history.id,
+                'status',history.status,
+                'createdAt',history.created_at
+              ) ORDER BY history.created_at ASC)
+              FROM order_status_history history WHERE history.order_id=o.id
+            ), '[]'::json) AS history
+       FROM orders o
+       JOIN payment_methods pm ON pm.id=o.payment_method_id
+      WHERE o.user_id=$1
+      ORDER BY o.created_at DESC
+      LIMIT 100`,
+    [user.id]
+  );
+  reply.header("Cache-Control", "private, no-store");
+  return { orders: result.rows };
+});
+
 registerStoreRoutes(app, pool, currentUser);
 registerAdminRoutes(app, pool, currentUser);
 await ensureLogsTable();

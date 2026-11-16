@@ -399,6 +399,7 @@ export const adminResources: AdminResource[] = [
           { label: "لغوشده", value: "canceled" }
         ]
       },
+      { key: "trackingCode", label: "کد رهگیری مرسوله", type: "text", dir: "ltr", list: true },
       { key: "paymentReceiptUrl", label: "فیش واریزی", type: "image", dir: "ltr", readonly: true },
       { key: "customerNote", label: "یادداشت مشتری", type: "textarea" },
       { key: "adminNote", label: "یادداشت مدیریت", type: "textarea" }

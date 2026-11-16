@@ -727,6 +727,72 @@ body:has(.account-page) .site-header {
   border-top: 1px solid var(--line-light);
 }
 
+.account-orders-panel { width: min(100%, 860px); }
+.account-orders-loading,
+.account-orders-empty { padding: 34px 20px; background: #f5efe4; color: var(--text-muted); text-align: center; }
+.account-orders-empty { display: grid; justify-items: center; gap: 9px; }
+.account-orders-empty strong { color: var(--text-dark); font-size: 15px; }
+.account-orders-empty p { max-width: 520px; margin: 0; font-size: 11px; line-height: 2; }
+.account-orders-empty a { margin-top: 6px; border: 1px solid rgba(36,75,59,.45); padding: 9px 16px; color: var(--green); font-size: 11px; }
+.account-orders-list { display: grid; gap: 14px; }
+.account-order-card { overflow: hidden; background: #fffdf8; border: 1px solid rgba(74,58,37,.14); }
+.account-order-summary { display: grid; grid-template-columns: minmax(190px,1fr) auto auto 20px; align-items: center; gap: 14px; padding: 18px; cursor: pointer; list-style: none; }
+.account-order-summary::-webkit-details-marker { display: none; }
+.account-order-summary::after { content: "+"; grid-column: 4; color: var(--green); font: 500 20px Dana,Tahoma,sans-serif; }
+.account-order-card[open] .account-order-summary::after { content: "−"; }
+.account-order-heading { display: grid; gap: 4px; }
+.account-order-heading strong { color: var(--text-dark); font-size: 13px; }
+.account-order-heading small { color: var(--text-muted); font-size: 9px; }
+.account-order-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.account-order-badges span { border: 1px solid rgba(74,58,37,.14); padding: 5px 8px; color: #655d52; font-size: 8px; white-space: nowrap; }
+.account-order-badges .is-processing,
+.account-order-badges .is-ready { border-color: #dfc98d; background: #fff7df; color: #755515; }
+.account-order-badges .is-sent,
+.account-order-badges .is-completed,
+.account-order-badges .is-payment-paid { border-color: #b9d4c5; background: #edf6f0; color: #285942; }
+.account-order-badges .is-canceled,
+.account-order-badges .is-payment-rejected { border-color: #dfc0b9; background: #f8eeeb; color: #8b3d32; }
+.account-order-amount { color: var(--green); font-size: 11px; white-space: nowrap; }
+.account-order-body { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; padding: 0 18px 18px; border-top: 1px solid rgba(74,58,37,.1); }
+.account-order-body > section { min-width: 0; border: 1px solid rgba(74,58,37,.1); padding: 16px; }
+.account-order-current { grid-column: 1 / -1; display: grid; gap: 5px; margin-top: 18px; background: #f4f0e6; }
+.account-order-current small,
+.account-order-tracking > small { color: var(--text-muted); font-size: 9px; }
+.account-order-current strong { color: var(--green); font-size: 15px; }
+.account-order-current p,
+.account-order-tracking p,
+.account-order-delivery p,
+.account-order-delivery address { margin: 0; color: var(--text-muted); font-size: 10px; font-style: normal; line-height: 1.9; }
+.account-order-progress { position: relative; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); margin: 0; padding: 17px 8px; border: 0 !important; list-style: none; }
+.account-order-progress::before { position: absolute; top: 33px; right: 10%; left: 10%; height: 1px; background: rgba(74,58,37,.15); content: ""; }
+.account-order-progress li { position: relative; z-index: 1; display: grid; justify-items: center; gap: 7px; color: #9a9185; font-size: 9px; text-align: center; }
+.account-order-progress i { display: grid; width: 32px; height: 32px; place-items: center; background: #fffdf8; border: 1px solid rgba(74,58,37,.18); border-radius: 50%; font-style: normal; }
+.account-order-progress li.is-done i { background: var(--green); border-color: var(--green); color: #fff; }
+.account-order-progress li.is-current { color: var(--green); font-weight: 700; }
+.account-order-progress li.is-current i { border: 2px solid var(--green); color: var(--green); box-shadow: 0 0 0 4px rgba(36,75,59,.09); }
+.account-order-progress.is-canceled { opacity: .62; }
+.account-order-tracking { display: grid; align-content: start; gap: 8px; background: #f8f2e8; }
+.account-order-tracking > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.account-order-tracking strong { overflow-wrap: anywhere; color: var(--text-dark); font: 700 14px ui-monospace,SFMono-Regular,Menlo,monospace; }
+.account-order-tracking button { flex: 0 0 auto; border: 1px solid rgba(36,75,59,.35); padding: 7px 10px; background: transparent; color: var(--green); cursor: pointer; font: 9px Dana,Tahoma,sans-serif; }
+.account-order-items,
+.account-order-delivery,
+.account-order-history { display: grid; align-content: start; gap: 10px; }
+.account-order-items h3,
+.account-order-delivery h3,
+.account-order-history h3 { margin: 0; color: var(--text-dark); font-size: 12px; }
+.account-order-items > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 9px; border-top: 1px solid rgba(74,58,37,.09); }
+.account-order-items > div > span { display: grid; gap: 3px; }
+.account-order-items strong { color: #443c32; font-size: 10px; }
+.account-order-items small { color: var(--text-muted); font-size: 8px; }
+.account-order-items b { color: var(--green); font-size: 9px; white-space: nowrap; }
+.account-order-history { grid-column: 1 / -1; }
+.account-order-history ol { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.account-order-history li { position: relative; display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 9px; min-height: 35px; color: #51493e; font-size: 10px; }
+.account-order-history li:not(:last-child)::after { position: absolute; top: 23px; right: 5px; width: 1px; height: 23px; background: rgba(36,75,59,.2); content: ""; }
+.account-order-history i { width: 11px; height: 11px; background: var(--green); border: 3px solid #dfeae3; border-radius: 50%; }
+.account-order-history time { color: var(--text-muted); font-size: 8px; }
+
 @media (min-width: 760px) {
   .auth-page {
     grid-template-columns: minmax(0, 1fr) minmax(360px, 470px);
@@ -888,7 +954,7 @@ body:has(.account-page) .site-header {
 
   .account-menu nav {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     overflow: visible;
     padding-bottom: 2px;
@@ -919,6 +985,18 @@ body:has(.account-page) .site-header {
   .account-form-actions > a {
     width: 100%;
   }
+
+  .account-order-summary { grid-template-columns: minmax(0,1fr) auto; }
+  .account-order-badges { grid-column: 1; }
+  .account-order-amount { grid-column: 2; grid-row: 1 / span 2; }
+  .account-order-summary::after { grid-column: 2; grid-row: 3; justify-self: end; }
+  .account-order-body { grid-template-columns: 1fr; }
+  .account-order-current,
+  .account-order-progress,
+  .account-order-history { grid-column: 1; }
+  .account-order-progress { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+  .account-order-progress::before { top: 25px; bottom: 25px; right: 27px; left: auto; width: 1px; height: auto; }
+  .account-order-progress li { grid-template-columns: 32px 1fr; justify-items: start; align-items: center; text-align: right; }
 }
 
 button,

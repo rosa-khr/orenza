@@ -4,7 +4,7 @@ import Icon from "./Icon.astro";
 
 interface Props {
   title: string;
-  current: "profile" | "addresses" | "security";
+  current: "profile" | "orders" | "addresses" | "security";
 }
 
 const { title, current } = Astro.props;
@@ -15,6 +15,7 @@ const returnHref = safeNext || "/";
 const returnLabel = safeNext.startsWith("/order/") ? "بازگشت به سبد خرید" : "بازگشت به فروشگاه";
 const menu = [
   { key: "profile", label: "مشخصات فردی", detail: "نام و اطلاعات تماس", href: `/account/profile/${nextSuffix}`, icon: "profile" },
+  { key: "orders", label: "سفارش‌های من", detail: "وضعیت و کد رهگیری", href: "/account/orders/", icon: "orders" },
   { key: "addresses", label: "نشانی‌ها", detail: "نشانی‌های تحویل", href: `/account/addresses/${nextSuffix}`, icon: "address" },
   { key: "security", label: "امنیت حساب", detail: "مدیریت رمز عبور", href: `/account/security/${nextSuffix}`, icon: "security" }
 ] as const;

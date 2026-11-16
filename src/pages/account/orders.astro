@@ -1,0 +1,23 @@
+---
+import AccountShell from "../../components/AccountShell.astro";
+---
+
+<AccountShell title="سفارش‌های من" current="orders">
+  <section class="account-panel account-route-panel account-orders-panel">
+    <header>
+      <span>02</span>
+      <div>
+        <h2>تاریخچه سفارش‌ها</h2>
+        <p>مراحل آماده‌سازی و ارسال هر سفارش و کد رهگیری مرسوله را اینجا ببینید.</p>
+      </div>
+    </header>
+    <div class="account-orders-loading" data-orders-loading>در حال دریافت سفارش‌ها…</div>
+    <div class="account-orders-list" data-orders-list hidden></div>
+    <div class="account-orders-empty" data-orders-empty hidden>
+      <strong>هنوز سفارشی ثبت نکرده‌اید.</strong>
+      <p>بعد از ثبت سفارش، وضعیت آماده‌سازی، ارسال و کد رهگیری در این بخش نمایش داده می‌شود.</p>
+      <a href="/products/">مشاهده محصولات</a>
+    </div>
+    <p class="account-status is-error" data-orders-error hidden aria-live="polite"></p>
+  </section>
+</AccountShell>

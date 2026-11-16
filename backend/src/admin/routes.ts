@@ -1136,17 +1136,23 @@ ${ai.instructions}
   app.post("/api/v1/admin/orders/:id/fulfillment-transition", async (request, reply) => {
     if (!(await requirePermission(request, reply, "orders"))) return;
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
-    const { action } = z.object({
-      action: z.enum(["ready", "sent"])
+    const { action, trackingCode } = z.object({
+      action: z.enum(["ready", "sent"]),
+      trackingCode: z.string().trim().max(120).optional()
     }).parse(request.body);
+    if (action === "sent" && !trackingCode) {
+      return reply.code(422).send({ error: "برای ثبت ارسال، کد رهگیری مرسوله را وارد کنید." });
+    }
     const expectedStatus = action === "ready" ? "processing" : "ready";
     const result = await pool.query<Record<string, unknown>>(
       `UPDATE orders
-          SET order_status=$2,updated_at=now()
+          SET order_status=$2,
+              tracking_code=CASE WHEN $2='sent' THEN $4 ELSE tracking_code END,
+              updated_at=now()
         WHERE id=$1
           AND order_status=$3
       RETURNING *`,
-      [id, action, expectedStatus]
+      [id, action, expectedStatus, trackingCode ?? null]
     );
     if (!result.rows[0]) {
       const required = action === "ready"

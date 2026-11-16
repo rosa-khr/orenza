@@ -144,6 +144,7 @@ export interface Order {
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   paymentReceiptUrl: string | null;
+  trackingCode: string | null;
   customerNote: string | null;
   adminNote: string | null;
   createdAt: string;

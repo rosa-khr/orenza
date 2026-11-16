@@ -301,6 +301,7 @@ export const orderAdminSchema = z.object({
   paymentStatus: z.enum(["pending", "paid", "rejected"]),
   orderStatus: z.enum(["new", "processing", "ready", "sent", "completed", "canceled"]),
   paymentReceiptUrl: optionalUrl.optional(),
+  trackingCode: z.string().trim().max(120).nullable().optional(),
   adminNote: z.string().trim().max(3000).nullable().optional()
 });
 

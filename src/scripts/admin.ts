@@ -2350,6 +2350,13 @@ const initOrderWorkflow = (
 
   const transition = async (action: "ready" | "sent") => {
     const isReadyAction = action === "ready";
+    const trackingInput = form.elements.namedItem("trackingCode") as HTMLInputElement | null;
+    const trackingCode = trackingInput?.value.trim() || "";
+    if (!isReadyAction && !trackingCode) {
+      toast("برای ثبت ارسال، کد رهگیری مرسوله را وارد کنید.", "error");
+      trackingInput?.focus();
+      return;
+    }
     const accepted = await askConfirm(
       isReadyAction ? "ثبت آماده ارسال" : "ثبت ارسال سفارش",
       isReadyAction
@@ -2363,7 +2370,7 @@ const initOrderWorkflow = (
     try {
       await api(`/api/v1/admin/orders/${orderId}/fulfillment-transition`, {
         method: "POST",
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action, ...(trackingCode ? { trackingCode } : {}) })
       });
       toast(isReadyAction ? "سفارش آماده ارسال شد." : "ارسال سفارش ثبت شد.");
       window.setTimeout(() => location.reload(), 350);

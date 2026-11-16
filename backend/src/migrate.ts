@@ -876,6 +876,7 @@ CREATE TABLE IF NOT EXISTS orders (
   payment_status varchar(20) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending','paid','rejected')),
   order_status varchar(20) NOT NULL DEFAULT 'new' CHECK (order_status IN ('new','processing','ready','sent','completed','canceled')),
   payment_receipt_url text,
+  tracking_code varchar(120),
   customer_note text,
   admin_note text,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -1017,9 +1018,42 @@ ALTER TABLE orders ADD CONSTRAINT orders_tax_percent_check CHECK (tax_percent >=
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_authority varchar(80);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_ref_id varchar(80);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_receipt_url text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code varchar(120);
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_order_status_check;
 ALTER TABLE orders ADD CONSTRAINT orders_order_status_check
   CHECK (order_status IN ('new','processing','ready','sent','completed','canceled'));
+
+CREATE TABLE IF NOT EXISTS order_status_history (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  status varchar(20) NOT NULL CHECK (status IN ('new','processing','ready','sent','completed','canceled')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS order_status_history_order_idx
+  ON order_status_history(order_id, created_at ASC);
+
+INSERT INTO order_status_history (order_id,status,created_at)
+SELECT o.id,o.order_status,o.created_at
+FROM orders o
+WHERE NOT EXISTS (
+  SELECT 1 FROM order_status_history history WHERE history.order_id=o.id
+);
+
+CREATE OR REPLACE FUNCTION record_order_status_history()
+RETURNS trigger AS $order_status_history$
+BEGIN
+  IF TG_OP = 'INSERT' OR OLD.order_status IS DISTINCT FROM NEW.order_status THEN
+    INSERT INTO order_status_history (order_id,status,created_at)
+    VALUES (NEW.id,NEW.order_status,CASE WHEN TG_OP = 'INSERT' THEN NEW.created_at ELSE now() END);
+  END IF;
+  RETURN NEW;
+END;
+$order_status_history$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS orders_status_history_trigger ON orders;
+CREATE TRIGGER orders_status_history_trigger
+AFTER INSERT OR UPDATE OF order_status ON orders
+FOR EACH ROW EXECUTE FUNCTION record_order_status_history();
 DROP INDEX IF EXISTS one_active_payment_method;
 CREATE UNIQUE INDEX IF NOT EXISTS one_active_payment_method_type ON payment_methods(type) WHERE is_active = true;
 

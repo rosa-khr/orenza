@@ -6,6 +6,35 @@ type Address = {
   id: string; label: string; recipient_name: string; phone: string; province: string;
   city: string; postal_code: string; address_line: string; is_default: boolean;
 };
+type OrderStatus = "new" | "processing" | "ready" | "sent" | "completed" | "canceled";
+type CustomerOrder = {
+  id: string;
+  orderNumber: string;
+  customerAddress: string;
+  customerProvince: string | null;
+  customerCity: string | null;
+  customerPostalCode: string | null;
+  shippingMethod: "tipax" | "post";
+  totalAmount: number | string;
+  discountAmount: number | string;
+  taxAmount: number | string;
+  finalAmount: number | string;
+  paymentStatus: "pending" | "paid" | "rejected";
+  paymentMethodTitle: string;
+  orderStatus: OrderStatus;
+  trackingCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: {
+    id: string;
+    productTitle: string;
+    weight: number;
+    quantity: number;
+    grindType: string;
+    totalPrice: number | string;
+  }[];
+  history: { id: string; status: OrderStatus; createdAt: string }[];
+};
 
 const api = async (path: string, options: RequestInit = {}) => {
   const response = await fetch(`/api/v1${path}`, {
@@ -26,6 +55,10 @@ const profileForm = document.querySelector<HTMLFormElement>("[data-profile-form]
 const addressForm = document.querySelector<HTMLFormElement>("[data-address-form]");
 const passwordForm = document.querySelector<HTMLFormElement>("[data-password-form]");
 const addressList = document.querySelector<HTMLElement>("[data-address-list]");
+const orderList = document.querySelector<HTMLElement>("[data-orders-list]");
+const ordersLoading = document.querySelector<HTMLElement>("[data-orders-loading]");
+const ordersEmpty = document.querySelector<HTMLElement>("[data-orders-empty]");
+const ordersError = document.querySelector<HTMLElement>("[data-orders-error]");
 const welcome = document.querySelector<HTMLElement>("[data-account-welcome]");
 const accountTitle = document.querySelector<HTMLElement>("[data-account-title]");
 const addresses = new Map<string, Address>();
@@ -91,6 +124,165 @@ const renderAddresses = () => {
     article.append(heading, detail, meta, actions);
     addressList.append(article);
   });
+};
+
+const orderStatusMeta: Record<OrderStatus, { label: string; detail: string }> = {
+  new: { label: "ثبت سفارش", detail: "سفارش با موفقیت ثبت شده است." },
+  processing: { label: "در حال آماده‌سازی", detail: "محصولات سفارش در حال آماده‌سازی هستند." },
+  ready: { label: "آماده ارسال", detail: "سفارش آماده تحویل به شرکت حمل است." },
+  sent: { label: "ارسال‌شده", detail: "سفارش به شرکت حمل تحویل داده شده است." },
+  completed: { label: "تکمیل‌شده", detail: "فرآیند سفارش تکمیل شده است." },
+  canceled: { label: "لغوشده", detail: "این سفارش لغو شده است." }
+};
+const orderStages: OrderStatus[] = ["new", "processing", "ready", "sent", "completed"];
+const paymentStatusLabels = { pending: "در انتظار پرداخت", paid: "پرداخت‌شده", rejected: "پرداخت ردشده" } as const;
+const money = new Intl.NumberFormat("fa-IR");
+const persianDate = new Intl.DateTimeFormat("fa-IR", {
+  year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+});
+
+const createElement = <Tag extends keyof HTMLElementTagNameMap>(
+  tag: Tag,
+  className?: string,
+  textContent?: string
+) => {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (textContent !== undefined) element.textContent = textContent;
+  return element;
+};
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : persianDate.format(date);
+};
+
+const renderOrders = (orders: CustomerOrder[]) => {
+  if (!orderList) return;
+  orderList.replaceChildren();
+  ordersLoading?.setAttribute("hidden", "");
+  if (!orders.length) {
+    ordersEmpty?.removeAttribute("hidden");
+    orderList.hidden = true;
+    return;
+  }
+  ordersEmpty?.setAttribute("hidden", "");
+  orderList.hidden = false;
+
+  orders.forEach((order, orderIndex) => {
+    const card = createElement("details", "account-order-card");
+    card.open = orderIndex === 0;
+    const summary = createElement("summary", "account-order-summary");
+    const heading = createElement("div", "account-order-heading");
+    heading.append(
+      createElement("strong", "", `سفارش ${order.orderNumber}`),
+      createElement("small", "", formatDate(order.createdAt))
+    );
+    const badges = createElement("div", "account-order-badges");
+    const statusBadge = createElement("span", `is-${order.orderStatus}`, orderStatusMeta[order.orderStatus].label);
+    const paymentBadge = createElement("span", `is-payment-${order.paymentStatus}`, paymentStatusLabels[order.paymentStatus]);
+    badges.append(statusBadge, paymentBadge);
+    const amount = createElement("b", "account-order-amount", `${money.format(Number(order.finalAmount || 0))} تومان`);
+    summary.append(heading, badges, amount);
+
+    const body = createElement("div", "account-order-body");
+    const current = createElement("section", "account-order-current");
+    current.append(
+      createElement("small", "", "وضعیت فعلی"),
+      createElement("strong", "", orderStatusMeta[order.orderStatus].label),
+      createElement("p", "", orderStatusMeta[order.orderStatus].detail)
+    );
+
+    const progress = createElement("ol", `account-order-progress${order.orderStatus === "canceled" ? " is-canceled" : ""}`);
+    const reached = new Set(order.history.map((entry) => entry.status));
+    const currentStageIndex = orderStages.indexOf(order.orderStatus);
+    orderStages.forEach((stage, stageIndex) => {
+      const step = createElement("li");
+      if (stage === order.orderStatus) step.classList.add("is-current");
+      if (reached.has(stage) && stage !== order.orderStatus) step.classList.add("is-done");
+      if (currentStageIndex > stageIndex) step.classList.add("is-done");
+      step.append(
+        createElement("i", "", money.format(stageIndex + 1)),
+        createElement("span", "", orderStatusMeta[stage].label)
+      );
+      progress.append(step);
+    });
+
+    const tracking = createElement("section", "account-order-tracking");
+    tracking.append(createElement("small", "", "کد رهگیری مرسوله"));
+    if (order.trackingCode) {
+      const trackingRow = createElement("div");
+      const code = createElement("strong", "", order.trackingCode);
+      code.dir = "ltr";
+      const copy = createElement("button", "", "کپی کد");
+      copy.type = "button";
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(order.trackingCode || "");
+          copy.textContent = "کپی شد";
+        } catch {
+          copy.textContent = "کپی نشد";
+        }
+        window.setTimeout(() => { copy.textContent = "کپی کد"; }, 1400);
+      });
+      trackingRow.append(code, copy);
+      tracking.append(trackingRow);
+    } else {
+      tracking.append(createElement("p", "", "پس از تحویل سفارش به شرکت حمل، کد رهگیری اینجا نمایش داده می‌شود."));
+    }
+
+    const itemSection = createElement("section", "account-order-items");
+    itemSection.append(createElement("h3", "", "اقلام سفارش"));
+    order.items.forEach((item) => {
+      const row = createElement("div");
+      const copy = createElement("span");
+      copy.append(
+        createElement("strong", "", item.productTitle),
+        createElement("small", "", `${money.format(item.weight)} گرم · ${money.format(item.quantity)} عدد${item.grindType ? ` · ${item.grindType}` : ""}`)
+      );
+      row.append(copy, createElement("b", "", `${money.format(Number(item.totalPrice || 0))} تومان`));
+      itemSection.append(row);
+    });
+
+    const delivery = createElement("section", "account-order-delivery");
+    delivery.append(
+      createElement("h3", "", "تحویل و پرداخت"),
+      createElement("p", "", `${order.shippingMethod === "tipax" ? "تیپاکس" : "پست"} · ${order.paymentMethodTitle}`),
+      createElement("address", "", [order.customerProvince, order.customerCity, order.customerAddress].filter(Boolean).join("، "))
+    );
+
+    const history = createElement("section", "account-order-history");
+    history.append(createElement("h3", "", "تاریخچه وضعیت"));
+    const historyList = createElement("ol");
+    order.history.forEach((entry) => {
+      const row = createElement("li");
+      row.append(
+        createElement("i"),
+        createElement("strong", "", orderStatusMeta[entry.status].label),
+        createElement("time", "", formatDate(entry.createdAt))
+      );
+      historyList.append(row);
+    });
+    history.append(historyList);
+
+    body.append(current, progress, tracking, itemSection, delivery, history);
+    card.append(summary, body);
+    orderList.append(card);
+  });
+};
+
+const loadOrders = async () => {
+  if (!orderList) return;
+  try {
+    const payload = await api("/me/orders");
+    renderOrders(payload.orders as CustomerOrder[]);
+  } catch (error) {
+    ordersLoading?.setAttribute("hidden", "");
+    if (ordersError) {
+      ordersError.textContent = error instanceof Error ? error.message : "دریافت سفارش‌ها انجام نشد.";
+      ordersError.hidden = false;
+    }
+  }
 };
 
 const openAddressForm = (address?: Address) => {
@@ -224,5 +416,7 @@ Promise.all([api("/me"), loadAddresses()])
     fillProfile();
   })
   .catch(() => undefined);
+
+void loadOrders();
 
 enablePersianValidation();

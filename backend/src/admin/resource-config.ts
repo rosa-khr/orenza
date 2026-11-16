@@ -166,9 +166,9 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
       taxPercent: "tax_percent", taxAmount: "tax_amount", finalAmount: "final_amount", paymentMethodId: "payment_method_id",
       paymentCardId: "payment_card_id", paymentAuthority: "payment_authority", paymentRefId: "payment_ref_id",
       paymentStatus: "payment_status", orderStatus: "order_status", paymentReceiptUrl: "payment_receipt_url", customerNote: "customer_note",
-      adminNote: "admin_note", ...audit
+      trackingCode: "tracking_code", adminNote: "admin_note", ...audit
     },
-    search: ["order_number", "customer_name", "customer_phone"],
+    search: ["order_number", "customer_name", "customer_phone", "tracking_code"],
     schema: orderAdminSchema,
     adminReadonly: [
       "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
