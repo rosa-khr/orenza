@@ -967,6 +967,7 @@ ${ai.instructions}
       customerNote: item.customerNote ? String(item.customerNote) : null,
       totalAmount: Number(item.totalAmount || 0),
       discountAmount: Number(item.discountAmount || 0),
+      shippingAmount: Number(item.shippingAmount || 0),
       taxPercent: Number(item.taxPercent ?? 10),
       taxAmount: Number(item.taxAmount || 0),
       finalAmount: Number(item.finalAmount || 0),

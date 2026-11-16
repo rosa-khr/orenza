@@ -15,11 +15,11 @@ interface Props {
 const { field, resourceKey, isView } = Astro.props;
 const orderReadonly = new Set([
   "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
-  "discountAmount", "taxPercent", "finalAmount", "customerNote"
+  "discountAmount", "shippingAmount", "taxPercent", "finalAmount", "customerNote"
 ]);
 const moneyFieldKeys = new Set([
   "purchasePricePerKg", "salePricePerKg", "profitPerKg", "discountSalePricePerKg",
-  "totalAmount", "discountAmount", "taxAmount", "finalAmount",
+  "totalAmount", "discountAmount", "shippingAmount", "taxAmount", "finalAmount",
   "pricePerKg", "pricePerVolume", "minOrderAmount"
 ]);
 const seoLimitFor = (key: string, fallback?: number) =>

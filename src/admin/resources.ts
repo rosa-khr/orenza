@@ -370,6 +370,7 @@ export const adminResources: AdminResource[] = [
       { key: "customerAddress", label: "نشانی تحویل", type: "textarea" },
       { key: "totalAmount", label: "مبلغ کل", type: "number", list: true },
       { key: "discountAmount", label: "تخفیف", type: "number" },
+      { key: "shippingAmount", label: "هزینه ارسال", type: "number", list: true, readonly: true },
       { key: "taxPercent", label: "درصد مالیات", type: "number", readonly: true },
       { key: "taxAmount", label: "مالیات", type: "number", list: true },
       { key: "finalAmount", label: "مبلغ نهایی", type: "number", list: true },

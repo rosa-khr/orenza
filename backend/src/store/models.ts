@@ -134,6 +134,7 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   discountAmount: number;
+  shippingAmount: number;
   taxPercent: number;
   taxAmount: number;
   finalAmount: number;

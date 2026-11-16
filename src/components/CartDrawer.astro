@@ -75,7 +75,7 @@ import Icon from "./Icon.astro";
           </label>
           <label class="choice-card">
             <input type="radio" name="shipping-method" value="post" required />
-            <span><strong>پست</strong><small>ارسال سراسری؛ هزینه بر اساس وزن و حجم.</small></span>
+            <span><strong>پست</strong><small>هزینه ثابت ارسال: ۲۰۰٬۰۰۰ تومان.</small></span>
           </label>
         </div>
       </fieldset>
@@ -96,6 +96,7 @@ import Icon from "./Icon.astro";
       <section class="checkout-totals" aria-label="مبلغ سفارش">
         <div><span>مبلغ اقلام</span><strong data-cart-subtotal>۰ تومان</strong></div>
         <div data-cart-discount-row hidden><span>تخفیف</span><strong data-cart-discount>۰ تومان</strong></div>
+        <div data-cart-shipping-row hidden><span data-cart-shipping-label>هزینه ارسال</span><strong data-cart-shipping>۰ تومان</strong></div>
         <div data-cart-tax-row hidden><span data-cart-tax-label>مالیات ارزش افزوده</span><strong data-cart-tax>۰ تومان</strong></div>
         <div><span>مبلغ نهایی</span><strong data-cart-final>۰ تومان</strong></div>
       </section>

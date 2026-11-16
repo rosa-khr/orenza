@@ -849,8 +849,17 @@ INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,pri
 SELECT 'تیپاکس','tipax','پس‌کرایه؛ هزینه هنگام تحویل توسط تیپاکس دریافت می‌شود.','collect',0,0,0,1,true
 WHERE NOT EXISTS (SELECT 1 FROM shipping_methods WHERE code='tipax');
 INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,price_per_kg,price_per_volume,sort_order,is_active)
-SELECT 'پست','post','هزینه ارسال بر اساس وزن و حجم مرسوله تنظیم می‌شود.','weightVolume',0,0,0,2,true
+SELECT 'پست','post','هزینه ثابت ارسال با پست: ۲۰۰٬۰۰۰ تومان.','fixed',200000,0,0,2,true
 WHERE NOT EXISTS (SELECT 1 FROM shipping_methods WHERE code='post');
+
+UPDATE shipping_methods
+SET pricing_type='collect',base_price=0,price_per_kg=0,price_per_volume=0,
+    description='پس‌کرایه؛ هزینه هنگام تحویل توسط تیپاکس دریافت می‌شود.',updated_at=now()
+WHERE code='tipax';
+UPDATE shipping_methods
+SET pricing_type='fixed',base_price=200000,price_per_kg=0,price_per_volume=0,
+    description='هزینه ثابت ارسال با پست: ۲۰۰٬۰۰۰ تومان.',updated_at=now()
+WHERE code='post';
 
 CREATE TABLE IF NOT EXISTS orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -865,6 +874,7 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping_method varchar(30) NOT NULL CHECK (shipping_method IN ('tipax','post')),
   total_amount bigint NOT NULL CHECK (total_amount >= 0),
   discount_amount bigint NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
+  shipping_amount bigint NOT NULL DEFAULT 0 CHECK (shipping_amount >= 0),
   tax_amount bigint NOT NULL DEFAULT 0 CHECK (tax_amount >= 0),
   tax_percent numeric(5,2) NOT NULL DEFAULT 10 CHECK (tax_percent >= 0 AND tax_percent <= 100),
   final_amount bigint NOT NULL CHECK (final_amount >= 0),
@@ -1010,7 +1020,9 @@ ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS merchant_id varchar(80);
 ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS tax_percent numeric(5,2) NOT NULL DEFAULT 10;
 ALTER TABLE payment_methods DROP CONSTRAINT IF EXISTS payment_methods_tax_percent_check;
 ALTER TABLE payment_methods ADD CONSTRAINT payment_methods_tax_percent_check CHECK (tax_percent >= 0 AND tax_percent <= 100);
+UPDATE payment_methods SET tax_percent=0,updated_at=now() WHERE type='cardToCard' AND tax_percent <> 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_card_id uuid REFERENCES payment_cards(id) ON DELETE RESTRICT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_amount bigint NOT NULL DEFAULT 0 CHECK (shipping_amount >= 0);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount bigint NOT NULL DEFAULT 0 CHECK (tax_amount >= 0);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_percent numeric(5,2) NOT NULL DEFAULT 10;
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_tax_percent_check;

@@ -24,9 +24,10 @@ const sampleOrder: NewOrder = {
   customerNote: "لطفاً سفارش با بسته‌بندی مناسب ارسال شود.",
   totalAmount: 1_350_000,
   discountAmount: 0,
+  shippingAmount: 200_000,
   taxAmount: 135_000,
   taxPercent: 10,
-  finalAmount: 1_485_000,
+  finalAmount: 1_685_000,
   createdAt: new Date(),
   items: [
     {

@@ -108,6 +108,29 @@ export class OrderService {
         };
       });
       const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
+      const totalWeightGrams = items.reduce((sum, item) => sum + item.weight * item.quantity, 0);
+      const shipping = await client.query<{
+        code: "tipax" | "post";
+        pricing_type: "collect" | "weightVolume" | "fixed";
+        base_price: string;
+        price_per_kg: string;
+      }>(
+        `SELECT code,pricing_type,base_price,price_per_kg
+         FROM shipping_methods WHERE code=$1 AND is_active=true FOR SHARE`,
+        [data.shippingMethod]
+      );
+      const shippingMethod = shipping.rows[0];
+      if (!shippingMethod) {
+        throw Object.assign(new Error("روش ارسال انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
+      }
+      if (totalWeightGrams >= 3000 && shippingMethod.code !== "tipax") {
+        throw Object.assign(new Error("برای سفارش‌های ۳ کیلوگرم و بیشتر فقط ارسال با تیپاکس امکان‌پذیر است."), { statusCode: 422 });
+      }
+      const shippingAmount = shippingMethod.pricing_type === "collect"
+        ? 0
+        : Number(shippingMethod.base_price || 0) + (shippingMethod.pricing_type === "weightVolume"
+          ? Math.ceil(totalWeightGrams / 1000) * Number(shippingMethod.price_per_kg || 0)
+          : 0);
       const discount = await resolveDiscount(client, data.discountCode, totalAmount);
       const taxableAmount = Math.max(0, totalAmount - discount.amount);
       const payment = await client.query<{ id: string; type: "cardToCard" | "bankGateway" | "zarinpal"; tax_percent: number | string }>(
@@ -118,9 +141,9 @@ export class OrderService {
       if (!paymentMethod) {
         throw Object.assign(new Error("روش پرداخت انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
       }
-      const taxPercent = Number(paymentMethod.tax_percent || 0);
+      const taxPercent = paymentMethod.type === "cardToCard" ? 0 : Number(paymentMethod.tax_percent || 0);
       const taxAmount = Math.round(taxableAmount * taxPercent / 100);
-      const finalAmount = taxableAmount + taxAmount;
+      const finalAmount = taxableAmount + taxAmount + shippingAmount;
       if (paymentMethod.type === "cardToCard") {
         if (!data.paymentCardId) {
           throw Object.assign(new Error("برای کارت‌به‌کارت، انتخاب کارت الزامی است."), { statusCode: 422 });
@@ -140,15 +163,15 @@ export class OrderService {
       const order = await client.query<Record<string, unknown>>(
         `INSERT INTO orders
           (order_number,user_id,customer_name,customer_phone,customer_address,customer_province,
-           customer_city,customer_postal_code,shipping_method,total_amount,discount_amount,tax_amount,tax_percent,final_amount,
+           customer_city,customer_postal_code,shipping_method,total_amount,discount_amount,shipping_amount,tax_amount,tax_percent,final_amount,
            discount_code_id,payment_method_id,payment_card_id,payment_ref_id,payment_receipt_url,
            payment_status,order_status,customer_note)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'pending','new',$20)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'pending','new',$21)
          RETURNING *`,
         [
           nextOrderNumber(), userId, data.customerName, data.customerPhone, data.customerAddress,
           data.customerProvince, data.customerCity, data.customerPostalCode, data.shippingMethod,
-          totalAmount, discount.amount, taxAmount, taxPercent, finalAmount, discount.id, data.paymentMethodId,
+          totalAmount, discount.amount, shippingAmount, taxAmount, taxPercent, finalAmount, discount.id, data.paymentMethodId,
           data.paymentCardId ?? null, data.paymentRefId ?? null, data.paymentReceiptUrl ?? null,
           data.customerNote ?? null
         ]
@@ -177,12 +200,12 @@ export class OrderService {
       const discount = await resolveDiscount(client, code, totalAmount);
       const taxableAmount = Math.max(0, totalAmount - discount.amount);
       const payment = paymentMethodId
-        ? await client.query<{ tax_percent: number | string }>(
-            "SELECT tax_percent FROM payment_methods WHERE id=$1 AND is_active=true",
+        ? await client.query<{ type: "cardToCard" | "bankGateway" | "zarinpal"; tax_percent: number | string }>(
+            "SELECT type,tax_percent FROM payment_methods WHERE id=$1 AND is_active=true",
             [paymentMethodId]
           )
         : null;
-      const taxPercent = Number(payment?.rows[0]?.tax_percent ?? 10);
+      const taxPercent = payment?.rows[0]?.type === "cardToCard" ? 0 : Number(payment?.rows[0]?.tax_percent ?? 10);
       const taxAmount = Math.round(taxableAmount * taxPercent / 100);
       return { code: code.toUpperCase(), discountAmount: discount.amount, taxPercent, taxAmount, finalAmount: taxableAmount + taxAmount };
     });

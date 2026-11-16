@@ -574,6 +574,7 @@ app.get("/api/v1/me/orders", async (request, reply) => {
             o.shipping_method AS "shippingMethod",
             o.total_amount AS "totalAmount",
             o.discount_amount AS "discountAmount",
+            o.shipping_amount AS "shippingAmount",
             o.tax_amount AS "taxAmount",
             o.final_amount AS "finalAmount",
             o.payment_status AS "paymentStatus",

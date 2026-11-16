@@ -50,6 +50,8 @@ type ShippingMethod = {
   description: string;
   pricingType: "collect" | "weightVolume" | "fixed";
   basePrice: number;
+  pricePerKg: number;
+  pricePerVolume: number;
 };
 
 type SubmittedOrder = {
@@ -57,6 +59,7 @@ type SubmittedOrder = {
   orderNumber: string;
   totalAmount: number;
   discountAmount: number;
+  shippingAmount: number;
   taxAmount: number;
   taxPercent: number;
   finalAmount: number;
@@ -96,6 +99,9 @@ export const initCart = () => {
   const cartSubtotal = document.querySelector<HTMLElement>("[data-cart-subtotal]");
   const cartDiscount = document.querySelector<HTMLElement>("[data-cart-discount]");
   const cartDiscountRow = document.querySelector<HTMLElement>("[data-cart-discount-row]");
+  const cartShipping = document.querySelector<HTMLElement>("[data-cart-shipping]");
+  const cartShippingLabel = document.querySelector<HTMLElement>("[data-cart-shipping-label]");
+  const cartShippingRow = document.querySelector<HTMLElement>("[data-cart-shipping-row]");
   const cartTax = document.querySelector<HTMLElement>("[data-cart-tax]");
   const cartTaxLabel = document.querySelector<HTMLElement>("[data-cart-tax-label]");
   const cartTaxRow = document.querySelector<HTMLElement>("[data-cart-tax-row]");
@@ -134,6 +140,10 @@ export const initCart = () => {
   let alertTimer: number | null = null;
   let discountAmount = 0;
   let submittedOrder: SubmittedOrder | null = null;
+  const shippingMethods = new Map<ShippingMethod["code"], ShippingMethod>([
+    ["tipax", { id: "tipax", title: "تیپاکس", code: "tipax", description: "پس‌کرایه", pricingType: "collect", basePrice: 0, pricePerKg: 0, pricePerVolume: 0 }],
+    ["post", { id: "post", title: "پست", code: "post", description: "هزینه ثابت ارسال", pricingType: "fixed", basePrice: 200000, pricePerKg: 0, pricePerVolume: 0 }]
+  ]);
   const maxReceiptUploadSize = 20 * 1024 * 1024;
 
   const readCart = (): CartItem[] => {
@@ -149,13 +159,26 @@ export const initCart = () => {
   const saveCart = () => localStorage.setItem("orenza-cart", JSON.stringify(cart));
   const subtotal = () => cart.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
   const taxableAmount = () => Math.max(0, subtotal() - discountAmount);
+  const totalWeightGrams = () => cart.reduce((sum, item) => sum + Number(item.weightGrams || 0) * Number(item.quantity || 0), 0);
+  const selectedShippingMethod = () => {
+    const code = shippingInputs.find((input) => input.checked && !input.disabled)?.value as ShippingMethod["code"] | undefined;
+    return code ? shippingMethods.get(code) : undefined;
+  };
+  const shippingAmount = () => {
+    if (submittedOrder) return Number(submittedOrder.shippingAmount || 0);
+    const method = selectedShippingMethod();
+    if (!method || method.pricingType === "collect") return 0;
+    return Number(method.basePrice || 0) + (method.pricingType === "weightVolume"
+      ? Math.ceil(totalWeightGrams() / 1000) * Number(method.pricePerKg || 0)
+      : 0);
+  };
   const taxPercent = () => submittedOrder
     ? Number(submittedOrder.taxPercent || 0)
     : Number(paymentMethod?.taxPercent || 0);
   const taxAmount = () => submittedOrder
     ? Number(submittedOrder.taxAmount || 0)
     : Math.round(taxableAmount() * taxPercent() / 100);
-  const finalAmount = () => submittedOrder ? Number(submittedOrder.finalAmount || 0) : taxableAmount() + taxAmount();
+  const finalAmount = () => submittedOrder ? Number(submittedOrder.finalAmount || 0) : taxableAmount() + taxAmount() + shippingAmount();
   const formatUploadSize = (bytes: number) => {
     if (bytes >= 1024 * 1024) {
       const megabytes = bytes / (1024 * 1024);
@@ -215,10 +238,29 @@ export const initCart = () => {
     if (cartSubtotal) cartSubtotal.textContent = `${numberFormatter.format(subtotal())} تومان`;
     if (cartDiscount) cartDiscount.textContent = `− ${numberFormatter.format(discountAmount)} تومان`;
     if (cartDiscountRow) cartDiscountRow.hidden = discountAmount === 0;
+    if (cartShippingLabel) cartShippingLabel.textContent = selectedShippingMethod()?.code === "post" ? "هزینه ارسال با پست" : "هزینه ارسال";
+    if (cartShipping) cartShipping.textContent = `${numberFormatter.format(shippingAmount())} تومان`;
+    if (cartShippingRow) cartShippingRow.hidden = shippingAmount() <= 0;
     if (cartTaxLabel) cartTaxLabel.textContent = `مالیات ارزش افزوده ${numberFormatter.format(taxPercent())}٪`;
     if (cartTax) cartTax.textContent = `${numberFormatter.format(taxAmount())} تومان`;
     if (cartTaxRow) cartTaxRow.hidden = taxPercent() <= 0;
     if (cartFinal) cartFinal.textContent = `${numberFormatter.format(finalAmount())} تومان`;
+  };
+
+  const syncShippingAvailability = () => {
+    const tipaxOnly = totalWeightGrams() >= 3000;
+    shippingInputs.forEach((input) => {
+      const disabled = tipaxOnly && input.value !== "tipax";
+      input.disabled = disabled;
+      input.closest("label")?.classList.toggle("is-disabled", disabled);
+      input.closest("label")?.setAttribute("aria-disabled", String(disabled));
+      if (disabled) input.checked = false;
+    });
+    if (!shippingInputs.some((input) => input.checked && !input.disabled)) {
+      const preferred = shippingInputs.find((input) => !input.disabled && input.value === "tipax")
+        || shippingInputs.find((input) => !input.disabled);
+      if (preferred) preferred.checked = true;
+    }
   };
 
   const copyText = async (value: string) => {
@@ -231,7 +273,12 @@ export const initCart = () => {
 
   const refreshShippingInputs = () => {
     shippingInputs.splice(0, shippingInputs.length, ...document.querySelectorAll<HTMLInputElement>('input[name="shipping-method"]'));
-    shippingInputs.forEach((input) => input.addEventListener("change", updateOrderLinks));
+    shippingInputs.forEach((input) => input.addEventListener("change", () => {
+      submittedOrder = null;
+      updateTotals();
+      updateOrderLinks();
+    }));
+    syncShippingAvailability();
   };
 
   const loadShippingMethods = async () => {
@@ -244,7 +291,9 @@ export const initCart = () => {
         return;
       }
       shippingMethodList.replaceChildren();
+      shippingMethods.clear();
       payload.items.forEach((method, index) => {
+        shippingMethods.set(method.code, method);
         const label = document.createElement("label");
         const radio = document.createElement("input");
         const copy = document.createElement("span");
@@ -270,6 +319,7 @@ export const initCart = () => {
         shippingMethodList.append(label);
       });
       refreshShippingInputs();
+      updateTotals();
       updateOrderLinks();
     } catch {
       refreshShippingInputs();
@@ -726,6 +776,7 @@ export const initCart = () => {
     cartItems?.replaceChildren(...cart.map(createCartItem));
     if (cartEmpty) cartEmpty.hidden = cart.length > 0;
     if (cartCheckout) cartCheckout.hidden = cart.length === 0;
+    syncShippingAvailability();
     updateTotals();
     updateOrderLinks();
     document.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT, { detail: { items: cart } }));
