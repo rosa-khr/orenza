@@ -221,7 +221,8 @@ if (root && list) {
           ? items.filter((product) => product.showInDiscounts)
           : items;
       visibleItems.forEach((product) => {
-        const isPowderCategory =
+        const isCoffeeProduct = (product.productType || "coffee") === "coffee";
+        const isDirectCartProduct = !isCoffeeProduct ||
           directCartCategories.has(root.dataset.category || "") || directCartCategories.has(product.categorySlug);
         const article = document.createElement("article");
         const eyebrow = document.createElement("span");
@@ -343,7 +344,7 @@ if (root && list) {
 
         const addPackagedToCart = () => {
           const unitPrice = productPrice(selectedWeight);
-          const isCoffee = product.productType === "coffee";
+          const isCoffee = isCoffeeProduct;
           const item: CartItemInput = {
             productId: product.id,
             productTitle: product.titleFa,
@@ -368,7 +369,7 @@ if (root && list) {
             button.textContent = weightLabel(weight);
             button.addEventListener("click", () => {
               selectedWeight = weight;
-              actionButton.textContent = isPowderCategory ? "افزودن به سبد" : "ادامه و انتخاب رُست";
+              actionButton.textContent = isDirectCartProduct ? "افزودن به سبد" : "ادامه و انتخاب رُست";
               update();
             });
             weights.append(button);
@@ -381,9 +382,9 @@ if (root && list) {
               button.setAttribute("aria-pressed", String(selected));
             });
           };
-          actionButton.textContent = isPowderCategory ? "افزودن به سبد" : "ادامه و انتخاب رُست";
+          actionButton.textContent = isDirectCartProduct ? "افزودن به سبد" : "ادامه و انتخاب رُست";
           actionButton.addEventListener("click", () => {
-            if (isPowderCategory) addPackagedToCart();
+            if (isDirectCartProduct) addPackagedToCart();
             else location.href = `/order/?product=${encodeURIComponent(productSlug(product.titleEn))}&weight=${selectedWeight}`;
           });
           controls.append(weights, actionButton);

@@ -225,7 +225,7 @@ export const adminResources: AdminResource[] = [
         options: [
           { label: "قهوه", value: "coffee" },
           { label: "دمنوش و چای", value: "herbalTea" },
-          { label: "نوشیدنی پودری (ماسالا، هات‌چاکلت و…)", value: "instantDrink" },
+          { label: "قهوه فوری و پودر آماده (گلد، کافی‌میت، هات‌چاکلت و…)", value: "instantDrink" },
           { label: "عسل و خوراکی", value: "food" },
           { label: "سایر", value: "other" }
         ]

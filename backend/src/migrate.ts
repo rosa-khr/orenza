@@ -635,11 +635,16 @@ ALTER TABLE products ADD CONSTRAINT products_package_weight_grams_check CHECK (p
 UPDATE products p
 SET product_type = CASE
   WHEN c.slug = 'herbal-tea' THEN 'herbalTea'
-  WHEN c.slug = 'cafe-drinks' THEN 'instantDrink'
+  WHEN c.slug IN ('instant-coffee','cafe-drinks') THEN 'instantDrink'
   ELSE p.product_type
 END
 FROM categories c
 WHERE p.category_id = c.id AND p.product_type = 'coffee';
+
+UPDATE products p
+SET product_type='instantDrink',roast_type=NULL,coffee_type=NULL,grind_type=NULL,blend_type=NULL,updated_at=now()
+FROM categories c
+WHERE p.category_id=c.id AND c.slug IN ('instant-coffee','cafe-drinks');
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_status varchar(20) NOT NULL DEFAULT 'inStock';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS product_content text;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image_urls text[] NOT NULL DEFAULT ARRAY[]::text[];

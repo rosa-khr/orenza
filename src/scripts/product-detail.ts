@@ -605,7 +605,7 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
         action.disabled = true;
         if (actionLabel) actionLabel.textContent = "این محصول فعلاً ناموجود است";
       } else {
-        const directCart = item.saleType === "packaged" || isDirectCartCategory;
+        const directCart = !isCoffee || item.saleType === "packaged" || isDirectCartCategory;
         if (actionLabel) actionLabel.textContent = directCart ? "افزودن به سبد خرید" : "ادامه و انتخاب رُست";
         action.addEventListener("click", () => {
           if (!directCart) {
