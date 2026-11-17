@@ -781,6 +781,8 @@ body:has(.account-page) .site-header {
 .account-order-items h3,
 .account-order-delivery h3,
 .account-order-history h3 { margin: 0; color: var(--text-dark); font-size: 12px; }
+.account-order-invoice { display: inline-flex; width: fit-content; align-items: center; justify-content: center; margin-top: 3px; border: 1px solid rgba(36,75,59,.38); padding: 8px 12px; color: var(--green); font-size: 9px; font-weight: 700; }
+.account-order-invoice:hover { background: var(--green); color: #fff; }
 .account-order-items > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 9px; border-top: 1px solid rgba(74,58,37,.09); }
 .account-order-items > div > span { display: grid; gap: 3px; }
 .account-order-items strong { color: #443c32; font-size: 10px; }

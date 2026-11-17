@@ -19,6 +19,10 @@ import { registerAdminRoutes } from "./admin/routes.js";
 import { registerStoreRoutes } from "./store/routes.js";
 import { registerRedirects } from "./seo.js";
 import { createRequestId, ensureLogsTable, loggerOptions, registerRequestLogging } from "./logger.js";
+import { getSiteSettings } from "./site-settings.js";
+import { readInvoiceSignature } from "./invoice-signatures.js";
+import { createInvoicePdf, type InvoiceBranding } from "./invoice-pdf.js";
+import type { NewOrder } from "./order-notifications.js";
 
 type UserRow = {
   id: string;
@@ -615,6 +619,101 @@ app.get("/api/v1/me/orders", async (request, reply) => {
   );
   reply.header("Cache-Control", "private, no-store");
   return { orders: result.rows };
+});
+
+app.get("/api/v1/me/orders/:id/invoice.pdf", async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return;
+  const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+  const result = await query<Record<string, unknown>>(
+    `SELECT o.id,o.order_number AS "orderNumber",o.customer_name AS "customerName",
+            o.customer_phone AS "customerPhone",o.customer_address AS "customerAddress",
+            o.customer_province AS "customerProvince",o.customer_city AS "customerCity",
+            o.customer_postal_code AS "customerPostalCode",o.shipping_method AS "shippingMethod",
+            o.payment_method_id AS "paymentMethodId",pm.title AS "paymentMethodTitle",
+            o.payment_ref_id AS "paymentRefId",o.payment_receipt_url AS "paymentReceiptUrl",
+            o.payment_status AS "paymentStatus",o.order_status AS "orderStatus",o.customer_note AS "customerNote",
+            o.total_amount AS "totalAmount",o.discount_amount AS "discountAmount",
+            o.shipping_amount AS "shippingAmount",o.tax_percent AS "taxPercent",
+            o.tax_amount AS "taxAmount",o.final_amount AS "finalAmount",o.created_at AS "createdAt"
+       FROM orders o
+       JOIN payment_methods pm ON pm.id=o.payment_method_id
+      WHERE o.id=$1 AND o.user_id=$2
+      LIMIT 1`,
+    [id, user.id]
+  );
+  const item = result.rows[0];
+  if (!item) return reply.code(404).send({ error: "سفارش موردنظر پیدا نشد." });
+
+  const [orderItems, settings] = await Promise.all([
+    query<Record<string, unknown>>(
+      `SELECT oi.product_title AS "productTitle",p.product_type AS "productType",
+              oi.weight,oi.quantity,oi.grind_type AS "grindType",oi.roast_type AS "roastType",
+              oi.blend_type AS "blendType",oi.brew_method AS "brewMethod",
+              oi.unit_price AS "unitPrice",oi.total_price AS "totalPrice"
+         FROM order_items oi
+         LEFT JOIN products p ON p.id=oi.product_id
+        WHERE oi.order_id=$1 ORDER BY oi.created_at`,
+      [id]
+    ),
+    getSiteSettings(pool)
+  ]);
+  const signatureFileName = String(settings.invoiceSignatureUrl || "").split("/").pop();
+  const branding: InvoiceBranding = {
+    brandName: String(settings.brandName || "اورنزا"),
+    brandNameEn: String(settings.brandNameEn || "ORENZA"),
+    supportPhone: String(settings.supportPhone || ""),
+    supportEmail: String(settings.supportEmail || ""),
+    websiteUrl: String(settings.websiteUrl || "https://orenza.ir"),
+    instagramUrl: String(settings.instagramUrl || "https://instagram.com/orenza.ir"),
+    address: String(settings.address || ""),
+    invoiceNationalId: String(settings.invoiceNationalId || "۰۰۲۱۴۱۱۴۱۷"),
+    invoiceSignature: signatureFileName ? await readInvoiceSignature(signatureFileName) : null
+  };
+  const order: NewOrder = {
+    id: String(item.id),
+    orderNumber: String(item.orderNumber || item.id),
+    customerName: String(item.customerName || ""),
+    customerPhone: String(item.customerPhone || ""),
+    customerAddress: String(item.customerAddress || ""),
+    customerProvince: String(item.customerProvince || ""),
+    customerCity: String(item.customerCity || ""),
+    customerPostalCode: String(item.customerPostalCode || ""),
+    shippingMethod: String(item.shippingMethod || ""),
+    paymentMethodId: item.paymentMethodId ? String(item.paymentMethodId) : null,
+    paymentMethodTitle: item.paymentMethodTitle ? String(item.paymentMethodTitle) : null,
+    paymentRefId: item.paymentRefId ? String(item.paymentRefId) : null,
+    paymentReceiptUrl: item.paymentReceiptUrl ? String(item.paymentReceiptUrl) : null,
+    paymentStatus: item.paymentStatus ? String(item.paymentStatus) : null,
+    orderStatus: item.orderStatus ? String(item.orderStatus) : null,
+    customerNote: item.customerNote ? String(item.customerNote) : null,
+    totalAmount: Number(item.totalAmount || 0),
+    discountAmount: Number(item.discountAmount || 0),
+    shippingAmount: Number(item.shippingAmount || 0),
+    taxPercent: Number(item.taxPercent || 0),
+    taxAmount: Number(item.taxAmount || 0),
+    finalAmount: Number(item.finalAmount || 0),
+    createdAt: item.createdAt instanceof Date ? item.createdAt : String(item.createdAt || new Date().toISOString()),
+    items: orderItems.rows.map((orderItem) => ({
+      productTitle: String(orderItem.productTitle || "محصول اورنزا"),
+      productType: orderItem.productType ? String(orderItem.productType) as "coffee" | "herbalTea" | "instantDrink" | "food" | "other" : null,
+      weight: Number(orderItem.weight || 0),
+      quantity: Number(orderItem.quantity || 0),
+      grindType: String(orderItem.grindType || ""),
+      roastType: String(orderItem.roastType || ""),
+      blendType: String(orderItem.blendType || ""),
+      brewMethod: orderItem.brewMethod ? String(orderItem.brewMethod) : null,
+      unitPrice: Number(orderItem.unitPrice || 0),
+      totalPrice: Number(orderItem.totalPrice || 0)
+    }))
+  };
+  const pdf = await createInvoicePdf(order, branding);
+  const fileName = `invoice-${order.orderNumber.replace(/[^\w.-]+/g, "-")}.pdf`;
+  reply
+    .type("application/pdf")
+    .header("Content-Disposition", `attachment; filename="${fileName}"`)
+    .header("Cache-Control", "private, no-store");
+  return reply.send(pdf);
 });
 
 registerStoreRoutes(app, pool, currentUser);

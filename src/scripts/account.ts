@@ -250,6 +250,10 @@ const renderOrders = (orders: CustomerOrder[]) => {
       createElement("p", "", `${order.shippingMethod === "tipax" ? "تیپاکس" : "پست"} · ${order.paymentMethodTitle}`),
       createElement("address", "", [order.customerProvince, order.customerCity, order.customerAddress].filter(Boolean).join("، "))
     );
+    const invoiceLink = createElement("a", "account-order-invoice", "دانلود فاکتور PDF");
+    invoiceLink.href = `/api/v1/me/orders/${encodeURIComponent(order.id)}/invoice.pdf`;
+    invoiceLink.setAttribute("download", `invoice-${order.orderNumber}.pdf`);
+    delivery.append(invoiceLink);
 
     const history = createElement("section", "account-order-history");
     history.append(createElement("h3", "", "تاریخچه وضعیت"));
