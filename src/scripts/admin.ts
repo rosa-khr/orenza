@@ -219,6 +219,27 @@ const askConfirm = async (title: string, message: string, acceptLabel = "تأی�
   return result.isConfirmed;
 };
 
+const askTrackingCode = async (currentValue = "") => {
+  const result = await adminSwal.fire({
+    title: "ثبت ارسال سفارش",
+    text: "اگر کد رهگیری مرسوله را دارید وارد کنید. این فیلد اختیاری است و بعداً هم قابل ثبت یا ویرایش خواهد بود.",
+    icon: "question",
+    input: "text",
+    inputLabel: "کد رهگیری مرسوله (اختیاری)",
+    inputValue: currentValue,
+    inputPlaceholder: "مثلاً ۲۴ رقم پست یا کد تیپاکس",
+    inputAttributes: {
+      maxlength: "120",
+      dir: "ltr",
+      inputmode: "numeric",
+      autocomplete: "off"
+    },
+    showCancelButton: true,
+    confirmButtonText: "بله، ارسال شد"
+  });
+  return result.isConfirmed ? String(result.value || "").trim() : null;
+};
+
 const openUserPasswordReset = (userId: string, userName: string) => {
   const layer = document.querySelector<HTMLElement>("[data-admin-password-reset]");
   const form = layer?.querySelector<HTMLFormElement>("[data-password-reset-form]");
@@ -834,18 +855,23 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     action: "ready" | "sent"
   ) => {
     const isReadyAction = action === "ready";
-    const accepted = await askConfirm(
-      isReadyAction ? "ثبت آماده ارسال" : "ثبت ارسال سفارش",
-      isReadyAction
-        ? "آماده‌سازی این سفارش تکمیل شده و سفارش وارد صف ارسال شود؟"
-        : "ارسال این سفارش به مشتری ثبت شود؟",
-      isReadyAction ? "بله، آماده ارسال است" : "بله، ارسال شد"
-    );
-    if (!accepted) return;
+    let trackingCode = "";
+    if (isReadyAction) {
+      const accepted = await askConfirm(
+        "ثبت آماده ارسال",
+        "آماده‌سازی این سفارش تکمیل شده و سفارش وارد صف ارسال شود؟",
+        "بله، آماده ارسال است"
+      );
+      if (!accepted) return;
+    } else {
+      const enteredTrackingCode = await askTrackingCode(String(row.trackingCode || ""));
+      if (enteredTrackingCode === null) return;
+      trackingCode = enteredTrackingCode;
+    }
     try {
       await api(`/api/v1/admin/orders/${row.id}/fulfillment-transition`, {
         method: "POST",
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action, ...(trackingCode ? { trackingCode } : {}) })
       });
       toast(isReadyAction ? "سفارش آماده ارسال شد." : "ارسال سفارش ثبت شد.");
       await loadRows();
@@ -2351,20 +2377,20 @@ const initOrderWorkflow = (
   const transition = async (action: "ready" | "sent") => {
     const isReadyAction = action === "ready";
     const trackingInput = form.elements.namedItem("trackingCode") as HTMLInputElement | null;
-    const trackingCode = trackingInput?.value.trim() || "";
-    if (!isReadyAction && !trackingCode) {
-      toast("برای ثبت ارسال، کد رهگیری مرسوله را وارد کنید.", "error");
-      trackingInput?.focus();
-      return;
+    let trackingCode = trackingInput?.value.trim() || "";
+    if (isReadyAction) {
+      const accepted = await askConfirm(
+        "ثبت آماده ارسال",
+        "آماده‌سازی این سفارش تکمیل شده و سفارش وارد صف ارسال شود؟",
+        "بله، آماده ارسال است"
+      );
+      if (!accepted) return;
+    } else {
+      const enteredTrackingCode = await askTrackingCode(trackingCode);
+      if (enteredTrackingCode === null) return;
+      trackingCode = enteredTrackingCode;
+      if (trackingInput) trackingInput.value = trackingCode;
     }
-    const accepted = await askConfirm(
-      isReadyAction ? "ثبت آماده ارسال" : "ثبت ارسال سفارش",
-      isReadyAction
-        ? "آماده‌سازی این سفارش تکمیل شده و سفارش وارد صف ارسال شود؟"
-        : "ارسال این سفارش به مشتری ثبت شود؟",
-      isReadyAction ? "بله، آماده ارسال است" : "بله، ارسال شد"
-    );
-    if (!accepted) return;
     if (readyButton) readyButton.disabled = true;
     if (sentButton) sentButton.disabled = true;
     try {

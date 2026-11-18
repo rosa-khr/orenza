@@ -225,7 +225,18 @@ const renderOrders = (orders: CustomerOrder[]) => {
         }
         window.setTimeout(() => { copy.textContent = "کپی کد"; }, 1400);
       });
-      trackingRow.append(code, copy);
+      const trackingLink = createElement(
+        "a",
+        "account-order-tracking-link",
+        order.shippingMethod === "tipax" ? "پیگیری در تیپاکس" : "پیگیری در پست"
+      );
+      const trackingBase = order.shippingMethod === "tipax"
+        ? "https://tipaxco.com/tracking"
+        : "https://tracking.post.ir/";
+      trackingLink.href = `${trackingBase}?id=${encodeURIComponent(order.trackingCode.trim())}`;
+      trackingLink.target = "_blank";
+      trackingLink.rel = "noopener noreferrer";
+      trackingRow.append(code, copy, trackingLink);
       tracking.append(trackingRow);
     } else {
       tracking.append(createElement("p", "", "پس از تحویل سفارش به شرکت حمل، کد رهگیری اینجا نمایش داده می‌شود."));

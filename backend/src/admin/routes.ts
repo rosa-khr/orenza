@@ -1141,14 +1141,11 @@ ${ai.instructions}
       action: z.enum(["ready", "sent"]),
       trackingCode: z.string().trim().max(120).optional()
     }).parse(request.body);
-    if (action === "sent" && !trackingCode) {
-      return reply.code(422).send({ error: "برای ثبت ارسال، کد رهگیری مرسوله را وارد کنید." });
-    }
     const expectedStatus = action === "ready" ? "processing" : "ready";
     const result = await pool.query<Record<string, unknown>>(
       `UPDATE orders
           SET order_status=$2,
-              tracking_code=CASE WHEN $2='sent' THEN $4 ELSE tracking_code END,
+              tracking_code=CASE WHEN $2='sent' AND NULLIF($4::varchar,'') IS NOT NULL THEN $4::varchar ELSE tracking_code END,
               updated_at=now()
         WHERE id=$1
           AND order_status=$3

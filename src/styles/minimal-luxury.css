@@ -772,9 +772,11 @@ body:has(.account-page) .site-header {
 .account-order-progress li.is-current i { border: 2px solid var(--green); color: var(--green); box-shadow: 0 0 0 4px rgba(36,75,59,.09); }
 .account-order-progress.is-canceled { opacity: .62; }
 .account-order-tracking { display: grid; align-content: start; gap: 8px; background: #f8f2e8; }
-.account-order-tracking > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.account-order-tracking > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .account-order-tracking strong { overflow-wrap: anywhere; color: var(--text-dark); font: 700 14px ui-monospace,SFMono-Regular,Menlo,monospace; }
 .account-order-tracking button { flex: 0 0 auto; border: 1px solid rgba(36,75,59,.35); padding: 7px 10px; background: transparent; color: var(--green); cursor: pointer; font: 9px Dana,Tahoma,sans-serif; }
+.account-order-tracking-link { flex: 1 0 100%; border: 1px solid rgba(36,75,59,.35); padding: 8px 11px; background: var(--green); color: #fff; font-size: 9px; font-weight: 700; text-align: center; }
+.account-order-tracking-link:hover { background: #23523e; color: #fff; }
 .account-order-items,
 .account-order-delivery,
 .account-order-history { display: grid; align-content: start; gap: 10px; }
