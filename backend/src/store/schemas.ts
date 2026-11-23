@@ -235,7 +235,7 @@ export const paymentCardSchema = z.object({
 
 export const shippingMethodSchema = z.object({
   title: z.string().trim().min(2).max(120),
-  code: z.enum(["tipax", "post", "cargo"]),
+  code: z.enum(["tipax", "post", "cargo", "courier"]),
   description: z.string().trim().max(300).default(""),
   pricingType: z.enum(["collect", "weightVolume", "fixed"]).default("fixed"),
   basePrice: z.coerce.number().int().min(0).max(100_000_000).default(0),
@@ -247,8 +247,8 @@ export const shippingMethodSchema = z.object({
   if (data.code === "tipax" && data.pricingType !== "collect") {
     context.addIssue({ code: "custom", path: ["pricingType"], message: "برای تیپاکس فعلاً حالت پس‌کرایه انتخاب شود." });
   }
-  if (data.code === "cargo" && data.pricingType !== "collect") {
-    context.addIssue({ code: "custom", path: ["pricingType"], message: "برای پیک یا باربری حالت پس‌کرایه انتخاب شود." });
+  if (["cargo", "courier"].includes(data.code) && data.pricingType !== "collect") {
+    context.addIssue({ code: "custom", path: ["pricingType"], message: "برای پیک و باربری حالت پس‌کرایه انتخاب شود." });
   }
   if (data.code === "post" && data.pricingType === "collect") {
     context.addIssue({ code: "custom", path: ["pricingType"], message: "برای پست، مدل هزینه بر اساس وزن/حجم یا ثابت تنظیم شود." });
@@ -304,7 +304,7 @@ export const orderAdminSchema = z.object({
   orderStatus: z.enum(["new", "processing", "ready", "sent", "completed", "canceled"]),
   paymentReceiptUrl: optionalUrl.optional(),
   trackingCode: z.string().trim().max(120).nullable().optional(),
-  trackingProvider: z.enum(["post", "tipax", "mahex", "cargo"]).nullable().optional(),
+  trackingProvider: z.enum(["post", "tipax", "mahex", "cargo", "courier"]).nullable().optional(),
   adminNote: z.string().trim().max(3000).nullable().optional()
 });
 
@@ -462,7 +462,7 @@ export const createOrderSchema = z.object({
   customerProvince: z.string().trim().min(2).max(80),
   customerCity: z.string().trim().min(2).max(80),
   customerPostalCode: z.string().transform(normalizePhone).pipe(z.string().regex(/^\d{10}$/)),
-  shippingMethod: z.enum(["tipax", "post", "cargo"]),
+  shippingMethod: z.enum(["tipax", "post", "cargo", "courier"]),
   paymentMethodId: z.string().uuid(),
   paymentCardId: z.string().uuid().nullable().optional(),
   paymentRefId: z.string().trim().min(4).max(80).regex(/^[0-9]+$/, "کد پیگیری باید فقط شامل ارقام ۰ تا ۹ باشد.").optional(),

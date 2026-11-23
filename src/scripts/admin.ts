@@ -77,7 +77,8 @@ const statusLabels: Record<string, string> = {
   zarinpal: "زرین‌پال",
   tipax: "تیپاکس",
   mahex: "ماهکس",
-  cargo: "پیک یا باربری",
+  cargo: "باربری",
+  courier: "پیک",
   post: "پست",
   collect: "پس‌کرایه",
   weightVolume: "وزن و حجم",
@@ -221,7 +222,7 @@ const askConfirm = async (title: string, message: string, acceptLabel = "تأی�
   return result.isConfirmed;
 };
 
-type TrackingProvider = "post" | "tipax" | "mahex" | "cargo";
+type TrackingProvider = "post" | "tipax" | "mahex" | "cargo" | "courier";
 
 const askTrackingDetails = async (
   shippingMethod: string,
@@ -230,9 +231,10 @@ const askTrackingDetails = async (
 ) => {
   const isPost = shippingMethod === "post";
   const isCargo = shippingMethod === "cargo";
+  const isCourier = shippingMethod === "courier";
   const selectedProvider: TrackingProvider = isPost
     ? "post"
-    : isCargo ? "cargo"
+    : isCargo ? "cargo" : isCourier ? "courier"
     : currentProvider === "mahex" ? "mahex" : "tipax";
   const result = await adminSwal.fire<{ trackingCode: string; trackingProvider: TrackingProvider }>({
     title: "ثبت ارسال سفارش",
@@ -242,8 +244,8 @@ const askTrackingDetails = async (
       <div class="admin-swal-fields is-stacked">
         <label>
           <span>شرکت حمل</span>
-          ${isPost || isCargo
-            ? `<input id="tracking-provider-fixed" class="admin-swal-input" value="${isPost ? "پست" : "پیک یا باربری"}" readonly>`
+          ${isPost || isCargo || isCourier
+            ? `<input id="tracking-provider-fixed" class="admin-swal-input" value="${isPost ? "پست" : isCourier ? "پیک" : "باربری"}" readonly>`
             : `<select id="tracking-provider" class="admin-swal-input">
                 <option value="tipax"${selectedProvider === "tipax" ? " selected" : ""}>تیپاکس</option>
                 <option value="mahex"${selectedProvider === "mahex" ? " selected" : ""}>ماهکس</option>
@@ -269,9 +271,9 @@ const askTrackingDetails = async (
       const trackingCode = popup?.querySelector<HTMLInputElement>("#tracking-code")?.value.trim() || "";
       const provider = isPost
         ? "post"
-        : isCargo ? "cargo"
+        : isCargo ? "cargo" : isCourier ? "courier"
         : popup?.querySelector<HTMLSelectElement>("#tracking-provider")?.value;
-      if (!provider || !["post", "tipax", "mahex", "cargo"].includes(provider)) {
+      if (!provider || !["post", "tipax", "mahex", "cargo", "courier"].includes(provider)) {
         Swal.showValidationMessage("شرکت حمل را انتخاب کنید.");
         return false;
       }

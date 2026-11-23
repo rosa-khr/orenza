@@ -1,10 +1,10 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type { Pool } from "pg";
 import { z } from "zod";
 import { toPublicRecord } from "../admin/repository.js";
 import { getPublicSiteSettings, getSiteSettings } from "../site-settings.js";
 import { OrderService } from "./order-service.js";
-import { removePaymentReceipt, savePaymentReceipt } from "../payment-receipts.js";
+import { maxReceiptSize, removePaymentReceipt, savePaymentReceipt } from "../payment-receipts.js";
 import { openProductImage } from "../product-images.js";
 import { openHomepageBanner } from "../homepage-banners.js";
 import { sanitizeRichText } from "../rich-text.js";
@@ -206,7 +206,8 @@ const getPublicProductDetail = async (pool: Pool, field: "id" | "slug", value: s
 export const registerStoreRoutes = (
   app: FastifyInstance,
   pool: Pool,
-  getCurrentUser: (request: FastifyRequest) => Promise<SessionUser>
+  getCurrentUser: (request: FastifyRequest) => Promise<SessionUser>,
+  setSession: (reply: FastifyReply, userId: string) => Promise<void>
 ) => {
   const orderService = new OrderService(pool);
 
@@ -473,8 +474,18 @@ export const registerStoreRoutes = (
       slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }).parse(request.params);
     const result = await pool.query<Record<string, unknown>>(
-      `SELECT title,slug,description,image_url,seo_title,seo_description,canonical_url,robots_index,robots_follow
-         FROM categories WHERE slug=$1 AND is_active=true AND deleted_at IS NULL LIMIT 1`,
+      `SELECT c.title,c.slug,c.description,c.image_url,c.seo_title,c.seo_description,c.canonical_url,c.robots_index,c.robots_follow,
+         COALESCE((
+           WITH RECURSIVE ancestors AS (
+             SELECT parent.id,parent.title,parent.slug,parent.parent_category_id,1 AS depth
+             FROM categories parent WHERE parent.id=c.parent_category_id AND parent.is_active=true AND parent.deleted_at IS NULL
+             UNION ALL
+             SELECT parent.id,parent.title,parent.slug,parent.parent_category_id,ancestors.depth+1
+             FROM categories parent JOIN ancestors ON ancestors.parent_category_id=parent.id
+             WHERE parent.is_active=true AND parent.deleted_at IS NULL
+           ) SELECT json_agg(json_build_object('title',title,'slug',slug) ORDER BY depth DESC) FROM ancestors
+         ),'[]'::json) AS ancestors
+         FROM categories c WHERE c.slug=$1 AND c.is_active=true AND c.deleted_at IS NULL LIMIT 1`,
       [slug]
     );
     if (!result.rows[0]) return reply.code(404).send({ error: "دسته‌بندی پیدا نشد." });
@@ -985,18 +996,30 @@ export const registerStoreRoutes = (
   app.post("/api/v1/orders", { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } }, async (request, reply) => {
     const user = await getCurrentUser(request);
     const order = await orderService.create(request.body, user?.id ?? null);
+    if (order.accountCreated) await setSession(reply, order.userId!);
     return reply.code(201).send({ order });
   });
 
   app.post("/api/v1/orders/card-transfer", {
-    bodyLimit: 25 * 1024 * 1024,
+    bodyLimit: 6 * 1024 * 1024,
     config: { rateLimit: { max: 8, timeWindow: "15 minutes" } }
   }, async (request, reply) => {
-    const part = await request.file();
+    const part = await request.file({ limits: { fileSize: maxReceiptSize } });
     if (!part || part.fieldname !== "receipt") {
       return reply.code(422).send({ error: "تصویر فیش واریزی را انتخاب کنید." });
     }
-    const buffer = await part.toBuffer();
+    let buffer: Buffer;
+    try {
+      buffer = await part.toBuffer();
+    } catch (error) {
+      if ((error as { code?: string }).code === "FST_REQ_FILE_TOO_LARGE") {
+        return reply.code(413).send({ error: "حجم تصویر فیش نباید بیشتر از ۵ مگابایت باشد." });
+      }
+      throw error;
+    }
+    if (part.file.truncated || buffer.length > maxReceiptSize) {
+      return reply.code(413).send({ error: "حجم تصویر فیش نباید بیشتر از ۵ مگابایت باشد." });
+    }
     const payloadField = part.fields.payload;
     const rawPayload = payloadField && "value" in payloadField ? String(payloadField.value) : "";
     if (!rawPayload) return reply.code(422).send({ error: "اطلاعات سفارش کامل نیست." });
@@ -1011,6 +1034,7 @@ export const registerStoreRoutes = (
     try {
       const user = await getCurrentUser(request);
       const order = await orderService.create({ ...(parsedPayload as Record<string, unknown>), paymentReceiptUrl: saved.url }, user?.id ?? null);
+      if (order.accountCreated) await setSession(reply, order.userId!);
       return reply.code(201).send({ order });
     } catch (error) {
       await removePaymentReceipt(saved.fileName);

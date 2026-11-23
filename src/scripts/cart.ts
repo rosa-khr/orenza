@@ -46,7 +46,7 @@ type PaymentCard = {
 type ShippingMethod = {
   id: string;
   title: string;
-  code: "tipax" | "post" | "cargo";
+  code: "tipax" | "post" | "cargo" | "courier";
   description: string;
   pricingType: "collect" | "weightVolume" | "fixed";
   basePrice: number;
@@ -143,9 +143,10 @@ export const initCart = () => {
   const shippingMethods = new Map<ShippingMethod["code"], ShippingMethod>([
     ["tipax", { id: "tipax", title: "تیپاکس", code: "tipax", description: "پس‌کرایه", pricingType: "collect", basePrice: 0, pricePerKg: 0, pricePerVolume: 0 }],
     ["post", { id: "post", title: "پست", code: "post", description: "هزینه ثابت ارسال", pricingType: "fixed", basePrice: 200000, pricePerKg: 0, pricePerVolume: 0 }],
-    ["cargo", { id: "cargo", title: "پیک یا باربری", code: "cargo", description: "پس‌کرایه برای سفارش‌های بیشتر از ۱۰ کیلوگرم", pricingType: "collect", basePrice: 0, pricePerKg: 0, pricePerVolume: 0 }]
+    ["cargo", { id: "cargo", title: "باربری", code: "cargo", description: "برای سفارش‌های بالای ۱۰ کیلوگرم، ارسال از طریق باربری انجام می‌شود و سفارش به نزدیک‌ترین باربری شهر شما می‌رسد. هزینه ارسال پس‌کرایه است.", pricingType: "collect", basePrice: 0, pricePerKg: 0, pricePerVolume: 0 }],
+    ["courier", { id: "courier", title: "پیک", code: "courier", description: "ارسال با پیک؛ هزینه ارسال جداگانه و هنگام تحویل دریافت می‌شود.", pricingType: "collect", basePrice: 0, pricePerKg: 0, pricePerVolume: 0 }]
   ]);
-  const maxReceiptUploadSize = 20 * 1024 * 1024;
+  const maxReceiptUploadSize = 5 * 1024 * 1024;
 
   const readCart = (): CartItem[] => {
     try {
@@ -254,7 +255,7 @@ export const initCart = () => {
       const allowed = weight > 10000
         ? input.value === "cargo"
         : weight >= 3000
-          ? input.value === "tipax"
+          ? ["tipax", "courier"].includes(input.value)
           : input.value !== "cargo";
       const disabled = !allowed;
       input.disabled = disabled;
@@ -649,7 +650,7 @@ export const initCart = () => {
         customerCity: customerCity?.value.trim(),
         customerAddress: customerAddress?.value.trim(),
         customerPostalCode: customerPostal?.value.trim(),
-        shippingMethod: shipping === "cargo" ? "cargo" : shipping === "tipax" ? "tipax" : "post",
+        shippingMethod: shipping === "courier" ? "courier" : shipping === "cargo" ? "cargo" : shipping === "tipax" ? "tipax" : "post",
         paymentMethodId: paymentMethod.id,
         paymentCardId: selectedPaymentCard?.id,
         paymentRefId: normalizeDigits(paymentRef?.value.trim() || ""),
@@ -683,7 +684,7 @@ export const initCart = () => {
     }
     if (!response.ok) {
       const fallback = response.status === 413
-        ? "حجم تصویر رسید بیشتر از ۲۰ مگابایت است؛ لطفاً تصویر کوچک‌تری انتخاب کن."
+        ? "حجم تصویر رسید بیشتر از ۵ مگابایت است؛ لطفاً تصویر کوچک‌تری انتخاب کن."
         : "سفارش ثبت نشد. اتصال اینترنت را بررسی کن؛ اطلاعات سبدت حفظ شده و می‌توانی دوباره تلاش کنی.";
       throw new Error(payload.error || fallback);
     }
@@ -707,10 +708,10 @@ export const initCart = () => {
       const order = await registerOrder();
       localStorage.removeItem("orenza-cart");
       cart = [];
-      if (copyStatus) copyStatus.textContent = `سفارش ${order.orderNumber} ثبت شد؛ در حال نمایش تأیید سفارش…`;
+      if (copyStatus) copyStatus.textContent = `سفارش ${order.orderNumber} ثبت شد؛ در حال نمایش پیگیری سفارش…`;
       if (registerOrderButton) registerOrderButton.textContent = "سفارش ثبت شد ✓";
       await showOrderSuccessAlert(order.orderNumber);
-      window.location.assign(`/order-success/?order=${encodeURIComponent(order.orderNumber)}`);
+      window.location.assign(`/account/orders/?order=${encodeURIComponent(order.orderNumber)}`);
     } catch (error) {
       const message = error instanceof TypeError
         ? "ارتباط با سرور برقرار نشد. اینترنت را بررسی کن؛ اطلاعات سبدت حفظ شده و می‌توانی دوباره تلاش کنی."
@@ -920,7 +921,7 @@ export const initCart = () => {
   const prepareReceipt = async (file: File) => {
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
     if (file.size > maxReceiptUploadSize) {
-      throw new Error("حجم تصویر رسید نباید بیشتر از ۲۰ مگابایت باشد.");
+      throw new Error("حجم تصویر رسید نباید بیشتر از ۵ مگابایت باشد.");
     }
     if (allowedTypes.has(file.type)) return file;
     if (!file.type.startsWith("image/") && !/\.(?:heic|heif)$/i.test(file.name)) {
@@ -944,7 +945,7 @@ export const initCart = () => {
     canvas.width = 1;
     canvas.height = 1;
     if (!blob || blob.size > maxReceiptUploadSize) {
-      throw new Error("حجم تصویر رسید باید کمتر از ۲۰ مگابایت باشد؛ لطفاً فایل کوچک‌تری انتخاب کن.");
+      throw new Error("حجم تصویر رسید نباید بیشتر از ۵ مگابایت باشد؛ لطفاً فایل کوچک‌تری انتخاب کن.");
     }
     const baseName = file.name.replace(/\.[^.]+$/, "") || "payment-receipt";
     return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
@@ -961,7 +962,7 @@ export const initCart = () => {
       if (paymentReceiptName) paymentReceiptName.textContent = "از دوربین یا گالری انتخاب کن؛ حجم تصویر خودکار بهینه می‌شود.";
     } else {
       if (file.size > maxReceiptUploadSize) {
-        const message = "حجم تصویر رسید نباید بیشتر از ۲۰ مگابایت باشد.";
+        const message = "حجم تصویر رسید نباید بیشتر از ۵ مگابایت باشد.";
         paymentReceipt.value = "";
         paymentReceipt.closest("label")?.classList.add("is-invalid");
         paymentReceipt.setAttribute("aria-invalid", "true");

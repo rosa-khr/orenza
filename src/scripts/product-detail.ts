@@ -561,6 +561,18 @@ if (root && (id || (pathSlug && pathSlug !== "detail"))) {
         const priceRoot = root.querySelector<HTMLElement>("[data-product-detail-price]");
         if (!priceRoot) return;
         const info = priceInfo(weight);
+        const schemaScript = document.querySelector<HTMLScriptElement>("[data-product-schema]");
+        if (schemaScript) {
+          try {
+            const schema = JSON.parse(schemaScript.textContent || "{}");
+            if (schema.offers) {
+              schema.offers.price = Math.round(info.final * 10);
+              schema.weight = { "@type": "QuantitativeValue", value: weight, unitCode: "GRM" };
+              if (schema.offers.priceSpecification) schema.offers.priceSpecification.price = Math.round(info.regular * 10);
+              schemaScript.textContent = JSON.stringify(schema);
+            }
+          } catch { /* Preserve other page data if a schema block is invalid. */ }
+        }
         const hasDiscount = item.showInDiscounts && info.final < info.regular && info.percent > 0;
         priceRoot.classList.toggle("has-product-detail-discount", hasDiscount);
         priceRoot.replaceChildren();

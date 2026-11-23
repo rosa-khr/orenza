@@ -1181,7 +1181,7 @@ ${ai.instructions}
     const { action, trackingCode, trackingProvider } = z.object({
       action: z.enum(["ready", "sent"]),
       trackingCode: z.string().trim().max(120).optional(),
-      trackingProvider: z.enum(["post", "tipax", "mahex", "cargo"]).optional()
+      trackingProvider: z.enum(["post", "tipax", "mahex", "cargo", "courier"]).optional()
     }).parse(request.body);
     const expectedStatus = action === "ready" ? "processing" : "ready";
     const current = await pool.query<{ shipping_method: string; tracking_provider: string | null }>(
@@ -1193,8 +1193,8 @@ ${ai.instructions}
     const resolvedProvider = action === "sent"
       ? order.shipping_method === "post"
         ? "post"
-        : order.shipping_method === "cargo"
-          ? "cargo"
+        : ["cargo", "courier"].includes(order.shipping_method)
+          ? order.shipping_method
           : trackingProvider === "mahex" ? "mahex" : trackingProvider === "tipax" ? "tipax" : order.tracking_provider || "tipax"
       : null;
     const result = await pool.query<Record<string, unknown>>(

@@ -69,7 +69,7 @@ const schema = {
       name: "Orenza Coffee",
       alternateName: "قهوه اورنزا",
       url: siteUrl.toString(),
-      logo: socialImage.toString(),
+      logo: { "@type": "ImageObject", url: new URL("/images/orenza-logo.png", siteUrl).toString() },
       email: "order.orenzacoffee@gmail.com",
       telephone: "+989103060396",
       contactPoint: {
@@ -90,7 +90,8 @@ const schema = {
       publisher: { "@id": `${siteUrl}#organization` }
     },
     {
-      "@type": "WebPage",
+      "@type": canonicalPath === "/about/" ? "AboutPage" : canonicalPath === "/contact/" ? "ContactPage"
+        : ["/products/", "/categories/", "/articles/"].includes(canonicalPath) || canonicalPath.startsWith("/category/") ? "CollectionPage" : "WebPage",
       "@id": `${structuredCanonical}#webpage`,
       name: structuredDataTitle || fullTitle,
       description: structuredDataDescription || description,
@@ -138,7 +139,7 @@ const schema = {
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="اورنزا" />
-    {robotsIndex && <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)}></script>}
+    {robotsIndex && <script type="application/ld+json" is:inline data-site-schema set:html={JSON.stringify(schema).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029")}></script>}
     <title>{fullTitle}</title>
   </head>
   <body>

@@ -9,6 +9,8 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const meta = (html, name) => html.match(new RegExp(`<meta name=["']${name}["'][^>]*content=["']([^"']*)`, "i"))?.[1] || "";
 const canonical = (html) => html.match(/<link rel=["']canonical["'][^>]*href=["']([^"']*)/i)?.[1] || "";
 const h1Text = (html) => (html.match(/<h1(?:\s[^>]*)?>([\s\S]*?)<\/h1>/i)?.[1] || "").replace(/<[^>]+>/g, "").trim();
+const schemaNodes = (html) => [...html.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
+  .flatMap((match) => { const data = JSON.parse(match[1]); return data["@graph"] || [data]; });
 
 test("public static pages are indexable and self canonical in initial HTML", async () => {
   const pages = new Map([
@@ -94,4 +96,69 @@ test("dynamic category and tag renderers emit initial H1, content and self canon
   assert.equal(canonical(tag), "https://orenza.ir/tags/fresh-roasted-coffee/");
   assert.equal(h1Text(tag), "قهوه تازه رست");
   assert.match(tag, /راهنمای کامل قهوه تازه رست/);
+});
+
+test("product schema uses the visible default weight, discounted price in IRR and real availability", async () => {
+  const html = renderProductDetailPage(await read("dist/products/detail/index.html"), "https://orenza.ir/products/schema-coffee/", {
+    id: "coffee-123", titleFa: "قهوه تست", titleEn: "Schema coffee", description: "قهوه تازه", productType: "coffee",
+    saleType: "weighted", availableWeightsGrams: [500,100,1000], salePricePerKg: 800000,
+    discountSalePricePerKg: 720000, discountPercent: 10, showInDiscounts: true,
+    imageUrl: "/images/coffee.webp", productImageUrls: ["/images/coffee.webp"], stockStatus: "outOfStock"
+  });
+  const product = schemaNodes(html).find((node) => node["@type"] === "Product");
+  assert.equal(product.sku, "coffee-123");
+  assert.equal(product.weight.value, 100);
+  assert.equal(product.offers.price, 720000);
+  assert.equal(product.offers.priceCurrency, "IRR");
+  assert.equal(product.offers.priceSpecification.price, 800000);
+  assert.equal(product.offers.priceSpecification.priceType, "https://schema.org/StrikethroughPrice");
+  assert.equal(product.offers.availability, "https://schema.org/OutOfStock");
+  assert.deepEqual(product.image, ["https://orenza.ir/images/coffee.webp"]);
+  assert.equal(product.aggregateRating, undefined);
+  assert.equal(product.review, undefined);
+  assert.equal(product.gtin, undefined);
+  assert.match(html, /۱۰۰ گرم · ۷۲٬۰۰۰ تومان/);
+  assert.doesNotMatch(html, /data-product-detail-purchase hidden/);
+});
+
+test("packaged offers use package price, ignore inactive discounts and do not invent price expiry", async () => {
+  const template = await read("dist/products/detail/index.html");
+  const data = { titleFa: "کافی میت", titleEn: "Creamer", description: "بسته کافی میت", saleType: "packaged", packageWeightGrams: 350,
+    packagePrice: 200000, salePricePerKg: 200000, discountSalePricePerKg: 180000, discountPercent: 10, showInDiscounts: false, stockStatus: "inStock" };
+  const product = schemaNodes(renderProductDetailPage(template, "https://orenza.ir/products/creamer/", data)).find((node) => node["@type"] === "Product");
+  assert.equal(product.weight.value,350);
+  assert.equal(product.offers.price,2000000);
+  assert.equal(product.offers.availability,"https://schema.org/InStock");
+  assert.equal(product.offers.priceSpecification,undefined);
+  assert.equal(product.offers.priceValidUntil,undefined);
+  const unpriced = schemaNodes(renderProductDetailPage(template, "https://orenza.ir/products/creamer/", {...data, packagePrice:0,salePricePerKg:0})).find((node) => node["@type"] === "Product");
+  assert.equal(unpriced.offers,undefined);
+  assert.ok(!schemaNodes(renderProductDetailPage(template,"https://orenza.ir/products/creamer/",{...data,robotsIndex:false})).some((node)=>node["@type"]==="Product"));
+});
+
+test("collection schema and breadcrumbs are correct in initial HTML and safe with quoted titles", async () => {
+  const title = 'قهوه "ویژه" </script><script>alert(1)</script>';
+  const url = "https://orenza.ir/category/instant/";
+  const html = renderContentPage(await read("dist/category-template/index.html"), "category", url, {
+    title, slug:"instant", description:"<p>قهوه فوری</p>", ancestors:[{title:"قهوه",slug:"coffee"}]
+  });
+  const nodes = schemaNodes(html);
+  const collection=nodes.find((node)=>node["@type"]==="CollectionPage");
+  assert.equal(collection.name,title);
+  assert.equal(collection.url,url);
+  assert.ok(!nodes.some((node)=>node["@type"]==="WebPage"));
+  const breadcrumbs=nodes.find((node)=>node["@type"]==="BreadcrumbList");
+  assert.deepEqual(breadcrumbs.itemListElement.map((entry)=>entry.name),["خانه","دسته‌بندی‌ها","قهوه",title]);
+  assert.equal(breadcrumbs.itemListElement.at(-1).item,url);
+  assert.ok(html.includes('href="https://orenza.ir/category/coffee/"'));
+  assert.doesNotMatch(html,/<script>alert\(1\)<\/script>/);
+});
+
+test("site identity and article structured data are valid JSON in initial HTML", async () => {
+  const home=schemaNodes(await read("dist/index.html"));
+  assert.ok(home.some((node)=>node["@type"]==="Organization"));
+  assert.ok(home.some((node)=>node["@type"]==="WebSite"));
+  assert.equal(home.find((node)=>node["@type"]==="Organization").logo.url,"https://orenza.ir/images/orenza-logo.png");
+  assert.ok(schemaNodes(await read("dist/contact/index.html")).some((node)=>node["@type"]==="ContactPage"));
+  assert.ok(schemaNodes(await read("dist/about/index.html")).some((node)=>node["@type"]==="AboutPage"));
 });

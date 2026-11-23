@@ -22,7 +22,8 @@ const blendLevels = [...blends].sort((first, second) =>
 );
 
 const initialBlend = blendLevels[0];
-const initialRoast = roasts[0];
+const initialRoastIndex = Math.max(0, roasts.findIndex((roast) => roast.id === "medium"));
+const initialRoast = roasts[initialRoastIndex];
 const grindLevels = devices
   .filter((device) => device.id !== "other")
   .sort((first, second) => first.grind - second.grind);
@@ -194,7 +195,8 @@ const initialGrindLevel = grindLevels[0];
               min="0"
               max={roasts.length - 1}
               step="1"
-              value="0"
+              value={initialRoastIndex}
+              style={`--blend-range-percent: ${(initialRoastIndex / Math.max(roasts.length - 1, 1)) * 100}%`}
               data-roast-range
               aria-describedby="roast-slider-help"
             />
@@ -207,7 +209,7 @@ const initialGrindLevel = grindLevels[0];
           <div class="blend-slider-steps" aria-label="درجه‌های رُست">
             {roasts.map((roast, index) => (
               <button
-                class={index === 0 ? "is-active" : ""}
+                class={index === initialRoastIndex ? "is-active" : ""}
                 type="button"
                 data-roast-slider-step
                 data-index={index}

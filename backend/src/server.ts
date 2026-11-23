@@ -30,6 +30,7 @@ type UserRow = {
   phone: string | null;
   email: string | null;
   password_hash: string | null;
+  password_change_recommended: boolean;
   display_name: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -153,6 +154,8 @@ const publicUser = (user: UserRow) => ({
   displayName: user.display_name || [user.first_name, user.last_name].filter(Boolean).join(" "),
   role: user.role,
   hasPassword: Boolean(user.password_hash),
+  username: user.username || user.phone,
+  passwordChangeRecommended: user.password_change_recommended,
   createdAt: user.created_at
 });
 
@@ -395,7 +398,7 @@ app.post("/api/v1/auth/password-reset/confirm", { config: { rateLimit: { max: 8,
     return reply.code(422).send({ error: "کد بازیابی صحیح نیست یا زمان آن گذشته است." });
   }
 
-  await query("UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2", [
+  await query("UPDATE users SET password_hash = $1, password_change_recommended=false, updated_at = now() WHERE id = $2", [
     await hashPassword(data.newPassword),
     reset!.user_id
   ]);
@@ -472,7 +475,10 @@ app.post("/api/v1/me/change-password", async (request, reply) => {
   if (user.password_hash && (!data.currentPassword || !(await verifyPassword(data.currentPassword, user.password_hash)))) {
     return reply.code(422).send({ error: "رمز عبور فعلی صحیح نیست." });
   }
-  await query("UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2", [
+  if (user.password_change_recommended && data.newPassword === user.phone) {
+    return reply.code(422).send({ error: "رمز جدید باید با شماره موبایل متفاوت باشد." });
+  }
+  await query("UPDATE users SET password_hash = $1, password_change_recommended=false, updated_at = now() WHERE id = $2", [
     await hashPassword(data.newPassword),
     user.id
   ]);
@@ -742,7 +748,7 @@ app.get("/api/v1/me/orders/:id/invoice.pdf", async (request, reply) => {
   return reply.send(pdf);
 });
 
-registerStoreRoutes(app, pool, currentUser);
+registerStoreRoutes(app, pool, currentUser, setSession);
 registerAdminRoutes(app, pool, currentUser);
 await ensureLogsTable();
 

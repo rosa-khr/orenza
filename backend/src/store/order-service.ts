@@ -2,6 +2,7 @@ import type { Pool, PoolClient } from "pg";
 import { createOrderSchema } from "./schemas.js";
 import { toPublicRecord, withTransaction } from "../admin/repository.js";
 import { notifyNewOrder, type NewOrder } from "../order-notifications.js";
+import { hashPassword } from "../security.js";
 
 type ProductPriceRow = {
   id: string;
@@ -110,7 +111,7 @@ export class OrderService {
       const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
       const totalWeightGrams = items.reduce((sum, item) => sum + item.weight * item.quantity, 0);
       const shipping = await client.query<{
-        code: "tipax" | "post" | "cargo";
+        code: "tipax" | "post" | "cargo" | "courier";
         pricing_type: "collect" | "weightVolume" | "fixed";
         base_price: string;
         price_per_kg: string;
@@ -124,13 +125,13 @@ export class OrderService {
         throw Object.assign(new Error("روش ارسال انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
       }
       if (totalWeightGrams > 10000 && shippingMethod.code !== "cargo") {
-        throw Object.assign(new Error("برای سفارش‌های بیشتر از ۱۰ کیلوگرم فقط ارسال با پیک یا باربری امکان‌پذیر است."), { statusCode: 422 });
+        throw Object.assign(new Error("برای سفارش‌های بیشتر از ۱۰ کیلوگرم فقط ارسال با باربری امکان‌پذیر است."), { statusCode: 422 });
       }
-      if (totalWeightGrams >= 3000 && totalWeightGrams <= 10000 && shippingMethod.code !== "tipax") {
-        throw Object.assign(new Error("برای سفارش‌های ۳ تا ۱۰ کیلوگرم فقط ارسال با تیپاکس امکان‌پذیر است."), { statusCode: 422 });
+      if (totalWeightGrams >= 3000 && totalWeightGrams <= 10000 && !["tipax", "courier"].includes(shippingMethod.code)) {
+        throw Object.assign(new Error("برای سفارش‌های ۳ تا ۱۰ کیلوگرم ارسال با تیپاکس یا پیک امکان‌پذیر است."), { statusCode: 422 });
       }
       if (totalWeightGrams < 3000 && shippingMethod.code === "cargo") {
-        throw Object.assign(new Error("پیک یا باربری فقط برای سفارش‌های بیشتر از ۱۰ کیلوگرم فعال است."), { statusCode: 422 });
+        throw Object.assign(new Error("باربری فقط برای سفارش‌های بیشتر از ۱۰ کیلوگرم فعال است."), { statusCode: 422 });
       }
       const shippingAmount = shippingMethod.pricing_type === "collect"
         ? 0
@@ -166,6 +167,25 @@ export class OrderService {
           throw Object.assign(new Error("برای کارت‌به‌کارت، کد پیگیری و تصویر فیش الزامی است."), { statusCode: 422 });
         }
       }
+      let orderUserId = userId;
+      if (!orderUserId) {
+        const nameParts = data.customerName.trim().split(/\s+/);
+        const account = await client.query<{ id: string }>(
+          `INSERT INTO users(phone,username,password_hash,display_name,first_name,last_name,role,password_change_recommended,last_login_at)
+           VALUES($1,$1,$2,$3,$4,$5,'customer',true,now())
+           ON CONFLICT DO NOTHING RETURNING id`,
+          [data.customerPhone, await hashPassword(data.customerPhone), data.customerName.slice(0,100), nameParts.shift()!.slice(0,100), nameParts.join(' ').slice(0,100) || null]
+        );
+        orderUserId = account.rows[0]?.id ?? null;
+        if (!orderUserId) {
+          throw Object.assign(new Error("این شماره موبایل قبلاً حساب کاربری دارد؛ برای ثبت سفارش وارد حساب خود شوید."), { statusCode: 409 });
+        }
+        await client.query(
+          `INSERT INTO user_addresses(user_id,label,recipient_name,phone,province,city,postal_code,address_line,is_default)
+           VALUES($1,'نشانی سفارش',$2,$3,$4,$5,$6,$7,true)`,
+          [orderUserId,data.customerName.slice(0,100),data.customerPhone,data.customerProvince,data.customerCity,data.customerPostalCode,data.customerAddress.slice(0,500)]
+        );
+      }
       const order = await client.query<Record<string, unknown>>(
         `INSERT INTO orders
           (order_number,user_id,customer_name,customer_phone,customer_address,customer_province,
@@ -175,7 +195,7 @@ export class OrderService {
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'pending','new',$21)
          RETURNING *`,
         [
-          nextOrderNumber(), userId, data.customerName, data.customerPhone, data.customerAddress,
+          nextOrderNumber(), orderUserId, data.customerName, data.customerPhone, data.customerAddress,
           data.customerProvince, data.customerCity, data.customerPostalCode, data.shippingMethod,
           totalAmount, discount.amount, shippingAmount, taxAmount, taxPercent, finalAmount, discount.id, data.paymentMethodId,
           data.paymentCardId ?? null, data.paymentRefId ?? null, data.paymentReceiptUrl ?? null,
@@ -195,7 +215,7 @@ export class OrderService {
         );
       }
       if (discount.id) await client.query("UPDATE discount_codes SET used_count = used_count + 1 WHERE id = $1", [discount.id]);
-      return { ...toPublicRecord(order.rows[0]!), items } as unknown as NewOrder;
+      return { ...toPublicRecord(order.rows[0]!), items, accountCreated: !userId } as unknown as NewOrder;
     });
     void notifyNewOrder(this.pool, createdOrder);
     return createdOrder;

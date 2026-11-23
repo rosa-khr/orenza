@@ -19,6 +19,8 @@ type OrderItem = {
 
 export type NewOrder = {
   id: string;
+  userId?: string;
+  accountCreated?: boolean;
   orderNumber: string;
   customerName: string;
   customerPhone: string;
@@ -53,7 +55,8 @@ const orderDate = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
 const shippingLabel = (value: string) => ({
   post: "پست پیشتاز",
   tipax: "ارسال پس‌کرایه",
-  cargo: "پیک یا باربری"
+  cargo: "باربری",
+  courier: "پیک"
 })[value] || value;
 const paymentStatusLabel = (value?: string | null) => ({
   pending: "در انتظار تأیید پرداخت",

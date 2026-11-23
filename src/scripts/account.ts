@@ -3,7 +3,7 @@ import { enablePersianValidation, validateFormFa } from "./persian-validation";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
-type User = { phone: string | null; email: string | null; displayName: string | null; hasPassword: boolean };
+type User = { phone: string | null; email: string | null; displayName: string | null; hasPassword: boolean; passwordChangeRecommended: boolean };
 type Address = {
   id: string; label: string; recipient_name: string; phone: string; province: string;
   city: string; postal_code: string; address_line: string; is_default: boolean;
@@ -16,7 +16,7 @@ type CustomerOrder = {
   customerProvince: string | null;
   customerCity: string | null;
   customerPostalCode: string | null;
-  shippingMethod: "tipax" | "post" | "cargo";
+  shippingMethod: "tipax" | "post" | "cargo" | "courier";
   totalAmount: number | string;
   discountAmount: number | string;
   taxAmount: number | string;
@@ -25,7 +25,7 @@ type CustomerOrder = {
   paymentMethodTitle: string;
   orderStatus: OrderStatus;
   trackingCode: string | null;
-  trackingProvider: "post" | "tipax" | "mahex" | "cargo" | null;
+  trackingProvider: "post" | "tipax" | "mahex" | "cargo" | "courier" | null;
   createdAt: string;
   updatedAt: string;
   items: {
@@ -78,6 +78,8 @@ const setStatus = (name: "profile" | "address" | "password", message: string, er
 };
 
 const fillProfile = () => {
+  const passwordNotice = document.querySelector<HTMLElement>("[data-password-notice]");
+  if (passwordNotice) passwordNotice.hidden = !user.passwordChangeRecommended;
   if (!profileForm) return;
   (profileForm.elements.namedItem("displayName") as HTMLInputElement).value = user.displayName || "";
   (profileForm.elements.namedItem("phone") as HTMLInputElement).value = user.phone || "";
@@ -172,9 +174,10 @@ const renderOrders = (orders: CustomerOrder[]) => {
   ordersEmpty?.setAttribute("hidden", "");
   orderList.hidden = false;
 
+  const requestedOrder = new URLSearchParams(location.search).get("order");
   orders.forEach((order, orderIndex) => {
     const card = createElement("details", "account-order-card");
-    card.open = orderIndex === 0;
+    card.open = requestedOrder ? order.orderNumber === requestedOrder : orderIndex === 0;
     const summary = createElement("summary", "account-order-summary");
     const heading = createElement("div", "account-order-heading");
     heading.append(
@@ -266,10 +269,10 @@ const renderOrders = (orders: CustomerOrder[]) => {
         }
         window.setTimeout(() => { copy.textContent = "کپی کد"; }, 1400);
       });
-      const trackingProvider = order.trackingProvider || (order.shippingMethod === "post" ? "post" : order.shippingMethod === "cargo" ? "cargo" : "tipax");
+      const trackingProvider = order.trackingProvider || (order.shippingMethod === "tipax" ? "tipax" : order.shippingMethod);
       const encodedCode = encodeURIComponent(order.trackingCode.trim());
-      if (trackingProvider === "cargo") {
-        trackingRow.append(code, copy, createElement("span", "account-order-tracking-link", "ارسال با پیک یا باربری"));
+      if (trackingProvider === "cargo" || trackingProvider === "courier") {
+        trackingRow.append(code, copy, createElement("span", "account-order-tracking-link", trackingProvider === "courier" ? "ارسال با پیک" : "ارسال با باربری"));
       } else {
         const trackingLink = createElement("a", "account-order-tracking-link", "پیگیری مرسوله");
         trackingLink.href = trackingProvider === "mahex"
@@ -286,8 +289,8 @@ const renderOrders = (orders: CustomerOrder[]) => {
       tracking.append(createElement(
         "p",
         "",
-        order.shippingMethod === "cargo"
-          ? "پس از تحویل سفارش به پیک یا باربری، اطلاعات ارسال اینجا نمایش داده می‌شود."
+        order.shippingMethod === "cargo" || order.shippingMethod === "courier"
+          ? `پس از تحویل سفارش به ${order.shippingMethod === "courier" ? "پیک" : "باربری"}، اطلاعات ارسال اینجا نمایش داده می‌شود.`
           : "پس از تحویل سفارش به شرکت حمل، کد رهگیری اینجا نمایش داده می‌شود."
       ));
     }
@@ -308,7 +311,7 @@ const renderOrders = (orders: CustomerOrder[]) => {
     const delivery = createElement("section", "account-order-delivery");
     delivery.append(
       createElement("h3", "", "تحویل و پرداخت"),
-      createElement("p", "", `${order.shippingMethod === "cargo" ? "پیک یا باربری" : order.shippingMethod === "tipax" ? "ارسال پس‌کرایه" : "پست"} · ${order.paymentMethodTitle}`),
+      createElement("p", "", `${order.shippingMethod === "courier" ? "پیک" : order.shippingMethod === "cargo" ? "باربری" : order.shippingMethod === "tipax" ? "ارسال پس‌کرایه" : "پست"} · ${order.paymentMethodTitle}`),
       createElement("address", "", [order.customerProvince, order.customerCity, order.customerAddress].filter(Boolean).join("، "))
     );
     const invoiceLink = createElement("a", "account-order-invoice", "دانلود فاکتور PDF");
@@ -445,6 +448,7 @@ passwordForm?.addEventListener("submit", async (event) => {
     });
     passwordForm.reset();
     user.hasPassword = true;
+    user.passwordChangeRecommended = false;
     fillProfile();
     setStatus("password", payload.message);
   } catch (error) {

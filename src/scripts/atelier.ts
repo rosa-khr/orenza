@@ -683,6 +683,7 @@ export const initAtelier = () => {
     if (processTitle) processTitle.textContent = "حالا نوبت انتخاب توئه";
     if (processNote) processNote.textContent = "فرآیند آماده‌سازی اینجا نمایش داده می‌شود.";
     addCartButton.textContent = "افزودن به سبد سفارش";
+    renderRoastSlider(Math.max(0, roastSteps.findIndex((step) => step.dataset.targetEn === "MEDIUM ROAST")));
     selectBlendFromSlider(Number(blendRange?.value || 0));
     updateResults();
     updateProgress();

@@ -174,6 +174,20 @@ body:has(.mobile-home-top) .support-chat-toggle {
 .support-chat-options a { color: var(--site-support-color, #173f33); }
 .support-chat-options a:hover { background: #f6f2e9; }
 
+.cart-checkout > .checkout-payment-guide {
+  color: #48584f;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.cart-checkout > .checkout-invoice-notice {
+  color: #234e67;
+  background: #eef6fb;
+  border-color: #b7d2e3;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.cart-checkout > .checkout-invoice-notice > span { color: inherit; }
+
 @media (max-width: 699px) {
   .site-breadcrumb {
     font-size: 10px;

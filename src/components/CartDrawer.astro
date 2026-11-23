@@ -42,7 +42,7 @@ import Icon from "./Icon.astro";
       <div class="checkout-login" data-checkout-login hidden>
         <div>
           <strong>سفارش سریع‌تر با حساب کاربری</strong>
-          <small>با ورود به حساب، اطلاعات تماس و نشانی تحویل به‌صورت خودکار تکمیل می‌شود.</small>
+          <small>برای شماره جدید، پس از ثبت سفارش حسابی با نام کاربری و رمز اولیه شماره موبایل ساخته می‌شود. اگر قبلاً حساب داری، وارد شو.</small>
         </div>
         <a href="/login/?next=%2Forder%2F%3Fcart%3Dopen">ورود به حساب</a>
       </div>
@@ -79,7 +79,11 @@ import Icon from "./Icon.astro";
           </label>
           <label class="choice-card" hidden>
             <input type="radio" name="shipping-method" value="cargo" required />
-            <span><strong>پیک یا باربری</strong><small>پس‌کرایه؛ ویژه سفارش‌های بیشتر از ۱۰ کیلوگرم.</small></span>
+            <span><strong>باربری</strong><small>برای سفارش‌های بالای ۱۰ کیلوگرم، ارسال از طریق باربری انجام می‌شود و سفارش به نزدیک‌ترین باربری شهر شما می‌رسد. هزینه ارسال پس‌کرایه است.</small></span>
+          </label>
+          <label class="choice-card">
+            <input type="radio" name="shipping-method" value="courier" required />
+            <span><strong>پیک</strong><small>ارسال با پیک؛ هزینه ارسال جداگانه و هنگام تحویل دریافت می‌شود.</small></span>
           </label>
         </div>
       </fieldset>
@@ -122,16 +126,12 @@ import Icon from "./Icon.astro";
           <span>تصویر رسید واریز</span>
           <span class="payment-receipt-control">
             <strong>انتخاب تصویر رسید</strong>
-            <em>JPG، PNG یا WebP · حداکثر ۲۰ مگابایت</em>
+            <em>JPG، PNG یا WebP · حداکثر ۵ مگابایت</em>
           </span>
           <input type="file" accept="image/*,.heic,.heif" data-payment-receipt required aria-label="انتخاب تصویر رسید واریز" />
           <small data-payment-receipt-name>از دوربین یا گالری انتخاب کن؛ حجم تصویر خودکار بهینه می‌شود.</small>
         </label>
       </section>
-      <p class="checkout-payment-guide" data-payment-guide>
-        مبلغ نهایی را به کارت انتخاب‌شده واریز کن. پس از ثبت کد پیگیری و رسید، سفارش با یک شماره پیگیری ثبت می‌شود؛ تیم اورنزا پرداخت را بررسی می‌کند و آماده‌سازی پس از تأیید آغاز می‌شود.
-      </p>
-
       <label class="checkout-terms-consent">
         <input type="checkbox" data-terms-accepted required />
         <span>
@@ -139,6 +139,11 @@ import Icon from "./Icon.astro";
           <a href="/terms/" target="_blank" rel="noopener">مشاهده قوانین</a>
         </span>
       </label>
+
+      <p class="checkout-invoice-notice" role="note">
+        <span aria-hidden="true">i</span>
+        <span>پس از ثبت سفارش، می‌توانید از بخش «سفارش‌های من»، با باز کردن «جزئیات سفارش»، فاکتور همان سفارش را دانلود کنید.</span>
+      </p>
 
       <button class="checkout-register-order" type="button" data-register-order disabled aria-disabled="true">
         ثبت نهایی سفارش

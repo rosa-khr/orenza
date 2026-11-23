@@ -728,6 +728,9 @@ body:has(.account-page) .site-header {
 }
 
 .account-orders-panel { width: min(100%, 860px); }
+.account-password-notice { margin-bottom: 20px; border: 1px solid #d6b66d; border-radius: 10px; padding: 18px; background: #fff7df; color: #655024; font-size: 14px; line-height: 1.9; }
+.account-password-notice p { margin: 6px 0 10px; }
+.account-password-notice a { display: inline-block; border-radius: 6px; padding: 8px 14px; background: var(--green); color: #fff; font-weight: 700; }
 .account-orders-loading,
 .account-orders-empty { padding: 34px 20px; background: #f5efe4; color: var(--text-muted); text-align: center; }
 .account-orders-empty { display: grid; justify-items: center; gap: 9px; }
@@ -3767,6 +3770,8 @@ body.mobile-nav-is-open {
 .checkout-terms-consent input { width: 17px; height: 17px; flex: 0 0 17px; margin: 3px 0 0; accent-color: var(--green); }
 .checkout-terms-consent > span { display: flex; min-width: 0; flex: 1; align-items: baseline; justify-content: space-between; gap: 10px; }
 .checkout-terms-consent a { flex: 0 0 auto; color: var(--green); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.checkout-invoice-notice { display: flex; align-items: flex-start; gap: 9px; margin: 0; border: 1px solid #c7dae8; border-radius: 9px; padding: 12px; background: #f0f7fc; color: #305873; font-size: 13px; line-height: 1.9; }
+.checkout-invoice-notice > span:first-child { display: grid; flex: 0 0 19px; width: 19px; height: 19px; margin-top: 3px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font: 700 13px Georgia,serif; }
 
 .cart-checkout > small[data-copy-status] {
   display: block;

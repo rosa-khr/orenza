@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { createProductSchema, productOfferData } from "./product-schema.js";
 
 const htmlCanonicalPlaceholder = "https://product-seo.invalid/__PRODUCT_CANONICAL_HTML__/";
 const jsonCanonicalPlaceholder = "__PRODUCT_CANONICAL_JSON__";
@@ -164,7 +165,14 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
       .join("|"),
     "g"
   );
-  const rendered = template.replace(pattern, (placeholder) => values.get(placeholder) ?? placeholder);
+  let rendered = template.replace(pattern, (placeholder) => values.get(placeholder) ?? placeholder);
+  const offer = productOfferData(product);
+  if (Number.isFinite(offer.price) && offer.price > 0) {
+    const money = new Intl.NumberFormat("fa-IR");
+    rendered = rendered
+      .replace(/(<strong data-product-detail-price>)[\s\S]*?(<\/strong>)/, `$1${money.format(offer.weight)} گرم · ${money.format(offer.price)} تومان$2`)
+      .replace('data-product-detail-purchase hidden', 'data-product-detail-purchase');
+  }
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -174,7 +182,9 @@ export const renderProductDetailPage = (template: string, canonicalUrl: string, 
       ...item
     }))
   };
-  const script = `<script type="application/ld+json" data-breadcrumb-schema="product">${safeInlineJson(breadcrumbSchema)}</script>`;
+  const script = product.robotsIndex === false ? "" :
+    `<script type="application/ld+json" data-breadcrumb-schema="product">${safeInlineJson(breadcrumbSchema)}</script>` +
+    `<script type="application/ld+json" data-product-schema>${safeInlineJson(createProductSchema(canonicalUrl, product))}</script>`;
   const robots = `${product.robotsIndex === false ? "noindex" : "index"}, ${product.robotsFollow === false ? "nofollow" : "follow"}${product.robotsIndex === false ? "" : ", max-image-preview:large"}`;
   return rendered
     .replace(/<meta name="robots" content="[^"]*"/, `<meta name="robots" content="${robots}"`)

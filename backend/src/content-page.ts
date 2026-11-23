@@ -6,6 +6,7 @@ type ContentPageData = Record<string, unknown> & {
   title: string; slug: string; description?: string | null; content?: string | null;
   seoTitle?: string | null; seoDescription?: string | null; canonicalUrl?: string | null;
   robotsIndex?: boolean; robotsFollow?: boolean; imageUrl?: string | null;
+  ancestors?: { title: string; slug: string }[];
 };
 
 const templates = new Map<ContentKind, string>();
@@ -25,6 +26,7 @@ const defaults = {
 } as const;
 
 const escapeHtml = (value: unknown) => String(value ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 
 const validateTemplate = (template: string, kind: ContentKind, source: string) => {
   const fallback = defaults[kind];
@@ -91,6 +93,42 @@ export const renderContentPage = (template: string, kind: ContentKind, canonical
     html = html
       .replace(/(<h1 data-tag-title>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(item.title)}$2`)
       .replace(/<section class="tag-detail-content" data-tag-content hidden><\/section>/, `<section class="tag-detail-content" data-tag-content>${String(item.content || "")}</section>`);
+  }
+  const origin = new URL(canonicalUrl).origin;
+  const breadcrumbs = [
+    { name: "خانه", item: `${origin}/` },
+    { name: kind === "category" ? "دسته‌بندی‌ها" : "محصولات", item: `${origin}/${kind === "category" ? "categories" : "products"}/` },
+    ...(kind === "category" ? item.ancestors || [] : []).map((parent) => ({ name: parent.title, item: `${origin}/category/${encodeURIComponent(parent.slug)}/` })),
+    { name: item.title, item: canonicalUrl }
+  ];
+  const parent = breadcrumbs[breadcrumbs.length - 2]!;
+  const links = breadcrumbs.map((entry, index) => `<li><a href="${escapeHtml(entry.item)}"${index === breadcrumbs.length - 1 ? ' aria-current="page"' : ""}>${escapeHtml(entry.name)}</a>${index < breadcrumbs.length - 1 ? '<span aria-hidden="true">/</span>' : ""}</li>`).join("");
+  html = html.replace(new RegExp(`(<nav[^>]*data-breadcrumb="${kind}"[^>]*>)[\\s\\S]*?(</nav>)`),
+    `$1<ol>${links}</ol><a class="site-breadcrumb__back" href="${escapeHtml(parent.item)}" data-breadcrumb-back><span data-breadcrumb-back-label>بازگشت به ${escapeHtml(parent.name)}</span></a>$2`);
+  // Rebuild template JSON-LD as JSON, so quoted titles cannot corrupt it.
+  const globalNodes: Record<string, unknown>[] = [];
+  for (const match of template.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)) {
+    try {
+      const parsed = JSON.parse(match[1]!);
+      for (const node of parsed["@graph"] || []) {
+        if (["Organization", "WebSite"].includes(node["@type"])) globalNodes.push(node);
+      }
+    } catch { /* A broken unrelated template block must not break the page. */ }
+  }
+  html = html.replace(/<script\b[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/g, "");
+  if (item.robotsIndex !== false) {
+    const site = globalNodes.find((node) => node["@type"] === "WebSite");
+    const schema = { "@context": "https://schema.org", "@graph": [
+      ...globalNodes,
+      { "@type": "CollectionPage", "@id": `${canonicalUrl}#webpage`, url: canonicalUrl,
+        name: item.title, description, inLanguage: "fa-IR",
+        ...(site ? { isPartOf: { "@id": site["@id"] } } : {}),
+        breadcrumb: { "@id": `${canonicalUrl}#breadcrumb` } },
+      { "@type": "BreadcrumbList", "@id": `${canonicalUrl}#breadcrumb`, itemListElement: breadcrumbs.map((entry, index) => ({
+        "@type": "ListItem", position: index + 1, ...entry
+      })) }
+    ] };
+    html = html.replace("</head>", `<script type="application/ld+json" data-content-schema>${safeJson(schema)}</script></head>`);
   }
   return html;
 };

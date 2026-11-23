@@ -146,7 +146,7 @@ export interface Order {
   orderStatus: OrderStatus;
   paymentReceiptUrl: string | null;
   trackingCode: string | null;
-  trackingProvider: "post" | "tipax" | "mahex" | "cargo" | null;
+  trackingProvider: "post" | "tipax" | "mahex" | "cargo" | "courier" | null;
   customerNote: string | null;
   adminNote: string | null;
   createdAt: string;

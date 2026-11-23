@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS username varchar(80);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_change_recommended boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name varchar(100);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name varchar(100);
 UPDATE users
@@ -840,7 +841,7 @@ CREATE INDEX IF NOT EXISTS articles_published_idx ON articles(is_published, crea
 CREATE TABLE IF NOT EXISTS shipping_methods (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title varchar(120) NOT NULL,
-  code varchar(30) NOT NULL CHECK (code IN ('tipax','post','cargo')),
+  code varchar(30) NOT NULL CHECK (code IN ('tipax','post','cargo','courier')),
   description varchar(300) NOT NULL DEFAULT '',
   pricing_type varchar(30) NOT NULL DEFAULT 'fixed' CHECK (pricing_type IN ('collect','weightVolume','fixed')),
   base_price bigint NOT NULL DEFAULT 0 CHECK (base_price >= 0),
@@ -850,15 +851,15 @@ CREATE TABLE IF NOT EXISTS shipping_methods (
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK ((code IN ('tipax','cargo') AND pricing_type = 'collect') OR (code = 'post' AND pricing_type <> 'collect'))
+  CHECK ((code IN ('tipax','cargo','courier') AND pricing_type = 'collect') OR (code = 'post' AND pricing_type <> 'collect'))
 );
 CREATE INDEX IF NOT EXISTS shipping_methods_active_idx ON shipping_methods(is_active, sort_order);
 ALTER TABLE shipping_methods DROP CONSTRAINT IF EXISTS shipping_methods_code_key;
 ALTER TABLE shipping_methods DROP CONSTRAINT IF EXISTS shipping_methods_code_check;
-ALTER TABLE shipping_methods ADD CONSTRAINT shipping_methods_code_check CHECK (code IN ('tipax','post','cargo'));
+ALTER TABLE shipping_methods ADD CONSTRAINT shipping_methods_code_check CHECK (code IN ('tipax','post','cargo','courier'));
 ALTER TABLE shipping_methods DROP CONSTRAINT IF EXISTS shipping_methods_check;
 ALTER TABLE shipping_methods ADD CONSTRAINT shipping_methods_check
-  CHECK ((code IN ('tipax','cargo') AND pricing_type = 'collect') OR (code = 'post' AND pricing_type <> 'collect'));
+  CHECK ((code IN ('tipax','cargo','courier') AND pricing_type = 'collect') OR (code = 'post' AND pricing_type <> 'collect'));
 
 INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,price_per_kg,price_per_volume,sort_order,is_active)
 SELECT 'تیپاکس','tipax','پس‌کرایه؛ هزینه هنگام تحویل توسط تیپاکس دریافت می‌شود.','collect',0,0,0,1,true
@@ -867,8 +868,11 @@ INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,pri
 SELECT 'پست','post','هزینه ثابت ارسال با پست: ۲۰۰٬۰۰۰ تومان.','fixed',200000,0,0,2,true
 WHERE NOT EXISTS (SELECT 1 FROM shipping_methods WHERE code='post');
 INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,price_per_kg,price_per_volume,sort_order,is_active)
-SELECT 'پیک یا باربری','cargo','پس‌کرایه؛ ویژه سفارش‌های بیشتر از ۱۰ کیلوگرم.','collect',0,0,0,3,true
+SELECT 'باربری','cargo','برای سفارش‌های بالای ۱۰ کیلوگرم، ارسال از طریق باربری انجام می‌شود و سفارش به نزدیک‌ترین باربری شهر شما می‌رسد. هزینه ارسال پس‌کرایه است.','collect',0,0,0,3,true
 WHERE NOT EXISTS (SELECT 1 FROM shipping_methods WHERE code='cargo');
+INSERT INTO shipping_methods (title,code,description,pricing_type,base_price,price_per_kg,price_per_volume,sort_order,is_active)
+SELECT 'پیک','courier','ارسال با پیک؛ هزینه ارسال جداگانه و هنگام تحویل دریافت می‌شود.','collect',0,0,0,4,true
+WHERE NOT EXISTS (SELECT 1 FROM shipping_methods WHERE code='courier');
 
 UPDATE shipping_methods
 SET pricing_type='collect',base_price=0,price_per_kg=0,price_per_volume=0,
@@ -879,8 +883,8 @@ SET pricing_type='fixed',base_price=200000,price_per_kg=0,price_per_volume=0,
     description='هزینه ثابت ارسال با پست: ۲۰۰٬۰۰۰ تومان.',updated_at=now()
 WHERE code='post';
 UPDATE shipping_methods
-SET pricing_type='collect',base_price=0,price_per_kg=0,price_per_volume=0,
-    description='پس‌کرایه؛ ویژه سفارش‌های بیشتر از ۱۰ کیلوگرم.',updated_at=now()
+SET title='باربری',pricing_type='collect',base_price=0,price_per_kg=0,price_per_volume=0,
+    description='برای سفارش‌های بالای ۱۰ کیلوگرم، ارسال از طریق باربری انجام می‌شود و سفارش به نزدیک‌ترین باربری شهر شما می‌رسد. هزینه ارسال پس‌کرایه است.',updated_at=now()
 WHERE code='cargo';
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -893,7 +897,7 @@ CREATE TABLE IF NOT EXISTS orders (
   customer_province varchar(80),
   customer_city varchar(80),
   customer_postal_code varchar(10),
-  shipping_method varchar(30) NOT NULL CHECK (shipping_method IN ('tipax','post','cargo')),
+  shipping_method varchar(30) NOT NULL CHECK (shipping_method IN ('tipax','post','cargo','courier')),
   total_amount bigint NOT NULL CHECK (total_amount >= 0),
   discount_amount bigint NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
   shipping_amount bigint NOT NULL DEFAULT 0 CHECK (shipping_amount >= 0),
@@ -909,7 +913,7 @@ CREATE TABLE IF NOT EXISTS orders (
   order_status varchar(20) NOT NULL DEFAULT 'new' CHECK (order_status IN ('new','processing','ready','sent','completed','canceled')),
   payment_receipt_url text,
   tracking_code varchar(120),
-  tracking_provider varchar(20) CHECK (tracking_provider IS NULL OR tracking_provider IN ('post','tipax','mahex','cargo')),
+  tracking_provider varchar(20) CHECK (tracking_provider IS NULL OR tracking_provider IN ('post','tipax','mahex','cargo','courier')),
   customer_note text,
   admin_note text,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -1057,13 +1061,13 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_code varchar(120);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_provider varchar(20);
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_tracking_provider_check;
 ALTER TABLE orders ADD CONSTRAINT orders_tracking_provider_check
-  CHECK (tracking_provider IS NULL OR tracking_provider IN ('post','tipax','mahex','cargo'));
+  CHECK (tracking_provider IS NULL OR tracking_provider IN ('post','tipax','mahex','cargo','courier'));
 UPDATE orders
-SET tracking_provider=CASE WHEN shipping_method='post' THEN 'post' WHEN shipping_method='cargo' THEN 'cargo' ELSE 'tipax' END
+SET tracking_provider=CASE WHEN shipping_method IN ('post','cargo','courier') THEN shipping_method ELSE 'tipax' END
 WHERE tracking_code IS NOT NULL AND tracking_provider IS NULL;
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_shipping_method_check;
 ALTER TABLE orders ADD CONSTRAINT orders_shipping_method_check
-  CHECK (shipping_method IN ('tipax','post','cargo'));
+  CHECK (shipping_method IN ('tipax','post','cargo','courier'));
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_order_status_check;
 ALTER TABLE orders ADD CONSTRAINT orders_order_status_check
   CHECK (order_status IN ('new','processing','ready','sent','completed','canceled'));
