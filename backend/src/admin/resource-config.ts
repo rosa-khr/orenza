@@ -162,18 +162,21 @@ export const resourceConfigs: Record<string, ResourceConfig> = {
     table: "orders",
     columns: {
       orderNumber: "order_number", customerName: "customer_name", customerPhone: "customer_phone",
-      customerAddress: "customer_address", totalAmount: "total_amount", discountAmount: "discount_amount", shippingAmount: "shipping_amount",
+      customerAddress: "customer_address", customerProvince: "customer_province", customerCity: "customer_city",
+      customerPostalCode: "customer_postal_code", shippingMethod: "shipping_method",
+      totalAmount: "total_amount", discountAmount: "discount_amount", shippingAmount: "shipping_amount",
       taxPercent: "tax_percent", taxAmount: "tax_amount", finalAmount: "final_amount", paymentMethodId: "payment_method_id",
       paymentCardId: "payment_card_id", paymentAuthority: "payment_authority", paymentRefId: "payment_ref_id",
       paymentStatus: "payment_status", orderStatus: "order_status", paymentReceiptUrl: "payment_receipt_url", customerNote: "customer_note",
-      trackingCode: "tracking_code", adminNote: "admin_note", ...audit
+      trackingCode: "tracking_code", trackingProvider: "tracking_provider", adminNote: "admin_note", ...audit
     },
     search: ["order_number", "customer_name", "customer_phone", "tracking_code"],
     schema: orderAdminSchema,
     adminReadonly: [
-      "orderNumber", "customerName", "customerPhone", "customerAddress", "totalAmount",
+      "orderNumber", "customerName", "customerPhone", "customerAddress", "customerProvince", "customerCity",
+      "customerPostalCode", "shippingMethod", "totalAmount",
       "discountAmount", "shippingAmount", "taxPercent", "taxAmount", "finalAmount", "paymentMethodId", "paymentCardId",
-      "paymentAuthority", "paymentRefId", "customerNote"
+      "paymentAuthority", "paymentRefId", "customerNote", "trackingProvider"
     ]
   }
 };

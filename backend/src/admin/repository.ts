@@ -383,12 +383,7 @@ export class AdminRepository {
       if (!result.rowCount) throw Object.assign(new Error("رکورد موردنظر پیدا نشد یا قبلاً حذف شده است."), { statusCode: 404 });
       return;
     }
-    const result = resource === "orders"
-      ? await this.pool.query(
-          "DELETE FROM orders WHERE id = $1 AND order_status = 'new' AND payment_status = 'pending'",
-          [recordId]
-        )
-      : await this.pool.query(`DELETE FROM ${config.table} WHERE id = $1`, [recordId]);
+    const result = await this.pool.query(`DELETE FROM ${config.table} WHERE id = $1`, [recordId]);
     if (!result.rowCount) throw Object.assign(new Error("رکورد موردنظر پیدا نشد."), { statusCode: 404 });
   }
 

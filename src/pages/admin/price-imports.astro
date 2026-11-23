@@ -13,6 +13,8 @@ import AdminShell from "../../components/admin/AdminShell.astro";
         <li>قیمت خرید را به تومان در ستون <code>purchase_price_per_kg_toman</code> وارد یا اصلاح کن.</li>
         <li>در ستون <code>increase_type</code> یکی از این دو مقدار را بنویس: <code>percent</code> برای درصد یا <code>fixed</code> برای مبلغ ثابت.</li>
         <li>مقدار افزایش را در ستون <code>increase_value</code> وارد کن. اگر این دو ستون خالی باشند، فقط قیمت خرید به‌روزرسانی می‌شود و قیمت فروش قبلی حفظ می‌شود.</li>
+        <li>برای تخفیف، در ستون <code>discount_type</code> مقدار <code>percent</code> (درصدی) یا <code>fixed</code> (مبلغ ثابت به تومان) و در <code>discount_value</code> مقدار تخفیف را وارد کن. تخفیف از قیمت فروش نهایی محاسبه و مبلغ ثابت به درصد تبدیل می‌شود؛ نمایش تخفیف محصول خودکار فعال خواهد شد.</li>
+        <li>برای حذف تخفیف، نوع تخفیف و مقدار صفر را وارد کن. خالی‌بودن هر دو ستون، تخفیف قبلی محصول را حفظ می‌کند.</li>
         <li>ستون‌های وضعیت با مقدار <code>TRUE</code> یا <code>FALSE</code> قابل مدیریت‌اند: موجودی، پرفروش‌ها، تخفیف‌ها، فوتر، جستجوهای پرطرفدار و انتشار.</li>
         <li>فایل نمونه با فونت <strong>Vazirmatn</strong> و چیدمان راست‌به‌چپ ساخته می‌شود.</li>
       </ol>
@@ -47,7 +49,7 @@ import AdminShell from "../../components/admin/AdminShell.astro";
     </header>
     <div class="admin-table-wrap">
       <table>
-        <thead><tr><th>ردیف</th><th>محصول</th><th>خرید قبلی</th><th>خرید جدید</th><th>فروش قبلی</th><th>فروش جدید</th><th>نوع افزایش</th><th>مقدار</th><th>نتیجه</th></tr></thead>
+        <thead><tr><th>ردیف</th><th>محصول</th><th>خرید قبلی</th><th>خرید جدید</th><th>فروش قبلی</th><th>فروش جدید</th><th>نوع افزایش</th><th>مقدار افزایش</th><th>نوع تخفیف</th><th>مقدار تخفیف</th><th>درصد نهایی تخفیف</th><th>قیمت با تخفیف</th><th>نتیجه</th></tr></thead>
         <tbody data-price-detail-rows></tbody>
       </table>
     </div>

@@ -401,6 +401,19 @@ export const adminResources: AdminResource[] = [
         ]
       },
       { key: "trackingCode", label: "کد رهگیری مرسوله", type: "text", dir: "ltr", list: true },
+      {
+        key: "trackingProvider",
+        label: "شرکت حمل",
+        type: "select",
+        readonly: true,
+        list: true,
+        options: [
+          { label: "پست", value: "post" },
+          { label: "تیپاکس", value: "tipax" },
+          { label: "ماهکس", value: "mahex" },
+          { label: "پیک یا باربری", value: "cargo" }
+        ]
+      },
       { key: "paymentReceiptUrl", label: "فیش واریزی", type: "image", dir: "ltr", readonly: true },
       { key: "customerNote", label: "یادداشت مشتری", type: "textarea" },
       { key: "adminNote", label: "یادداشت مدیریت", type: "textarea" }
@@ -435,7 +448,7 @@ export const adminResources: AdminResource[] = [
     key: "shipping-methods",
     title: "روش‌های ارسال",
     singular: "روش ارسال",
-    description: "مدیریت پست، تیپاکس و مدل محاسبه هزینه ارسال",
+    description: "مدیریت پست، تیپاکس، پیک یا باربری و مدل محاسبه هزینه ارسال",
     fields: [
       { key: "title", label: "عنوان روش ارسال", type: "text", required: true, list: true },
       {
@@ -446,7 +459,8 @@ export const adminResources: AdminResource[] = [
         list: true,
         options: [
           { label: "تیپاکس", value: "tipax" },
-          { label: "پست", value: "post" }
+          { label: "پست", value: "post" },
+          { label: "پیک یا باربری", value: "cargo" }
         ]
       },
       { key: "description", label: "توضیح نمایش در سبد خرید", type: "textarea", list: true },

@@ -29,7 +29,7 @@ const escapeHtml = (value: unknown) =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-const shippingLabel = (value: string) => ({ post: "پست پیشتاز", tipax: "تیپاکس" })[value] || value;
+const shippingLabel = (value: string) => ({ post: "پست پیشتاز", tipax: "ارسال پس‌کرایه", cargo: "پیک یا باربری" })[value] || value;
 const paymentStatusLabel = (value?: string | null) => ({
   pending: "در انتظار تأیید پرداخت",
   paid: "پرداخت‌شده",

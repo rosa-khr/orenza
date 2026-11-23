@@ -46,7 +46,7 @@ type PaymentCard = {
 type ShippingMethod = {
   id: string;
   title: string;
-  code: "tipax" | "post";
+  code: "tipax" | "post" | "cargo";
   description: string;
   pricingType: "collect" | "weightVolume" | "fixed";
   basePrice: number;
@@ -142,7 +142,8 @@ export const initCart = () => {
   let submittedOrder: SubmittedOrder | null = null;
   const shippingMethods = new Map<ShippingMethod["code"], ShippingMethod>([
     ["tipax", { id: "tipax", title: "تیپاکس", code: "tipax", description: "پس‌کرایه", pricingType: "collect", basePrice: 0, pricePerKg: 0, pricePerVolume: 0 }],
-    ["post", { id: "post", title: "پست", code: "post", description: "هزینه ثابت ارسال", pricingType: "fixed", basePrice: 200000, pricePerKg: 0, pricePerVolume: 0 }]
+    ["post", { id: "post", title: "پست", code: "post", description: "هزینه ثابت ارسال", pricingType: "fixed", basePrice: 200000, pricePerKg: 0, pricePerVolume: 0 }],
+    ["cargo", { id: "cargo", title: "پیک یا باربری", code: "cargo", description: "پس‌کرایه برای سفارش‌های بیشتر از ۱۰ کیلوگرم", pricingType: "collect", basePrice: 0, pricePerKg: 0, pricePerVolume: 0 }]
   ]);
   const maxReceiptUploadSize = 20 * 1024 * 1024;
 
@@ -248,16 +249,24 @@ export const initCart = () => {
   };
 
   const syncShippingAvailability = () => {
-    const tipaxOnly = totalWeightGrams() >= 3000;
+    const weight = totalWeightGrams();
     shippingInputs.forEach((input) => {
-      const disabled = tipaxOnly && input.value !== "tipax";
+      const allowed = weight > 10000
+        ? input.value === "cargo"
+        : weight >= 3000
+          ? input.value === "tipax"
+          : input.value !== "cargo";
+      const disabled = !allowed;
       input.disabled = disabled;
-      input.closest("label")?.classList.toggle("is-disabled", disabled);
-      input.closest("label")?.setAttribute("aria-disabled", String(disabled));
+      const label = input.closest("label");
+      label?.classList.toggle("is-disabled", disabled);
+      label?.setAttribute("aria-disabled", String(disabled));
+      if (label) label.hidden = disabled;
       if (disabled) input.checked = false;
     });
     if (!shippingInputs.some((input) => input.checked && !input.disabled)) {
-      const preferred = shippingInputs.find((input) => !input.disabled && input.value === "tipax")
+      const preferred = shippingInputs.find((input) => !input.disabled && input.value === "cargo")
+        || shippingInputs.find((input) => !input.disabled && input.value === "tipax")
         || shippingInputs.find((input) => !input.disabled);
       if (preferred) preferred.checked = true;
     }
@@ -640,7 +649,7 @@ export const initCart = () => {
         customerCity: customerCity?.value.trim(),
         customerAddress: customerAddress?.value.trim(),
         customerPostalCode: customerPostal?.value.trim(),
-        shippingMethod: shipping === "tipax" ? "tipax" : "post",
+        shippingMethod: shipping === "cargo" ? "cargo" : shipping === "tipax" ? "tipax" : "post",
         paymentMethodId: paymentMethod.id,
         paymentCardId: selectedPaymentCard?.id,
         paymentRefId: normalizeDigits(paymentRef?.value.trim() || ""),

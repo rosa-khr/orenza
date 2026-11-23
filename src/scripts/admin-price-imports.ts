@@ -50,7 +50,7 @@ const syncFile = () => {
 
 const openDetails = async (jobId: string) => {
   if (!detailDialog || !detailRows || !detailSummary || !detailDownload) return;
-  detailRows.innerHTML = '<tr><td colspan="9">در حال دریافت جزئیات…</td></tr>';
+  detailRows.innerHTML = '<tr><td colspan="13">در حال دریافت جزئیات…</td></tr>';
   detailSummary.textContent = "در حال دریافت اطلاعات اجرا…";
   detailDownload.href = `/api/v1/admin/price-imports/${encodeURIComponent(jobId)}/file`;
   detailDialog.showModal();
@@ -63,12 +63,13 @@ const openDetails = async (jobId: string) => {
     detailRows.innerHTML = rows.length ? rows.map((row) => {
       const increaseType = row.increase_type === "percent" ? "درصدی" : row.increase_type === "fixed" ? "مبلغ ثابت" : "بدون تغییر فروش";
       const result = row.status === "updated" ? "به‌روزرسانی شد" : escapeHtml(row.error_message || "ناموفق");
+      const discountType = row.discount_type === "percent" ? "درصدی" : row.discount_type === "fixed" ? "مبلغ ثابت" : "بدون تغییر";
       const formatMoney = (value: unknown) => value === null || value === undefined ? "—" : money.format(Number(value));
-      return `<tr><td>${escapeHtml(row.row_number)}</td><td>${escapeHtml(row.product_title || row.product_identifier)}</td><td>${formatMoney(row.previous_purchase_price)}</td><td>${formatMoney(row.new_purchase_price)}</td><td>${formatMoney(row.previous_sale_price)}</td><td>${formatMoney(row.new_sale_price)}</td><td>${increaseType}</td><td>${escapeHtml(row.increase_value ?? "—")}</td><td>${result}</td></tr>`;
-    }).join("") : '<tr><td colspan="9">جزئیاتی برای این اجرا ثبت نشده است.</td></tr>';
+      return `<tr><td>${escapeHtml(row.row_number)}</td><td>${escapeHtml(row.product_title || row.product_identifier)}</td><td>${formatMoney(row.previous_purchase_price)}</td><td>${formatMoney(row.new_purchase_price)}</td><td>${formatMoney(row.previous_sale_price)}</td><td>${formatMoney(row.new_sale_price)}</td><td>${increaseType}</td><td>${escapeHtml(row.increase_value ?? "—")}</td><td>${discountType}</td><td>${formatMoney(row.discount_value)}</td><td>${formatMoney(row.discount_percent)}</td><td>${formatMoney(row.discounted_sale_price)}</td><td>${result}</td></tr>`;
+    }).join("") : '<tr><td colspan="13">جزئیاتی برای این اجرا ثبت نشده است.</td></tr>';
   } catch (error) {
     detailSummary.textContent = error instanceof Error ? error.message : "دریافت جزئیات انجام نشد.";
-    detailRows.innerHTML = '<tr><td colspan="9">امکان نمایش جزئیات وجود ندارد.</td></tr>';
+    detailRows.innerHTML = '<tr><td colspan="13">امکان نمایش جزئیات وجود ندارد.</td></tr>';
   }
 };
 

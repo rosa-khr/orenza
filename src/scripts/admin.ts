@@ -76,6 +76,8 @@ const statusLabels: Record<string, string> = {
   bankGateway: "درگاه بانکی",
   zarinpal: "زرین‌پال",
   tipax: "تیپاکس",
+  mahex: "ماهکس",
+  cargo: "پیک یا باربری",
   post: "پست",
   collect: "پس‌کرایه",
   weightVolume: "وزن و حجم",
@@ -219,25 +221,64 @@ const askConfirm = async (title: string, message: string, acceptLabel = "تأی�
   return result.isConfirmed;
 };
 
-const askTrackingCode = async (currentValue = "") => {
-  const result = await adminSwal.fire({
+type TrackingProvider = "post" | "tipax" | "mahex" | "cargo";
+
+const askTrackingDetails = async (
+  shippingMethod: string,
+  currentValue = "",
+  currentProvider = ""
+) => {
+  const isPost = shippingMethod === "post";
+  const isCargo = shippingMethod === "cargo";
+  const selectedProvider: TrackingProvider = isPost
+    ? "post"
+    : isCargo ? "cargo"
+    : currentProvider === "mahex" ? "mahex" : "tipax";
+  const result = await adminSwal.fire<{ trackingCode: string; trackingProvider: TrackingProvider }>({
     title: "ثبت ارسال سفارش",
-    text: "اگر کد رهگیری مرسوله را دارید وارد کنید. این فیلد اختیاری است و بعداً هم قابل ثبت یا ویرایش خواهد بود.",
     icon: "question",
-    input: "text",
-    inputLabel: "کد رهگیری مرسوله (اختیاری)",
-    inputValue: currentValue,
-    inputPlaceholder: "مثلاً ۲۴ رقم پست یا کد تیپاکس",
-    inputAttributes: {
-      maxlength: "120",
-      dir: "ltr",
-      inputmode: "numeric",
-      autocomplete: "off"
-    },
+    html: `
+      <p class="admin-swal-help">اگر کد رهگیری را دارید وارد کنید؛ ثبت کد اختیاری است و بعداً هم می‌توانید آن را ویرایش کنید.</p>
+      <div class="admin-swal-fields is-stacked">
+        <label>
+          <span>شرکت حمل</span>
+          ${isPost || isCargo
+            ? `<input id="tracking-provider-fixed" class="admin-swal-input" value="${isPost ? "پست" : "پیک یا باربری"}" readonly>`
+            : `<select id="tracking-provider" class="admin-swal-input">
+                <option value="tipax"${selectedProvider === "tipax" ? " selected" : ""}>تیپاکس</option>
+                <option value="mahex"${selectedProvider === "mahex" ? " selected" : ""}>ماهکس</option>
+              </select>`}
+        </label>
+        <label>
+          <span>کد رهگیری مرسوله (اختیاری)</span>
+          <input id="tracking-code" class="admin-swal-input" maxlength="120" dir="ltr" autocomplete="off" placeholder="کد رهگیری مرسوله">
+        </label>
+      </div>`,
     showCancelButton: true,
-    confirmButtonText: "بله، ارسال شد"
+    confirmButtonText: "بله، ارسال شد",
+    didOpen: (popup) => {
+      popup.setAttribute("dir", "rtl");
+      const input = popup.querySelector<HTMLInputElement>("#tracking-code");
+      if (input) {
+        input.value = currentValue;
+        input.focus();
+      }
+    },
+    preConfirm: () => {
+      const popup = Swal.getPopup();
+      const trackingCode = popup?.querySelector<HTMLInputElement>("#tracking-code")?.value.trim() || "";
+      const provider = isPost
+        ? "post"
+        : isCargo ? "cargo"
+        : popup?.querySelector<HTMLSelectElement>("#tracking-provider")?.value;
+      if (!provider || !["post", "tipax", "mahex", "cargo"].includes(provider)) {
+        Swal.showValidationMessage("شرکت حمل را انتخاب کنید.");
+        return false;
+      }
+      return { trackingCode, trackingProvider: provider as TrackingProvider };
+    }
   });
-  return result.isConfirmed ? String(result.value || "").trim() : null;
+  return result.isConfirmed && result.value ? result.value : null;
 };
 
 const openUserPasswordReset = (userId: string, userName: string) => {
@@ -805,19 +846,40 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
     }
   };
 
-  const deleteRow = async (id: string) => {
+  const deleteRow = async (row: Record<string, unknown>) => {
+    const id = String(row.id || "");
+    if (!id) return;
     const isSoftDelete = config.key === "products" || config.key === "categories";
-    const accepted = await askConfirm(
-      isSoftDelete ? "تغییر وضعیت به حذف‌شده" : "حذف رکورد",
-      isSoftDelete
-        ? "رکورد در دیتابیس باقی می‌ماند، اما دیگر در سایت نمایش داده نمی‌شود. ادامه می‌دهید؟"
-        : "این عملیات قابل بازگشت نیست. از حذف این رکورد مطمئن هستید؟",
-      isSoftDelete ? "بله، حذف نرم انجام شود" : "بله، حذف شود"
-    );
+    const isOrder = config.key === "orders";
+    const orderNumber = String(row.orderNumber || "").trim();
+    const accepted = isOrder
+      ? (await adminSwal.fire({
+          title: "حذف دائمی سفارش",
+          text: `برای حذف سفارش ${orderNumber}، شماره سفارش را دقیقاً وارد کنید. این عملیات قابل بازگشت نیست.`,
+          icon: "warning",
+          input: "text",
+          inputLabel: "شماره سفارش",
+          inputPlaceholder: orderNumber,
+          inputAttributes: { dir: "ltr", autocomplete: "off" },
+          inputValidator: (value) => String(value || "").trim() === orderNumber
+            ? undefined
+            : "شماره سفارش واردشده مطابقت ندارد.",
+          showCancelButton: true,
+          confirmButtonText: "حذف دائمی سفارش"
+        })).isConfirmed
+      : await askConfirm(
+          isSoftDelete ? "تغییر وضعیت به حذف‌شده" : "حذف رکورد",
+          isSoftDelete
+            ? "رکورد در دیتابیس باقی می‌ماند، اما دیگر در سایت نمایش داده نمی‌شود. ادامه می‌دهید؟"
+            : "این عملیات قابل بازگشت نیست. از حذف این رکورد مطمئن هستید؟",
+          isSoftDelete ? "بله، حذف نرم انجام شود" : "بله، حذف شود"
+        );
     if (!accepted) return;
     try {
       await api(`/api/v1/admin/${config.key}/${id}`, { method: "DELETE" });
-      toast(isSoftDelete ? "وضعیت رکورد به حذف‌شده تغییر کرد." : "رکورد با موفقیت حذف شد.");
+      toast(isOrder
+        ? `سفارش ${orderNumber} برای همیشه حذف شد.`
+        : isSoftDelete ? "وضعیت رکورد به حذف‌شده تغییر کرد." : "رکورد با موفقیت حذف شد.");
       await loadRows();
     } catch (error) {
       toast(error instanceof Error ? error.message : "حذف انجام نشد.", "error");
@@ -856,6 +918,7 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
   ) => {
     const isReadyAction = action === "ready";
     let trackingCode = "";
+    let trackingProvider = "";
     if (isReadyAction) {
       const accepted = await askConfirm(
         "ثبت آماده ارسال",
@@ -864,14 +927,23 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
       );
       if (!accepted) return;
     } else {
-      const enteredTrackingCode = await askTrackingCode(String(row.trackingCode || ""));
-      if (enteredTrackingCode === null) return;
-      trackingCode = enteredTrackingCode;
+      const tracking = await askTrackingDetails(
+        String(row.shippingMethod || ""),
+        String(row.trackingCode || ""),
+        String(row.trackingProvider || "")
+      );
+      if (tracking === null) return;
+      trackingCode = tracking.trackingCode;
+      trackingProvider = tracking.trackingProvider;
     }
     try {
       await api(`/api/v1/admin/orders/${row.id}/fulfillment-transition`, {
         method: "POST",
-        body: JSON.stringify({ action, ...(trackingCode ? { trackingCode } : {}) })
+        body: JSON.stringify({
+          action,
+          ...(trackingCode ? { trackingCode } : {}),
+          ...(trackingProvider ? { trackingProvider } : {})
+        })
       });
       toast(isReadyAction ? "سفارش آماده ارسال شد." : "ارسال سفارش ثبت شد.");
       await loadRows();
@@ -956,8 +1028,8 @@ const initList = (root: HTMLElement, config: ResourceConfig) => {
         button("ثبت ارسال سفارش", gridIcons.truck, () => void changeFulfillmentStatus(row, "sent"))
       );
     }
-    if (!isDeleted && config.key !== "users" && (config.key !== "orders" || isPendingOrder)) {
-      actions.append(button("حذف", gridIcons.trash, () => void deleteRow(id)));
+    if (!isDeleted && config.key !== "users") {
+      actions.append(button(config.key === "orders" ? "حذف دائمی سفارش" : "حذف", gridIcons.trash, () => void deleteRow(row)));
     }
     return actions;
   };
@@ -2378,6 +2450,7 @@ const initOrderWorkflow = (
     const isReadyAction = action === "ready";
     const trackingInput = form.elements.namedItem("trackingCode") as HTMLInputElement | null;
     let trackingCode = trackingInput?.value.trim() || "";
+    let trackingProvider = String(item.trackingProvider || "");
     if (isReadyAction) {
       const accepted = await askConfirm(
         "ثبت آماده ارسال",
@@ -2386,9 +2459,14 @@ const initOrderWorkflow = (
       );
       if (!accepted) return;
     } else {
-      const enteredTrackingCode = await askTrackingCode(trackingCode);
-      if (enteredTrackingCode === null) return;
-      trackingCode = enteredTrackingCode;
+      const tracking = await askTrackingDetails(
+        String(item.shippingMethod || ""),
+        trackingCode,
+        trackingProvider
+      );
+      if (tracking === null) return;
+      trackingCode = tracking.trackingCode;
+      trackingProvider = tracking.trackingProvider;
       if (trackingInput) trackingInput.value = trackingCode;
     }
     if (readyButton) readyButton.disabled = true;
@@ -2396,7 +2474,11 @@ const initOrderWorkflow = (
     try {
       await api(`/api/v1/admin/orders/${orderId}/fulfillment-transition`, {
         method: "POST",
-        body: JSON.stringify({ action, ...(trackingCode ? { trackingCode } : {}) })
+        body: JSON.stringify({
+          action,
+          ...(trackingCode ? { trackingCode } : {}),
+          ...(trackingProvider ? { trackingProvider } : {})
+        })
       });
       toast(isReadyAction ? "سفارش آماده ارسال شد." : "ارسال سفارش ثبت شد.");
       window.setTimeout(() => location.reload(), 350);
@@ -3317,7 +3399,9 @@ const initInvoice = async () => {
     set("[data-invoice-date]", item.createdAt ? new Date(String(item.createdAt)).toLocaleDateString("fa-IR-u-ca-persian") : "—");
     set("[data-invoice-customer]", String(item.customerName || "—"));
     set("[data-invoice-phone]", String(item.customerPhone || "—"));
-    set("[data-invoice-address]", String(item.customerAddress || "—"));
+    set("[data-invoice-postal-code]", String(item.customerPostalCode || "—"));
+    set("[data-invoice-address]", [item.customerProvince, item.customerCity, item.customerAddress]
+      .filter(Boolean).map(String).join("، ") || "—");
     set("[data-invoice-total]", `${money.format(Number(item.totalAmount || 0))} تومان`);
     set("[data-invoice-discount]", `${money.format(Number(item.discountAmount || 0))} تومان`);
     set("[data-invoice-tax]", `${money.format(Number(item.taxAmount || 0))} تومان`);

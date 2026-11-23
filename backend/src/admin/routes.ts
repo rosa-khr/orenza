@@ -302,6 +302,8 @@ export const registerAdminRoutes = (
       price: number;
       increaseType: number;
       increaseValue: number;
+      discountType: number;
+      discountValue: number;
       isInStock: number;
       showInBestSellers: number;
       showInDiscounts: number;
@@ -330,6 +332,8 @@ export const registerAdminRoutes = (
           price: headers.findIndex((header) => ["purchase_price_per_kg", "purchase_price_per_kg_toman", "purchase price per kg", "قیمت خرید", "قیمت خرید هر کیلو", "قیمت"].includes(header)),
           increaseType: headers.findIndex((header) => ["increase_type", "increase mode", "نوع افزایش", "نوع سود"].includes(header)),
           increaseValue: headers.findIndex((header) => ["increase_value", "increase amount", "markup_percent", "fixed_increase_toman", "درصد سود", "مبلغ افزایش", "مقدار افزایش"].includes(header)),
+          discountType: headers.findIndex((header) => ["discount_type", "نوع تخفیف"].includes(header)),
+          discountValue: headers.findIndex((header) => ["discount_value", "مقدار تخفیف", "مبلغ تخفیف"].includes(header)),
           isInStock: headers.findIndex((header) => ["is_in_stock", "in_stock", "موجود", "امکان تأمین"].includes(header)),
           showInBestSellers: headers.findIndex((header) => ["show_in_best_sellers", "پرفروش", "نمایش در پرفروش‌ترین‌ها"].includes(header)),
           showInDiscounts: headers.findIndex((header) => ["show_in_discounts", "تخفیف‌دار", "نمایش در محصولات تخفیف‌دار"].includes(header)),
@@ -378,6 +382,10 @@ export const registerAdminRoutes = (
         sale: number;
         increaseType: "percent" | "fixed" | null;
         increaseValue: number | null;
+        discountType: "percent" | "fixed" | null;
+        discountValue: number | null;
+        discountPercent: number | null;
+        discountedSale: number | null;
         isInStock: boolean | null;
         showInBestSellers: boolean | null;
         showInDiscounts: boolean | null;
@@ -396,6 +404,11 @@ export const registerAdminRoutes = (
         const price = parseImportPrice(row[columns.price]);
         const increaseType = columns.increaseType >= 0 ? parseIncreaseType(row[columns.increaseType]) : null;
         const increaseValue = columns.increaseValue >= 0 ? parseIncreaseValue(row[columns.increaseValue]) : null;
+        const rawDiscountType = columns.discountType >= 0 ? String(row[columns.discountType] ?? "").trim() : "";
+        const rawDiscountValue = columns.discountValue >= 0 ? String(row[columns.discountValue] ?? "").trim() : "";
+        const hasDiscount = Boolean(rawDiscountType || rawDiscountValue);
+        const discountType = parseIncreaseType(rawDiscountType);
+        const discountValue = parseIncreaseValue(rawDiscountValue);
         const flags = {
           isInStock: columns.isInStock >= 0 ? parseImportBoolean(row[columns.isInStock]) : null,
           showInBestSellers: columns.showInBestSellers >= 0 ? parseImportBoolean(row[columns.showInBestSellers]) : null,
@@ -406,6 +419,10 @@ export const registerAdminRoutes = (
         };
         if (!identifier) { failures.push({ rowNumber, identifier: "", error: `${source}: محصول مشخص نشده است.` }); continue; }
         if (price == null) { failures.push({ rowNumber, identifier, error: `${source}: قیمت خرید باید یک عدد صحیح معتبر باشد.` }); continue; }
+        if (hasDiscount && (!discountType || discountValue === null)) {
+          failures.push({ rowNumber, identifier, error: `${source}: نوع تخفیف باید percent یا fixed و مقدار تخفیف یک عدد معتبر باشد.` });
+          continue;
+        }
         if (Object.values(flags).includes("invalid")) {
           failures.push({ rowNumber, identifier, error: `${source}: مقدار ستون‌های وضعیت فقط باید TRUE یا FALSE باشد.` });
           continue;
@@ -432,6 +449,21 @@ export const registerAdminRoutes = (
           ? (safeIncreaseType === "percent" ? Math.round(price * (1 + safeIncreaseValue / 100)) : Math.round(price + safeIncreaseValue))
           : Number(product.rows[0]!.sale_price_per_kg);
         if (!Number.isSafeInteger(sale) || sale > 10_000_000_000) { failures.push({ rowNumber, identifier, error: `${source}: قیمت فروش نهایی معتبر نیست.` }); continue; }
+        let discountPercent: number | null = null;
+        let discountedSale: number | null = null;
+        if (hasDiscount) {
+          const value = discountValue!;
+          if ((discountType === "percent" && value >= 100) || (discountType === "fixed" && value >= sale) || sale <= 0) {
+            failures.push({ rowNumber, identifier, error: `${source}: تخفیف باید کمتر از قیمت فروش و درصد آن کمتر از ۱۰۰ باشد.` });
+            continue;
+          }
+          discountPercent = discountType === "fixed" ? Number((value / sale * 100).toFixed(8)) : value;
+          discountedSale = value === 0 ? null : discountType === "fixed" ? Math.round(sale - value) : Math.round(sale * (1 - value / 100));
+          if (value > 0 && (!discountedSale || discountedSale >= sale)) {
+            failures.push({ rowNumber, identifier, error: `${source}: مقدار تخفیف باید قیمت فروش را حداقل یک تومان کاهش دهد.` });
+            continue;
+          }
+        }
         updates.push({
           rowNumber,
           identifier,
@@ -443,9 +475,13 @@ export const registerAdminRoutes = (
           sale,
           increaseType: hasIncrease ? safeIncreaseType : null,
           increaseValue: hasIncrease ? safeIncreaseValue : null,
+          discountType: hasDiscount ? discountType : null,
+          discountValue: hasDiscount ? discountValue : null,
+          discountPercent,
+          discountedSale,
           isInStock: flags.isInStock as boolean | null,
           showInBestSellers: flags.showInBestSellers as boolean | null,
-          showInDiscounts: flags.showInDiscounts as boolean | null,
+          showInDiscounts: hasDiscount ? discountValue! > 0 : flags.showInDiscounts as boolean | null,
           showInPopularFooter: flags.showInPopularFooter as boolean | null,
           showInPopularSearches: flags.showInPopularSearches as boolean | null,
           isActive: flags.isActive as boolean | null
@@ -465,6 +501,8 @@ export const registerAdminRoutes = (
                   show_in_popular_footer=COALESCE($6,show_in_popular_footer),
                   show_in_popular_searches=COALESCE($7,show_in_popular_searches),
                   is_active=COALESCE($8,is_active),
+                  discount_percent=CASE WHEN $10::boolean THEN $11::numeric ELSE discount_percent END,
+                  discount_sale_price_per_kg=CASE WHEN $10::boolean THEN $12::bigint ELSE discount_sale_price_per_kg END,
                   updated_at=now()
             WHERE id=$9`,
           [
@@ -476,15 +514,18 @@ export const registerAdminRoutes = (
             item.showInPopularFooter,
             item.showInPopularSearches,
             item.isActive,
-            item.productId
+            item.productId,
+            item.discountType !== null,
+            item.discountPercent,
+            item.discountedSale
           ]
         );
         await client.query(
           `INSERT INTO price_import_items(
              job_id,row_number,product_identifier,product_id,product_title,previous_purchase_price,new_purchase_price,
-             previous_sale_price,new_sale_price,increase_type,increase_value,status
-           ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'updated')`,
-          [jobId, item.rowNumber, item.identifier, item.productId, item.productTitle, item.previous, item.next, item.previousSale, item.sale, item.increaseType, item.increaseValue]
+             previous_sale_price,new_sale_price,increase_type,increase_value,discount_type,discount_value,discount_percent,discounted_sale_price,status
+           ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'updated')`,
+          [jobId, item.rowNumber, item.identifier, item.productId, item.productTitle, item.previous, item.next, item.previousSale, item.sale, item.increaseType, item.increaseValue, item.discountType, item.discountValue, item.discountPercent, item.discountedSale]
         );
       }
       const jobStatus = updates.length ? "completed" : "failed";
@@ -1137,20 +1178,35 @@ ${ai.instructions}
   app.post("/api/v1/admin/orders/:id/fulfillment-transition", async (request, reply) => {
     if (!(await requirePermission(request, reply, "orders"))) return;
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
-    const { action, trackingCode } = z.object({
+    const { action, trackingCode, trackingProvider } = z.object({
       action: z.enum(["ready", "sent"]),
-      trackingCode: z.string().trim().max(120).optional()
+      trackingCode: z.string().trim().max(120).optional(),
+      trackingProvider: z.enum(["post", "tipax", "mahex", "cargo"]).optional()
     }).parse(request.body);
     const expectedStatus = action === "ready" ? "processing" : "ready";
+    const current = await pool.query<{ shipping_method: string; tracking_provider: string | null }>(
+      `SELECT shipping_method,tracking_provider FROM orders WHERE id=$1`,
+      [id]
+    );
+    const order = current.rows[0];
+    if (!order) return reply.code(404).send({ error: "سفارش پیدا نشد." });
+    const resolvedProvider = action === "sent"
+      ? order.shipping_method === "post"
+        ? "post"
+        : order.shipping_method === "cargo"
+          ? "cargo"
+          : trackingProvider === "mahex" ? "mahex" : trackingProvider === "tipax" ? "tipax" : order.tracking_provider || "tipax"
+      : null;
     const result = await pool.query<Record<string, unknown>>(
       `UPDATE orders
-          SET order_status=$2,
-              tracking_code=CASE WHEN $2='sent' AND NULLIF($4::varchar,'') IS NOT NULL THEN $4::varchar ELSE tracking_code END,
+          SET order_status=$2::varchar,
+              tracking_code=CASE WHEN $2::varchar='sent' AND NULLIF($4::varchar,'') IS NOT NULL THEN $4::varchar ELSE tracking_code END,
+              tracking_provider=CASE WHEN $2::varchar='sent' THEN $5::varchar ELSE tracking_provider END,
               updated_at=now()
         WHERE id=$1
-          AND order_status=$3
+          AND order_status=$3::varchar
       RETURNING *`,
-      [id, action, expectedStatus, trackingCode ?? null]
+      [id, action, expectedStatus, trackingCode ?? null, resolvedProvider]
     );
     if (!result.rows[0]) {
       const required = action === "ready"

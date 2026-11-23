@@ -1,5 +1,7 @@
 export {};
 import { enablePersianValidation, validateFormFa } from "./persian-validation";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 type User = { phone: string | null; email: string | null; displayName: string | null; hasPassword: boolean };
 type Address = {
@@ -14,7 +16,7 @@ type CustomerOrder = {
   customerProvince: string | null;
   customerCity: string | null;
   customerPostalCode: string | null;
-  shippingMethod: "tipax" | "post";
+  shippingMethod: "tipax" | "post" | "cargo";
   totalAmount: number | string;
   discountAmount: number | string;
   taxAmount: number | string;
@@ -23,6 +25,7 @@ type CustomerOrder = {
   paymentMethodTitle: string;
   orderStatus: OrderStatus;
   trackingCode: string | null;
+  trackingProvider: "post" | "tipax" | "mahex" | "cargo" | null;
   createdAt: string;
   updatedAt: string;
   items: {
@@ -192,6 +195,44 @@ const renderOrders = (orders: CustomerOrder[]) => {
       createElement("strong", "", orderStatusMeta[order.orderStatus].label),
       createElement("p", "", orderStatusMeta[order.orderStatus].detail)
     );
+    if (order.orderStatus === "sent") {
+      const confirmDelivery = createElement("button", "account-order-confirm-delivery", "سفارش را تحویل گرفتم");
+      confirmDelivery.type = "button";
+      confirmDelivery.addEventListener("click", async () => {
+        const decision = await Swal.fire({
+          title: "تأیید تحویل سفارش",
+          text: "آیا سفارش را تحویل گرفته‌اید؟ با تأیید شما، وضعیت سفارش تکمیل‌شده می‌شود.",
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "بله، تحویل گرفتم",
+          cancelButtonText: "انصراف",
+          reverseButtons: true,
+          buttonsStyling: false,
+          customClass: { popup: "account-confirm-popup", confirmButton: "account-confirm-accept", cancelButton: "account-confirm-cancel", actions: "account-confirm-actions" },
+          didOpen: (popup) => popup.setAttribute("dir", "rtl")
+        });
+        if (!decision.isConfirmed) return;
+        confirmDelivery.disabled = true;
+        confirmDelivery.textContent = "در حال ثبت تحویل...";
+        try {
+          await api(`/me/orders/${encodeURIComponent(order.id)}/confirm-delivery`, { method: "POST", body: "{}" });
+          await loadOrders();
+        } catch (error) {
+          confirmDelivery.disabled = false;
+          confirmDelivery.textContent = "سفارش را تحویل گرفتم";
+          await Swal.fire({
+            title: "ثبت تحویل انجام نشد",
+            text: error instanceof Error ? error.message : "لطفاً دوباره تلاش کنید.",
+            icon: "error",
+            confirmButtonText: "متوجه شدم",
+            buttonsStyling: false,
+            customClass: { popup: "account-confirm-popup", confirmButton: "account-confirm-accept", actions: "account-confirm-actions" },
+            didOpen: (popup) => popup.setAttribute("dir", "rtl")
+          });
+        }
+      });
+      current.append(confirmDelivery);
+    }
 
     const progress = createElement("ol", `account-order-progress${order.orderStatus === "canceled" ? " is-canceled" : ""}`);
     const reached = new Set(order.history.map((entry) => entry.status));
@@ -225,21 +266,30 @@ const renderOrders = (orders: CustomerOrder[]) => {
         }
         window.setTimeout(() => { copy.textContent = "کپی کد"; }, 1400);
       });
-      const trackingLink = createElement(
-        "a",
-        "account-order-tracking-link",
-        order.shippingMethod === "tipax" ? "پیگیری در تیپاکس" : "پیگیری در پست"
-      );
-      const trackingBase = order.shippingMethod === "tipax"
-        ? "https://tipaxco.com/tracking"
-        : "https://tracking.post.ir/";
-      trackingLink.href = `${trackingBase}?id=${encodeURIComponent(order.trackingCode.trim())}`;
-      trackingLink.target = "_blank";
-      trackingLink.rel = "noopener noreferrer";
-      trackingRow.append(code, copy, trackingLink);
+      const trackingProvider = order.trackingProvider || (order.shippingMethod === "post" ? "post" : order.shippingMethod === "cargo" ? "cargo" : "tipax");
+      const encodedCode = encodeURIComponent(order.trackingCode.trim());
+      if (trackingProvider === "cargo") {
+        trackingRow.append(code, copy, createElement("span", "account-order-tracking-link", "ارسال با پیک یا باربری"));
+      } else {
+        const trackingLink = createElement("a", "account-order-tracking-link", "پیگیری مرسوله");
+        trackingLink.href = trackingProvider === "mahex"
+          ? "https://mahex.com/tracking"
+          : trackingProvider === "tipax"
+            ? `https://tipaxco.com/tracking?id=${encodedCode}`
+            : `https://tracking.post.ir/?id=${encodedCode}`;
+        trackingLink.target = "_blank";
+        trackingLink.rel = "noopener noreferrer";
+        trackingRow.append(code, copy, trackingLink);
+      }
       tracking.append(trackingRow);
     } else {
-      tracking.append(createElement("p", "", "پس از تحویل سفارش به شرکت حمل، کد رهگیری اینجا نمایش داده می‌شود."));
+      tracking.append(createElement(
+        "p",
+        "",
+        order.shippingMethod === "cargo"
+          ? "پس از تحویل سفارش به پیک یا باربری، اطلاعات ارسال اینجا نمایش داده می‌شود."
+          : "پس از تحویل سفارش به شرکت حمل، کد رهگیری اینجا نمایش داده می‌شود."
+      ));
     }
 
     const itemSection = createElement("section", "account-order-items");
@@ -258,7 +308,7 @@ const renderOrders = (orders: CustomerOrder[]) => {
     const delivery = createElement("section", "account-order-delivery");
     delivery.append(
       createElement("h3", "", "تحویل و پرداخت"),
-      createElement("p", "", `${order.shippingMethod === "tipax" ? "تیپاکس" : "پست"} · ${order.paymentMethodTitle}`),
+      createElement("p", "", `${order.shippingMethod === "cargo" ? "پیک یا باربری" : order.shippingMethod === "tipax" ? "ارسال پس‌کرایه" : "پست"} · ${order.paymentMethodTitle}`),
       createElement("address", "", [order.customerProvince, order.customerCity, order.customerAddress].filter(Boolean).join("، "))
     );
     const invoiceLink = createElement("a", "account-order-invoice", "دانلود فاکتور PDF");

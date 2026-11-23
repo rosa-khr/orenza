@@ -763,6 +763,17 @@ body:has(.account-page) .site-header {
 .account-order-tracking p,
 .account-order-delivery p,
 .account-order-delivery address { margin: 0; color: var(--text-muted); font-size: 10px; font-style: normal; line-height: 1.9; }
+.account-order-confirm-delivery { width: fit-content; min-height: 40px; margin-top: 7px; border: 1px solid var(--green); padding: 9px 16px; background: var(--green); color: #fff; cursor: pointer; font: 700 11px Dana,Tahoma,sans-serif; }
+.account-order-confirm-delivery:hover { background: #23523e; }
+.account-order-confirm-delivery:disabled { cursor: wait; opacity: .65; }
+.swal2-popup.account-confirm-popup { width: min(92vw, 460px); border: 1px solid #ded3c3; border-radius: 13px; background: #fffdf9; padding: 24px 26px 22px; color: var(--text-dark); font-family: Dana,Tahoma,sans-serif; }
+.account-confirm-popup .swal2-title { font-size: 19px; line-height: 1.7; }
+.account-confirm-popup .swal2-html-container { color: var(--text-muted); font-size: 14px; line-height: 1.9; }
+.account-confirm-popup .swal2-icon.swal2-question { border-color: #c4a777; color: #9a7139; }
+.account-confirm-actions { gap: 8px; }
+.account-confirm-accept, .account-confirm-cancel { min-height: 42px; border: 1px solid var(--green); border-radius: 7px; padding: 9px 16px; cursor: pointer; font: 700 12px Dana,Tahoma,sans-serif; }
+.account-confirm-accept { background: var(--green); color: #fff; }
+.account-confirm-cancel { border-color: #d9cdbc; background: #fff; color: #62594e; }
 .account-order-progress { position: relative; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); margin: 0; padding: 17px 8px; border: 0 !important; list-style: none; }
 .account-order-progress::before { position: absolute; top: 33px; right: 10%; left: 10%; height: 1px; background: rgba(74,58,37,.15); content: ""; }
 .account-order-progress li { position: relative; z-index: 1; display: grid; justify-items: center; gap: 7px; color: #9a9185; font-size: 9px; text-align: center; }

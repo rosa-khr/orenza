@@ -21,6 +21,7 @@ export type PriceImportSampleProduct = {
 
 export const priceImportHeaders = [
   "product_id", "category", "product", "purchase_price_per_kg_toman", "increase_type", "increase_value",
+  "discount_type", "discount_value",
   "is_in_stock", "show_in_best_sellers", "show_in_discounts", "show_in_popular_footer",
   "show_in_popular_searches", "is_active"
 ];
@@ -55,6 +56,8 @@ export const createPriceImportWorkbook = (products: PriceImportSampleProduct[]) 
       Number(product.purchase_price_per_kg),
       "",
       "",
+      "",
+      "",
       product.stock_status === "inStock",
       product.show_in_best_sellers,
       product.show_in_discounts,
@@ -65,9 +68,10 @@ export const createPriceImportWorkbook = (products: PriceImportSampleProduct[]) 
   ]);
   sheet["!cols"] = [
     { wch: 38 }, { wch: 24 }, { wch: 30 }, { wch: 27 }, { wch: 18 }, { wch: 18 },
+    { wch: 18 }, { wch: 18 },
     { wch: 16 }, { wch: 23 }, { wch: 21 }, { wch: 24 }, { wch: 27 }, { wch: 14 }
   ];
-  sheet["!autofilter"] = { ref: `A1:L${sortedProducts.length + 1}` };
+  sheet["!autofilter"] = { ref: `A1:N${sortedProducts.length + 1}` };
   XLSX.utils.book_append_sheet(workbook, sheet, "محصولات");
 
   const generatedFile = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });

@@ -110,7 +110,7 @@ export class OrderService {
       const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
       const totalWeightGrams = items.reduce((sum, item) => sum + item.weight * item.quantity, 0);
       const shipping = await client.query<{
-        code: "tipax" | "post";
+        code: "tipax" | "post" | "cargo";
         pricing_type: "collect" | "weightVolume" | "fixed";
         base_price: string;
         price_per_kg: string;
@@ -123,8 +123,14 @@ export class OrderService {
       if (!shippingMethod) {
         throw Object.assign(new Error("روش ارسال انتخابی در حال حاضر فعال نیست."), { statusCode: 422 });
       }
-      if (totalWeightGrams >= 3000 && shippingMethod.code !== "tipax") {
-        throw Object.assign(new Error("برای سفارش‌های ۳ کیلوگرم و بیشتر فقط ارسال با تیپاکس امکان‌پذیر است."), { statusCode: 422 });
+      if (totalWeightGrams > 10000 && shippingMethod.code !== "cargo") {
+        throw Object.assign(new Error("برای سفارش‌های بیشتر از ۱۰ کیلوگرم فقط ارسال با پیک یا باربری امکان‌پذیر است."), { statusCode: 422 });
+      }
+      if (totalWeightGrams >= 3000 && totalWeightGrams <= 10000 && shippingMethod.code !== "tipax") {
+        throw Object.assign(new Error("برای سفارش‌های ۳ تا ۱۰ کیلوگرم فقط ارسال با تیپاکس امکان‌پذیر است."), { statusCode: 422 });
+      }
+      if (totalWeightGrams < 3000 && shippingMethod.code === "cargo") {
+        throw Object.assign(new Error("پیک یا باربری فقط برای سفارش‌های بیشتر از ۱۰ کیلوگرم فعال است."), { statusCode: 422 });
       }
       const shippingAmount = shippingMethod.pricing_type === "collect"
         ? 0

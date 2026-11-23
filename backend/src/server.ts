@@ -584,6 +584,7 @@ app.get("/api/v1/me/orders", async (request, reply) => {
             o.payment_status AS "paymentStatus",
             o.order_status AS "orderStatus",
             o.tracking_code AS "trackingCode",
+            o.tracking_provider AS "trackingProvider",
             o.created_at AS "createdAt",
             o.updated_at AS "updatedAt",
             pm.title AS "paymentMethodTitle",
@@ -619,6 +620,31 @@ app.get("/api/v1/me/orders", async (request, reply) => {
   );
   reply.header("Cache-Control", "private, no-store");
   return { orders: result.rows };
+});
+
+app.post("/api/v1/me/orders/:id/confirm-delivery", async (request, reply) => {
+  const user = await requireUser(request, reply);
+  if (!user) return;
+  const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+  const result = await query<Record<string, unknown>>(
+    `UPDATE orders
+        SET order_status='completed',updated_at=now()
+      WHERE id=$1
+        AND user_id=$2
+        AND order_status='sent'
+    RETURNING id,order_number AS "orderNumber",order_status AS "orderStatus",updated_at AS "updatedAt"`,
+    [id, user.id]
+  );
+  if (!result.rows[0]) {
+    const owned = await query<{ order_status: string }>(
+      "SELECT order_status FROM orders WHERE id=$1 AND user_id=$2",
+      [id, user.id]
+    );
+    if (!owned.rows[0]) return reply.code(404).send({ error: "سفارش موردنظر پیدا نشد." });
+    return reply.code(422).send({ error: "فقط سفارش ارسال‌شده را می‌توانید به‌عنوان تحویل‌گرفته‌شده ثبت کنید." });
+  }
+  reply.header("Cache-Control", "private, no-store");
+  return { item: result.rows[0] };
 });
 
 app.get("/api/v1/me/orders/:id/invoice.pdf", async (request, reply) => {

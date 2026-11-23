@@ -52,7 +52,8 @@ const orderDate = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
 });
 const shippingLabel = (value: string) => ({
   post: "پست پیشتاز",
-  tipax: "تیپاکس"
+  tipax: "ارسال پس‌کرایه",
+  cargo: "پیک یا باربری"
 })[value] || value;
 const paymentStatusLabel = (value?: string | null) => ({
   pending: "در انتظار تأیید پرداخت",
